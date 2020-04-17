@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hcs.hcs_supplier_item_version.mapper.SupplierItemVersionMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hcs.hcs_supplier_item_version.dto.SupplierItemVersion">
+        <result column="KID" property="kid" jdbcType="DECIMAL" />
+        <result column="PLANT_ID" property="plantId" jdbcType="DECIMAL" />
+        <result column="ITEM_ID" property="itemId" jdbcType="DECIMAL" />
+        <result column="ITEM_VERSION" property="itemVersion" jdbcType="VARCHAR" />
+        <result column="REMARKS" property="remarks" jdbcType="VARCHAR" />
+        <result column="ENABLE_FLAG" property="enableFlag" jdbcType="VARCHAR" />
+        <result column="MAIN_VERSION" property="mainVersion" jdbcType="VARCHAR" />
+        <result column="STOCK_QTY" property="stockQty" jdbcType="DECIMAL" />
+        <result column="WIP_QTY" property="wipQty" jdbcType="DECIMAL" />
+        <result column="OUT_ORDER_QTY" property="outOrderQty" jdbcType="DECIMAL" />
+        <result column="SUPPLIER_ID" property="supplierId" jdbcType="DECIMAL" />
+        <result column="BOM_ID" property="bomId" jdbcType="DECIMAL" />
+        <result column="CREATION_DATE" property="creationDate" jdbcType="DATE" />
+        
+        <!-- 业务字段 -->
+        <result column="user_name" property="userName" jdbcType="VARCHAR" />
+    </resultMap>
+	<!-- 版本明细查询 -->
+	<select id="query" resultMap="BaseResultMap" parameterType="com.hand.hcs.hcs_supplier_item_version.dto.SupplierItemVersion">
+		select hsiv.*,
+		       su.user_name
+		from hcs_supplier_item_version hsiv
+		left join sys_user su on hsiv.created_by = su.user_id
+		where 1=1
+		<if test="itemId != null">
+			and hsiv.ITEM_ID = #{itemId}
+		</if>
+		<if test="plantId != null">
+			and hsiv.PLANT_ID = #{plantId}
+		</if>
+		<if test="supplierId != null">
+			and hsiv.SUPPLIER_ID = #{supplierId}
+		</if>
+		<if test="bomId != null">
+			and hsiv.BOM_ID = #{bomId}
+		</if>
+		<if test="enableFlag != null">
+			and hsiv.ENABLE_FLAG = #{enableFlag}
+		</if>
+		order by hsiv.creation_date desc
+	</select>
+</mapper>

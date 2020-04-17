@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.utils.recording_changes_basic_data.mapper.ChangesBasicDataMapper">
+    <resultMap id="BaseResultMap" type="com.hand.utils.recording_changes_basic_data.dto.ChangesBasicData">
+        <result column="change_id" property="changeId" jdbcType="DECIMAL" />
+        <result column="table_name" property="tableName" jdbcType="VARCHAR" />
+        <result column="change_content" property="changeContent" jdbcType="VARCHAR" />
+        <result column="change_type" property="changeType" jdbcType="VARCHAR" />
+        <result column="user_name" property="userName" jdbcType="VARCHAR" />
+        <result column="user_id" property="userId" jdbcType="DECIMAL" />
+        <result column="LAST_UPDATE_DATE" property="lastUpdateDate" jdbcType="VARCHAR" />
+    </resultMap>
+<select id="selectChangeDatas" resultMap="BaseResultMap" parameterType="com.hand.utils.recording_changes_basic_data.dto.ChangesBasicData">
+      select 
+           t.change_id,
+	       t.table_name,
+	       t.change_content,
+	       t.user_name,
+	       su.user_id,
+	       t.change_type,
+	       t.request_id,
+	       t.program_id,
+	       t.object_version_number,
+	       t.created_by,
+	       t.creation_date,
+	       t.last_updated_by,
+	       t.last_update_date,
+	       t.last_update_login
+           from recording_changes_basic_data t
+           left join sys_user su on t.user_name=su.user_name
+           where 1=1
+           	<if test = "operationStartTime != null and operationStartTime != ''">
+			 	and t.last_update_date &gt;= to_date(#{operationStartTime}, 'yyyy-mm-dd hh24:mi:ss')
+			 </if>
+			 <if test = "operationEndTime != null and operationEndTime != ''">
+			 	and t.last_update_date &lt;= to_date(#{operationEndTime}, 'yyyy-mm-dd hh24:mi:ss')
+			 </if>
+            <if test="userName != null and userName != ''">
+                and t.user_name like concat('%',concat(#{userName,jdbcType=VARCHAR},'%'))
+            </if>
+            <if test="userId != null and userId != ''">
+				and su.user_id = #{userId}
+			</if>
+			<if test="changeType != null and changeType != ''">
+				and t.change_type = #{changeType}
+			</if>
+            order by t.change_id desc 
+           
+    </select>
+
+</mapper>

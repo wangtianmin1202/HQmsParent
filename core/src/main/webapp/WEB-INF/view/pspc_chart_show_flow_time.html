@@ -1,0 +1,2178 @@
+<#include "include/header.html">
+<script src="${base.contextPath}/common/code?PSPC_JUDGEMENT=PSPC.JUDGEMENT" type="text/javascript"></script>
+<script src="${base.contextPath}/common/code?EXTRA_ATTRITUBE=PSPC.DATA.EXTRA.ATTRITUBE" type="text/javascript"></script>
+<script src="${base.contextPath}/lib/echarts/echarts.min.js"></script>
+<script src="${base.contextPath}/lib/layer/layer.js"></script>
+<script src="${base.contextPath}/resources/lib/utils/sys_util.js"></script>
+<script type="text/javascript">
+var host = window.location.host;
+
+    var viewModel = Hap.createGridViewModel("#grid");
+    //计量的四种类型
+    viewModel.sampleType = ["XBAR-R","XBAR-S","Me-R","X-Rm"];
+    //计数的四种类型
+    viewModel.countType = ["nP","P","C","U"];
+    var oocGridViewModel = Hap.createGridViewModel("#oocGrid");
+    var countOocGridViewModel = Hap.createGridViewModel("#countOocGrid");
+
+    //接收其它页面传过来的参数 add by yuchao.wang
+    var entityIdParameter = '${RequestParameters.entityId!}';
+    var entityCodeParameter = '${RequestParameters.entityCode!}';
+    var chartIdParameter = '${RequestParameters.chartId!}';
+
+    //webSocket
+    var ws;
+
+    //定时器
+    var timer;
+
+    oocGridViewModel.save = function(){
+        oocGrid.saveChanges();
+    }
+
+
+    viewModel.query = function () {
+        if(!viewModel.model.entityId){
+            Hap.showToast({
+                type:'error',  //1.success 2.error
+                message: "请选择实体控制图",
+                // showDuration:3000,//3秒后显示成功框
+                hideDuration:3000 ,//展示3秒成功框
+                "positionClass": "toast-bottom-right",
+            });
+            return;
+        }
+
+        queryData(viewModel.model.entityId);
+    }
+    //ooc状态 在界面分别显示 蓝色 黄色 红色
+    var oocStatus = ["NORMAL","WARNING","WRONG"];
+
+    var exportHead = '';
+    var exportTbody = '';
+</script>
+<style>
+
+    .element::-webkit-scrollbar {display:none}
+    .table-div{
+        /*width: 90%;*/
+        margin: 0 auto;
+        height: 500px;
+        overflow-y: scroll;
+    }
+    #out-table-div table{
+        /*width: 100%;*/
+        margin: 0 auto;
+    }
+    #out-table-div table th,#out-table-div table td{
+        text-align: center;
+        border: 1px solid grey;
+        border-right: none;
+        border-left: none;
+        min-width:80px;
+    }
+    #out-table-div table th{
+        height: 40px;
+        background-color: #F5F5F5;
+        position: relative;
+    }
+    /*#out-table-div table thead th div:last-child{*/
+    /*border-right: 1px solid grey;*/
+    /*}*/
+    #out-table-div table td{
+        height: 30px;
+    }
+    .btn-foot{
+        width: 95%;
+        position: absolute;
+        bottom: 20px;
+    }
+    .row{
+        margin: 0;
+        padding: 0;
+    }
+    #detailDialog label,div{
+        padding: 0;
+        margin: 0;
+    }
+    .padding-div>div{
+        padding: 0 10px;
+    }
+    .sample-label label{
+        height: 30px;
+        line-height: 30px;
+        text-align: center;
+    }
+    #setDialog .sample-label{
+        height:30px
+    }
+    #setDialog .sample-label label{
+        text-align: right;
+    }
+    #setDialog .sample-label label,.sample-label div{
+        height: 100%;
+        padding: 0;
+        margin: 0;
+        padding-left: 10px;
+    }
+    #setDialog .row{
+        margin-top: 20px;
+    }
+    .head-div{
+        margin-top: 15px;
+    }
+    .head-div label{
+        color: black;
+        font-size: 14px;
+        line-height: 30px;
+        text-align: right;
+    }
+    .head-div input{
+        width:180px;
+        /*margin-right:5px;*/
+    }
+
+    #out-table-div table th div {
+        width: 100%;
+        height: 100%;
+        position: relative;
+        text-align: center;
+        line-height: 40px;
+        background-color: #F5F5F5;
+        white-space:nowrap;
+    }
+
+    #countDetailDialog label{
+        padding: 0;
+    }
+    #countDetailDialog .row{
+        margin-top: 10px;
+    }
+</style>
+<body>
+<div style="clear:both">
+    <!-- 顶部查询框 -->
+    <div class="container" id="query-form-head" style="width: 100%">
+        <!-- 第一行查询 -->
+        <div class="head-div row">
+            <label class="col-md-2">控制要素组：</label>
+            <div class="col-md-2">
+                <input id="ceGroup" style="width: 180px" data-bind="value:model.ceGroupId">
+            </div>
+            <label class="col-md-2" >控制要素：</label>
+            <div class="col-md-2">
+                <input id="ceParameter" style="width: 180px" data-bind="value:model.ceParameterId">
+            </div>
+            <label class="col-md-2">附着对象组：</label>
+            <div class="col-md-2">
+                <input id="attachmentGroup" style="width: 180px" data-bind="value:model.attachmentGroupId">
+            </div>
+        </div>
+        <script>
+            var ceGroup = $("#ceGroup").kendoLov($.extend(<@lov "PSPC_PSPC_CE_GROUP"/>,{
+                textField: 'classifyGroup',
+                valueField:'classifyGroupId',
+                select:function (e) {
+
+                }
+            })).data("kendoLov");
+            var ceParameter = $("#ceParameter").kendoLov($.extend(<@lov "PSPC_PSPC_CE_PARAMETER"/>,{
+                textField: 'ceParameter',
+                valueField:'ceParameterId',
+                query:function (e) {
+                    e.param.ceGroupId = viewModel.model.ceGroupId;
+                }
+            })).data("kendoLov");
+            var attachmentGroup = $("#attachmentGroup").kendoLov($.extend(<@lov "PSPC_PSPC_ATTACHMENT_GROUP_PRO"/>,{
+                textField: 'attachmentGroupDescription',
+                valueField:'attachmentGroupId',
+                select:function (e) {
+                },
+                query:function (e) {
+                    e.param.ceGroupId = viewModel.model.ceGroupId;
+                }
+            })).data("kendoLov");
+        </script>
+        <!-- 第二行查询 -->
+        <div class="head-div row">
+            <label class="col-md-2">控制图：</label>
+            <div class="col-md-2">
+                <input id="chartId" style="width: 180px" data-bind="value:model.chartId">
+            </div>
+            <label class="col-md-2" ><span style='color:red'>*&nbsp;&nbsp;</span>实体控制图：</label>
+            <div class="col-md-2">
+                <input id="entityId" required style="width: 180px" data-bind="value:model.entityId">
+            </div>
+            <div class="col-md-4">
+                <span class="btn btn-default k-grid-add" style="float:left;margin-right:5px;" onclick="chartShow()">设置</span>
+                <span class="btn btn-default k-grid-save-changes" data-bind="click:reset" style="float:left;margin-right:5px;"><@spring.message "hap.reset"/></span>
+                <span  class="btn btn-primary" data-bind="click:query" style="float:left;margin-right:5px;"><@spring.message "hap.query"/></span>
+                <span class="btn btn-primary k-grid-excel" style="float:left; margin-right:5px;" onclick="exportExcel()">
+                    <i class="fa fa-file-excel-o" style="margin-right:3px;"></i><@spring.message "hap.exportexcel"/>
+                </span>
+            </div>
+        </div>
+        <script>
+            var pspcChart = $("#chartId").kendoLov($.extend(<@lov "PSPC_PSPC_CHART"/>,{
+                textField: 'chartCode',
+                valueField:'chartId',
+                select:function (e) {
+                },
+                query:function (e) {
+                    e.param.ceGroupId = viewModel.model.ceGroupId;
+                }
+            })).data("kendoLov");
+
+            var pspcEntity = $("#entityId").kendoLov($.extend(<@lov "PSPC_PSPC_ENTITY"/>,{
+                textField: 'entityCode',
+                valueField:'entityId',
+                select:function (e) {
+                    viewModel.chartId = e.item.chartId;
+                    viewModel.model.entityCode = e.item.entityCode;
+                    /**
+                     * 选择之后重新建立连接
+                     */
+                    if ("WebSocket" in window){
+                        // 打开一个 web socket
+                        //ws = new WebSocket("ws://10.12.17.216:8080"+_basePath+"/spc-websocket?param1=1&entityCode="+viewModel.model.entityCode);//localhost
+                        //ws = new WebSocket("ws://10.12.189.155:8081"+_basePath+"/spc-websocket?param1=1&entityCode="+viewModel.model.entityCode);//科勒 dev
+                        //ws = new WebSocket("wss://cnsbx009/spc-websocket?param1=1&entityCode="+viewModel.model.entityCode);//科勒 uat
+                        var ws = "";
+                        if(window.location.href.indexOf("https") != -1 ){
+                        	ws = new WebSocket("wss://"+host+"/core/spc-websocket?param1=1&entityCode="+viewModel.model.entityCode);
+                        }else{
+                        	ws = new WebSocket("ws://"+host+"/core/spc-websocket?param1=1&entityCode="+viewModel.model.entityCode);
+                        }
+                        
+                        ws.onmessage = function (evt){
+                            queryData(viewModel.model.entityId);
+                        };
+
+                        ws.onopen = function(evt) {
+                            console.log("webSocket已连接");
+                        };
+                    }
+                },
+                query:function (e) {
+                    e.param.ceGroupId = viewModel.model.ceGroupId;
+                    e.param.attachmentGroupId = viewModel.model.attachmentGroupId;
+                    e.param.ceParameterId = viewModel.model.ceParameterId;
+                    e.param.chartId = viewModel.model.chartId;
+                }
+            })).data("kendoLov");
+        </script>
+        <!-- 第三行查询 -->
+        <div class="head-div row">
+            <label class="col-md-2">样本开始时间：</label>
+            <div class="col-md-2">
+                <input type="text" id="startTime" data-role="datetimepicker" style="margin-right:5px;"
+                       data-bind="value:model.sampleTimeStart" class="datetimepicker">
+            </div>
+            <label class="col-md-2">样本结束时间：</label>
+            <div class="col-md-2">
+                <input type="text" id="endTime" data-role="datetimepicker" style="margin-right:5px;"
+                       data-bind="value:model.sampleTimeEnd" class="datetimepicker">
+            </div>
+        </div>
+    </div>
+    <script>kendo.bind($('#query-form-head'), viewModel);</script>
+</div>
+<!-- 折线图 -->
+<div id="line-chart" style="height: 650px;width:95%;margin: 0 auto;overflow: visible;margin-top: 20px"></div>
+<!-- 计量明细信息弹窗 -->
+<div id="detailDialog" class="dialog-div" style="display: none;padding: 0; ">
+    <div class="padding-div">
+        <div style="border-bottom: grey 1px solid">
+            <h4>样本数据</h4>
+        </div>
+        <!-- 样本时间 -->
+        <div id="sample-div-out">
+            <div class="row sample-label" id="sample-div">
+                <label class="col-sm-2">样本时间</label>
+                <label class="col-sm-2">2019-08-06</label>
+            </div>
+            <div class="row sample-label">
+                <label class="col-sm-2 col-md-2">平均值</label>
+                <label class="col-sm-2 col-md-2" id="subgroupBar"></label>
+                <label class="col-sm-2 col-md-2" >极差值</label>
+                <label class="col-sm-2 col-md-2" id="subgroupR"></label>
+                <label class="col-sm-2 col-md-2">标准差</label>
+                <label class="col-sm-2 col-md-2" id="subgroupSigma"></label>
+            </div>
+            <div class="row sample-label">
+                <label class="col-sm-2 col-md-2" >中位数</label>
+                <label class="col-sm-2 col-md-2" id="subgroupMe"></label>
+                <label class="col-sm-2 col-md-2">最大值</label>
+                <label class="col-sm-2 col-md-2" id="subgroupMax"></label>
+                <label class="col-sm-2 col-md-2">最小值</label>
+                <label class="col-sm-2 col-md-2" id="subgroupMin"></label>
+            </div>
+        </div>
+        <!-- 失控事件 -->
+        <div style="height: 150px">
+            <div style="border-bottom: grey 1px solid;height: 40px" id="query-form">
+                <h4 style="float: left;height:20px;top: 50%;transform: translateY(-50%);
+                                            position: relative;margin: 0">失控事件</h4>
+                <span id="oocSaveSpan" class="btn btn-success k-grid-save-changes pull-right" data-bind="click:save" style="margin-right:5px;top: 50%;transform: translateY(-50%);
+                                            position: relative;"><@spring.message "hap.save"/></span>
+            </div>
+            <script>kendo.bind($('#query-form'), oocGridViewModel);</script>
+            <div id="oocGrid">
+            </div>
+            <script>
+                var dataSource = new kendo.data.DataSource({
+                    transport: {
+                        read: {
+                            url: _basePath + "/pspc/ooc/query",
+                            type: "POST",
+                            dataType: "json"
+                        },
+                        update: {
+                            url: _basePath + "/pspc/ooc/submit/change/status",
+                            type: "POST",
+                            async:false,
+                            contentType: "application/json"
+                        },
+                        parameterMap: function (options, type) {
+                            if (type !== "read" && options.models) {
+                                var datas = Hap.prepareSubmitParameter(options, type)
+                                return kendo.stringify(datas);
+                            } else if (type === "read") {
+                                return Hap.prepareQueryParameter(oocGridViewModel.model.toJSON(), options)
+                            }
+                        }
+                    },
+                    batch: true,
+                    serverPaging: true,
+                    pageSize: 10,
+                    schema: {
+                        data: 'rows',
+                        total: 'total',
+                        model: {
+                            id: "oocId",
+                            fields: {
+                            },
+                            editable: function (col) {
+                                if (col == 'judgementShortCode' || col == 'judgementCode') {
+                                    return false;
+                                }
+                                return true;
+                            }
+                        }
+                    }
+                });
+
+                var oocGrid = $("#oocGrid").kendoGrid({
+                    dataSource: dataSource,
+                    resizable: true,
+                    scrollable: true,
+                    navigatable: false,
+                    autoBind:false,
+                    selectable: 'multiple, rowbox',
+                    dataBound: function () {
+                        if (parent.autoResizeIframe) {
+                            parent.autoResizeIframe('${RequestParameters.functionCode!}')
+                        }
+                    },
+                    columns: [
+
+                        {
+                            field: "judgementShortCode",
+                            title: '<@spring.message "ooc.judgementshortcode"/>',
+                            width: 120
+                        },
+                        {
+                            field: "judgementCode",
+                            title: '<@spring.message "ooc.judgementcode"/>',
+                            width: 120,
+                            template:function (dataItem) {
+                                var v = dataItem.judgementCode;
+                                $.each(PSPC_JUDGEMENT,function(i,r){
+                                    if(v == r.value){
+                                        v = r.meaning.replace(/#/g,dataItem.limitData).replace(/\$/g,dataItem.lengthData);
+                                    }
+                                });
+                                return v || '';
+                            }
+                        },
+                        {
+                            field: "classifyGroupId",
+                            title: '<@spring.message "ooc.classifygroupid"/>',
+                            width: 120,
+                            template:function (dataItem) {
+                                return dataItem.classifyGroupId?dataItem.classifyGroup:'';
+                            },
+                            editor:function (container, options) {
+                                $('<input name="' + options.field + '"/>')
+                                    .appendTo(container)
+                                    .kendoLov($.extend(<@lov "PSPC_PSPC_CLASSFY_GROUP"/>,{
+                                    valueField: 'classifyGroupId',
+                                    textField:'classifyGroup',
+                                    model: options.model,
+                                    select:function (dataItem) {
+                                        options.model.classifyGroup = dataItem.item.classifyGroup;
+                                    }
+                                }));
+                            }
+                        },
+                        {
+                            field: "classifyId",
+                            title: '<@spring.message "ooc.classifyid"/>',
+                            width: 120,
+                            template:function (dataItem) {
+                                return dataItem.classifyId?dataItem.classifyCode:'';
+                            },
+                            editor:function (container, options) {
+                                $('<input name="' + options.field + '"/>')
+                                    .appendTo(container)
+                                    .kendoLov($.extend(<@lov "PSPC_PSPC_CLASSIFY"/>,{
+                                    valueField: 'classifyId',
+                                    textField:'classifyCode',
+                                    model: options.model,
+                                    select:function (dataItem) {
+                                        options.model.classifyCode = dataItem.item.classifyCode;
+                                    },
+                                    query:function (e) {
+                                        e.param.classifyGroupId = options.model.classifyGroupId;
+                                    }
+                                }));
+                            }
+                        },
+                        {
+                            field: "remark",
+                            title: '<@spring.message "hap.comment"/>',
+                            width: 120
+                        },
+                    ],
+                    editable: true
+                }).data('kendoGrid');
+            </script>
+        </div>
+    </div>
+    <div class="btn-foot">
+        <div class="pull-right">
+            <span class="btn btn-default" onclick="closeDialog('detailDialog')" style="float:left;margin-right:10px;" ><@spring.message "hap.cancel"/></span>
+            <span class="btn btn-primary k-grid-add" onclick="closeDialog('detailDialog')" style="float:left;margin-right:5px;" ><@spring.message "hap.ok"/></span>
+        </div>
+    </div>
+</div>
+<!-- 计数类型明细弹窗 -->
+<div id="countDetailDialog" class="dialog-div" style="display: none;padding: 0; ">
+    <div class="padding-div">
+        <!-- 样本 -->
+        <div style="margin: 0;padding: 0" id="count-sample-div">
+            <div class="row sample-label">
+                <label class="col-sm-2 col-md-2">样本数据</label>
+                <label class="col-sm-2 col-md-2" id="count-sample-value"></label>
+                <label class="col-sm-3 col-md-3" >样本时间</label>
+                <label class="col-sm-4 col-md-4" id="count-sample-time"></label>
+            </div>
+            <div class="row sample-label">
+                <label class="col-sm-2 col-md-2">不合格数</label>
+                <label class="col-sm-2 col-md-2" id="count-non-ok-count"></label>
+                <label class="col-sm-3 col-md-3" >不合格率/单位缺陷数</label>
+                <label class="col-sm-4 col-md-4" id="count-non-ok-rate"></label>
+            </div>
+        </div>
+        <!-- 失控事件 -->
+        <div style="height: 250px">
+            <div style="border-bottom: grey 1px solid;height: 40px" id="query-form2">
+                <h4 style="float: left;height:20px;top: 50%;transform: translateY(-50%);
+                                            position: relative;margin: 0">失控事件</h4>
+                <span class="btn btn-success k-grid-save-changes pull-right" data-bind="click:save" style="margin-right:5px;top: 50%;transform: translateY(-50%);
+                                            position: relative;"><@spring.message "hap.save"/></span>
+            </div>
+            <script>kendo.bind($('#query-form2'), countOocGridViewModel);</script>
+            <div id="countOocGrid">
+            </div>
+            <script>
+                var countDataSource = new kendo.data.DataSource({
+                    transport: {
+                        read: {
+                            url: _basePath + "/pspc/count/ooc/query/count/judge",
+                            type: "POST",
+                            dataType: "json"
+                        },
+                        update: {
+                            url: _basePath + "/pspc/count/ooc/submit/and/save",
+                            type: "POST",
+                            contentType: "application/json",
+                            async:false
+                        },
+                        parameterMap: function (options, type) {
+                            if (type !== "read" && options.models) {
+                                var datas = Hap.prepareSubmitParameter(options, type)
+                                return kendo.stringify(datas);
+                            } else if (type === "read") {
+                                return Hap.prepareQueryParameter(countOocGridViewModel.model.toJSON(), options)
+                            }
+                        }
+                    },
+                    batch: true,
+                    serverPaging: true,
+                    pageSize: 10,
+                    schema: {
+                        data: 'rows',
+                        total: 'total',
+                        model: {
+                            id: "countOocId",
+                            fields: {}
+                        }
+                    }
+                });
+
+                var countOocGrid = $("#countOocGrid").kendoGrid({
+                    dataSource: countDataSource,
+                    resizable: true,
+                    scrollable: true,
+                    navigatable: false,
+                    autoBind:false,
+                    selectable: 'multiple, rowbox',
+                    dataBound: function () {
+                        if (parent.autoResizeIframe) {
+                            parent.autoResizeIframe('${RequestParameters.functionCode!}')
+                        }
+                    },
+                    columns: [
+                        {
+                            field: "judgementShortCode",
+                            title: '<@spring.message "ooc.judgementshortcode"/>',
+                            width: 120
+                        },
+                        {
+                            field: "judgementCode",
+                            title: '<@spring.message "ooc.judgementcode"/>',
+                            width: 120,
+                            template:function (dataItem) {
+                                var v = dataItem.judgementCode;
+                                $.each(PSPC_JUDGEMENT,function(i,r){
+                                    if(v == r.value){
+                                        v = r.meaning.replace(/#/g,dataItem.limitData).replace(/\$/g,dataItem.lengthData);
+                                    }
+                                });
+                                return v || '';
+                            }
+                        },
+                        {
+                            field: "classifyGroupId",
+                            title: '<@spring.message "ooc.classifygroupid"/>',
+                            width: 120,
+                            template:function (dataItem) {
+                                return dataItem.classifyGroupId?dataItem.classifyGroup:'';
+                            },
+                            editor:function (container, options) {
+                                $('<input name="' + options.field + '"/>')
+                                    .appendTo(container)
+                                    .kendoLov($.extend(<@lov "PSPC_PSPC_CLASSFY_GROUP"/>,{
+                                    valueField: 'classifyGroupId',
+                                    textField:'classifyGroup',
+                                    model: options.model,
+                                    select:function (dataItem) {
+                                        options.model.classifyGroup = dataItem.item.classifyGroup;
+                                    }
+                                }));
+                            }
+                        },
+                        {
+                            field: "classifyId",
+                            title: '<@spring.message "ooc.classifyid"/>',
+                            width: 120,
+                            template:function (dataItem) {
+                                return dataItem.classifyId?dataItem.classifyCode:'';
+                            },
+                            editor:function (container, options) {
+                                $('<input name="' + options.field + '"/>')
+                                    .appendTo(container)
+                                    .kendoLov($.extend(<@lov "PSPC_PSPC_CLASSIFY"/>,{
+                                    valueField: 'classifyId',
+                                    textField:'classifyCode',
+                                    model: options.model,
+                                    select:function (dataItem) {
+                                        options.model.classifyCode = dataItem.item.classifyCode;
+                                    },
+                                    query:function (e) {
+                                        e.param.classifyGroupId = options.model.classifyGroupId;
+                                    }
+                                }));
+                            }
+                        },
+                        {
+                            field: "remark",
+                            title: '<@spring.message "hap.comment"/>',
+                            width: 120
+                        },
+                    ],
+                    editable: true
+                }).data('kendoGrid');
+            </script>
+        </div>
+    </div>
+    <div class="btn-foot">
+        <div class="pull-right">
+            <span class="btn btn-default" onclick="closeDialog('countDetailDialog')" style="float:left;margin-right:10px;" ><@spring.message "hap.cancel"/></span>
+            <span class="btn btn-primary k-grid-add" onclick="closeDialog('countDetailDialog')" style="float:left;margin-right:5px;" ><@spring.message "hap.ok"/></span>
+        </div>
+    </div>
+</div>
+<script>
+    var dom = document.getElementById("line-chart");
+    var myChart = echarts.init(dom);
+    option = null;
+    option = {
+
+        tooltip: {
+            trigger: 'axis'
+        },
+        legend: {
+            selected: {
+                'UCL' : false
+            },
+        },
+        grid: [{
+            height:'35%',
+            // containLabel: true
+        },{
+            top:'55%',
+            height:'35%',
+            // containLabel: true
+        }],
+        axisPointer: {
+            type: "cross",
+            label: {
+                formatter: function (params) {
+                    if (params.seriesData.length === 0) {
+                        return "11";
+                    }
+                }
+            }
+        }
+    };
+    if (option && typeof option === "object") {
+        myChart.setOption(option, true);
+    }
+</script>
+<!-- 设置弹窗 -->
+<div id="setDialog" style="display: none">
+    <div class="row sample-label">
+        <label class="col-sm-3">显示控制限:</label>
+        <div class="col-sm-1">
+            <input type="checkbox" checked id="showControlLabel" style="width: 20px;height: 20px;top: 50%;
+                                            transform: translateY(-50%);
+                                            position: relative;">
+        </div>
+        <label class="col-sm-3">显示X/Y轴标签:</label>
+        <div class="col-sm-2">
+            <input type="checkbox" checked id="showXYLabel" style="width: 20px;height: 20px;top: 50%;
+                                            transform: translateY(-50%);
+                                            position: relative;">
+        </div>
+    </div>
+    <div class="row sample-label">
+        <label class="col-sm-3">显示SIGMA线:</label>
+        <div class="col-sm-1">
+            <input type="checkbox" id="showSigmaLine" style="width: 20px;height: 20px;top: 50%;
+                                            transform: translateY(-50%);
+                                            position: relative;">
+        </div>
+        <label class="col-sm-3">子组标签:</label>
+        <div class="col-sm-2">
+            <input id="childGroupLabel" class="k-textbox" style="background-color: #F5F5F5" disabled >
+        </div>
+    </div>
+    <div class="row sample-label">
+        <label class="col-sm-3">显示规格限:</label>
+        <div class="col-sm-1">
+            <input type="checkbox" id="showRuleControl" style="width: 20px;height: 20px;top: 50%;
+                                            transform: translateY(-50%);
+                                            position: relative;">
+        </div>
+        <label class="col-sm-3">刷新频率（秒）:</label>
+        <div class="col-sm-2">
+            <input id="refreshRate" class="k-textbox" >
+        </div>
+    </div>
+    <div class="row sample-label">
+        <label class="col-sm-3">显示控制图标题:</label>
+        <div class="col-sm-1">
+            <input type="checkbox" checked id="showControlTitle" style="width: 20px;height: 20px;top: 50%;
+                                            transform: translateY(-50%);
+                                            position: relative;">
+        </div>
+        <label class="col-sm-3">显示网格线:</label>
+        <div class="col-sm-2">
+            <input id="showGridLine" type="checkbox" checked style="width: 20px;height: 20px;top: 50%;
+                                            transform: translateY(-50%);
+                                            position: relative;">
+        </div>
+    </div>
+    <div class="btn-foot">
+        <div class="pull-right">
+            <span class="btn btn-default" onclick="closeDialog('setDialog')" style="float:left;margin-right:10px;" ><@spring.message "hap.cancel"/></span>
+            <span class="btn btn-primary k-grid-add" onclick="setSave('setDialog')" style="float:left;margin-right:5px;" ><@spring.message "hap.ok"/></span>
+        </div>
+    </div>
+</div>
+<script>
+    var setDialog = $("#setDialog").kendoWindow({
+        width: 500,
+        height: 300,
+        title: '图形设置',
+        visible: false,
+        modal: true,
+        actions: [
+            "Close"
+        ],
+        close:function() {
+
+        }
+    }).data("kendoWindow");
+</script>
+<!-- 表格 -->
+<div id="out-table-div" style="width: 100%;clear: both;display: none">
+
+    <!-- 表格 -->
+    <div class="table-div" id="scroll-table-div" style="overflow:auto">
+        <table border="1px" cellspacing="0" cellpadding="0" style="width: 95%">
+            <thead id="table-thead">
+            </thead>
+            <tbody id="table-body" style="margin-top: 40px">
+
+            </tbody>
+        </table>
+    </div>
+</div>
+<script type="text/javascript">
+    //折线图横坐标
+    var xLabel = [];
+    //计量型主图数据
+    var sampleMainData = [];
+    //计量型次图数据
+    var sampleLessData = [];
+    //计数型折线图数据
+    var countMainData = [];
+    //图表数据
+    var chartData = {};
+    chartData.UCL = [];
+    chartData.LCL = [];
+    chartData.USL = [];
+    chartData.SL = [];
+    chartData.LSL = [];
+    chartData["CL+SIGMA"] = [];
+    chartData["CL+2*SIGMA"] = [];
+    chartData["CL-SIGMA"] = [];
+    chartData["CL-SIGMA"] = [];
+    /**
+     * 校验为空就返回空字符
+     */
+    function checkNull(value) {
+        if(value == null || value == undefined){
+            return ''
+        }else{
+            return value;
+        }
+    }
+    /**
+     * 返回 值的 向上或者向下被n整除的数
+     */
+    function getInteger(value,type,n) {
+        if((value % n) == 0){
+            return value;
+        }
+        //向上
+        if(1 == type){
+            if(value <0 ){
+                return parseInt((value+n)/n-1) * n;
+            }
+            return parseInt((value+n)/n) * n;
+        }
+        //向下
+        if(-1 == type){
+            return getInteger(value-n,1,n);
+        }
+    }
+
+    /**
+     * 根据勾选框显示不同的图形
+     */
+    function initLineGrid(controlFlag,sigmaFlag,ruleFlag,controlTitleFlag,xyLabelFlag,gridFlag) {
+        //主图名字
+        var mainName;
+        //次图名字
+        var lessName;
+        var typeIndex = viewModel.sampleType.indexOf(viewModel.chartType)
+        if(typeIndex == 0){
+            mainName = "平均值";
+            lessName = "极差";
+        }
+        if(typeIndex == 1){
+            mainName = "平均值";
+            lessName = "标准差";
+        }
+        if(typeIndex == 2){
+            mainName = "中位数";
+            lessName = "极差";
+        }
+        if(typeIndex == 3){
+            mainName = "样本值";
+            lessName = "极差";
+        }
+
+        //初始化
+        myChart = echarts.init(dom);
+        option = null;
+        option = {
+            tooltip: {
+                trigger: 'axis',
+                //鼠标移动下方表格跟随滚动
+                formatter:function (param) {
+                    //下方表格跟随移动
+                    var rowIndex = param[0].dataIndex;
+                    var tr = $('tbody tr:nth-child('+(rowIndex+1)+')')[0];
+                    if(tr){
+                        var topHeight = tr.offsetTop - $('#table-thead th div').height();
+                        $('#scroll-table-div').animate({scrollTop: topHeight}, 0);
+                    }
+                    //toolTip提示
+                    // var mainValue = '';
+                    // var lessValue = '';
+                    // var tempValue = chartData.allData[rowIndex];
+                    // if(typeIndex == 0){
+                    //     mainValue = checkNull(tempValue.subgroupBar);
+                    //     lessValue = checkNull(tempValue.subgroupR);
+                    // }
+                    // if(typeIndex == 1){
+                    //     mainValue = checkNull(tempValue.subgroupBar);
+                    //     lessValue = checkNull(tempValue.subgroupSigma);
+                    // }
+                    // if(typeIndex == 2){
+                    //     mainValue = checkNull(tempValue.subgroupMe);
+                    //     lessValue = checkNull(tempValue.subgroupR);
+                    // }
+                    // if(typeIndex == 3){
+                    //     mainValue = checkNull(tempValue.sampleDataList[0]?tempValue.sampleDataList[0].sampleValue:null);
+                    //     lessValue = checkNull(tempValue.subgroupRM);
+                    // }
+
+                    return param[0].axisValueLabel +"<br>"+mainName+"：" + sampleMainData[rowIndex]+ "<br>"
+                        + ""+lessName+"：" + sampleLessData[rowIndex];
+                }
+            },
+            legend: {
+                data:[]
+            },
+            grid: [{
+                height:'35%',
+                // containLabel: true
+            },{
+                top:'55%',
+                height:'35%',
+                // containLabel: true
+            }],
+            //上下两个表格 提示共线
+            axisPointer: {
+                link: {xAxisIndex: 'all'}
+            }
+        };
+
+        //将折线图的数据以及所有标志线 的数据放入该数组中，用于比较得到最大最小值，用于设定纵坐标的最大最小
+        var yValueArray = [];
+        var yValueArrayS = [];
+        Array.prototype.push.apply(yValueArray,sampleMainData);
+        Array.prototype.push.apply(yValueArrayS,sampleLessData);
+        var series = [{
+            name:mainName,
+            type:'line',
+            data:sampleMainData,
+            color:'#1890FF',
+            smooth: false,
+            symbol: 'circle',
+            lineStyle:{
+                color:'#178bf6'
+            },
+            itemStyle:{
+                color:function(item){
+                    return getDataColor("M",item.dataIndex);
+                }
+            },
+            //显示失控信息代码
+            label:{
+                show:true,
+                formatter:function(item){
+                    return getDataCode("M",item.dataIndex,'oocList');
+                }
+            }
+        },{
+            name:lessName,
+            type:'line',
+            xAxisIndex: 1,
+            yAxisIndex: 1,
+            data:sampleLessData,
+            color:'#1890FF',
+            smooth: false,
+            symbol: 'circle',
+            lineStyle:{
+                color:'#178bf6'
+            },
+            itemStyle:{
+                color:function(item){
+                    return getDataColor("S",item.dataIndex);
+                }
+            },
+            //显示失控信息代码
+            label:{
+                show:true,
+                formatter:function(item){
+                    return getDataCode("S",item.dataIndex,'oocList');
+                }
+            }
+        }];
+
+        //标志线 主图
+        var markLineData = {
+            silent:true,
+            symbol:"none",               //去掉警戒线最后面的箭头
+            label:{
+                position:"end",          //将警示值放在哪个位置，三个值“start”,"middle","end"  开始  中点 结束
+                formatter:function (param) {
+                    var name = param.name;
+                    return name + ":" + chartData[name.toLowerCase() +"MValue"];
+                }
+            },
+            data : [
+            ]
+        };
+        //标志线 次图
+        var markLingeDataS = {
+            silent:true,
+            symbol:"none",               //去掉警戒线最后面的箭头
+            label:{
+                position:"end",          //将警示值放在哪个位置，三个值“start”,"middle","end"  开始  中点 结束
+                formatter:function (param) {
+                    var name = param.name;
+                    return name + ":" + chartData[name.toLowerCase() +"SValue"];
+                }
+            },
+            data : [
+            ]
+        };
+        //显示控制线
+        if(controlFlag){
+            //没有值就不显示
+            //主图
+            if(!ifNull(chartData.uclMValue)){
+                yValueArray.push(chartData.uclMValue);
+                markLineData.data.push(getMarkLimeData("UCL",chartData.uclMValue,'#FF0000'));
+            }
+            if(!ifNull(chartData.lclMValue)){
+                yValueArray.push(chartData.lclMValue);
+                markLineData.data.push(getMarkLimeData("LCL",chartData.lclMValue,'#FF0000'));
+            }
+            if(!ifNull(chartData.clMValue)){
+                yValueArray.push(chartData.clMValue);
+                markLineData.data.push(getMarkLimeData("CL",chartData.clMValue,'#FF0000'));
+            }
+            //次图
+            if(!ifNull(chartData.uclSValue)){
+                yValueArrayS.push(chartData.uclSValue);
+                markLingeDataS.data.push(getMarkLimeData("UCL",chartData.uclSValue,'#FF0000'));
+            }
+            if(!ifNull(chartData.lclSValue)){
+                yValueArrayS.push(chartData.lclSValue);
+                markLingeDataS.data.push(getMarkLimeData("LCL",chartData.lclSValue,'#FF0000'));
+            }
+            if(!ifNull(chartData.clSValue)){
+                yValueArrayS.push(chartData.clSValue);
+                markLingeDataS.data.push(getMarkLimeData("CL",chartData.clSValue,'#FF0000'));
+            }
+        }
+        //显示sigma线
+        if(sigmaFlag){
+            //主图
+            if(null != chartData["CL+SIGMA".toLowerCase() + "MValue"] && "" !== chartData["CL+SIGMA".toLowerCase() + "MValue"]){
+                yValueArray.push(chartData["CL+SIGMA".toLowerCase() + "MValue"]);
+                markLineData.data.push(getMarkLimeData("CL+SIGMA",chartData["CL+SIGMA".toLowerCase() + "MValue"],'#FF9900'));
+            }
+            if(null != chartData["CL+2*SIGMA".toLowerCase() + "MValue"] && "" !== chartData["CL+2*SIGMA".toLowerCase() + "MValue"]){
+                yValueArray.push(chartData["CL+2*SIGMA".toLowerCase() + "MValue"]);
+                markLineData.data.push(getMarkLimeData("CL+2*SIGMA",chartData["CL+2*SIGMA".toLowerCase() + "MValue"],'#FF9900'));
+            }
+            if(null != chartData["CL-SIGMA".toLowerCase() + "MValue"] && "" !== chartData["CL-SIGMA".toLowerCase() + "MValue"]){
+                yValueArray.push(chartData["CL-SIGMA".toLowerCase() + "MValue"]);
+                markLineData.data.push(getMarkLimeData("CL-SIGMA",chartData["CL-SIGMA".toLowerCase() + "MValue"],'#FF9900'));
+            }
+            if(null != chartData["CL-2*SIGMA".toLowerCase() + "MValue"] && "" !== chartData["CL-2*SIGMA".toLowerCase() + "MValue"]){
+                yValueArray.push(chartData["CL-2*SIGMA".toLowerCase() + "MValue"]);
+                markLineData.data.push(getMarkLimeData("CL-2*SIGMA",chartData["CL-2*SIGMA".toLowerCase() + "MValue"],'#FF9900'));
+            }
+            //次图
+            if(null != chartData["CL+SIGMA".toLowerCase() + "SValue"] && "" !== chartData["CL+SIGMA".toLowerCase() + "SValue"]){
+
+                yValueArrayS.push(chartData["CL+SIGMA".toLowerCase() + "SValue"]);
+                markLingeDataS.data.push(getMarkLimeData("CL+SIGMA",chartData["CL+SIGMA".toLowerCase() + "SValue"],'#FF9900'));
+            }
+            if(null != chartData["CL+2*SIGMA".toLowerCase() + "SValue"] && "" !== chartData["CL+2*SIGMA".toLowerCase() + "SValue"]){
+                yValueArrayS.push(chartData["CL+2*SIGMA".toLowerCase() + "SValue"]);
+                markLingeDataS.data.push(getMarkLimeData("CL+2*SIGMA",chartData["CL+2*SIGMA".toLowerCase() + "SValue"],'#FF9900'));
+            }
+            if(null != chartData["CL-SIGMA".toLowerCase() + "SValue"] && "" !== chartData["CL-SIGMA".toLowerCase() + "SValue"]){
+                yValueArrayS.push(chartData["CL-SIGMA".toLowerCase() + "SValue"]);
+                markLingeDataS.data.push(getMarkLimeData("CL-SIGMA",chartData["CL-SIGMA".toLowerCase() + "SValue"],'#FF9900'));
+            }
+            if(null != chartData["CL-2*SIGMA".toLowerCase() + "SValue"] && "" !== chartData["CL-2*SIGMA".toLowerCase() + "SValue"]){
+                yValueArrayS.push(chartData["CL-2*SIGMA".toLowerCase() + "SValue"]);
+                markLingeDataS.data.push(getMarkLimeData("CL-2*SIGMA",chartData["CL-2*SIGMA".toLowerCase() + "SValue"],'#FF9900'));
+            }
+        }
+
+        //显示规格线
+        if(ruleFlag){
+            //主图
+            if(!ifNull(chartData.uslMValue)){
+                yValueArray.push(chartData.uslMValue);
+                markLineData.data.push(getMarkLimeData("USL",chartData.uslMValue,'#00FF00'));
+            }
+            if(!ifNull(chartData.lslMValue)){
+                yValueArray.push(chartData.lslMValue);
+                markLineData.data.push(getMarkLimeData("LSL",chartData.lslMValue,'#00FF00'));
+            }
+            if(!ifNull(chartData.slMValue)){
+                yValueArray.push(chartData.slMValue);
+                markLineData.data.push(getMarkLimeData("SL",chartData.slMValue,'#00FF00'));
+            }
+            //次图
+            if(!ifNull(chartData.uslSValue)){
+                yValueArrayS.push(chartData.uslSValue);
+                markLineData.data.push(getMarkLimeData("USL",chartData.uslSValue,'#00FF00'));
+            }
+            if(!ifNull(chartData.lslSValue)){
+                yValueArrayS.push(chartData.lslSValue);
+                markLineData.data.push(getMarkLimeData("LSL",chartData.lslSValue,'#00FF00'));
+            }
+            if(!ifNull(chartData.slSValue)){
+                yValueArrayS.push(chartData.slSValue);
+                markLineData.data.push(getMarkLimeData("SL",chartData.slSValue,'#00FF00'));
+            }
+        }
+        //横坐标
+        var xAxis = [{
+            name:xyLabelFlag?chartData.sampleMainXName:'',
+            type: 'category',
+            data: xLabel,
+            nameLocation:'middle',
+            nameGap:25,
+        },{
+            name:xyLabelFlag?chartData.sampleLessXName:'',
+            gridIndex: 1,
+            type: 'category',
+            data: xLabel,
+            nameLocation:'middle',
+            nameGap:25
+        }];
+        //如果表中维护最大值最小值为空，则取所有数据的最大值 向上/向下
+        if(ifNull(chartData.yMMax)){
+            chartData.yMMax = getInteger(Math.max.apply(null, yValueArray),1,1);
+        }
+        if(ifNull(chartData.yMMin)){
+            chartData.yMMin = getInteger(Math.min.apply(null, yValueArray),-1,1);
+        }
+        if(ifNull(chartData.ySMax)){
+            chartData.ySMax = getInteger(Math.max.apply(null, yValueArrayS),1,0.5);
+        }
+        if(ifNull(chartData.ySMin)){
+            chartData.ySMin = getInteger(Math.min.apply(null, yValueArrayS),-1,0.5);
+        }
+        //纵坐标
+        var yAxis =  [{
+            name:xyLabelFlag?chartData.sampleMainYName:'',
+            type: 'value',
+            position:'left',
+            scale:true,
+            splitLine: {
+                show: gridFlag,
+                lineStyle:{
+                    color:'#efefef'
+                }
+            },
+            max:chartData.yMMax,
+            min:chartData.yMMin,
+            nameLocation:'middle',
+            nameGap:40,
+            axisLine: {show:false},
+            axisTick: {show:false}
+        },{
+            name:xyLabelFlag?chartData.sampleLessYName:'',
+            gridIndex: 1,
+            type: 'value',
+            data: xLabel,
+            max:chartData.ySMax,
+            min:chartData.ySMin,
+            nameLocation:'middle',
+            nameGap:40,
+            splitLine: {
+                show: gridFlag,
+                lineStyle:{
+                    color:'#efefef'
+                }
+            },
+            axisLine: {show:false},
+            axisTick: {show:false},
+            silent:true
+        }];
+        //显示控制图标题
+        option.title = {
+            show:controlTitleFlag,
+            text: chartData.chartTitle,
+            x:'center'
+        }
+
+        series[0].markLine = markLineData;
+        series[1].markLine = markLingeDataS;
+        option.series = series;
+        option.xAxis = xAxis;
+        option.yAxis = yAxis;
+        myChart.clear();
+        myChart.setOption(option,true);
+        myChart.resize();
+    }
+
+    /**
+     * 标志线的构造
+     */
+    function getMarkLimeData(name,value,color) {
+        return {
+            name:name,
+            silent:false,             //鼠标悬停事件  true没有，false有
+            lineStyle:{               //警戒线的样式  ，虚实  颜色
+                type:"dotted",
+                color:color
+            },
+            yAxis: value
+        };
+    }
+
+    /**
+     * 初始化下方表格，并且在循环数据时 获得上方图形的数据
+     */
+    function initTable() {
+        $('#table-thead').html('');
+        $('#table-body').html('');
+        $('#out-table-div').css('display','block');
+        var tableHeadTitle = ['序号','样本时间','状态','平均值','极差值','标准差值','最大值','最小值'];
+        for (var i = 0; i < tableHeadTitle.length; i++) {
+            $('#table-thead').append('<th><div>'+tableHeadTitle[i]+'</div></th>');
+
+            if(i == 0){
+                //不添加序号 后台有
+                continue;
+            }
+            exportHead += tableHeadTitle[i]+',';
+        }
+        for (var i = 0; i < chartData.allData[0].sampleCount; i++) {
+            $('#table-thead').append('<th><div>样本'+(i+1)+'</div></th>');
+            exportHead += ('样本'+(i+1))+',';
+        }
+        exportHead = exportHead.substr(0,exportHead.length-1);
+        var typeIndex = viewModel.sampleType.indexOf(viewModel.chartType);
+        //表格 表体
+        for (var i = 0; i < chartData.allData.length; i++) {
+            var tempRow = chartData.allData[i];
+            if(i == 0){
+                //标题
+                chartData.sampleMainXName = tempRow.chartDetailM?tempRow.chartDetailM.axisLabelX:"";
+                chartData.sampleMainYName = tempRow.chartDetailM?tempRow.chartDetailM.axisLabelY:"";
+                chartData.sampleLessXName = tempRow.chartDetailS?tempRow.chartDetailS.axisLabelX:"";
+                chartData.sampleLessYName = tempRow.chartDetailS?tempRow.chartDetailS.axisLabelY:"";
+            }
+
+            //折线图横坐标
+            xLabel.push(checkNull(tempRow.subgroupNum));
+            //根据不通类型 放入不同的数据
+            if(typeIndex == 0){
+                sampleMainData.push(tempRow.subgroupBar);
+                sampleLessData.push(checkNull(tempRow.subgroupR));
+            }
+            if(typeIndex == 1){
+                sampleMainData.push(tempRow.subgroupBar);
+                sampleLessData.push(checkNull(tempRow.subgroupSigma));
+            }
+            if(typeIndex == 2){
+                sampleMainData.push(tempRow.subgroupMe);
+                sampleLessData.push(checkNull(tempRow.subgroupR));
+            }
+            if(typeIndex == 3){
+                sampleMainData.push(tempRow.subgroupMe);
+                sampleLessData.push(checkNull(tempRow.subgroupRm));
+            }
+            // //折线图数据
+            // sampleMainData.push(checkNull(tempRow.subgroupBar));
+            // //次图数据
+            // sampleLessData.push(checkNull(tempRow.subgroupR));
+            var tr = '<tr>';
+            //序号
+            tr += '<td>' + checkNull(tempRow.subgroupNum) + '</td>';
+            exportTbody += checkNull(tempRow.subgroupNum) + ',';
+            //样本时间
+            tr += '<td>' + checkNull(tempRow.sampleSubgroupTime) + '</td>';
+            exportTbody += checkNull(tempRow.sampleSubgroupTime) + ',';
+            //状态
+            var statusColor = "";
+            var content = "";
+            if(tempRow.oocList && tempRow.oocList.length > 0){
+                statusColor = "#ff0000";
+                content = "失控";
+            }else{
+                statusColor = "#178bf6";
+                content= "正常";
+            }
+            tr += '<td><span style="color:'+statusColor+'">'+content+'</span></td>';
+            exportTbody += content + ',';
+            //平均值
+            tr += '<td>' + checkNull(tempRow.subgroupBar) + '</td>';
+            exportTbody += checkNull(tempRow.subgroupBar) + ',';
+            //极差值
+            tr += '<td>' + checkNull(tempRow.subgroupR) + '</td>';
+            exportTbody += checkNull(tempRow.subgroupR) + ',';
+            //标准差值
+            tr += '<td>' + checkNull(tempRow.subgroupSigma) + '</td>';
+            exportTbody += checkNull(tempRow.subgroupSigma) + ',';
+            //最大值
+            tr += '<td>' + checkNull(tempRow.subgroupMax) + '</td>';
+            exportTbody += checkNull(tempRow.subgroupMax) + ',';
+            //最小值
+            tr += '<td>' + checkNull(tempRow.subgroupMin) + '</td>';
+            exportTbody += checkNull(tempRow.subgroupMin) + ',';
+
+            //样本
+            for (var j = 0; j < chartData.allData[0].sampleCount; j++) {
+                var value = tempRow.sampleDataList[j]?checkNull(tempRow.sampleDataList[j].sampleValue):'';
+                tr += '<td>' + value + '</td>';
+                exportTbody += value + ',';
+            }
+            tr += '</tr>';
+            $('#table-body').append(tr);
+            //判断个状态
+            setStatus(tempRow.oocList,i);
+
+            //没有值 默认正常
+            if(!chartData.allData[i].oocStatus){
+                chartData.allData[i].oocStatus = oocStatus[0];
+            }
+            var length = exportTbody.length - 1;
+            exportTbody = exportTbody.substr(0,length);
+            exportTbody += '#';
+        }
+
+        exportTbody = exportTbody.substr(0,exportTbody.length - 1);
+    }
+
+    myChart.on('click', function (param) {
+        //点击数据点的数据
+        var pointData = chartData.allData[param.dataIndex];
+        //计数类型
+        if(viewModel.sampleType.indexOf(viewModel.chartType) > -1){
+
+            $('#sample-div').html('');
+            //样本时间
+            for (var i = 0; i < pointData.sampleDataList.length; i++) {
+                var temp = pointData.sampleDataList[i];
+                $('#sample-div').append(
+                    '                <label class="col-sm-6">'+ temp.sampleValue + ',' + temp.sampleTime+'</label>\n');
+            }
+
+            //详细信息
+            $('#subgroupBar').html(pointData.subgroupBar);
+            $('#subgroupR').html(pointData.subgroupR);
+            $('#subgroupSigma').html(pointData.subgroupSigma);
+            $('#subgroupMe').html(pointData.subgroupMe);
+            $('#subgroupMax').html(pointData.subgroupMax);
+            $('#subgroupMin').html(pointData.subgroupMin);
+            oocGrid.dataSource.data(pointData.oocList);
+
+            var detailDialog = $("#detailDialog").kendoWindow({
+                width: 500,
+                height: 400,
+                title: '数据点详细信息',
+                visible: false,
+                modal: true,
+                actions: [
+                    "Close"
+                ],
+                close:function() {
+                    queryData(viewModel.model.entityId);
+                }
+            }).data("kendoWindow");
+            detailDialog.center().open();
+        }
+        //计量类型
+        if(viewModel.countType.indexOf(viewModel.chartType) > -1){
+            //样本数据
+            $('#count-sample-value').html(pointData.sampleValueCount);
+            //样本时间
+            $('#count-sample-time').html(pointData.sampleTime);
+            //不合格数
+            $('#count-non-ok-count').html(pointData.unqualifiedQuantity);
+            //不合格数
+            $('#count-non-ok-rate').html(pointData.unqualifiedPercent);
+            countOocGrid.dataSource.data(pointData.countOocList);
+            var countDetailDialog = $("#countDetailDialog").kendoWindow({
+                width: 500,
+                height: 400,
+                title: '数据点详细信息',
+                visible: false,
+                modal: true,
+                actions: [
+                    "Close"
+                ],
+                close:function() {
+                    queryData(viewModel.model.entityId);
+                }
+            }).data("kendoWindow");
+            countDetailDialog.center().open();
+        }
+
+
+    });
+
+    window.addEventListener("resize",function(){
+        myChart.resize();
+    });
+
+    //如果有参数传过来进行查询 add by yuchao.wang
+    if(entityIdParameter != null && entityIdParameter !== '' && chartIdParameter != null && chartIdParameter !== '') {
+        viewModel.model.entityId = entityIdParameter;
+        viewModel.model.entityCode = entityCodeParameter;
+        viewModel.chartId = chartIdParameter;
+        $("#entityId").data("kendoLov").text(entityCodeParameter);
+        viewModel.query();
+    }
+
+    function queryData(entityId) {
+        var obj = {
+            'entityId':entityId,
+            'chartId':viewModel.chartId
+        };
+        if(viewModel.model.sampleTimeStart){
+            obj.sampleStartTimeStr = viewModel.model.sampleTimeStart.Format("yyyy-MM-dd hh:mm:ss");
+        }
+        if(viewModel.model.sampleTimeEnd){
+            obj.sampleEndTimeStr = viewModel.model.sampleTimeEnd.Format("yyyy-MM-dd hh:mm:ss");
+        }
+        var index = layer.load(1, {
+            shade: [0.4,'#AAAAAA']
+        });
+        $.ajax({
+            type: "POST",
+            // async:false,
+            url: _basePath + "/pspc/entity/query/chart/show",
+            data:obj,
+            dataType:"json",
+            // 此处不能设置，否则后台无法接值
+            // contentType: "application/json; charset=utf-8",
+            success:function(data){
+                layer.close(index);
+                console.log(data);
+                if(data.success){
+                    if(data.rows && data.rows.length > 0){
+                        //初始化数据
+                        xLabel = [];
+                        sampleMainData = [];
+                        sampleLessData = [];
+                        countMainData = [];
+                        chartData = {};
+                        chartData.UCL = [];
+                        chartData.LCL = [];
+                        chartData.USL = [];
+                        chartData.SL = [];
+                        chartData.LSL = [];
+                        exportHead = '';
+                        exportTbody = '';
+
+                        chartData.allData = data.rows;
+                        viewModel.chartType = data.rows[0].chartType;
+                        chartData.chartTitle = data.rows[0].chartTitle;
+                        //如果是计量型
+                        if(viewModel.sampleType.indexOf(viewModel.chartType) != -1){
+                            initSampleData(data);
+                        }else if(viewModel.countType.indexOf(viewModel.chartType) != -1){
+                            //计数型
+                            initCountData(data);
+                        }else{
+                            Hap.showToast({
+                                type:'error',  //1.success 2.error
+                                message: viewModel.chartType+"-类型不匹配",
+                                // showDuration:3000,//3秒后显示成功框
+                                hideDuration:3000 ,//展示3秒成功框
+                                "positionClass": "toast-bottom-right"
+                            });
+                        }
+                    }else{
+                        myChart.clear();
+                        $('#table-thead').html('');
+                        $('#table-body').html('');
+                    }
+                }else{
+                    Hap.showToast({
+                        type:'error',  //1.success 2.error
+                        message: data.message,
+                        // showDuration:3000,//3秒后显示成功框
+                        hideDuration:3000 ,//展示3秒成功框
+                        "positionClass": "toast-bottom-right"
+                    });
+                }
+            },
+            error:function(data){
+                console.log(data);
+            }
+        });
+    }
+
+    /**
+     * 设置按钮
+     */
+    function chartShow() {
+        setDialog.center().open();
+    }
+
+    /**
+     * 关闭弹窗
+     */
+    function closeDialog(dialogId) {
+        $('#'+dialogId).data('kendoWindow').close();
+    }
+
+    /**
+     * 设置保存
+     */
+    function setSave(dialogId) {
+        //计数型
+        if(viewModel.countType.indexOf(viewModel.chartType) > -1){
+            initCountChart(document.getElementById("showControlLabel").checked,
+                document.getElementById("showSigmaLine").checked,
+                document.getElementById("showRuleControl").checked,
+                document.getElementById("showControlTitle").checked,
+                document.getElementById("showXYLabel").checked,
+                document.getElementById("showGridLine").checked);
+        }
+        //计量型
+        if(viewModel.sampleType.indexOf(viewModel.chartType) > -1){
+            initLineGrid(document.getElementById("showControlLabel").checked,
+                document.getElementById("showSigmaLine").checked,
+                document.getElementById("showRuleControl").checked,
+                document.getElementById("showControlTitle").checked,
+                document.getElementById("showXYLabel").checked,
+                document.getElementById("showGridLine").checked);
+        }
+        //如果输入了刷新频率定时执行刷新任务，否则清楚掉
+        if($('#refreshRate').val()){
+            timer = window.setInterval(function () {
+                queryData(viewModel.model.entityId);
+            },$('#refreshRate').val()*1000);
+        }else{
+            clearInterval(timer);
+        }
+        $('#'+dialogId).data('kendoWindow').close();
+    }
+
+    /**
+     * 初始化计量型数据
+     */
+    function initSampleData(data) {
+        //计量型有两个图 高度高一些
+        $('#line-chart').css('height','650px');
+
+        //主图标志线的数据
+        chartData.uclMValue = data.rows[0].uclMValue;
+        chartData.lclMValue = data.rows[0].lclMValue;
+        chartData.clMValue = data.rows[0].clMValue;
+        chartData.uslMValue = data.rows[0].uslMValue;
+        chartData.lslMValue = data.rows[0].lslMValue;
+        chartData.slMValue = data.rows[0].slMValue;
+
+        chartData.yMMax = data.rows[0].chartDetailM.axisMaxY;
+        chartData.yMMin = data.rows[0].chartDetailM.axisMinY;
+        chartData["CL+SIGMA".toLowerCase() + "MValue"] = data.rows[0].clMValue + data.rows[0].sigmaMValue;
+        chartData["CL+2*SIGMA".toLowerCase() + "MValue"] = data.rows[0].clMValue + 2*data.rows[0].sigmaMValue;
+        chartData["CL-SIGMA".toLowerCase() + "MValue"] = data.rows[0].clMValue-data.rows[0].sigmaMValue;
+        chartData["CL-2*SIGMA".toLowerCase() + "MValue"] = data.rows[0].clMValue - 2 * data.rows[0].sigmaMValue;
+        //次图标志线的数据
+        chartData.uclSValue = data.rows[0].uclSValue;
+        chartData.lclSValue = data.rows[0].lclSValue;
+        chartData.clSValue = data.rows[0].clSValue;
+        chartData.uslSValue = data.rows[0].uslSValue;
+        chartData.lslSValue = data.rows[0].lslSValue;
+        chartData.slSValue = data.rows[0].slSValue;
+        chartData.subgroupSize = data.rows[0].subgroupSize;
+
+        chartData.ySMax = data.rows[0].chartDetailS.axisMaxY;
+        chartData.ySMin = data.rows[0].chartDetailS.axisMinY;
+        chartData["CL+SIGMA".toLowerCase() + "SValue"] = data.rows[0].clSValue + data.rows[0].sigmaSValue;
+        chartData["CL+2*SIGMA".toLowerCase() + "SValue"] = data.rows[0].clSValue + 2*data.rows[0].sigmaSValue;
+        chartData["CL-SIGMA".toLowerCase() + "SValue"] = data.rows[0].clSValue-data.rows[0].sigmaSValue;
+        chartData["CL-2*SIGMA".toLowerCase() + "SValue"] = data.rows[0].clSValue - 2 * data.rows[0].sigmaSValue;
+        //设置弹窗中的子组大小
+        $('#childGroupLabel').val(chartData.subgroupSize);
+
+        //数据表格标题
+        //初始化表格，并拿到图形的一些数据赋值在全局变量中
+        initTable();
+        //初始化图形
+        initLineGrid(document.getElementById("showControlLabel").checked,
+            document.getElementById("showSigmaLine").checked,
+            document.getElementById("showRuleControl").checked,
+            document.getElementById("showControlTitle").checked,
+            document.getElementById("showXYLabel").checked,
+            document.getElementById("showGridLine").checked);
+    }
+
+    /**
+     * 初始化计数型的数据
+     */
+    function initCountData() {
+        //计数型只有一个图 高度略小一点
+        $('#line-chart').css('height','350px');
+        // $('#line-chart').children('div:first-child').css('height','350px');
+        // $('#line-chart').children('div:first-child').children('canvas').css('height','350px');
+        //初始化表格
+        initCountTable();
+        //初始化图形
+        initCountChart(document.getElementById("showControlLabel").checked,
+            document.getElementById("showSigmaLine").checked,
+            document.getElementById("showRuleControl").checked,
+            document.getElementById("showControlTitle").checked,
+            document.getElementById("showXYLabel").checked,
+            document.getElementById("showGridLine").checked);
+    }
+
+    /**
+     * 初始化计数型的表格
+     */
+    function initCountTable() {
+        $('#table-thead').html('');
+        $('#table-body').html('');
+        $('#out-table-div').css('display','block');
+        var headTitle = ["序号","样本时间","抽检数","不合格数"];
+        var typeIndex = -1;
+        if(chartData.allData.length > 0){
+            typeIndex = viewModel.countType.indexOf(chartData.allData[0].chartType);
+        }
+        for(var i = 0 ;i < chartData.allData.length;i++){
+            var tempRow = chartData.allData[i];
+            //计数型折线点数据
+            if(typeIndex == 0 || typeIndex == 2){
+                countMainData.push(tempRow.unqualifiedQuantity);
+            }
+            if(typeIndex == 1 || typeIndex == 3){
+                countMainData.push(tempRow.unqualifiedPercent);
+            }
+            //UCL 数据
+            chartData.UCL.push(tempRow.upperControlLimit);
+            //LCL 数据
+            chartData.LCL.push(tempRow.lowerControlLimit);
+
+            setStatus(tempRow.countOocList,i);
+
+            //横坐标
+            xLabel.push(tempRow.subgroupNum);
+
+            //表头
+            if(i == 0){
+                //y轴最大最小值
+                chartData.countYMax = tempRow.chartDetailM.axisMaxY;
+                chartData.countYMin = tempRow.chartDetailM.axisMinY;
+                //计数型Y、X轴名称
+                chartData.countYName = tempRow.chartDetailM.axisLabelY;
+                chartData.countXName = tempRow.chartDetailM.axisLabelX;
+
+                var headTr = '';
+                for(var j = 0;j < headTitle.length;j++){
+                    headTr += '<th><div>'+headTitle[j]+'</div></th>';
+                    if(j == 0){
+                        continue;
+                    }
+                    exportHead += headTitle[j] + ',';
+                }
+                //不合格项
+                for (var j = 0; j < tempRow.badItemList.length; j++) {
+                    headTr += '<th><div>'+tempRow.badItemList[j].description+'</div></th>';
+                    exportHead += tempRow.badItemList[j].description + ',';
+                }
+                console.log(exportHead);
+                //批次
+                for (var j = 0; j < tempRow.batchCodeList.length; j++) {
+                    var title = getDataFromArray(EXTRA_ATTRITUBE,"value",tempRow.batchCodeList[j],"meaning") || "";
+                    headTr += '<th><div>'+title+'</div></th>';
+                    exportHead += title + ',';
+                }
+                headTr += '<th><div>状态</div></th>';
+                exportHead += '状态' + ',';
+                headTr += '<th><div>不合格率%</div></th>'
+                exportHead += '不合格率' + ',';
+                $('#out-table-div thead').append(headTr);
+            }
+            //表体
+            var trRow = '<tr>';
+            //序号
+            trRow += '<td>'+tempRow.subgroupNum+'</td>';
+            exportTbody += tempRow.subgroupNum + ',';
+            //（2）	样本时间
+            trRow += '<td>'+tempRow.sampleTime+'</td>';
+            exportTbody += tempRow.sampleTime + ',';
+            //（3）	抽检数
+            trRow += '<td>'+tempRow.sampleValueCount+'</td>';
+            exportTbody += tempRow.sampleValueCount + ',';
+            //（4）	不合格数
+            trRow += '<td>'+tempRow.unqualifiedQuantity +'</td>';
+            exportTbody += tempRow.unqualifiedQuantity + ',';
+            //不良项
+            for (var j = 0; j < chartData.allData[0].badItemList.length; j++) {
+                var classifyId = chartData.allData[0].badItemList[j].classifyId;
+                var value = getDataFromArray(tempRow.sampleDataClassList,"classifyId",classifyId,"classifyCountValue");
+                var v = (value==null)?"":value;
+                trRow += '<td>'+v+'</td>';
+
+                exportTbody += v + ',';
+            }
+            //批次
+            for (var j = 0; j < chartData.allData[0].batchCodeList.length; j++) {
+                var extendAttribute = chartData.allData[0].batchCodeList[j];
+                var value = getDataFromArray(tempRow.sampleDataExtendList,"extendAttribute",extendAttribute,"extendValue");
+                var v = (value==null)?"":value;
+                trRow += '<td>'+v +'</td>';
+
+                exportTbody += v + ',';
+            }
+            //状态
+            var statusColor = "";
+            var content = "";
+            if(tempRow.countOocList && tempRow.countOocList.length > 0){
+                statusColor = "#ff0000";
+                content = "失控";
+            }else{
+                statusColor = "#178bf6";
+                content= "正常";
+            }
+            trRow += '<td><span style="color:'+statusColor+'">'+content+'</span></td>';
+            exportTbody += content + ',';
+            //不合格率
+            trRow += '<td>'+(tempRow.unqualifiedPercent*100).toFixed(2) +'</td>';
+            exportTbody += (tempRow.unqualifiedPercent*100).toFixed(2) + ',';
+            $('#out-table-div tbody').append(trRow);
+
+            exportTbody = exportTbody.substr(0,exportTbody.length-1) + '#';
+        }
+
+        //最大组号的数据
+        var maxGroup = chartData.allData[chartData.allData.length-1];
+        chartData["CL"] = maxGroup.centerLine;
+        //USL、SL、LSL
+        chartData["USL"] = maxGroup.upperSpecLimit;
+        chartData["SL"] = maxGroup.specTarget;
+        chartData["LSL"] = maxGroup.lowerSpecLimit;
+
+        //CL+SIGMA(最大组号的(UCL-LCL)/6)
+
+        var sigMa = (maxGroup.upperControlLimit -
+            maxGroup.lowerControlLimit)/6;
+        chartData["CL+SIGMA"] = (maxGroup.centerLine + sigMa).toFixed(4);
+        chartData["CL+2*SIGMA"] = (maxGroup.centerLine + 2*sigMa).toFixed(4);
+        chartData["CL-SIGMA"] = (maxGroup.centerLine - sigMa).toFixed(4);
+        chartData["CL-2*SIGMA"] = (maxGroup.centerLine - 2*sigMa).toFixed(4);
+
+        exportHead = exportHead.substr(0,exportHead.length-1);
+        exportTbody = exportTbody.substr(0,exportTbody.length-1);
+    }
+    /**
+     * 初始化计数型图形
+     */
+    function initCountChart(controlFlag,sigmaFlag,ruleFlag,controlTitleFlag,xyLabelFlag,gridFlag) {
+        var yValueArray = [];
+        Array.prototype.push.apply(yValueArray,countMainData);
+        //初始化
+        myChart = echarts.init(dom);
+        option = null;
+        option = {
+            tooltip: {
+                trigger: 'axis',
+                //鼠标移动下方表格跟随滚动
+                formatter:function (param) {
+                    var rowIndex = param[0].dataIndex;
+                    var tr = $('tbody tr:nth-child('+(rowIndex+1)+')')[0];
+                    if(tr){
+                        var topHeight = tr.offsetTop - $('#table-thead th div').height();
+                        $('#scroll-table-div').animate({scrollTop: topHeight}, 0);
+                    }
+                    //控制线的标签
+                    var controlLabel = document.getElementById("showControlLabel").checked?
+                        ("<br>UCL : " +(chartData.allData[rowIndex].upperControlLimit || '')
+                            + "<br>LCL : " +(chartData.allData[rowIndex].lowerControlLimit || ''))
+                        :'';
+                    var typeName = '';
+                    var chartTypeIndex = viewModel.countType.indexOf(viewModel.chartType);
+                    if(chartTypeIndex == 0){
+                        typeName = '不合格品数';
+                    }
+                    if(chartTypeIndex == 1){
+                        typeName = '不合格品率';
+                    }
+                    if(chartTypeIndex == 2){
+                        typeName = '不合格数';
+                    }
+                    if(chartTypeIndex == 3){
+                        typeName = '单位不合格数';
+                    }
+                    return param[0].axisValueLabel + "<br>"
+                        + typeName+ " : " +(countMainData[rowIndex] || '')
+                        +controlLabel;
+                }
+            },
+            legend: {
+                selected: {
+                    //此处用来控制计数 控制线和SIGMA的显示隐藏
+                    'UCL' : controlFlag,
+                    'CL' : controlFlag,
+                    'LCL' : controlFlag,
+                    'CL+SIGMA' : sigmaFlag,
+                    'CL+2*SIGMA' : sigmaFlag,
+                    'CL-SIGMA' : sigmaFlag,
+                    'CL-2*SIGMA' : sigmaFlag
+                },
+                data:[]
+            },
+            grid: {
+                // containLabel: true
+            },
+            //上下两个表格 提示共线
+            axisPointer: {
+                link: {xAxisIndex: 'all'}
+            }
+        };
+
+        //将折线图的数据以及所有标志线 的数据放入该数组中，用于比较得到最大最小值，用于设定纵坐标的最大最小
+        var series = [{
+            name:'不合格',
+            type:'line',
+            data:countMainData,
+            color:'#1890FF',
+            smooth: false,
+            symbol: 'circle',
+            lineStyle:{
+                color:'#178bf6'
+            },
+            itemStyle:{
+                color:function(item){
+                    return getDataColor(null,item.dataIndex);
+                }
+            },
+            //显示失控信息代码
+            label:{
+                show:true,
+                formatter:function(item){
+                    return getDataCode(null,item.dataIndex,'countOocList');
+                }
+            }
+        }];
+
+        //标志线 次图
+        var markLingeDataS = {
+            silent:true,
+            symbol:"none",               //去掉警戒线最后面的箭头
+            label:{
+                position:"end",          //将警示值放在哪个位置，三个值“start”,"middle","end"  开始  中点 结束
+                formatter:function (param) {
+                    var name = param.name;
+                    var value = '';
+                    if(chartData[name].length > 0){
+                        value = chartData[name][chartData[name].length-1];
+                    }else{
+                        value = chartData[name];
+                    }
+                    return name + ":" + value;
+                }
+            },
+            data : [
+            ]
+        };
+
+        //控制线、规格先及SIGMA是否显示在 legend中设置
+        var chartTypeIndex = viewModel.countType.indexOf(viewModel.chartType);
+        //nP和C显示折线，其他两种显示 直线
+        if(controlFlag){
+            if(chartTypeIndex == 1 || chartTypeIndex == 3) {
+                //UCL
+                series.push(initNewSeries("UCL", "#FF0000", chartData.UCL));
+                //CL
+                // series.push(initNewSeries("CL","#FF0000",chartData.CL));
+                //LCL
+                series.push(initNewSeries("LCL", "#FF0000", chartData.LCL));
+
+                Array.prototype.push.apply(yValueArray,chartData.UCL);
+                // Array.prototype.push.apply(yValueArray,chartData.CL);
+                Array.prototype.push.apply(yValueArray,chartData.LCL);
+            }else{
+                markLingeDataS.data.push(getMarkLimeData("UCL",chartData.UCL[chartData.UCL.length-1],'#FF0000'));
+                markLingeDataS.data.push(getMarkLimeData("LCL",chartData.LCL[chartData.LCL.length-1],'#FF0000'));
+                yValueArray.push(chartData.UCL[chartData.UCL.length-1]);
+                // Array.prototype.push.apply(yValueArray,chartData.UCL[chartData.UCL.length-1]);
+                // Array.prototype.push.apply(yValueArray,chartData.LCL[chartData.LCL.length-1]);
+                yValueArray.push(chartData.LCL[chartData.LCL.length-1]);
+            }
+            markLingeDataS.data.push(getMarkLimeData("CL",chartData["CL"],'#696969'));
+        }
+
+        //规格线
+        if(ruleFlag){
+            if(null != chartData["USL"] && "undefined" != chartData["USL"]){
+                yValueArray.push(chartData["USL"]);
+                markLingeDataS.data.push(getMarkLimeData("USL",chartData["USL"],'#00FF00'));
+            }
+            if(null != chartData["SL"] && "undefined" != chartData["SL"]){
+                yValueArray.push(chartData["SL"]);
+                markLingeDataS.data.push(getMarkLimeData("SL",chartData["SL"],'#00FF00'));
+            }
+            if(null != chartData["LSL"] && "undefined" != chartData["LSL"]){
+                yValueArray.push(chartData["LSL"]);
+                markLingeDataS.data.push(getMarkLimeData("LSL",chartData["LSL"],'#00FF00'));
+            }
+        }
+
+        //SIGMA线
+        if(sigmaFlag){
+            if(null != chartData["CL+SIGMA"] && "undefined" != chartData["CL+SIGMA"]){
+                yValueArray.push(chartData["CL+SIGMA"]);
+                markLingeDataS.data.push(getMarkLimeData("CL+SIGMA",chartData["CL+SIGMA"],'#FF9900'));
+            }
+            if(null != chartData["CL+2*SIGMA"] && "undefined" != chartData["CL+2*SIGMA"]){
+                yValueArray.push(chartData["CL+2*SIGMA"]);
+                markLingeDataS.data.push(getMarkLimeData("CL+2*SIGMA",chartData["CL+2*SIGMA"],'#FF9900'));
+            }
+            if(null != chartData["CL-SIGMA"] && "undefined" != chartData["CL-SIGMA"]){
+                yValueArray.push(chartData["CL-SIGMA"]);
+                markLingeDataS.data.push(getMarkLimeData("CL-SIGMA",chartData["CL-SIGMA"],'#FF9900'));
+            }
+            if(null != chartData["CL-2*SIGMA"] && "undefined" != chartData["CL-2*SIGMA"]){
+                yValueArray.push(chartData["CL-2*SIGMA"]);
+                markLingeDataS.data.push(getMarkLimeData("CL-2*SIGMA",chartData["CL-2*SIGMA"],'#FF9900'));
+            }
+        }
+
+        //横坐标
+        var xAxis = {
+            type: 'category',
+            data: xLabel,
+            name:xyLabelFlag?chartData.countXName:'',
+            nameLocation:'middle',
+            nameGap:25,
+            nameGap:25,
+            scale:true,
+            axisLine: {show:false},
+            axisTick: {show:false}
+        };
+
+        var ymax;
+        var ymin;
+        //如果明细表数据里有最大最小值则按表里来，没有则计算所有数据的最大最小值
+        if(null != chartData.countYMax){
+            ymax = chartData.countYMax;
+        }else{
+            ymax = getInteger(Math.max.apply(null, yValueArray),1,0.03);
+        }
+        if(null != chartData.countYMin){
+            ymin = chartData.countYMin;
+        }else{
+            ymin = getInteger(Math.min.apply(null, yValueArray),-1,0.03);
+        }
+
+        //纵坐标
+        var yAxis =  {
+            name:xyLabelFlag?chartData.countYName:'',
+            type: 'value',
+            position:'left',
+            scale:true,
+            splitLine: {
+                show: gridFlag,
+                lineStyle:{
+                    type:'dotted',
+                    color:'#efefef'
+                }
+            },
+            max:ymax,
+            min:ymin,
+            nameLocation:'middle',
+            nameGap:40,
+            axisLine: {show:false},
+            axisTick: {show:false}
+        };
+        //显示控制图标题
+        option.title = {
+            show:controlTitleFlag,
+            text: chartData.chartTitle,
+            x:'center'
+        }
+
+        series[0].markLine = markLingeDataS;
+        option.series = series;
+        option.xAxis = xAxis;
+        option.yAxis = yAxis;
+        myChart.clear();
+        myChart.setOption(option,true);
+        myChart.resize();
+    }
+
+    /**
+     * 判断状态
+     * oocRows ooc数据（ooc or count_ooc)
+     * i 数据下标
+     */
+    function setStatus(oocRows,i) {
+        //判断个状态
+        if(oocRows && oocRows.length > 0){
+            var flag = false;
+            var proCount = 0;
+            for (var j = 0; j < oocRows.length; j++) {
+                var temp = oocRows[j];
+                if(temp.oocStatus == "UNPROCESSED"){
+                    flag = true;
+                    break;
+                }
+                if(temp.oocStatus == "PROCESSED"){
+                    proCount++;
+                }
+            }
+
+            if(flag){
+                chartData.allData[i].oocStatus = oocStatus[2];
+            }else if(proCount == oocRows.length){
+                chartData.allData[i].oocStatus = oocStatus[1];
+            }
+        }else{
+            chartData.allData[i].oocStatus = oocStatus[0];
+        }
+
+    }
+
+    /**
+     *根据图表状态返回对应数据点颜色
+     */
+    function getDataColor(chartType,index) {
+        var tempData = chartData.allData[index];
+        var color = '';
+        if(tempData.oocStatus == oocStatus[0]){
+            color = "#178bf6";
+        }
+        if(tempData.oocStatus == oocStatus[2]){
+            color = "#ff0000";
+        }
+        if(tempData.oocStatus == oocStatus[1]){
+            color = "#ffa500";
+        }
+        //计数型
+        if(null == chartType){
+            return color;
+        }
+        //计量型
+        var sCount = 0;//次图的样本数量
+        var mCount = 0;//主图的样本数量
+        var oocList = tempData["oocList"];
+        for (var i = 0; i < oocList.length; i++) {
+            if(oocList[i].chartDetailType == "S"){
+                sCount++;
+            }
+            if(oocList[i].chartDetailType == "M"){
+                mCount++;
+            }
+        }
+        //次图
+        if(chartType == "S" && sCount > 0){
+            return color;
+        }else if(chartType == "M" && mCount > 0){
+            return color;
+        }else{
+            return "#178bf6";
+        }
+    }
+
+    /**
+     * 获得数据点对应编码
+     */
+    function getDataCode(chartType,index,oocType) {
+        var tempData = chartData.allData[index];
+        var code = '';
+
+        var oocList = tempData[oocType];
+        var sCount = 0;//次图的样本数量
+        var mCount = 0;//主图的样本数量
+        var sCode = '';//次图编码
+        var mCode = '';//主图编码
+        for (var i = 0; i < oocList.length; i++) {
+            //只显示第一个code
+            var tempCode = tempData[oocType][i].judgementShortCode;
+            if(!code && tempCode){
+                code = tempCode;
+            }
+            if(oocList[i].chartDetailType == "S" && !sCode){
+                if(tempCode){
+                    sCode = tempCode;
+                }
+                sCount++;
+            }
+            if(oocList[i].chartDetailType == "M" && !mCode){
+                if(tempCode){
+                    mCode = tempCode;
+                }
+                mCount++;
+            }
+        }
+        //计数型的没有类型
+        if(!chartType){
+            //如果有样本数据到那时又没有编码就显示 #
+            code = (tempData[oocType].length>0&&!code)?'#':code;
+            //有多个OOC数据显示 + 号
+            if(tempData[oocType] && tempData[oocType].length > 1){
+                code += "+";
+            }
+            return code;
+        }
+        //计量型
+        //分主图和次图，并且数量如果超过1个显示 +,如果需要显示错误编码但是编码没有默认显示 #
+        if("S" == chartType && sCount > 0){
+            //没有样本 不显示编码
+            if(sCount > 0){
+                if(!sCode){
+                    sCode = '#';
+                }
+                sCode = sCount > 1?(sCode+'#'):sCode;
+            }
+            return sCode;
+        }
+        if("M" == chartType && mCount > 0){
+            if(mCount > 0){
+                if(!mCode){
+                    mCode = '#';
+                }
+                mCode = mCount > 1?(mCode+'#'):mCode;
+            }
+            return mCode;
+        }
+        return '';
+    }
+
+    //绑定table外层div滚动事件
+    $('#scroll-table-div').on('scroll', tableScrollHandle);
+
+    //表格滚动时固定表头
+    function tableScrollHandle() {
+        //获取table外层DIV的滚动值
+        var scrollTop = $('#scroll-table-div').scrollTop();
+        //当滚动距离大于0时设置top及相应的样式
+        if ((scrollTop) > 0) {
+            $('#scroll-table-div thead').children('th').children('div').css({
+                "top": (scrollTop-0.8) + 'px',
+                "border-bottom": "1px solid #DDDDDD",
+                "border-top": "1px solid #898989",
+                "height": "41px"
+            });
+        } else {
+            // 当滚动距离小于0时设置top及相应的样式
+            $('#scroll-table-div thead').children('th').children('div').css({
+                "top": scrollTop + 'px',
+                "border-bottom": "0px solid #DDDDDD",
+                "border-top": "0px solid #898989",
+                "height": "px"
+            });
+        }
+    }
+
+    /**
+     * 从数组中找数据
+     * @param dataArray 数据数组
+     * @param name 属性名
+     * @param value 匹配值
+     * @param returnName 返回的属性名
+     */
+    function getDataFromArray(dataArray,name,value,returnName) {
+        for (var n = 0; n < dataArray.length; n++) {
+            if(dataArray[n][name] == value){
+                return dataArray[n][returnName];
+            }
+        }
+    }
+
+    /**
+     * 初始化一个SERIES
+     */
+    function initNewSeries(name,color,data){
+        return {
+            name:name,
+            type:'line',
+            data:data,
+            smooth: false,
+            symbol: 'circle',
+            showSymbol:false,//数据点是否显示圆圈
+            step: 'middle',
+            hoverAnimation:false,//鼠标移动上取数据点不放大
+            lineStyle:{
+                color:color,
+                width:1
+            },
+            itemStyle:{
+                color:function(item){
+                    return color;
+                }
+            },
+            showAllSymbol: false
+        };
+    }
+
+    function getUpperNumber() {
+        var arr = [];
+        for(var i = 0;i<40;i++){
+            var n = Math.random()*0.2;
+            arr.push(n.toFixed(2));
+        }
+        return arr;
+    }
+
+    //导出exportExcel
+    function exportExcel() {
+        if(exportHead == null || exportHead === '' || exportTbody == null || exportTbody === '') {
+            Hap.showToast({
+                type:'error',  //1.success 2.error
+                message: '请先查询再导出',
+                hideDuration:2000
+            });
+            return;
+        }
+
+        var url = '/pspc/entity/export/excel/single/graph';
+        var rowEnd = 0;
+        var colEnd = 0;
+        if(viewModel.sampleType.indexOf(viewModel.chartType) > -1){
+            rowEnd = 23;
+            colEnd = 9;
+        }
+        if(viewModel.countType.indexOf(viewModel.chartType) > -1){
+            rowEnd = 15;
+            colEnd = 10;
+        }
+        //拼接其他参数
+        var otherParams = [];
+        otherParams.push({paramName:'thead', paramValue:exportHead});
+        otherParams.push({paramName:'tbody', paramValue:exportTbody});
+        otherParams.push({paramName:'title', paramValue:'图形展示'});
+        otherParams.push({paramName:'rowEnd', paramValue:rowEnd});
+        otherParams.push({paramName:'colEnd', paramValue:colEnd});
+        otherParams.push({paramName:'exportFileName', paramValue:'parametricComparisonExport'});
+        otherParams.push({paramName:'${_csrf.parameterName}', paramValue:'${_csrf.token}'});
+
+        exportExcelWithEcharts(myChart, url, otherParams);
+    }
+
+    /**
+     * 页面加载完成后 加载webSocket
+     */
+    $(function () {
+
+    })
+</script>
+</body>
+</html>

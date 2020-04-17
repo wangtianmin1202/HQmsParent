@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_qc_task.mapper.OqcTaskMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_qc_task.dto.OqcTask">
+        <result column="TASK_ID" property="taskId" jdbcType="DECIMAL" />
+        <result column="PLANT_ID" property="plantId" jdbcType="DECIMAL" />
+        <result column="SOURCE_ORDER" property="sourceOrder" jdbcType="VARCHAR" />
+        <result column="ITEM_ID" property="itemId" jdbcType="DECIMAL" />
+        <result column="ITEM_VERSION" property="itemVersion" jdbcType="VARCHAR" />
+        <result column="SPREADING" property="spreading" jdbcType="VARCHAR" />
+        <result column="PRODUCTION_BATCH" property="productionBatch" jdbcType="VARCHAR" />
+        <result column="RECEIVE_QTY" property="receiveQty" jdbcType="DECIMAL" />
+        <result column="SAMPLE_QTY" property="sampleQty" jdbcType="DECIMAL" />
+        <result column="WAREHOUSE_CODE" property="warehouseCode" jdbcType="VARCHAR" />
+        <result column="WARNING_DATE" property="warningDate" jdbcType="DATE" />
+        <result column="OQC_DATE" property="oqcDate" jdbcType="DATE" />
+        <result column="IS_URGENCY" property="isUrgency" jdbcType="VARCHAR" />
+        <result column="SOLVE_STATUS" property="solveStatus" jdbcType="VARCHAR" />
+        <result column="ERROR_MSG" property="errorMsg" jdbcType="VARCHAR" />
+        <result column="INSPECTION_NUM" property="inspectionNum" jdbcType="VARCHAR" />
+        <result column="INSPECTION_RES" property="inspectionRes" jdbcType="VARCHAR" />
+        <result column="DEAL_METHOD" property="dealMethod" jdbcType="VARCHAR" />
+        
+        <result column="ITEM_CODE" property="itemCode" jdbcType="VARCHAR" />
+        <result column="ITEM_DESCRIPTIONS" property="itemDescriptions" jdbcType="VARCHAR" />
+        <result column="PLANT_CODE" property="plantCode" jdbcType="VARCHAR" />
+    </resultMap>
+    
+<select id="reSelect" resultMap="BaseResultMap">
+SELECT t.*, hi.item_code, hi.descriptions AS item_descriptions, hp.plant_code
+  FROM hqm_oqc_task t
+  JOIN hcm_item hi
+    ON t.plant_id = hi.plant_id
+   AND t.item_id = hi.item_id
+  JOIN hcm_plant hp
+    ON t.plant_id = hp.plant_id
+ WHERE 1 = 1
+   AND t.solve_status != 'Y'
+   AND ((t.oqc_date IS NOT NULL AND t.oqc_date &lt; SYSDATE) OR t.oqc_date IS NULL)
+   <if test="itemId != null">
+   AND t.item_id = #{itemId}
+   </if>
+   
+</select>
+
+</mapper>

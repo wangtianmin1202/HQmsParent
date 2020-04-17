@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper
+	namespace="com.hand.plm.plm_prod_design_standard_detail.mapper.ProdDesignStandardDetailMapper">
+	<resultMap id="BaseResultMap"
+		type="com.hand.plm.plm_prod_design_standard_detail.view.ProdDesignStandardDetailVO">
+		<result column="DETAIL_ID" property="detailId" jdbcType="VARCHAR" />
+		<result column="DESIGN_STANDARD_ID" property="designStandardId" jdbcType="VARCHAR" />
+		<result column="DESION_DIMENSION" property="desionDimension" jdbcType="VARCHAR" />
+		<result column="RELATED_PARTS" property="relatedParts"	jdbcType="VARCHAR" />
+		<result column="DESIGN_STANDARD_DESCRIPTION" property="designStandardDescription" jdbcType="VARCHAR" />
+		<result column="GRAPHIC_CODE" property="graphicCode"	jdbcType="VARCHAR" />
+		<result column="CHECKER" property="checker" jdbcType="VARCHAR" />
+		<result column="STATUS" property="status" jdbcType="VARCHAR" />
+		<result column="VERSION" property="version" jdbcType="VARCHAR" />
+		<result column="product_name" property="productName" jdbcType="VARCHAR" />
+		<result column="NAME" property="name" jdbcType="VARCHAR" />
+
+	</resultMap>
+
+
+
+	<select id="queryAll" resultMap="BaseResultMap"
+		parameterType="com.hand.plm.plm_prod_design_standard_detail.view.ProdDesignStandardDetailVO">
+			SELECT *
+	  FROM (SELECT product_name,
+	               tt.name,
+	               pld.detail_id,
+	               pld.design_standard_id,
+	               pld.desion_dimension,
+	               nvl(ppd.name, pld.related_parts) related_parts,
+	               pld.design_standard_description,
+	               pld.graphic_code,
+	              (SELECT he.name
+                  FROM sys_user su, hr_employee he
+                 WHERE su.employee_id = he.employee_id
+                   AND su.user_id = pld.checker) checker,
+	               pld.status,
+	               pld.version,
+	               v.meaning
+	          FROM plm_prod_design_standard_detail pld
+	          LEFT JOIN (SELECT t.kid,
+	                           REPLACE(sys_connect_by_path(ppb.product_name, ';'), ';', '') product_name,
+	                           ltrim(sys_connect_by_path(t.name, ';'), ';') NAME
+	                      FROM plm_product_design_standard t
+	                      LEFT JOIN plm_product_basic_data ppb
+	                        ON t.product_id = ppb.product_id
+	                     WHERE 1 = 1
+	                     START WITH t.parent_id IS NULL
+	                    CONNECT BY PRIOR t.kid = t.parent_id) tt
+	            ON pld.design_standard_id = tt.kid
+	          LEFT JOIN plm_product_design_standard ppd
+	            ON to_char(ppd.kid) = pld.related_parts
+	          LEFT JOIN sys_code_v v
+	            ON pld.desion_dimension = v.value
+	           AND v.code = 'PLM_PROD_DESIGN_STANDARD'
+	           WHERE 1 = 1
+	           
+	  <if test="detailId != null and detailId != ''">
+            AND pld.detail_id= #{detailId}
+        </if>
+        <if test="designStandardId != null and designStandardId != ''">
+            AND pld.design_standard_id= #{designStandardId}
+        </if>
+        
+        <if test="detailIdList !=null and detailIdList.size > 0">
+            AND pld.detail_id IN
+            <foreach collection="detailIdList" index="index" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        
+        <if test="designStandardIdList !=null and designStandardIdList.size > 0">
+            AND pld.design_standard_id IN
+            <foreach collection="designStandardIdList" index="index" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        
+        <if test="status != null and status != ''">
+            AND pld.status= #{status}
+        </if>
+	       <if test="treeId != null and treeId != ''">
+             AND pld.design_standard_id IN
+               (SELECT ppd.kid
+                  FROM plm_product_design_standard ppd
+                 WHERE 1 = 1
+                 START WITH ppd.kid = #{treeId}
+                CONNECT BY PRIOR ppd.kid = ppd.parent_id)
+        </if>
+	           
+	           ) tmp
+	 WHERE 1 = 1
+
+        
+        
+        <if test="name != null and name != ''">
+        	AND ( instr(tmp.name, #{name}) > 0 
+             OR tmp.meaning LIKE CONCAT('%', CONCAT(#{name}, '%'))
+             OR tmp.related_parts LIKE CONCAT('%',CONCAT(#{name}, '%')) 
+             OR tmp.design_standard_description LIKE CONCAT('%',CONCAT(#{name}, '%')) 
+             OR tmp.graphic_code LIKE CONCAT('%',CONCAT(#{name}, '%')) 
+             OR tmp.checker LIKE CONCAT('%',CONCAT(#{name}, '%')) 
+            )
+        </if>
+
+	</select>
+	
+	
+	<select id="getInvalidDetailCount" resultType="java.lang.Long">
+		SELECT COUNT(1)
+	  FROM plm_prod_design_standard_approve t
+	 WHERE 1 = 1
+	   AND t.status IN ('PENDING_APPROVE', 'APPROVING')
+	   AND t.operation_type = 'invalid'
+	   AND t.detail_id =#{detailId}
+	</select>
+	
+	
+	<!--获取变更号 -->
+ <select id="getChangeNum" resultType="java.lang.String">
+SELECT 'GUID' || to_char(SYSDATE, 'YY') || lpad(nvl(MAX(substr(t.change_num, -4)), 0) + 1, 4, 0)
+  FROM plm_prod_design_standard_approve t
+ WHERE t.change_num LIKE 'PFUN' || to_char(SYSDATE, 'YY') || '%'
+
+ </select>
+</mapper>

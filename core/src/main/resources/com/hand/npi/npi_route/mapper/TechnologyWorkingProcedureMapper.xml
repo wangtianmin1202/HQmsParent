@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.npi.npi_route.mapper.TechnologyWorkingProcedureMapper">
+    <resultMap id="BaseResultMap" type="com.hand.npi.npi_route.dto.TechnologyWorkingProcedure">
+        <result column="ROUTE_WP_REF_ID" property="routeWpRefId" jdbcType="DECIMAL" />
+        <result column="SERIAL_NUMBER" property="serialNumber" jdbcType="DECIMAL" />
+        <result column="ROUTE_ID" property="routeId" jdbcType="VARCHAR" />
+        <result column="STANDARD_WORKING_HOURS" property="standardWorkingHours" jdbcType="DECIMAL" />
+        <result column="PRE_WORKING_PROCEDURE" property="preWorkingProcedure" jdbcType="VARCHAR" />
+        <result column="IN_OUT_MAKE" property="inOutMake" jdbcType="VARCHAR" />
+        <result column="AUTO_FLAG" property="autoFlag" jdbcType="VARCHAR" />
+        <result column="VERSION" property="version" jdbcType="VARCHAR" />
+        <result column="WP_ID" property="wpId" jdbcType="VARCHAR" />
+        <result column="WP_CODE" property="wpCode" jdbcType="VARCHAR" />
+        <result column="WP_NAME" property="wpName" jdbcType="VARCHAR" />
+        <result column="WP_SOP_REF_ID" property="wpSopRefId" jdbcType="DECIMAL" />
+        <result column="LINE_TYPE" property="lineType" jdbcType="VARCHAR" />
+        <result column="LINE_CODE" property="lineCode" jdbcType="VARCHAR" />
+        <result column="STATUS" property="status" jdbcType="VARCHAR" />
+        <result column="COPY_FLAG" property="copyFlag" jdbcType="VARCHAR" />
+    </resultMap>
+    
+    <select id="getMaxSerialNumber" resultType="Float">
+    	select nvl(max(t.serial_number),0)+1 from NPI_TECHNOLOGY_WORKING_PROCEDURE t
+		  where t.route_id = #{routeId}
+    </select>
+
+    <select id="queryWpInfo" resultMap="BaseResultMap">
+        select t.*,t1.WP_NAME,t1.WP_CODE from NPI_TECHNOLOGY_WORKING_PROCEDURE t join NPI_TECHNOLOGY_WORK_PROCEDURE_STORE t1
+          on t.WP_ID  = t1.WP_ID
+        <where>
+            <if test="routeId!=null">
+                AND ROUTE_ID = #{routeId}
+            </if>
+            <if test="routeWpRefId!=null">
+                AND ROUTE_WP_REF_ID = #{routeWpRefId}
+            </if>
+        </where>
+    </select>
+
+</mapper>

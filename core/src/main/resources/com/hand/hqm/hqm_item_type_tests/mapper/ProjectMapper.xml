@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_item_type_tests.mapper.ProjectMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_item_type_tests.dto.Project">
+        <result column="PROJECT_ID" property="projectId" jdbcType="DECIMAL" />
+        <result column="PROJECT_CODE" property="projectCode" jdbcType="VARCHAR" />
+        <result column="PROJECT_TYPE" property="projectType" jdbcType="VARCHAR" />
+        <result column="PROJECT_DESCRIPTION" property="projectDescription" jdbcType="VARCHAR" />
+        <result column="CATEGORY" property="category" jdbcType="VARCHAR" />
+        <result column="SUCCESSION" property="succession" jdbcType="VARCHAR" />
+        <result column="ENABLE_FLAG" property="enableFlag" jdbcType="VARCHAR" />
+
+
+        <result column="type_meaning" property="typeMeaning" jdbcType="VARCHAR" />
+        <result column="flag_meaning" property="flagMeaning" jdbcType="VARCHAR" />
+        <result column="category_meaning" property="categoryMeaning" jdbcType="VARCHAR" />
+    </resultMap>
+
+    <select id="exQuery" parameterType="com.hand.hqm.hqm_item_type_tests.dto.Project" resultMap="BaseResultMap">
+        select hp.project_id,
+       hp.project_code,
+       hp.project_description,
+       hp.category,
+       a3.meaning             category_meaning,
+       hp.succession,
+       a1.meaning             flag_meaning,
+       hp.enable_flag,
+       hp.project_type,
+       a2.meaning             type_meaning
+  from hpm_project hp
+  left join (select scvb.value, scvb.meaning
+               from sys_code_b scb, sys_code_value_b scvb
+              where scb.code_id = scvb.code_id
+                and scb.code = 'SYS.YES_NO') a1
+    on hp.enable_flag = a1.value
+  left join (select scvb.value, scvb.meaning
+               from sys_code_b scb, sys_code_value_b scvb
+              where scb.code_id = scvb.code_id
+                and scb.code = 'HQM_PRODUCT_TYPE') a2
+    on hp.project_type = a2.value
+  left join (select scvb.value, scvb.meaning
+               from sys_code_b scb, sys_code_value_b scvb
+              where scb.code_id = scvb.code_id
+                and scb.code = 'HQM_8D_RESEARCH_PRODUCT_TYPE') a3
+    on hp.category = a3.value
+    <where>
+        <if test="projectId != null">
+            hp.project_id =#{projectId}
+        </if>
+        <if test="projectType != null">
+            hp.project_type =#{projectType}
+        </if>
+        <if test="projectDescription != null">
+            hp.project_description concat(concat('%',#{projectDescription}),'%')
+        </if>
+        <if test="category != null">
+            hp.category =#{category}
+        </if>
+        <if test="succession != null">
+            hp.succession like concat(concat('%',#{succession}),'%')
+        </if>
+    </where>
+    </select>
+
+</mapper>

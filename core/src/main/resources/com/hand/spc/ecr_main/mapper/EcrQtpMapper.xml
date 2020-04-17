@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.spc.ecr_main.mapper.EcrQtpMapper">
+    <resultMap id="baseResult" type="com.hand.spc.ecr_main.dto.EcrQtp">
+        <result column="qtp_id" property="qtpId" jdbcType="DECIMAL" />
+        <result column="ecrno" property="ecrno" jdbcType="VARCHAR" />
+        <result column="lab_reqno" property="labReqno" jdbcType="VARCHAR" />
+        <result column="pci_title" property="pciTitle" jdbcType="VARCHAR" />
+        <result column="pci_test_report" property="pciTestReport" jdbcType="VARCHAR" />
+        <result column="conclusion" property="conclusion" jdbcType="VARCHAR" />
+        <result column="qtp_seq" property="qtpSeq" jdbcType="DECIMAL" />
+        <result column="status" property="status" jdbcType="VARCHAR" />
+        <result column="dutyby" property="dutyby" jdbcType="VARCHAR" />
+        <result column="ask_finished_date" property="askFinishedDate" jdbcType="DATE" />
+        <result column="plan_finished_date" property="planFinishedDate" jdbcType="DATE" />
+        <result column="act_finished_date" property="actFinishedDate" jdbcType="DATE" />
+        
+        <result column="item_id" property="itemId" jdbcType="DECIMAL" />
+        <result column="is_need" property="isNeed" jdbcType="VARCHAR" />
+
+    
+    </resultMap>
+
+
+<resultMap id="ViewResultMap" type="com.hand.spc.ecr_main.view.EcrQtpV0" extends="baseResult">
+            <result column="ITEM_CODE" property="itemCode" jdbcType="VARCHAR" />
+        <result column="descriptions" property="itemDesc" jdbcType="VARCHAR" />
+        
+    </resultMap>
+    
+    
+    <select id="eqQuery" parameterType="com.hand.spc.ecr_main.dto.EcrQtp"
+            resultMap="ViewResultMap">		       
+		 select heq.qtp_id,
+		        heq.ecrno,
+		        heq.lab_reqno,
+		        heq.pci_title,
+		        heq.pci_test_report,
+		        heq.conclusion,
+		        heq.qtp_seq,
+		        heq.status,
+		        heq.dutyby,
+		        heq.ask_finished_date,
+		        heq.plan_finished_date,
+		        heq.act_finished_date,
+		        hi.ITEM_CODE,
+		        hi.descriptions
+		        from HPM_ECR_QTP heq,hcm_item hi 
+		        where heq.item_id=hi.ITEM_ID(+)
+        
+            <if test="ecrno != null">
+              AND    heq.ecrno = #{ecrno}
+            </if> 
+    </select>
+</mapper>

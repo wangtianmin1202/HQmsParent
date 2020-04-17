@@ -1,0 +1,729 @@
+<#include "../include/header.html">
+<script src="${base.contextPath}/common/code?SRM_TICKET_STATUS=SRM_TICKET_STATUS"></script>
+<script src="${base.contextPath}/common/code?SRM_TICKET_TYPE=SRM_TICKET_TYPE"></script>
+<script src="${base.contextPath}/common/code?SRM_TICKET_LINE_STATUS=SRM_TICKET_LINE_STATUS"></script>
+<script src="${base.contextPath}/common/code?SRM_YES_NO=SRM_YES_NO"></script>
+<script src="${base.contextPath}/common/code?SRM_PACKING_TYPE=SRM_PACKING_TYPE"></script>
+<script src="${base.contextPath}/lib/prints/doc_print.js" type="text/javascript" charset="UTF-8"></script>
+<script src="${base.contextPath}/lib/bootstrap-3.3.7/js/bootstrap.min.js"></script>
+<script type="text/javascript">
+    var viewModel = Hap.createGridViewModel("#grid");
+    var supplierId = "";
+	var supplierName = "";
+    /* 页面初始化查询供应商id */
+    $(document).ready(function(){
+    	$.ajax({
+    		url:"${base.contextPath}/hcs/supplier/onhand/quantities/querySupplier",
+    		type: "POST",
+    		contentType: "application/json",
+    		success: function(data){
+    			if(data.success){
+    				if(data.rows[0] != null){
+    					supplierId = data.rows[0].supplierId;
+    					supplierName = data.rows[0].supplierName;
+    				}
+    			}
+    		}
+    	})
+    })
+    var parentJson = {};
+    //详情
+    function detail(id,itemId,qty,ticketId,plantId){
+    	parentJson.ticketLineId = id;
+    	parentJson.itemId = itemId;
+    	parentJson.qty = qty;
+    	parentJson.ticketId = ticketId;
+    	parentJson.plantId = plantId;
+    	parentJson.status = 'P';
+    	window.parent.parentJson = parentJson;
+    	var dialog = window.parent.$("#bindWindow").kendoWindow({
+			actions: ["Close"],
+			width: 1400,
+			height: 700,
+			title: '<@spring.message "srm.purchase.bind"/>',
+			visible: false,
+			iframe: true,
+			modal: true,
+			content: 'delivery_ticket_bind.html'
+		}).data("kendoWindow");
+		dialog.center().open();
+    }
+</script>
+<body>
+<div id="LineWindow"></div>
+<div id="printWindow"></div>
+<div id="page-content">
+		<div class="pull-left" id="toolbar-btn" style="padding-bottom:10px;">
+			<span class="btn btn-primary k-grid-excel" style="float:left;margin-right:5px;" data-bind="click:exportExcel">
+    		<i class="fa fa-file-excel-o" style="margin-right:3px"></i><@spring.message "srm.exportexcel"/></span>       
+	    </div>
+   		<script>kendo.bind($('#toolbar-btn'), viewModel);</script>
+			    <div id="queryPanel" class="pull-right" style="margin-right:5px;padding-bottom:10px;">
+			        <div class="k-query-simple" id="query-form">
+			        		<!-- 送货单号 -->
+			                <input type="text" data-role="maskedtextbox" style="width:150px;margin-right:5px;" placeholder='<@spring.message "deliveryticketh.ticketNumber"/>'
+			                   data-bind="value:model.ticketNumber" class="k-textbox">
+			                
+				            <!--  送货单状态 -->
+			                <input id="status" style="width:150px;margin-right:5px;" placeholder='<@spring.message "deliveryticketh.status"/>'
+			                   data-bind="value:model.status">     
+			                <script>
+						                   $("#status").kendoComboBox({
+							               	    dataTextField: "meaning",
+							               	    dataValueField: "value",
+							               	    valuePrimitive: true,
+							               	    dataSource: SRM_TICKET_STATUS
+							               	});
+						                   
+				            </script> 
+				            
+			        		<!--  物料编码 -->
+				            <input  id="itemLov" style="margin-right:5px" placeholder="<@spring.message 'srm.purchase.itemcode'/>" data-bind="value:model.itemId" >
+				            <script>
+				                	$("#itemLov").kendoLov($.extend
+				                	    (<@lov"LOV_ITEM_BY_USER"/>, {
+				                	        textField: 'itemName',
+				                	        valueField:'itemId',
+				                	        query: function(e){
+				                	        	e.param['supplierId'] = supplierId;
+				                	        	e.param['enableFlag'] = 'Y';
+				                	        }
+				                	}));
+				            </script>
+				           
+			        </div>
+			        <script>kendo.bind($('#query-form'), viewModel);</script>
+			        <div class="k-query-detail" id="query-form2">
+			            <div class="rows">
+			            	<!--  送货单行状态 -->
+			                <input id="lineStatus" style="margin-right:5px;width:180px" placeholder='<@spring.message "polinelocations.lineStatus"/>'
+			                   data-bind="value:model.lineStatus">     
+			                <script>
+						                   $("#lineStatus").kendoComboBox({
+							               	    dataTextField: "meaning",
+							               	    dataValueField: "value",
+							               	    valuePrimitive: true,
+							               	    dataSource: SRM_TICKET_LINE_STATUS
+							               	});
+						                   
+				            </script> 
+				             <!-- 工厂 -->
+<!-- 				            <input  id="plantLov" style="margin-right:5px;width:180px" placeholder="<@spring.message 'srm.plantname'/>" data-bind="value:model.plantId" > -->
+				            <script>
+// 				                	$("#plantLov").kendoLov($.extend
+// 				                	    (<@lov"LOV_PLANT_BY_USER"/>, {
+// 				                	        textField: 'plantName',
+// 				                	        valueField:'plantId',
+// 				                	        query: function(e){
+// 				                	        	e.param['supplierId'] = supplierId;
+// 				                	        	e.param['enableFlag'] = 'Y';
+// 				                	        }
+// 				                	}));
+				            </script> 
+				            <!-- 供应商名称 -->
+				            <input  id="supplierLov" style="margin-right:5px;width:180px" placeholder="<@spring.message 'srm.suppliername'/>" data-bind="value:model.supplierId" >
+				            <script>
+				                	$("#supplierLov").kendoLov($.extend
+				                	    (<@lov"LOV_SUPPLIER_SRM"/>, {
+				                	        textField: 'supplierCode',
+				                	        valueField:'supplierId',
+				                	        query: function(e){
+				                	        	e.param['supplierId'] = supplierId;
+				                	        }
+				                	}));
+				            </script>
+				            <!-- 采购定单号 -->
+			                <input type="text" data-role="maskedtextbox" style="margin-right:5px;width:180px" placeholder='<@spring.message "deliveryticketh.poNumber"/>'
+			                   data-bind="value:model.poNumber" class="k-textbox">
+			            </div>
+			            <div class="rows" style="margin-top:5px">
+			           		<!--   创建时间从 -->
+				            <input type="text" data-role="datetimepicker" style="margin-right:5px;" placeholder='<@spring.message "polinelocations.createStartDate"/>'
+					                   data-bind="value:model.createStartDate" class="datetimepicker">
+				            <!-- 创建时间至 -->
+				            <input type="text" data-role="datetimepicker" style="margin-right:5px;" placeholder='<@spring.message "polinelocations.createEndDate"/>'
+				            data-bind="value:model.createEndDate" class="datetimepicker">  
+				            <!-- 接收时间从 -->
+				            <input type="text" data-role="datetimepicker" style="margin-right:5px;" placeholder='<@spring.message "deliveryticketl.startDate"/>'
+					                   data-bind="value:model.startDate" class="datetimepicker">
+				            <!-- 接收时间至 -->
+				            <input type="text" data-role="datetimepicker" style="margin-right:5px;" placeholder='<@spring.message "deliveryticketl.endDate"/>'
+				            data-bind="value:model.endDate" class="datetimepicker"> 
+			           		
+			            	
+			            </div>
+			            <div class="rows" style="margin-top:5px">
+			            	<!-- 发货日期从 -->
+				            <input type="text" data-role="datepicker" style="margin-right:5px;width:180px" placeholder='<@spring.message "deliveryticketl.startTime"/>'
+					                   data-bind="value:model.startTime" class="datepicker">
+				            <!-- 发货日期至 -->
+				            <input type="text" data-role="datepicker" style="margin-right:5px;width:180px" placeholder='<@spring.message "deliveryticketl.endTime"/>'
+				            data-bind="value:model.endTime" class="datepicker"> 
+				            <!-- 需求时间从 -->
+				            <input type="text" data-role="datetimepicker" style="margin-right:5px;" placeholder='<@spring.message "polinelocations.needbydatestart"/>'
+					                   data-bind="value:model.needStartTime" class="datetimepicker">
+				            <!-- 需求时间至 -->
+				            <input type="text" data-role="datetimepicker" style="margin-right:5px;" placeholder='<@spring.message "polinelocations.needbydateend"/>'
+				            data-bind="value:model.needEndTime" class="datetimepicker">
+			            </div>
+			            <div class="rows" style="margin-top:5px">
+							<!--   预计到货时间从 -->
+				            <input type="text" data-role="datetimepicker" style="margin-right:5px;" placeholder='<@spring.message "deliveryticketh.expectedStartTime"/>'
+					                   data-bind="value:model.expectedStartTime" class="datetimepicker">
+				            <!-- 预计到货时间至 -->
+				            <input type="text" data-role="datetimepicker" style="margin-right:5px;" placeholder='<@spring.message "deliveryticketh.expectedEndTime"/>'
+				            data-bind="value:model.expectedEndTime" class="datetimepicker">  
+				            <!-- 生成结算单据标识 -->
+			                <input id="settlementFlag" style="width:180px;margin-right:5px;" placeholder='<@spring.message "polinelocations.settlementFlag"/>'
+			                   data-bind="value:model.settlementFlag">     
+			                <script>
+						                   $("#settlementFlag").kendoComboBox({
+							               	    dataTextField: "meaning",
+							               	    dataValueField: "value",
+							               	    valuePrimitive: true,
+							               	    dataSource: SRM_YES_NO
+							               	});
+						                   
+				            </script> 
+<!-- 				           送货单类型 -->
+<!-- 			                <input id="ticketType" style="width:150px;margin-right:5px;" placeholder='<@spring.message "deliveryticketh.ticketType"/>' -->
+<!-- 			                   data-bind="value:model.ticketType">      -->
+<!-- 			                <script> -->
+<!-- // 						                   $("#ticketType").kendoComboBox({ -->
+<!-- // 							               	    dataTextField: "meaning", -->
+<!-- // 							               	    dataValueField: "value", -->
+<!-- // 							               	    valuePrimitive: true, -->
+<!-- // 							               	    dataSource: SRM_TICKET_TYPE -->
+<!-- // 							               	}); -->
+						                   
+<!-- 				            </script>  -->
+			            </div>
+			        </div>
+			        <script>kendo.bind($('#query-form2'), viewModel);</script>
+			         <div style="clear:both"></div>
+			    </div>
+			    <div style="clear:both">
+			        <div id="grid"></div>
+			    </div>
+</div>
+<script type="text/javascript">
+$('#queryPanel').kendoQueryPanel({
+    queryFunction: function () {
+        viewModel.query();
+    },
+    resetFunction: function () {
+        viewModel.reset();
+        window.parent.viewModel.model.set('purchaseGroup','')
+    }
+});
+    Hap.initEnterQuery('#query-form', viewModel.query);
+    var BaseUrl = _basePath;
+    dataSource = new kendo.data.DataSource({
+        transport: {
+            read: {
+                url: BaseUrl + "/hcs/delivery/ticket/l/queryHeadLine",
+                type: "POST",
+                dataType: "json"
+            },
+            parameterMap: function (options, type) {
+                if (type !== "read" && options.models) {
+                    var datas = Hap.prepareSubmitParameter(options, type)
+                    return kendo.stringify(datas);
+                } else if (type === "read") {
+                	viewModel.model.purchaseGroup = window.parent.viewModel.model.purchaseGroup
+                    return Hap.prepareQueryParameter(viewModel.model.toJSON(), options)
+                }
+            }
+        },
+        batch: true,
+        serverPaging: true,
+        pageSize: 20,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+                id: "ticketId",
+                fields: {
+                	cancelFlag:{
+                		type:'boolean',
+                		checkedValue:'Y',
+                		uncheckedValue:'N',
+                	},
+                	needByDatePo: {
+                		type:"date"
+                	}
+                }
+            }
+        }
+    });
+
+    $("#grid").kendoGrid({
+    	excel: {
+    		fileName:'<@spring.message "ticket.line"/>.xlsx',
+    		filterable: true,
+    	},
+    	excelExport: function(e){
+    		var rows = e.workbook.sheets[0].rows;
+    		var datas = e.data;
+    		for(var i=1;i<rows.length; i++){
+    			//rows[i].cells[2].value = Hap.getCodeMeaning(SRM_TICKET_STATUS,datas[i-1].status);
+    			rows[i].cells[2].value = Hap.getCodeMeaning(SRM_TICKET_LINE_STATUS,datas[i-1].lineStatus);
+    			if(isNotEmpty(datas[i-1].receiveDate && datas[i-1].receiveDate.length >=10 )){    				
+	    			rows[i].cells[12].value = datas[i-1].receiveDate.slice(0,10)
+    			}
+    			rows[i].cells[15].value = Hap.getCodeMeaning(SRM_PACKING_TYPE,datas[i-1].packetInfo);
+    			if(isNotEmpty(datas[i-1].shipDate && datas[i-1].shipDate.length >=10 )){    				
+	    			rows[i].cells[18].value = datas[i-1].shipDate.slice(0,10)
+    			}
+    			rows[i].cells[23].value = Hap.getCodeMeaning(SRM_YES_NO,datas[i-1].settlementFlag?"N":datas[i-1].settlementFlag);
+    		}
+    	},
+        dataSource: dataSource,
+        resizable: true,
+        scrollable: true,
+        sortable:true,
+        navigatable: false,
+        dataBound: function () {
+            if (parent.autoResizeIframe) {
+                parent.autoResizeIframe('${RequestParameters.functionCode!}')
+            }
+        },
+        pageable: {
+            pageSizes: [5, 10, 20, 50],
+            refresh: true,
+            buttonCount: 5
+        },
+        columns: [
+                    {
+                field: "ticketNumber",
+                title: '<@spring.message "deliveryticketh.ticketnumber"/>',
+                width: 200,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+                locked:true
+            },
+            
+            {
+                field: "ticketLineNum",
+                title: '<@spring.message "editorder.ticketLineNum"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+                locked:true
+            },
+//             {
+//                 field: "status",
+//                 title: '<@spring.message "deliveryticketh.status"/>',
+//                 width: 120,
+//                 attributes: {style: "text-align:center;white-space: nowrap;"},
+//                 headerAttributes: {style: "text-align:center"},
+//                 template: function (dataItem) {
+//                     var v = dataItem.status ? dataItem.status : "";
+//                     $.each(SRM_TICKET_STATUS, function (i, n) {
+//                         if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+//                             v = n.meaning;
+//                             return v;
+//                         }
+//                     });
+//                     return v;
+//                 },
+//                 editor: function (container, options) {
+//                     $('<input name="' + options.field + '"/>')
+//                         .appendTo(container)
+//                         .kendoDropDownList({
+//                             dataTextField: "meaning",
+//                             dataValueField: "value",
+//                             valuePrimitive: true,
+//                             dataSource:SRM_TICKET_STATUS
+//                         });
+//                 }
+//             },
+            
+            {
+                field: "lineStatus",
+                title: '<@spring.message "polinelocations.lineStatus"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+                template: function (dataItem) {
+                    var v = dataItem.lineStatus ? dataItem.lineStatus : "N";
+                    $.each(SRM_TICKET_LINE_STATUS, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return v;
+                        }
+                    });
+                    return v;
+                },
+                editor: function (container, options) {
+                    $('<input name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            dataTextField: "meaning",
+                            dataValueField: "value",
+                            valuePrimitive: true,
+                            dataSource:SRM_TICKET_LINE_STATUS
+                        });
+                }
+            },
+            
+            {
+                field: "itemCode",
+                title: '<@spring.message "polinelocations.itemCode"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"}
+            },
+            {
+                field: "itemName",
+                title: '<@spring.message "polinelocations.itemName"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"}
+            },
+            
+//             {
+//                 field: "cancelFlag",
+//                 title: '<@spring.message "editorder.cancelFlag"/>',
+//                 width: 120,
+//                 attributes: {style: "text-align:center;white-space: nowrap;"},
+//                 headerAttributes: {style: "text-align:center"}
+//             },
+            {
+                field: "itemVersion",
+                title: '<@spring.message "polinelocations.itemVersion"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"}
+            },
+            {
+                field: "uomCode",
+                title: '<@spring.message "polinelocations.uomCode"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"}
+            },
+            {
+                field: "plantName",
+                title: '<@spring.message "deliveryticketh.plantName"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+            {
+                field: "supplierCode",
+                title: '<@spring.message "deliveryticketh.supplierCode"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+            {
+                field: "supplierName",
+                title: '<@spring.message "deliveryticketh.supplierName"/>',
+                width: 200,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+            {
+                field: "shipQuantity",
+                title: '<@spring.message "polinelocations.shipQuantity"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"}
+            },
+            {
+                field: "receiveQuantity",
+                title: '<@spring.message "polinelocations.receiveQuantity"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"}
+            },
+            
+            {
+                field: "receiveDate",
+                title: '<@spring.message "deliveryticketh.receiveDate"/>',
+                width: 150,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+                template: function(rowdata){
+                	if(rowdata.receiveDate != null){
+	                	var str = rowdata.receiveDate.slice(0,10)
+	                	return '<span>'+str+'</span>'
+                	}else{
+                		return '<span></span>'
+                	}
+                }
+            },
+            {
+	             field: "needByDatePo",
+	             title: '<@spring.message "deliveryticketh.needByDatepo"/>',
+	             width: 150,
+	             attributes: {style: "text-align:center;white-space: nowrap;"},
+	             headerAttributes: {style: "text-align:center"},
+	             format: "{0:yyyy-MM-dd}",
+	         },
+//             {
+//                 field: "quarantineQty",
+//                 title: '<@spring.message "editoder.bjcount"/>',
+//                 width: 120,
+//                 attributes: {style: "text-align:center;white-space: nowrap;"},
+//                 headerAttributes: {style: "text-align:center"},
+// //                 template: function(rowdata){
+// //                 	return '<a style="color:blue" href="javascript:void(0)" onclick="detail('+rowdata.ticketLineId+","+ rowdata.itemId+","+ rowdata.shipQuantity +","+ rowdata.ticketId+","+ rowdata.plantId +')"><@spring.message "editoder.detail"/></a>'
+// //                 },
+//                 //locked:true
+//             },
+            {
+                field: "lotsNum",
+                title: '<@spring.message "polinelocations.productionBatch"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"}
+            },
+            {
+                field: "packetInfo",
+                title: '<@spring.message "polinelocations.packedInfo"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+                template: function (dataItem) {
+                    var v = dataItem.packetInfo ? dataItem.packetInfo : "";
+                    $.each(SRM_PACKING_TYPE, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return v;
+                        }
+                    });
+                    return v;
+                },
+                editor: function (container, options) {
+                    $('<input name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            dataTextField: "meaning",
+                            dataValueField: "value",
+                            valuePrimitive: true,
+                            dataSource:SRM_PACKING_TYPE
+                        });
+                },
+            },
+            {
+                field: "barcodeQty",
+                title: '<@spring.message "polinelocations.barcodeQty"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"}
+            },
+            {
+                field: "",
+                title: '<@spring.message "editoder.bqinfo"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+                template: function(rowdata){
+                	if(rowdata.lineStatus === 'C'){
+                		return '';
+                	}else{                		
+	                	return '<a style="color:blue" href="javascript:void(0)" onclick="detail('+rowdata.ticketLineId+","+ rowdata.itemId+","+ rowdata.shipQuantity+","+ rowdata.ticketId+","+ rowdata.plantId +')"><@spring.message "editoder.detail"/></a>'
+                	}
+                },
+                //locked:true
+            },
+            {
+                field: "remarks",
+                title: '<@spring.message "polinelocations.remarks"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"}
+            },
+                 
+                    {
+                field: "shipDate",
+                title: '<@spring.message "deliveryticketh.shipdate"/>',
+                width: 150,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+                template: function(rowdata){
+                	if(rowdata.shipDate != null){
+	                	var str = rowdata.shipDate.slice(0,10)
+	                	return '<span>'+str+'</span>'
+                	}else{
+                		return '<span></span>'
+                	}
+                }
+            },
+                    {
+                field: "expectedDate",
+                title: '<@spring.message "deliveryticketh.expecteddate"/>',
+                width: 150,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+            {
+                field: "poNumber",
+                title: '<@spring.message "polinelocations.poNumber"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"}
+            },
+            {
+                field: "lineNum",
+                title: '<@spring.message "polinelocations.lineNumber"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"}
+            },
+            {
+                field: "shipmentNum",
+                title: '<@spring.message "polinelocations.shipmentNum"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"}
+            },
+            {
+                field: "settlementFlag",
+                title: '<@spring.message "polinelocations.settlementFlag"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+                template: function (dataItem) {
+                    var v = dataItem.settlementFlag ? dataItem.settlementFlag : "";
+                    $.each(SRM_YES_NO, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return v;
+                        }
+                    });
+                    return v;
+                },
+                editor: function (container, options) {
+                    $('<input name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            dataTextField: "meaning",
+                            dataValueField: "value",
+                            valuePrimitive: true,
+                            dataSource:SRM_YES_NO
+                        });
+                },
+            },
+            {
+                field: "creationDate",
+                title: '<@spring.message "deliveryticketh.creationDate"/>',
+                width: 150,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+            {
+                field: "printTime",
+                title: '<@spring.message "deliveryticketh.printTime"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+            
+            
+            
+//                     {
+//                 field: "ticketType",
+//                 title: '<@spring.message "deliveryticketh.tickettype"/>',
+//                 width: 120,
+//                 attributes: {style: "text-align:center;white-space: nowrap;"},
+//                 headerAttributes: {style: "text-align:center"},
+//                 template: function (dataItem) {
+//                     var v = dataItem.ticketType ? dataItem.ticketType : "";
+//                     $.each(SRM_TICKET_TYPE, function (i, n) {
+//                         if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+//                             v = n.meaning;
+//                             return v;
+//                         }
+//                     });
+//                     return v;
+//                 },
+//                 editor: function (container, options) {
+//                     $('<input name="' + options.field + '"/>')
+//                         .appendTo(container)
+//                         .kendoDropDownList({
+//                             dataTextField: "meaning",
+//                             dataValueField: "value",
+//                             valuePrimitive: true,
+//                             dataSource:SRM_TICKET_TYPE
+//                         });
+//                 }
+//             },
+                    
+            
+//             {
+//                 field: "supplierSiteName",
+//                 title: '<@spring.message "deliveryticketh.supplierSiteName"/>',
+//                 width: 120,
+//                 attributes: {style: "text-align:center;white-space: nowrap;"},
+//                 headerAttributes: {style: "text-align:center"},
+//             },
+//             {
+//                 field: "agentFullName",
+//                 title: '<@spring.message "deliveryticketh.agentFullName"/>',
+//                 width: 120,
+//                 attributes: {style: "text-align:center;white-space: nowrap;"},
+//                 headerAttributes: {style: "text-align:center"},
+//             },
+            
+            
+//             {
+//                 field: "packetQuantity",
+//                 title: '<@spring.message "polinelocations.packetQuantity"/>',
+//                 width: 120,
+//                 attributes: {style: "text-align:center;white-space: nowrap;"},
+//                 headerAttributes: {style: "text-align:center"}
+//             },
+//                     {
+//                 field: "outsideBoxQuantity",
+//                 title: '<@spring.message "polinelocations.outsideBoxQuantity"/>',
+//                 width: 120,
+//                 attributes: {style: "text-align:center;white-space: nowrap;"},
+//                 headerAttributes: {style: "text-align:center"}
+//             },
+            
+            
+            
+//             {
+//                 field: "needByDate",
+//                 title: '<@spring.message "deliveryticketh.needByDate"/>',
+//                 width: 150,
+//                 attributes: {style: "text-align:center;white-space: nowrap;"},
+//                 headerAttributes: {style: "text-align:center"},
+//             },
+//             {
+//                 field: "promisedDate",
+//                 title: '<@spring.message "deliveryticketh.promisedDate"/>',
+//                 width: 150,
+//                 attributes: {style: "text-align:center;white-space: nowrap;"},
+//                 headerAttributes: {style: "text-align:center"},
+//                 template: function(rowdata){
+//                 	if(rowdata.promisedDate != null){
+// 	                	var str = rowdata.promisedDate.slice(0,10)
+// 	                	return '<span>'+str+'</span>'
+//                 	}else{
+//                 		return '<span></span>'
+//                 	}
+//                 }
+//             },
+            
+            
+            
+            
+//             {
+//                 field: "lineLocationDesc",
+//                 title: '<@spring.message "polinelocations.lineLocationDesc"/>',
+//                 width: 120,
+//                 attributes: {style: "text-align:center;white-space: nowrap;"},
+//                 headerAttributes: {style: "text-align:center"}
+//             },      
+            
+        ],
+        editable: false
+    });
+    Hap.autoResizeGrid('#grid');
+</script>
+</body>
+</html>

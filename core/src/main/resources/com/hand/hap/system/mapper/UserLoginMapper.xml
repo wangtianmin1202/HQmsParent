@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hap.system.mapper.UserLoginMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hap.system.dto.UserLogin">
+        <result column="LOGIN_ID" property="loginId" jdbcType="DECIMAL" />
+        <result column="USER_ID" property="userId" jdbcType="DECIMAL" />
+        <result column="LOGIN_TIME" property="loginTime" jdbcType="VARCHAR" />
+        <result column="IP" property="ip" jdbcType="VARCHAR" />
+        <result column="REFERER" property="referer" jdbcType="VARCHAR" />
+        <result column="USER_AGENT" property="userAgent" jdbcType="VARCHAR" />
+        
+        <!-- 业务字段 -->
+        <result column="USER_NAME" property="userName" jdbcType="VARCHAR" />
+        <result column="EMPLOYEE_ID" property="employeeId" jdbcType="DECIMAL" />
+        <result column="EMPLOYEE_CODE" property="employeeCode" jdbcType="VARCHAR" />
+        <result column="NAME" property="name" jdbcType="VARCHAR" />
+        <result column="SUPPLIER_ID" property="supplierId" jdbcType="DECIMAL" />
+        <result column="SUPPLIER_CODE" property="supplierCode" jdbcType="VARCHAR" />
+        <result column="SUPPLIER_NAME" property="supplierName" jdbcType="VARCHAR" />
+        <result column="START_TIME" property="startTime" jdbcType="VARCHAR" />
+        <result column="END_TIME" property="endTime" jdbcType="VARCHAR" />
+        <result column="ENABLE_FLAG" property="enableFlag" jdbcType="VARCHAR" />
+    </resultMap>
+	<!-- 登录日志查询 -->
+	<select id="query" resultMap="BaseResultMap" parameterType="com.hand.hap.system.dto.UserLogin">
+		select sul.user_id,
+		       sul.login_id,
+		       sul.login_time,
+		       sul.ip,
+		       sul.referer,
+		       sul.user_agent,
+		       su.user_name,
+		       su.employee_id,
+		       he.employee_code,
+		       he.name,
+		       su.supplier_id,
+		       hs.supplier_code,
+		       hs.supplier_name
+		from sys_user_login sul
+		left join sys_user su on sul.user_id = su.user_id
+		left join hr_employee he on su.employee_id = he.employee_id 
+		left join hcs_suppliers hs on su.supplier_id = hs.supplier_id
+		where 1=1
+		<if test = "userName != null">
+			and su.user_name LIKE concat('%',concat(#{userName,jdbcType=VARCHAR},'%'))
+		</if> 
+		<if test = "startTime != null">
+			and sul.login_time &gt;= to_date(#{startTime}, 'yyyy-mm-dd hh24:mi:ss')
+		</if>
+		<if test = "endTime != null">
+			and sul.login_time &lt;= to_date(#{endTime}, 'yyyy-mm-dd hh24:mi:ss')
+		</if>
+		<if test = "employeeId != null">
+			and su.employee_id = #{employeeId}
+		</if> 
+		<if test = "supplierId != null">
+			and su.supplier_id = #{supplierId}
+		</if> 
+		order by sul.login_id desc
+	</select>
+	<!-- 员工LOV -->
+	<select id="employeeLov" resultMap="BaseResultMap" parameterType="com.hand.hap.system.dto.UserLogin">
+		select he.employee_id,
+		       he.employee_code,
+		       he.name 
+		from hr_employee he
+		where 1=1
+		<if test="employeeCode!=null">		
+			and he.employee_code LIKE concat('%',concat(#{employeeCode,jdbcType=VARCHAR},'%'))
+		</if>
+		<if test="name!=null">		
+			and he.name LIKE concat('%',concat(#{name,jdbcType=VARCHAR},'%'))
+		</if>
+		<if test="enableFlag!=null">		
+			and he.enabled_flag = #{enableFlag}
+		</if>
+	</select>
+</mapper>

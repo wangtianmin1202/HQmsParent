@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_iqc_inspection_template_l.mapper.IqcInspectionTemplateLMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_iqc_inspection_template_l.dto.IqcInspectionTemplateL">
+        <result column="LINE_ID" property="lineId" jdbcType="DECIMAL" />
+        <result column="HEADER_ID" property="headerId" jdbcType="DECIMAL" />
+        <result column="ATTRIBUTE_ID" property="attributeId" jdbcType="DECIMAL" />
+        <result column="ATTRIBUTE_TYPE" property="attributeType" jdbcType="VARCHAR" />
+        <result column="INSPECTION_ATTRIBUTE" property="inspectionAttribute" jdbcType="VARCHAR" />
+        <result column="ORDER_CODE" property="orderCode" jdbcType="DECIMAL" />
+        <result column="ENABLE_TYPE" property="enableType" jdbcType="VARCHAR" />
+        <result column="SAMPLE_PROCEDURE_TYPE" property="sampleProcedureType" jdbcType="VARCHAR" />
+        <result column="INSPECTION_LEVELS" property="inspectionLevels" jdbcType="VARCHAR" />
+        <result column="QUALITY_CHARACTER_GRADE" property="qualityCharacterGrade" jdbcType="VARCHAR" />
+        <result column="ACCEPTANCE_QUALITY_LIMIT" property="acceptanceQualityLimit" jdbcType="VARCHAR" />
+        <result column="STANDARD_TYPE" property="standardType" jdbcType="VARCHAR" />
+        <result column="TEXT_STANDRAD" property="textStandrad" jdbcType="VARCHAR" />
+        <result column="STANDRAD_FROM" property="standradFrom" jdbcType="VARCHAR" />
+        <result column="STANDRAD_TO" property="standradTo" jdbcType="VARCHAR" />
+        <result column="STANDRAD_UOM" property="standradUom" jdbcType="VARCHAR" />
+        <result column="FREQUENCY_TYPE" property="frequencyType" jdbcType="VARCHAR" />
+        <result column="FREQUENCY" property="frequency" jdbcType="DECIMAL" />
+        <result column="INSPECTION_TOOL" property="inspectionTool" jdbcType="VARCHAR" />
+        <result column="REMARK" property="remark" jdbcType="VARCHAR" />
+        <result column="ENABLE_TIME" property="enableTime" jdbcType="DATE" />
+        <result column="DISABLE_TIME" property="disableTime" jdbcType="DATE" />
+        <result column="SOURCE_TYPE" property="sourceType" jdbcType="VARCHAR" />
+        <result column="HISTORY_NUM" property="historyNum" jdbcType="DECIMAL" />
+        <result column="IS_SYNC" property="isSync" jdbcType="VARCHAR" />
+        <result column="FILL_IN_TYPE" property="fillInType" jdbcType="VARCHAR" />
+        <result column="ENABLE_FLAG" property="enableFlag" jdbcType="VARCHAR" />
+        
+        <result column="PRECISION" property="precision" jdbcType="DECIMAL" />
+        <result column="INSPECTION_METHOD" property="inspectionMethod" jdbcType="VARCHAR" />
+        
+        <result column="SAMPLE_WAY_CODE" property="sampleWayCode" jdbcType="VARCHAR" />
+        <result column="SAMPLE_WAY_ID" property="sampleWayId" jdbcType="DECIMAL" />
+        <result column="SAMPLE_TYPE" property="sampleType" jdbcType="VARCHAR" />
+        <result column="TIME_LIMIT" property="timeLimit" jdbcType="DECIMAL" />
+        <result column="SAMPLE_PLAN" property="samplePlan" jdbcType="VARCHAR" />
+    </resultMap>
+<select id="myselect" resultMap="BaseResultMap" parameterType="com.hand.hqm.hqm_iqc_inspection_template_l.dto.IqcInspectionTemplateL">
+SELECT t.header_id,
+       t.line_id,
+       t.attribute_id,
+       hice.attribute_type,
+       hice.inspection_attribute,
+       t.order_code,
+       hsm.sample_procedure_type,
+       hsm.inspection_levels,
+       hice.quality_character_grade,
+       hsm.acceptance_quality_limit,
+       hice.standard_type,
+       t.enable_type,
+       t.text_standrad,
+       t.standrad_from,
+       t.standrad_to,
+       t.standrad_uom,
+       hice.frequency_type,
+       hice.frequency,
+       hice.inspection_tool,
+       hice.remark,
+       t.enable_time,
+       t.disable_time,
+       hice.source_type,
+       t.history_num,
+       t.is_sync,
+       t.precision,
+       t.inspection_method,
+       t.sample_way_id,
+       t.fill_in_type,
+       hsm.sample_way_code,
+       hsm.sample_type,
+       t.time_limit,
+       t.sample_plan
+  FROM hqm_iqc_inspection_template_l t, hqm_inspection_attribute hice,hqm_sample_manage hsm
+ WHERE 1 = 1
+   AND t.sample_way_id = hsm.sample_way_id
+   AND t.attribute_id = hice.attribute_id
+   <if test="headerId != null">
+   AND t.header_id = #{headerId}
+   </if>
+   <if test="headerId == null">
+   AND t.header_id = -1
+   </if>
+   <if test="attributeId != null">
+   AND t.attribute_id = #{attributeId}
+   </if>
+   ORDER BY t.line_id DESC
+</select>
+<select id="reSelect" resultMap="BaseResultMap" parameterType="com.hand.hqm.hqm_iqc_inspection_template_l.dto.IqcInspectionTemplateL">
+SELECT t.header_id,
+       t.line_id,
+       t.attribute_id,
+       hice.attribute_type,
+       hice.inspection_attribute,
+       t.order_code,
+       hsm.sample_procedure_type,
+       hsm.inspection_levels,
+       hice.quality_character_grade,
+       hsm.acceptance_quality_limit,
+       hice.standard_type,
+       t.enable_type,
+       t.text_standrad,
+       t.standrad_from,
+       t.standrad_to,
+       t.standrad_uom,
+       hice.frequency_type,
+       hice.frequency,
+       hice.inspection_tool,
+       hice.remark,
+       t.enable_time,
+       t.disable_time,
+       hice.source_type,
+       t.history_num,
+       t.is_sync,
+       t.precision,
+       t.inspection_method,
+       t.sample_way_id,
+       t.fill_in_type,
+       hsm.sample_way_code,
+       hsm.sample_type,
+       t.time_limit,
+       t.sample_plan
+  FROM hqm_iqc_inspection_template_l t, hqm_inspection_attribute hice,hqm_sample_manage hsm
+ WHERE 1 = 1
+   AND t.sample_way_id = hsm.sample_way_id
+   AND t.attribute_id = hice.attribute_id
+   <if test="lineId != null">
+   AND t.line_id = #{lineId}
+   </if>
+</select>
+</mapper>

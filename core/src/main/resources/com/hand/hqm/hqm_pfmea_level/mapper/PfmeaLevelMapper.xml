@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_pfmea_level.mapper.PfmeaLevelMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_pfmea_level.dto.PfmeaLevel">
+        <result column="LEVEL_ID" property="levelId" jdbcType="DECIMAL" />
+        <result column="FMEA_LEVEL" property="fmeaLevel" jdbcType="VARCHAR" />
+        <result column="PARENT_LEVEL_ID" property="parentLevelId" jdbcType="DECIMAL" />
+        <result column="LEVEL_CODE" property="levelCode" jdbcType="VARCHAR" />
+        <result column="LEVEL_TYPE" property="levelType" jdbcType="VARCHAR" />
+        <result column="DESCRIPTION" property="description" jdbcType="VARCHAR" />
+        <result column="LEVEL_PFMEA_TYPE" property="levelPfmeaType" jdbcType="VARCHAR" /> 
+    </resultMap>
+
+
+<select id="selectParentInvalid" parameterType="com.hand.hqm.hqm_pfmea_level.dto.PfmeaLevel" resultMap="BaseResultMap">
+		       SELECT h.* 
+		  FROM HQM_PFMEA_LEVEL h  
+		         where 1=1
+         	 AND h.parent_level_id IS NULL
+         	 and  h.Level_Type =#{levelType} 
+         
+    </select>
+    
+    <!-- 顶层父级ID为空 -->
+	<select id="selectFmeaLevelByLevelCode" parameterType="java.lang.String" resultMap="BaseResultMap">
+		       SELECT h.* 
+		  FROM HQM_PFMEA_LEVEL h  
+		     where h.parent_level_id IS NULL
+		     AND h.LEVEL_CODE =#{levelCode} 
+         
+    </select>
+
+
+<select id="selectInvalidByParent" parameterType="com.hand.hqm.hqm_pfmea_level.dto.PfmeaLevel" resultMap="BaseResultMap">
+       SELECT h.* 
+		  FROM HQM_PFMEA_LEVEL h  
+       where 1=1 
+         and   h.parent_level_id =#{parentLevelId}
+    </select> 
+</mapper>

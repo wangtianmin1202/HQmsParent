@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_sample_scrapped_after.mapper.SampleScrappedAfterMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_sample_scrapped_after.dto.SampleScrappedAfter">
+        <result column="SCRAPPED_ID" property="scrappedId" jdbcType="DECIMAL" />
+        <result column="DOCUMENT_STATUS" property="documentStatus" jdbcType="VARCHAR" />
+        <result column="APPROVER" property="approver" jdbcType="DECIMAL" />
+        <result column="APPROVAL_DATE" property="approvalDate" jdbcType="DATE" />
+        <result column="APPLICANT_DOCUMENT_CODE" property="applicantDocumentCode" jdbcType="VARCHAR" />
+        <result column="DOCUMENT_TYPE" property="documentType" jdbcType="VARCHAR" />
+        
+        <result column="CREATED_NAME" property="createdName" jdbcType="VARCHAR" />
+        <result column="CREATION_DATE_COLUMN" property="creationDateColumn" jdbcType="DATE" />
+        <result column="APPROVER_NAME" property="approverName" jdbcType="VARCHAR" />
+         <result column="SAMPLE_CODE" property="sampleCode" jdbcType="VARCHAR" />       
+              
+    </resultMap>
+
+<select id="selectMaxNumber" resultMap="BaseResultMap"
+            parameterType="com.hand.hqm.hqm_sample_scrapped_after.dto.SampleScrappedAfter">
+SELECT t.applicant_document_code
+  FROM hqm_sample_scrapped t
+ WHERE 1 = 1
+   AND t.applicant_document_code LIKE concat(#{applicantDocumentCode}, '%')
+ ORDER BY t.applicant_document_code DESC
+</select>
+
+<select id="reSelect" resultMap="BaseResultMap"
+            parameterType="com.hand.hqm.hqm_sample_scrapped_after.dto.SampleScrappedAfter">
+SELECT t.*,
+       he.name         AS created_name,
+       t.creation_date AS creation_date_column,
+       hea.name        AS approver_name
+  FROM hqm_sample_scrapped t
+  JOIN sys_user su
+    ON t.created_by = su.user_id
+  JOIN hr_employee he
+    ON su.employee_id = he.employee_id
+  LEFT JOIN sys_user suap
+    ON t.approver = suap.user_id
+  LEFT JOIN hr_employee hea
+    ON suap.employee_id = hea.employee_id
+ WHERE 1 = 1
+<!--  <if test="sampleGiveDateFrom != null">
+		   AND t.sample_give_date &gt;= to_date(#{sampleGiveDateFrom},'yyyy-mm-dd hh24:mi:ss')
+</if> -->
+<if test="sampleGiveDateFrom != null or sampleGiveDateTo != null or  sampleId != null or sampleCode != null">
+ AND EXISTS (SELECT 1
+          FROM hqm_scrapped_detail hsd, hqm_sample_account hsa
+         WHERE hsd.sample_id = hsa.sample_id
+           AND hsd.scrapped_id = t.scrapped_id
+           <if test="sampleGiveDateFrom != null">
+		   AND hsa.sample_give_date &gt;= to_date(#{sampleGiveDateFrom},'yyyy-mm-dd hh24:mi:ss')
+		   </if>
+		   <if test="sampleGiveDateTo != null">
+		   AND hsa.sample_give_date &lt;= to_date(#{sampleGiveDateTo},'yyyy-mm-dd hh24:mi:ss')
+		   </if>
+		   <if test="sampleId != null">
+		   AND hsa.sample_id = #{sampleId}
+		   </if>
+		    <if test="sampleCode != null">
+     AND hsa.sample_code   LIKE concat('%',concat(#{sampleCode},'%'))
+   </if>   
+           )
+</if>
+   <if test="documentType != null">
+   AND t.document_type = #{documentType}
+   </if>
+   <if test="applicantDocumentCode != null">
+     AND t.applicant_document_code  LIKE concat('%',concat(#{applicantDocumentCode},'%'))
+   </if>
+   <if test="scrappedIds != null">
+   AND t.scrapped_id IN (${scrappedIds})
+   </if>
+   <if test="createdByColumn != null">
+   AND t.created_by = #{createdByColumn} 
+   </if>
+   <if test="approver != null">
+   AND t.approver = #{approver}
+   </if>
+   <if test="documentStatus != null">
+   AND t.document_status = #{documentStatus}
+   </if>
+   
+   ORDER BY t.creation_date DESC
+</select>
+</mapper>

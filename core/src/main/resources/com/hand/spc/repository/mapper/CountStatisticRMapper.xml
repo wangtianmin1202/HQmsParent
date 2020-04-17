@@ -1,0 +1,498 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper
+	namespace="com.hand.spc.repository.mapper.CountStatisticRMapper">
+	<!-- 可根据自己的需求，是否要使用 -->
+	<resultMap id="BaseResultMap" type="com.hand.spc.repository.dto.CountStatisticR">
+		<result column="count_statistic_id" property="countStatisticId" jdbcType="DECIMAL" />
+		<result column="tenant_id" property="tenantId" jdbcType="DECIMAL" />
+		<result column="site_id" property="siteId" jdbcType="DECIMAL" />
+		<result column="count_sample_data_id" property="countSampleDataId" jdbcType="DECIMAL" />
+		<result column="entity_code" property="entityCode" jdbcType="VARCHAR" />
+		<result column="entity_version" property="entityVersion" jdbcType="VARCHAR" />
+		<result column="subgroup_num" property="subgroupNum" jdbcType="DECIMAL" />
+		<result column="sample_value_count" property="sampleValueCount" jdbcType="DECIMAL" />
+		<result column="unqualified_quantity" property="unqualifiedQuantity" jdbcType="DECIMAL" />
+		<result column="sample_time" property="sampleTime" jdbcType="DATE" />
+		<result column="unqualified_percent" property="unqualifiedPercent" jdbcType="DECIMAL" />
+		<result column="upper_control_limit" property="upperControlLimit" jdbcType="DECIMAL" />
+		<result column="center_line" property="centerLine" jdbcType="DECIMAL" />
+		<result column="lower_control_limit" property="lowerControlLimit" jdbcType="DECIMAL" />
+		<result column="upper_spec_limit" property="upperSpecLimit" jdbcType="DECIMAL" />
+		<result column="spec_target" property="specTarget" jdbcType="DECIMAL" />
+		<result column="lower_spec_limit" property="lowerSpecLimit" jdbcType="DECIMAL" />
+		<result column="object_version_number" property="objectVersionNumber" jdbcType="DECIMAL" />
+		<result column="creation_date" property="creationDate" jdbcType="DATE" />
+		<result column="created_by" property="createdBy" jdbcType="DECIMAL" />
+		<result column="last_updated_by" property="lastUpdatedBy" jdbcType="DECIMAL" />
+		<result column="last_update_date" property="lastUpdateDate" jdbcType="DATE" />
+	</resultMap>
+
+	<resultMap id="ListCountStatisticMap" type="com.hand.spc.repository.dto.CountStatisticR">
+		<result column="count_statistic_id" property="countStatisticId" jdbcType="DECIMAL" />
+		<result column="tenant_id" property="tenantId" jdbcType="DECIMAL" />
+		<result column="site_id" property="siteId" jdbcType="DECIMAL" />
+		<result column="count_sample_data_id" property="countSampleDataId" jdbcType="DECIMAL" />
+		<result column="entity_code" property="entityCode" jdbcType="VARCHAR" />
+		<result column="entity_version" property="entityVersion" jdbcType="VARCHAR" />
+		<result column="subgroup_num" property="subgroupNum" jdbcType="DECIMAL" />
+		<result column="sample_value_count" property="sampleValueCount" jdbcType="DECIMAL" />
+		<result column="unqualified_quantity" property="unqualifiedQuantity" jdbcType="DECIMAL" />
+		<result column="sample_time" property="sampleTime" jdbcType="DATE" />
+		<result column="unqualified_percent" property="unqualifiedPercent" jdbcType="DECIMAL" />
+		<result column="upper_control_limit" property="upperControlLimit" jdbcType="DECIMAL" />
+		<result column="center_line" property="centerLine" jdbcType="DECIMAL" />
+		<result column="lower_control_limit" property="lowerControlLimit" jdbcType="DECIMAL" />
+		<result column="upper_spec_limit" property="upperSpecLimit" jdbcType="DECIMAL" />
+		<result column="spec_target" property="specTarget" jdbcType="DECIMAL" />
+		<result column="lower_spec_limit" property="lowerSpecLimit" jdbcType="DECIMAL" />
+		<result column="main_statistic_value" property="mainStatisticValue" jdbcType="DECIMAL" />
+		<result column="object_version_number" property="objectVersionNumber" jdbcType="DECIMAL" />
+	</resultMap>
+
+	<select id="listCountStatistic"
+		resultMap="ListCountStatisticMap">
+		SELECT
+		pcs.count_statistic_id,
+		pcs.tenant_id,
+		pcs.site_id,
+		pcs.count_sample_data_id,
+		pcs.entity_code,
+		pcs.entity_version,
+		pcs.subgroup_num,
+		pcs.sample_value_count,
+		pcs.unqualified_quantity,
+		pcs.sample_time,
+		pcs.unqualified_percent,
+		pcs.upper_control_limit,
+		pcs.center_line,
+		pcs.lower_control_limit,
+		pcs.upper_spec_limit,
+		pcs.spec_target,
+		pcs.lower_spec_limit,
+		CASE #{6}
+		WHEN 'nP' THEN
+		pcs.unqualified_quantity
+		WHEN 'P' THEN
+		pcs.unqualified_percent
+		WHEN 'C'
+		THEN
+		pcs.unqualified_quantity
+		WHEN 'U' THEN
+		pcs.unqualified_percent
+		END
+		main_statistic_value,
+		pcs.object_version_number
+		FROM
+		pspc_count_statistic pcs
+		WHERE
+		pcs.tenant_id = #{0}
+		AND pcs.site_id =
+		#{1}
+		AND pcs.entity_code = #{2}
+		AND pcs.entity_version = #{3}
+		AND pcs.subgroup_num &lt;= #{4}
+		AND pcs.subgroup_num &gt;= #{5}
+		ORDER BY
+		pcs.subgroup_num
+	</select>
+
+
+	<!-- <insert id="batchInsertRows" parameterType="java.util.List">
+		<foreach collection="list" item="item" index="index" separator=";">
+			INSERT INTO pspc_count_statistic
+			<trim prefix="(" suffix=")" suffixOverrides=",">
+				<if test="item.tenantId!= null">
+					tenant_id,
+				</if>
+				<if test="item.siteId!= null">
+					site_id,
+				</if>
+				<if test="item.countSampleDataId != null">
+					count_sample_data_id,
+				</if>
+				<if test="item.entityCode!= null">
+					entity_code,
+				</if>
+				<if test="item.entityVersion!= null">
+					entity_version,
+				</if>
+				<if test="item.subgroupNum!= null">
+					subgroup_num,
+				</if>
+				<if test="item.sampleValueCount!= null">
+					sample_value_count,
+				</if>
+				<if test="item.unqualifiedQuantity != null">
+					unqualified_quantity,
+				</if>
+				<if test="item.sampleTime!= null">
+					sample_time,
+				</if>
+				<if test="item.unqualifiedPercent!= null">
+					unqualified_percent,
+				</if>
+				<if test="item.upperControlLimit!= null">
+					upper_control_limit,
+				</if>
+				<if test="item.centerLine!= null">
+					center_line,
+				</if>
+				<if test="item.lowerControlLimit != null">
+					lower_control_limit,
+				</if>
+				<if test="item.upperSpecLimit!= null">
+					upper_spec_limit,
+				</if>
+				<if test="item.specTarget!= null">
+					spec_target,
+				</if>
+				<if test="item.lowerSpecLimit!= null">
+					lower_spec_limit
+				</if>
+			</trim>
+
+			<trim prefix="values (" suffix=")" suffixOverrides=",">
+				<if test="item.tenantId!= null">
+					#{item.tenantId},
+				</if>
+				<if test="item.siteId!= null">
+					#{item.siteId},
+				</if>
+				<if test="item.countSampleDataId != null">
+					#{item.countSampleDataId},
+				</if>
+				<if test="item.entityCode!= null">
+					#{item.entityCode},
+				</if>
+				<if test="item.entityVersion!= null">
+					#{item.entityVersion},
+				</if>
+				<if test="item.subgroupNum!= null">
+					#{item.subgroupNum},
+				</if>
+				<if test="item.sampleValueCount!= null">
+					#{item.sampleValueCount},
+				</if>
+				<if test="item.unqualifiedQuantity != null">
+					#{item.unqualifiedQuantity},
+				</if>
+				<if test="item.sampleTime!= null">
+					#{item.sampleTime},
+				</if>
+				<if test="item.unqualifiedPercent!= null">
+					#{item.unqualifiedPercent},
+				</if>
+				<if test="item.upperControlLimit!= null">
+					#{item.upperControlLimit},
+				</if>
+				<if test="item.centerLine!= null">
+					#{item.centerLine},
+				</if>
+				<if test="item.lowerControlLimit != null">
+					#{item.lowerControlLimit},
+				</if>
+				<if test="item.upperSpecLimit!= null">
+					#{item.upperSpecLimit},
+				</if>
+				<if test="item.specTarget!= null">
+					#{item.specTarget},
+				</if>
+				<if test="item.lowerSpecLimit!= null">
+					#{item.lowerSpecLimit}
+				</if>
+			</trim>
+		</foreach>
+		;
+	</insert> -->
+	
+	
+	<!-- <insert id="batchInsertRows" parameterType="java.util.List">
+        INSERT INTO pspc_count_statistic (
+        tenant_id,
+        site_id,
+        count_sample_data_id,
+        entity_code,
+        entity_version,
+        subgroup_num,
+        sample_value_count,
+        unqualified_quantity,
+        sample_time,
+        unqualified_percent,
+        upper_control_limit,
+        center_line,
+        lower_control_limit,
+        upper_spec_limit,
+        spec_target,
+        lower_spec_limit
+        )
+        VALUES
+        <foreach collection="list" item="item" index="index" separator=",">
+           (
+            #{item.tenantId},
+            #{item.siteId},
+            #{item.countSampleDataId},
+            #{item.entityCode},
+            #{item.entityVersion},
+            #{item.subgroupNum},
+            #{item.sampleValueCount},
+            #{item.unqualifiedQuantity},
+            #{item.sampleTime},
+            #{item.unqualifiedPercent},
+            #{item.upperControlLimit},
+            #{item.centerLine},
+            #{item.lowerControlLimit},
+            #{item.upperSpecLimit},
+            #{item.specTarget},
+            #{item.lowerSpecLimit}
+              )
+        </foreach>
+    </insert> -->
+    
+    
+    <insert id="batchInsertRows" parameterType="java.util.List" ><!--oracle写法 -->
+	    <foreach collection="list" item="item" index="index" open="begin" close=";end;" separator=";">
+	    insert into pspc_count_statistic (
+        tenant_id,
+        site_id,
+        count_sample_data_id,
+        entity_code,
+        entity_version,
+        subgroup_num,
+        sample_value_count,
+        unqualified_quantity,
+        sample_time,
+        unqualified_percent,
+        upper_control_limit,
+        center_line,
+        lower_control_limit,
+        upper_spec_limit,
+        spec_target,
+        lower_spec_limit
+        )
+	    values
+	    (
+            #{item.tenantId},
+            #{item.siteId},
+            #{item.countSampleDataId},
+            #{item.entityCode},
+            #{item.entityVersion},
+            #{item.subgroupNum},
+            #{item.sampleValueCount},
+            #{item.unqualifiedQuantity},
+            #{item.sampleTime},
+            #{item.unqualifiedPercent},
+            #{item.upperControlLimit},
+            #{item.centerLine},
+            #{item.lowerControlLimit},
+            #{item.upperSpecLimit},
+            #{item.specTarget},
+            #{item.lowerSpecLimit}
+         )
+	    </foreach>
+    </insert>
+
+	<select id="queryMaxSubgroupNum" resultType="java.lang.Long">
+		SELECT
+		max(pcs.subgroup_num)
+		FROM
+		pspc_count_statistic pcs
+		WHERE
+		pcs.tenant_id =
+		#{tenantId}
+		AND pcs.site_id = #{siteId}
+		AND pcs.entity_code =
+		#{entityCode}
+		AND pcs.entity_version = #{entityVersion}
+		AND
+		pcs.sample_time &gt;= #{startDate}
+		AND pcs.sample_time &lt;= #{endDate}
+	</select>
+
+	<resultMap id="ListPlatoCountMap"
+		type="com.hand.spc.repository.dto.PlatoCountVO">
+		<result column="count_statistic_id" property="countStatisticId"
+			jdbcType="DECIMAL" />
+		<result column="count_sample_data_id"
+			property="countSampleDataId" jdbcType="DECIMAL" />
+		<result column="tenant_id" property="tenantId"
+			jdbcType="DECIMAL" />
+		<result column="site_id" property="siteId" jdbcType="DECIMAL" />
+		<result column="sample_time" property="sampleTime"
+			jdbcType="DATE" />
+		<result column="sample_value_count" property="sampleValueCount"
+			jdbcType="DECIMAL" />
+		<result column="unqualified_quantity"
+			property="unqualifiedQuantity" jdbcType="DECIMAL" />
+		<result column="unqualified_percent"
+			property="unqualifiedPercent" jdbcType="DECIMAL" />
+		<collection property="platoCountSampleDataClassifyDTOList"
+			ofType="com.hand.spc.repository.dto.PlatoCountSampleDataClassifyVO">
+			<result column="classify_desc" property="classifyDesc"
+				jdbcType="VARCHAR" />
+			<result column="classify_count_value"
+				property="classifyCountValue" jdbcType="DECIMAL" />
+		</collection>
+		<collection property="platoCountSampleDataExtendDTOList"
+			ofType="com.hand.spc.repository.dto.PlatoCountSampleDataExtendVO">
+			<result column="extend_attribute" property="extendAttribute"
+				jdbcType="VARCHAR" />
+			<result column="extend_value" property="extendValue"
+				jdbcType="DECIMAL" />
+		</collection>
+	</resultMap>
+
+	<select id="listPlatoCount"
+		parameterType="com.hand.spc.repository.dto.CountStatisticVO"
+		resultMap="ListPlatoCountMap">
+		SELECT
+		pcs.count_statistic_id,
+		pcs.count_sample_data_id,
+		pcs.tenant_id,
+		pcs.site_id,
+		pcs.sample_time,
+		pcs.sample_value_count,
+		pcs.unqualified_quantity,
+		pcs.unqualified_percent,
+		pcy.description as
+		classify_desc,
+		pcsdc.classify_count_value,
+		pcsde.extend_attribute,
+		pcsde.extend_value
+		FROM
+		pspc_count_statistic pcs
+		LEFT JOIN
+		pspc_count_sample_data_classify pcsdc ON
+		pcsdc.count_sample_data_id =
+		pcs.count_sample_data_id
+		LEFT JOIN pspc_classify pcy ON pcy.classify_id
+		= pcsdc.classify_id
+		LEFT JOIN pspc_count_sample_data_extend pcsde ON
+		pcsde.count_sample_data_id = pcs.count_sample_data_id
+		WHERE
+		pcs.tenant_id = #{tenantId,jdbcType=DECIMAL}
+		AND pcs.site_id =
+		#{siteId,jdbcType=DECIMAL}
+		AND pcs.entity_code = #{entityCode}
+		AND
+		pcs.entity_version = #{entityVersion}
+		<if test="maxSubgroupNum > 0">
+			AND pcs.subgroup_num &gt;= #{minSubgroupNum}
+			AND
+			pcs.subgroup_num &lt;= #{maxSubgroupNum}
+		</if>
+		<if test="startDate!=null">
+			AND pcs.sample_time &gt;= #{startDate}
+		</if>
+		<if test="endDate!=null">
+			AND pcs.sample_time &lt;= #{endDate}
+		</if>
+		ORDER BY
+		pcs.subgroup_num,
+		pcs.sample_time
+	</select>
+
+	<resultMap id="ListSeCountPointDataMap"
+		type="com.hand.spc.repository.dto.SeCountPointDataDTO">
+		<result column="count_statistic_id" property="countStatisticId"
+			jdbcType="DECIMAL" />
+		<result column="count_sample_data_id"
+			property="countSampleDataId" jdbcType="DECIMAL" />
+		<result column="tenant_id" property="tenantId"
+			jdbcType="DECIMAL" />
+		<result column="site_id" property="siteId" jdbcType="DECIMAL" />
+		<result column="count_sample_data_id"
+			property="countSampleDataId" jdbcType="DECIMAL" />
+		<result column="subgroup_num" property="subgroupNum"
+			jdbcType="DECIMAL" />
+		<result column="sample_time" property="sampleTime"
+			jdbcType="DATE" />
+		<result column="sample_value_count" property="sampleValueCount"
+			jdbcType="DECIMAL" />
+		<result column="unqualified_quantity"
+			property="unqualifiedQuantity" jdbcType="DECIMAL" />
+		<result column="unqualified_percent"
+			property="unqualifiedPercent" jdbcType="DECIMAL" />
+		<result column="upper_control_limit"
+			property="upperControlLimit" jdbcType="DECIMAL" />
+		<result column="center_line" property="centerLine"
+			jdbcType="DECIMAL" />
+		<result column="lower_control_limit"
+			property="lowerControlLimit" jdbcType="DECIMAL" />
+		<result column="upper_spec_limit" property="upperSpecLimit"
+			jdbcType="DECIMAL" />
+		<result column="spec_target" property="specTarget"
+			jdbcType="DECIMAL" />
+		<result column="lower_spec_limit" property="lowerSpecLimit"
+			jdbcType="DECIMAL" />
+
+		<collection property="seCountSampleDataClassifyDTOList"
+			ofType="com.hand.spc.repository.dto.SeCountSampleDataClassifyVO">
+			<result column="classify_desc" property="classifyDesc"
+				jdbcType="VARCHAR" />
+			<result column="classify_count_value"
+				property="classifyCountValue" jdbcType="DECIMAL" />
+		</collection>
+		<collection property="seCountSampleDataExtendDTOList"
+			ofType="com.hand.spc.repository.dto.SeCountSampleDataExtendVO">
+			<result column="extend_attribute" property="extendAttribute"
+				jdbcType="VARCHAR" />
+			<result column="extend_value" property="extendValue"
+				jdbcType="DECIMAL" />
+		</collection>
+	</resultMap>
+
+	<select id="listSECount"
+		parameterType="com.hand.spc.repository.dto.CountStatisticVO"
+		resultMap="ListSeCountPointDataMap">
+		SELECT
+		pcs.count_statistic_id,
+		pcs.count_sample_data_id,
+		pcs.tenant_id,
+		pcs.site_id,
+		pcs.sample_time,
+		pcs.sample_value_count,
+		pcs.unqualified_quantity,
+		pcs.unqualified_percent,
+		pcs.upper_control_limit,
+		pcs.center_line,
+		pcs.lower_control_limit,
+		pcs.upper_spec_limit,
+		pcs.spec_target,
+		pcs.lower_spec_limit,
+		pcy.description as classify_desc,
+		pcsdc.classify_count_value,
+		pcsde.extend_attribute,
+		pcsde.extend_value
+		FROM
+		pspc_count_statistic pcs
+		LEFT JOIN pspc_count_sample_data_classify pcsdc ON
+		pcsdc.count_sample_data_id = pcs.count_sample_data_id
+		LEFT JOIN
+		pspc_classify pcy ON pcy.classify_id = pcsdc.classify_id
+		LEFT JOIN
+		pspc_count_sample_data_extend pcsde ON
+		pcsde.count_sample_data_id =
+		pcs.count_sample_data_id
+		WHERE
+		pcs.tenant_id =
+		#{tenantId,jdbcType=DECIMAL}
+		AND pcs.site_id =
+		#{siteId,jdbcType=DECIMAL}
+		AND pcs.entity_code = #{entityCode}
+		AND
+		pcs.entity_version = #{entityVersion}
+		AND pcs.subgroup_num &gt;=
+		#{minSubgroupNum}
+		AND pcs.subgroup_num &lt;= #{maxSubgroupNum}
+		<if test="startDate!=null">
+			AND pcs.sample_time &gt;= #{startDate}
+		</if>
+		<if test="endDate!=null">
+			AND pcs.sample_time &lt;= #{endDate}
+		</if>
+		ORDER BY
+		pcs.subgroup_num,
+		pcs.sample_time
+	</select>
+</mapper>

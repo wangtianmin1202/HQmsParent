@@ -1,0 +1,634 @@
+<#include "../include/header.html">
+<script src="${base.contextPath}/common/code?SRM_TICKET_STATUS=SRM_TICKET_STATUS"></script>
+<script src="${base.contextPath}/common/code?SRM_TICKET_STATUS_NP=SRM_TICKET_STATUS_NP"></script>
+<script src="${base.contextPath}/common/code?SRM_TICKET_TYPE=SRM_TICKET_TYPE"></script>
+<script src="${base.contextPath}/lib/bootstrap-3.3.7/js/bootstrap.min.js"></script>
+<script src="${base.contextPath}/lib/prints/doc_print.js" type="text/javascript" charset="UTF-8"></script>
+<script type="text/javascript">
+    var viewModel = Hap.createGridViewModel("#grid");
+    var supplierId = "";
+	var supplierName = "";
+    /* 页面初始化查询供应商id */
+    $(document).ready(function(){
+    	$.ajax({
+    		url:"${base.contextPath}/hcs/supplier/onhand/quantities/querySupplier",
+    		type: "POST",
+    		contentType: "application/json",
+    		success: function(data){
+    			if(data.success){
+    				if(data.rows[0] != null){
+    					supplierId = data.rows[0].supplierId;
+    					supplierName = data.rows[0].supplierName;
+    					if(supplierId == null){
+    						//$("#print").hide()
+       						$("#delivery").hide()
+       						$("#cancel").hide()
+       					}
+    				}
+    			}
+    		}
+    	})
+    })
+    var headerId;
+    //打印
+    viewModel.print = function(){
+    	var grid = $("#grid").data("kendoGrid");
+    	var checked = grid.selectedDataItems();
+    	var len = checked.length;
+    	if(len === 0){
+    		kendo.ui.showInfoDialog({
+    			title: '<@spring.message "hap.tip.info"/>',
+    			message:'<@spring.message "hap.tip.selectrow"/>'
+    		})
+    		return;
+    	}
+    	headerId = checked[0].ticketId;
+    	
+    	var jsonInfo = {
+    			'ticketId':checked[0].ticketId
+    	}
+    	$.ajax({
+			url:"${base.contextPath}/hcs/delivery/ticket/h/checkPrint",
+			type:"POST",
+			data: jsonInfo,
+			dataType: "json",
+			success: function (data){
+				if(data.success){
+					if(checked[0].printTime>0){
+			    		kendo.ui.showConfirmDialog({
+			        		title:'<@spring.message "hap.tip.info"/>',
+			        		message: '<@spring.message "error.srm_purchase_0013"/>'
+			        	}).done(function(e){
+			        		if(e.button=='OK'){
+			        			openPirnt()
+			        		}
+			        	})
+			    	}else{
+			    		kendo.ui.showConfirmDialog({
+			        		title: '<@spring.message "hap.tip.info"/>',
+			        		message: '<@spring.message "error.srm_purchase_0034"/>'
+			        	}).done(function(e){
+			        		if(e.button=='OK'){
+			        			openPirnt()
+			        		}
+			        	})
+			    	}
+				}else{
+					kendo.ui.showErrorDialog({
+						title: '<@spring.message "hap.error"/>',
+		    			message: data.message
+		    		})
+				}
+			}
+		})
+    	
+    	
+    }
+    function openPirnt(){
+    	var grid = $("#grid").data("kendoGrid");
+    	var checked = grid.selectedDataItems();
+    	var jsonData = {
+				"ticketId" : checked[0].ticketId,
+				"printTime" : nvl(checked[0].printTime,0)
+		}
+		$.ajax({
+			url:"${base.contextPath}/hcs/delivery/ticket/h/updatePrintTime",
+			type:"POST",
+			data: jsonData,
+			dataType: "json",
+			success: function (data){
+				if(data.success){
+		    		viewModel.query();
+				}else{
+					kendo.ui.showErrorDialog({
+						title: '<@spring.message "hap.error"/>',
+		    			message: data.message
+		    		})
+				}
+			}
+		})
+    	var dialog = $("#printWindow").kendoWindow({
+            width: 1200,
+            height: 700,
+            title: '送货单打印',
+            visible: false,
+            iframe: true,
+            modal: true,
+            content: 'printModel.html?'
+        }).data("kendoWindow");
+        dialog.center().open();
+    }
+    //发货
+    viewModel.delivery = function(){
+    	var grid = $("#grid").data("kendoGrid");
+    	var checked = grid.selectedDataItems();
+    	var len = checked.length;
+    	if(len === 0){
+    		kendo.ui.showInfoDialog({
+    			title: '<@spring.message "hap.tip.info"/>',
+    			message: '<@spring.message "hap.tip.selectrow"/>'
+    		})
+    		return;
+    	}
+    	if(checked[0].status === "N"){
+    		kendo.ui.showInfoDialog({
+    			title: '<@spring.message "hap.tip.info"/>',
+    			message: '<@spring.message "error.srm_purchase_0014"/>'
+    		})
+    		return;
+    	}else if(checked[0].status === "S"){
+    		kendo.ui.showInfoDialog({
+    			title: '<@spring.message "hap.tip.info"/>',
+    			message: '<@spring.message "error.srm_purchase_0015"/>'
+    		})
+    		return;
+    	}else if(checked[0].status === "C"){
+    		kendo.ui.showInfoDialog({
+    			title: '<@spring.message "hap.tip.info"/>',
+    			message:'<@spring.message "error.srm_purchase_0016"/>'
+    		})
+    		return;
+    	}else if(checked[0].status === "P"){
+    		kendo.ui.showConfirmDialog({
+        		title: '<@spring.message "hap.tip.info"/>',
+        		message: '<@spring.message "error.srm_purchase_0017"/>'
+        	}).done(function(e){
+        		if(e.button=='OK'){
+        			var jsonData = {
+        					"ticketId" : checked[0].ticketId
+        			}
+        			$.ajax({
+        				url:"${base.contextPath}/hcs/delivery/ticket/h/delivery",
+        				type:"POST",
+        				data: jsonData,
+        				dataType: "json",
+        				success: function (data){
+        					if(data.success){
+        			    		viewModel.query();
+        			    		Hap.showToast({
+        	            			type:'success',
+        	            			"positionClass": "toast-bottom-right",
+        	            			message:'<@spring.message "hap.tip.success"/>',
+        	            			hideDuration:10*1000
+        	            		})	
+        					}else{
+        						kendo.ui.showErrorDialog({
+        							title: '<@spring.message "hap.error"/>',
+        			    			message: data.message
+        			    		})
+        					}
+        				}
+        			}) 
+        		}
+        	})
+    	}
+    }
+    //取消送货单
+    viewModel.cancel = function(){
+    	var grid = $("#grid").data("kendoGrid");
+    	var checked = grid.selectedDataItems();
+    	var len = checked.length;
+    	if(len === 0){
+    		kendo.ui.showInfoDialog({
+    			title: '<@spring.message "hap.tip.info"/>',
+    			message: '<@spring.message "hap.tip.selectrow"/>'
+    		})
+    		return;
+    	}
+    	if(checked[0].status === "P"){
+    		kendo.ui.showConfirmDialog({
+        		title: '<@spring.message "hap.tip.info"/>',
+        		message: '<@spring.message "error.srm_purchase_0021"/>'
+        	}).done(function(e){
+        		if(e.button=='OK'){
+        			var jsonData = {
+        					"ticketId" : checked[0].ticketId
+        			}
+        			cancelFunction(jsonData)
+        		}
+        	})
+    	}else if(checked[0].status === "N"){
+    		kendo.ui.showConfirmDialog({
+        		title: '<@spring.message "hap.tip.info"/>',
+        		message: '<@spring.message "error.srm_purchase_0018"/>'
+        	}).done(function(e){
+        		if(e.button=='OK'){
+        			var jsonData = {
+        					"ticketId" : checked[0].ticketId
+        			}
+        			cancelFunction(jsonData)
+        		}
+        	})
+    	}else if(checked[0].status === "S"){
+    		kendo.ui.showConfirmDialog({
+        		title:'<@spring.message "hap.tip.info"/>',
+        		message: '<@spring.message "error.srm_purchase_0019"/>'
+        	}).done(function(e){
+        		if(e.button=='OK'){
+        			var jsonData = {
+        					"ticketId" : checked[0].ticketId
+        			}
+        			cancelFunction(jsonData)
+        		}
+        	})
+    	}else if(checked[0].status === "C"){
+    		kendo.ui.showInfoDialog({
+    			title: '<@spring.message "hap.tip.info"/>',
+    			message:'<@spring.message "error.srm_purchase_0020"/>'
+    		})
+    		return;
+    	}
+    }
+    //取消送货单
+    function cancelFunction(jsonData){
+    	$.ajax({
+			url:"${base.contextPath}/hcs/delivery/ticket/h/cancel",
+			type:"POST",
+			data: jsonData,
+			dataType: "json",
+			success: function (data){
+				if(data.success){
+		    		viewModel.query();
+		    		Hap.showToast({
+            			type:'success',
+            			"positionClass": "toast-bottom-right",
+            			message:'<@spring.message "hap.tip.success"/>',
+            			hideDuration:10*1000
+            		})	
+				}else{
+					kendo.ui.showErrorDialog({
+						title: '<@spring.message "hap.error"/>',
+		    			message: data.message
+		    		})
+				}
+			}
+		}) 
+    }
+    var parentData = [];
+    var lineData;
+    function editorDelivery(id){
+    	var headData = {
+    			"ticketId" : id
+    	}
+    	parentData = [{
+    		"enableFlag" : 'F',
+    		"id" : id
+    	}]
+       		$.ajax({
+    	   		url:"${base.contextPath}/hcs/delivery/ticket/l/queryByHeadId",
+    	   		type: "POST",
+    	   		data: headData,
+    	   		dataType: "json",
+    	   		success: function(data){
+    	   			if(data.success){
+    	   			    lineData  = data.rows;
+    	   				var dialog = $("#LineWindow").kendoWindow({
+    	   					actions: ["Close"],
+    	   					width: 1500,
+    	   					height: 650,
+    	   					title: '<@spring.message "srm.purchase.deliveryticketedit"/>',
+    	   					visible: false,
+    	   					iframe: true,
+    	   					modal: true,
+    	   					content: 'edit_order.html'
+    	   				}).data("kendoWindow");
+    	   				dialog.center().open();
+    	   			}else{
+    	   				kendo.ui.showErrorDialog({
+    							title: '<@spring.message "hap.tip.info"/>',
+    			    			message: data.message
+    		    		})
+    		    		return;
+    	   		 }
+    	   		}
+    	   	})
+    
+    }
+    function checkStr(str){
+		if(str == null || str === '' ||typeof(str) == "undefined"){
+    		return false;
+    	}
+		return true;
+    }
+    var parentJson = {};
+</script>
+<body>
+<div id="bindWindow"></div>
+<div id="LineWindow"></div>
+<div id="printWindow"></div>
+<div id="page-content">
+		<div class="pull-left" id="toolbar-btn" style="padding-bottom:10px;">
+		<span id="print" class="btn btn-success k-grid-save-changes" data-bind="click:print"  style="float:left;margin-right:5px;"><i class="fa fa-print" style="margin-right:3px;"></i><@spring.message "hap.print"/></span>
+			<span id="delivery" class="btn btn-primary fa fa-share k-grid-add" style="float:left;margin-right:5px;" data-bind="click:delivery"><@spring.message "deliveryticketh.ship"/></span>
+			<span id="cancel"  data-bind="click:cancel" class="btn btn-danger" style="float:left;margin-right:5px"><@spring.message "deliveryticketh.cancelticket"/></span>
+			<span class="btn btn-primary k-grid-excel" style="float:left;margin-right:5px;" data-bind="click:exportExcel">
+    		<i class="fa fa-file-excel-o" style="margin-right:3px"></i><@spring.message "srm.exportexcel"/></span>	        
+	    </div>
+   		<script>kendo.bind($('#toolbar-btn'), viewModel);</script>
+			    <div id="queryPanel" class="pull-right" style="margin-right:5px;padding-bottom:10px;">
+			        <div class="k-query-simple" id="query-form">
+			        		<!-- 送货单号 -->
+			                <input type="text" data-role="maskedtextbox" style="width:140px;margin-right:5px;" placeholder='<@spring.message "deliveryticketh.ticketNumber"/>'
+			                   data-bind="value:model.ticketNumber" class="k-textbox">
+			               
+				            <!--  送货单状态 -->
+			                <input id="status" style="width:100px;margin-right:5px;" placeholder='<@spring.message "deliveryticketh.status"/>'
+			                   data-bind="value:model.status">     
+			                <script>
+						                   $("#status").kendoComboBox({
+							               	    dataTextField: "meaning",
+							               	    dataValueField: "value",
+							               	    valuePrimitive: true,
+							               	    dataSource: SRM_TICKET_STATUS_NP
+							               	});
+						                   
+				            </script> 
+			        		
+			        </div>
+			        <script>kendo.bind($('#query-form'), viewModel);</script>
+			        <div class="k-query-detail" id="query-form2">
+			            <div class="rows">
+<!-- 			            	  送货单类型 -->
+<!-- 			                <input id="ticketType" style="width:150px;margin-right:5px;" placeholder='<@spring.message "deliveryticketh.ticketType"/>' -->
+<!-- 			                   data-bind="value:model.ticketType">      -->
+<!-- 			                <script> -->
+<!-- // 						                   $("#ticketType").kendoComboBox({ -->
+<!-- // 							               	    dataTextField: "meaning", -->
+<!-- // 							               	    dataValueField: "value", -->
+<!-- // 							               	    valuePrimitive: true, -->
+<!-- // 							               	    dataSource: SRM_TICKET_TYPE -->
+<!-- // 							               	}); -->
+						                   
+<!-- 				            </script>  -->
+				             <!-- 收获组织 -->
+<!-- 					            <input  id="plantLov" style="margin-right:5px" placeholder="<@spring.message 'polinelocations.plant'/>" data-bind="value:model.plantId" > -->
+					            <script>
+// 					                	$("#plantLov").kendoLov($.extend
+// 					                	    (<@lov"LOV_PLANT_BY_USER"/>, {
+// 					                	        textField: 'plantName',
+// 					                	        valueField:'plantId',
+// 					                	        query: function(e){
+// 					                	        	e.param['supplierId'] = supplierId;
+// 					                	        	e.param['enableFlag'] = 'Y';
+// 					                	        }
+// 					                	}));
+					            </script> 
+				            <!-- 供应商名称 -->
+				            <input  id="supplierLov" style="margin-right:5px" placeholder="<@spring.message 'polinelocations.supplierId'/>" data-bind="value:model.supplierId" >
+				            <script>
+				                	$("#supplierLov").kendoLov($.extend
+				                	    (<@lov"LOV_SUPPLIER_SRM"/>, {
+				                	        textField: 'supplierCode',
+				                	        valueField:'supplierId',
+				                	        query: function(e){
+				                	        	e.param['supplierId'] = supplierId;
+				                	        }
+				                	}));
+				            </script>
+				        </div>
+				        <div class="rows" style="margin-top:1%">
+			            	<!--   发货日期从 -->
+				            <input type="text" data-role="datepicker" style="width:200px;margin-right:5px;" placeholder='<@spring.message "deliveryticketh.shipStartDate"/>'
+					                   data-bind="value:model.shipStartDate" class="datepicker">
+				            <!-- 发货日期至 -->
+				            <input type="text" data-role="datepicker" style="width:200px;margin-right:5px;" placeholder='<@spring.message "deliveryticketh.shipEndDate"/>'
+				            data-bind="value:model.shipEndDate" class="datepicker">  
+				        </div>
+				        <div class="rows" style="margin-top:1%">
+			            	<!--   预计到货时间从 -->
+				            <input type="text" data-role="datetimepicker" style="width:200px;margin-right:5px;" placeholder='<@spring.message "deliveryticketh.expectedStartTime"/>'
+					                   data-bind="value:model.expectedStartTime" class="datetimepicker">
+				            <!-- 预计到货时间至 -->
+				            <input type="text" data-role="datetimepicker" style="width:200px;margin-right:5px;" placeholder='<@spring.message "deliveryticketh.expectedEndTime"/>'
+				            data-bind="value:model.expectedEndTime" class="datetimepicker">  
+				        </div>
+				        <div class="rows" style="margin-top:1%">
+			            	<!--   创建时间从 -->
+				            <input type="text" data-role="datetimepicker" style="width:200px;margin-right:5px;" placeholder='<@spring.message "deliveryticketh.startTime"/>'
+					                   data-bind="value:model.startTime" class="datetimepicker">
+				            <!-- 创建时间至 -->
+				            <input type="text" data-role="datetimepicker" style="width:200px;margin-right:5px;" placeholder='<@spring.message "deliveryticketh.endTime"/>'
+				            data-bind="value:model.endTime" class="datetimepicker">  
+				        </div>
+			        </div>
+			        <script>kendo.bind($('#query-form2'), viewModel);</script>
+			         <div style="clear:both"></div>
+			    </div>
+			    <div style="clear:both">
+			        <div id="grid"></div>
+			    </div>
+</div>
+<script type="text/javascript">
+$('#queryPanel').kendoQueryPanel({
+    queryFunction: function () {
+        viewModel.query();
+    },
+    resetFunction: function () {
+        viewModel.reset();
+        window.parent.viewModel.model.set("purchaseGroup",'')
+    }
+});
+    Hap.initEnterQuery('#query-form', viewModel.query);
+    var BaseUrl = _basePath;
+    dataSource = new kendo.data.DataSource({
+        transport: {
+            read: {
+                url: BaseUrl + "/hcs/delivery/ticket/h/queryData",
+                type: "POST",
+                dataType: "json"
+            },
+            parameterMap: function (options, type) {
+                if (type !== "read" && options.models) {
+                    var datas = Hap.prepareSubmitParameter(options, type)
+                    return kendo.stringify(datas);
+                } else if (type === "read") {
+                	if(checkStr(window.parent.ticketNumber)){
+                		viewModel.model.ticketNumber = window.parent.ticketNumber;
+                	} 
+                	viewModel.model.queryFlag = 'E'
+                	viewModel.model.purchaseGroup = window.parent.viewModel.model.purchaseGroup;
+                    return Hap.prepareQueryParameter(viewModel.model.toJSON(), options)
+                }
+            }
+        },
+        batch: true,
+        serverPaging: true,
+        pageSize: 20,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+                id: "ticketId",
+                fields: {}
+            }
+        }
+    });
+
+    $("#grid").kendoGrid({
+    	excel: {
+    		fileName:"送货单编辑-主界面.xlsx",
+    		filterable: true,
+    	},
+    	excelExport: function(e){
+    		var rows = e.workbook.sheets[0].rows;
+    		var datas = e.data;
+    		
+    		for(var i=1;i<rows.length; i++){
+    			rows[i].cells[1].value = Hap.getCodeMeaning(SRM_TICKET_STATUS,datas[i-1].status);
+//     			rows[i].cells[2].value = Hap.getCodeMeaning(SRM_TICKET_TYPE,datas[i-1].ticketType);
+    		}
+    	},
+        dataSource: dataSource,
+        resizable: true,
+        scrollable: true,
+        navigatable: false,
+        sortable:true,
+        selectable: 'rowbox',
+        dataBound: function () {
+            if (parent.autoResizeIframe) {
+                parent.autoResizeIframe('${RequestParameters.functionCode!}')
+            }
+        },
+        pageable: {
+            pageSizes: [5, 10, 20, 50],
+            refresh: true,
+            buttonCount: 5
+        },
+        columns: [
+                    {
+                field: "ticketNumber",
+                title: '<@spring.message "deliveryticketh.ticketnumber"/>',
+                width: 200,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+                template: function(rowdata){
+                	return '<a href="javascript:void(0)" style="color:blue" onclick="editorDelivery('+rowdata.ticketId+')">'+rowdata.ticketNumber+'</a>'
+                },
+                locked:true
+            },
+            {
+                field: "status",
+                title: '<@spring.message "deliveryticketh.status"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+                template: function (dataItem) {
+                    var v = dataItem.status ? dataItem.status : "";
+                    $.each(SRM_TICKET_STATUS, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return v;
+                        }
+                    });
+                    return v;
+                },
+                editor: function (container, options) {
+                    $('<input name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            dataTextField: "meaning",
+                            dataValueField: "value",
+                            valuePrimitive: true,
+                            dataSource:SRM_TICKET_STATUS
+                        });
+                }
+            },
+//                     {
+//                 field: "ticketType",
+//                 title: '<@spring.message "deliveryticketh.tickettype"/>',
+//                 width: 120,
+//                 attributes: {style: "text-align:center;white-space: nowrap;"},
+//                 headerAttributes: {style: "text-align:center"},
+//                 template: function (dataItem) {
+//                     var v = dataItem.ticketType ? dataItem.ticketType : "";
+//                     $.each(SRM_TICKET_TYPE, function (i, n) {
+//                         if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+//                             v = n.meaning;
+//                             return v;
+//                         }
+//                     });
+//                     return v;
+//                 },
+//                 editor: function (container, options) {
+//                     $('<input name="' + options.field + '"/>')
+//                         .appendTo(container)
+//                         .kendoDropDownList({
+//                             dataTextField: "meaning",
+//                             dataValueField: "value",
+//                             valuePrimitive: true,
+//                             dataSource:SRM_TICKET_TYPE
+//                         });
+//                 }
+//             },
+                    {
+                field: "plantName",
+                title: '<@spring.message "deliveryticketh.plantName"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+                 
+                    {
+                field: "shipDate",
+                title: '<@spring.message "deliveryticketh.shipdate"/>',
+                width: 150,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+                template: function(rowdata){
+                	if(rowdata.shipDate != null){
+	                	var str = rowdata.shipDate.slice(0,10)
+	                	return '<span>'+str+'</span>'
+                	}else{
+                		return '<span></span>'
+                	}
+                } 
+            },
+                    {
+                field: "expectedDate",
+                title: '<@spring.message "deliveryticketh.expecteddate"/>',
+                width: 200,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+            {
+                field: "supplierCode",
+                title: '<@spring.message "deliveryticketh.supplierCode"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+            {
+                field: "supplierName",
+                title: '<@spring.message "deliveryticketh.supplierName"/>',
+                width: 300,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+//             {
+//                 field: "supplierSiteName",
+//                 title: '<@spring.message "deliveryticketh.supplierSiteName"/>',
+//                 width: 120,
+//                 attributes: {style: "text-align:center;white-space: nowrap;"},
+//                 headerAttributes: {style: "text-align:center"},
+//             },
+                    {
+                field: "remarks",
+                title: '<@spring.message "deliveryticketh.remarks"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+            {
+                field: "creationDate",
+                title: '<@spring.message "deliveryticketh.creationDate"/>',
+                width: 200,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+        ],
+        editable: false
+    });
+    Hap.autoResizeGrid('#grid');
+</script>
+</body>
+</html>

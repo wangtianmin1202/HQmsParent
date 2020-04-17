@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.plm.plm_product_func_attr_draft.mapper.ProductFuncAttrDraftMapper">
+    <resultMap id="BaseResultMap" type="com.hand.plm.plm_product_func_attr_draft.dto.ProductFuncAttrDraft">
+        <result column="KID" property="kid" jdbcType="DECIMAL" />
+        <result column="PRODUCT" property="product" jdbcType="VARCHAR" />
+        <result column="PRODUCT_FUNC" property="productFunc" jdbcType="VARCHAR" />
+        <result column="PRODUCT_FUNC_ATTR" property="productFuncAttr" jdbcType="VARCHAR" />
+        <result column="STATUS" property="status" jdbcType="VARCHAR" />
+        <result column="REMARK" property="remark" jdbcType="VARCHAR" />
+        <result column="OPERATION_FLAG" property="operationFlag" jdbcType="VARCHAR" />
+        <result column="DETAIL_ID" property="detailId" jdbcType="DECIMAL" />
+        <result column="OPERATION_FLAG" property="operationFlag" jdbcType="VARCHAR" />
+        <result column="PRODUCT_ID" property="productId" jdbcType="VARCHAR" />
+        <result column="PRODUCT_FUNC_ID" property="productFuncId" jdbcType="VARCHAR" />
+        <result column="CURRENT_APPROVE_BY" property="currentApproveBy" jdbcType="VARCHAR" />
+        <result column="LAST_APPROVED_BY" property="lastApprovedBy" jdbcType="VARCHAR" />
+        <result column="LAST_APPROVED_BY" property="changeNum" jdbcType="VARCHAR" />
+        <result column="VERSION" property="version" jdbcType="VARCHAR" />
+        
+    </resultMap>
+
+
+ 
+ <select id="checkTreeLevel" resultType="java.lang.Long">
+ SELECT COUNT(1)
+  FROM plm_product_func_attr_basic p, plm_product_func_attr_basic t
+ WHERE p.kid = t.parent_id
+   AND t.name = #{productFunc}
+   AND p.name = #{product}
+ 
+ </select>
+ 
+ <select id="getDetailVersion" resultType="java.lang.String">
+ 	SELECT t.version FROM plm_product_func_attr_detail t WHERE t.detail_id=#{detailId}
+ </select>
+ 
+<!--获取变更号 -->
+ <select id="getChangeNum" resultType="java.lang.String">
+<!--  SELECT 'PFUN' || to_char(SYSDATE, 'YY') || lpad(plm_prod_func_detail_change_s.nextval, 4, '0')
+  FROM dual -->
+  
+ SELECT 'PFUN' || to_char(SYSDATE, 'YY') || lpad(nvl(MAX(substr(t.change_num, -4)), 0) + 1, 4, 0)
+  FROM plm_product_func_attr_approve t
+ WHERE t.change_num LIKE 'PFUN' || to_char(SYSDATE, 'YY') || '%'
+  
+ </select>
+ 
+ 
+ <select id="insertDetailCheck" resultType="java.lang.Long">
+ SELECT COUNT(1)
+  FROM plm_product_func_attr_detail t
+ WHERE t.kid = #{kid}
+   AND t.function_content = #{functionContent}
+ 
+ </select>
+</mapper>

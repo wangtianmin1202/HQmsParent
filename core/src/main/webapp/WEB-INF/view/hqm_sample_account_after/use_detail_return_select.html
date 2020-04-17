@@ -1,0 +1,152 @@
+<#include "../include/header.html">
+<script type="text/javascript">
+    var viewModel = Hap.createGridViewModel("#grid");
+    var useId = '${RequestParameters.useId!-1}';
+	var documentStatus = '${RequestParameters.documentStatus!-1}';
+	var selectAccount = {};
+</script>
+<body>
+<script type="text/javascript">
+
+viewModel.save = function(){//进行关闭
+	var selected = grid.selectedDataItems();
+	var sampleIds = new Array();
+	$.each(selected,function(i,v){
+		sampleIds.push(v.sampleId);
+	});
+	$.ajax({
+        url: '${base.contextPath}/hqm/use/after/close',
+        type: 'POST',
+        data: {
+        	useId : useId,
+        	sampleIds : sampleIds.join(','),
+        },
+        async: false,
+        dataType: "json",
+        success: function (response) {
+            if (response.success) {
+            	window.parent.kendo.ui.showInfoDialog({
+                    message: "关闭成功"
+                });
+            	window.parent.refreshDocumentStatus('6');
+            	window.parent.refreshDocumentStatusColumn('6');
+            	window.parent.$("#returnSelectWindow").data('kendoWindow').close();
+            } else {
+            	kendo.ui.showErrorDialog({
+                    message: response.message
+                });
+            }
+        }
+    });
+}
+</script>
+<div class="row" id="toolbar-btn" style="margin:5px;">
+    <span id="btn-save" class="btn btn-primary" data-bind="click:save" style="float:left;margin-right:5px;"><@spring.message "hap.confirm"/></span>
+</div>
+<script>kendo.bind($('#toolbar-btn'), viewModel);</script>
+<div style="clear:both">
+        <div id="grid" style="height:400px;"></div>
+</div>
+<script type="text/javascript">
+    var BaseUrl = _basePath;
+    dataSource = new kendo.data.DataSource({
+        transport: {
+            read: {
+                url: BaseUrl + "/hqm/use/detail/after/query",
+                type: "POST",
+                dataType: "json"
+            },
+            update: {
+                url: BaseUrl + "/hqm/use/detail/after/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            destroy: {
+                url: BaseUrl + "/hqm/use/detail/after/remove",
+                type: "POST",
+                contentType: "application/json"
+            },
+            create: {
+                url: BaseUrl + "/hqm/use/detail/after/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            parameterMap: function (options, type) {
+                if (type !== "read" && options.models) {
+                    var datas = Hap.prepareSubmitParameter(options, type);
+                    return kendo.stringify(datas);
+                } else if (type === "read") {
+                	var queryModel = {
+                			useId : useId,
+                	};
+                    return Hap.prepareQueryParameter(queryModel, options);
+                }
+            }
+        },
+        batch: true,
+        serverPaging: true,
+        pageSize: 20,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+                id: "useLineId",
+                fields: {}
+            }
+        }
+    });
+
+   var grid = $("#grid").kendoGrid({
+        dataSource: dataSource,
+        resizable: true,
+        scrollable: true,
+        navigatable: false,
+        selectable: 'multiple, rowbox',
+        dataBound: function () {
+            if (parent.autoResizeIframe) {
+                parent.autoResizeIframe('${RequestParameters.functionCode!}')
+            }
+        },
+        pageable: {
+            pageSizes: [5, 10, 20, 50],
+            refresh: true,
+            buttonCount: 5
+        },
+        columns: [
+        	{
+                field: "sampleModel",
+                title: '<@spring.message "usedetailafter.samplemodel"/>',
+            },
+            {
+                field: "itemCode",
+                title: '<@spring.message "usedetailafter.itemcode"/>',
+            },
+            {
+                field: "sealingSampleStatus",
+                title: '<@spring.message "usedetailafter.sealingsamplestatus"/>',
+            },
+            {
+                field: "sampleGiveDate",
+                title: '<@spring.message "usedetailafter.samplegivedate"/>',
+                width: 180
+            },
+            {
+                field: "createdName",
+                title: '<@spring.message "usedetailafter.createdname"/>',
+            },
+            {
+                field: "creationDateColumn",
+                title: '<@spring.message "usedetailafter.creationdatecolumn"/>',
+                width: 180
+            },
+                    {
+                field: "documentStatus",
+                title: '<@spring.message "usedetailafter.documentstatus"/>',
+            },
+        ],
+        editable: false
+    }).data('kendoGrid');
+
+</script>
+</body>
+</html>

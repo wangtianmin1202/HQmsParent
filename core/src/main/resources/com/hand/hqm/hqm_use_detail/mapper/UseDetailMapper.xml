@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_use_detail.mapper.UseDetailMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_use_detail.dto.UseDetail">
+        <result column="USE_LINE_ID" property="useLineId" jdbcType="DECIMAL" />
+        <result column="USE_ID" property="useId" jdbcType="DECIMAL" />
+        <result column="SAMPLE_ID" property="sampleId" jdbcType="DECIMAL" />
+        <result column="USE_QTY" property="useQty" jdbcType="DECIMAL" />
+        <result column="REMARK" property="remark" jdbcType="VARCHAR" />
+        
+          <result column="SAMPLE_MODEL" property="sampleModel" jdbcType="VARCHAR" /> 
+          <result column="SAMPLE_GIVE_DATE" property="sampleGiveDate" jdbcType="DATE" />
+          <result column="SAMPLE_CODE" property="sampleCode" jdbcType="VARCHAR" />
+          <result column="SEALING_SAMPLE_STATUS" property="sealingSampleStatus" jdbcType="VARCHAR" />
+          <result column="CREATE_DATE" property="createDate" jdbcType="DATE" />
+          <result column="CREATE_NAME" property="createName" jdbcType="VARCHAR" />
+          <result column="DOCUMENT_STATUS" property="documentStatus" jdbcType="VARCHAR" />
+    </resultMap>
+
+
+<select id="myselect" resultMap="BaseResultMap"  parameterType="com.hand.hqm.hqm_use_detail.mapper.UseDetailMapper">   
+
+SELECT    h.use_id   ,h.use_line_id
+			,h.sample_id
+			,hq.sample_model
+			,hq.sample_code
+			,hq.sealing_sample_status
+			,hq.sample_give_date
+	FROM hqm_use_detail h, hqm_sample_account hq
+ WHERE hq.sample_id = h.sample_id
+    <if test="useId != null">
+     AND  h.use_id = #{useId} 
+   </if>
+</select>
+
+<select id="selectforsample" resultMap="BaseResultMap"  parameterType="com.hand.hqm.hqm_use_detail.mapper.UseDetailMapper">   
+
+SELECT h.use_id
+			,h.use_line_id
+			,h.sample_id 
+			,hq.sample_model
+			,hq.sample_code
+			,hq.sealing_sample_status
+			,hq.sample_give_date
+			,hs.creation_date as create_Date
+			,hs.document_status
+			,hr.name as create_Name
+	FROM hqm_use_detail h, hqm_sample_account hq, hqm_sample_use hs, hr_employee hr
+ WHERE hq.sample_id = h.sample_id
+	 AND hs.use_id = h.use_id
+	 AND hr.employee_id = hs.created_by
+    <if test="useId != null">
+     AND  h.use_id = #{useId} 
+   </if>
+</select>
+</mapper>

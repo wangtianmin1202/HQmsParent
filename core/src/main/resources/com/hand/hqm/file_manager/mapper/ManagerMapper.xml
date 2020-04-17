@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.file_manager.mapper.ManagerMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.file_manager.dto.Manager">
+        <result column="FILE_ID" property="fileId" jdbcType="DECIMAL" />
+        <result column="FILE_NUM" property="fileNum" jdbcType="VARCHAR" />
+        <result column="FILE_TITLE" property="fileTitle" jdbcType="VARCHAR" />
+        <result column="EDITION" property="edition" jdbcType="VARCHAR" />
+        <result column="CLASSIFY_ID" property="classifyId" jdbcType="DECIMAL" />
+        <result column="ENABLE_FLAG" property="enableFlag" jdbcType="VARCHAR" />
+        <result column="REMARK" property="remark" jdbcType="VARCHAR" />
+        <result column="FILE_URL" property="fileUrl" jdbcType="VARCHAR" />
+        
+        <result column="EXPIRATION_DATE" property="expirationDate" jdbcType="DATE" />
+        <result column="CREATE_DATE" property="createDate" jdbcType="DATE" />
+        <result column="UPDATE_NAME" property="updateName" jdbcType="VARCHAR" />
+        <result column="UP_DATE" property="upDate" jdbcType="DATE" />
+        <result column="USE_NAME" property="useName" jdbcType="VARCHAR" />
+        <result column="CREATE_DATE_BEGIN" property="createDateBegin" jdbcType="DATE" />
+        <result column="CREATE_DATE_END" property="createDateEnd" jdbcType="DATE" />
+        <result column="USER_ID" property="userId" jdbcType="DECIMAL" />
+        <result column="FILE_ID_LIST" property="fileIdList" jdbcType="VARCHAR" />
+    </resultMap>
+ <select id="myselect" resultMap="BaseResultMap"  parameterType="com.hand.hqm.file_manager.dto.Manager">
+       SELECT distinct t.file_id
+			,t.file_num
+			,t.file_title
+			,t.edition
+			,su1.user_name AS USE_NAME
+			,t.creation_date AS CREATE_DATE 
+			,su2.user_name AS  UPDATE_NAME
+			,t.last_update_date  AS UP_DATE
+			,t.expiration_date
+			,t.enable_flag
+			,t.remark
+			,c.CLASSIFY_ID 
+	FROM file_manager t ,file_manager_classify c ,sys_user su1,sys_user su2
+ WHERE 1 = 1
+ and t.file_id =c.file_id
+ and t.CREATED_BY = su1.user_id(+)  
+ and t.LAST_UPDATED_BY =su2.user_id(+) 
+   <if test="classifyId!=null">
+   and c.classify_id =#{classifyId}
+   </if>
+   <if test="fileNum!=null">
+   and t.file_num   LIKE concat('%',concat(#{fileNum,jdbcType=VARCHAR},'%'))
+   </if>
+   <if test="fileTitle!=null">
+   and t.file_title LIKE concat('%',concat(#{fileTitle,jdbcType=VARCHAR},'%'))
+   </if>
+   <if test="userId!=null">
+   and t.created_by =#{userId}
+   </if>
+   <if test="createDateBegin!=null">
+   and t.creation_date  &gt;= #{createDateBegin}
+   </if>
+   <if test="createDateEnd!=null">
+  and t.creation_date &lt;=#{createDateEnd}   
+    </if>
+ order by t.last_update_date desc 
+
+ </select> 
+ <select id = "selectAllFile" resultMap="BaseResultMap" >
+ 	SELECT * FROM file_manager WHERE expiration_date IS NOT NULL and ENABLE_FLAG = 'Y'
+ </select>
+
+	<select id = "queryFileUpload" resultMap="BaseResultMap">
+		select t.*
+		from file_manager t
+		where t.file_id in ${fileIdList}
+	</select>
+	
+	<select id = "selectMaxFileId" resultType = "float">
+		select max(t.file_id) from file_manager t
+	</select>
+</mapper>

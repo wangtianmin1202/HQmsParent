@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hcs.hcs_certificate_file_manage.mapper.CertificateMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hcs.hcs_certificate_file_manage.dto.Certificate">
+        <result column="CERTIFICATE_ID" property="certificateId" jdbcType="DECIMAL" />
+        <result column="SUPPLIER_ID" property="supplierId" jdbcType="DECIMAL" />
+        <result column="FIRST_CATEGORY" property="firstCategory" jdbcType="VARCHAR" />
+        <result column="SECOND_CATEGORY" property="secondCategory" jdbcType="VARCHAR" />
+        <result column="APPROVAL_STATUS" property="approvalStatus" jdbcType="VARCHAR" />
+        <result column="CERTIFICATE_TYPE" property="certificateType" jdbcType="VARCHAR" />
+        <result column="ATTACHMENT" property="attachment" jdbcType="VARCHAR" />
+        <result column="TYPE_VALUE" property="typeValue" jdbcType="VARCHAR" />
+        <result column="START_DATE" property="startDate" jdbcType="DATE" />
+        <result column="END_DATE" property="endDate" jdbcType="DATE" />
+        <result column="ITEM_ID" property="itemId" jdbcType="DECIMAL" />
+        <result column="PLANT_ID" property="plantId" jdbcType="DECIMAL" />
+        <result column="LEVELS" property="levels" jdbcType="VARCHAR" />
+        <result column="supplier_code" property="supplierCode" jdbcType="VARCHAR" />
+        <result column="item_description" property="itemDescription" jdbcType="VARCHAR" />
+        <result column="ITEM_CODE" property="itemCode" jdbcType="VARCHAR" />
+        <result column="ID_CODE" property="idCode" jdbcType="VARCHAR" />
+        <result column="supplier_name" property="supplierName" jdbcType="VARCHAR" />
+        <result column="sec_cate_mean" property="secCateMean" jdbcType="VARCHAR" />
+    </resultMap>
+
+    <select id="currentQuery" parameterType="com.hand.hcs.hcs_certificate_file_manage.dto.Certificate" resultMap="BaseResultMap">
+        select DISTINCT hc.certificate_id,
+        a1.meaning approval_status,
+        hs.supplier_code,
+        hs.supplier_name,
+        hc.start_date,
+        hc.end_date,
+        hc.attachment,
+        hc.first_category,
+        a2.meaning levels,
+        hc.creation_date,
+        case WHEN hc.certificate_type='PER' THEN  a3.meaning ELSE HC.TYPE_VALUE END type_value,
+        hi.item_code,
+        hi.descriptions item_description,
+        hc.levels,
+        a4.meaning second_category
+        from hcs_certificate hc
+        left join hcs_suppliers hs
+        on hc.supplier_id = hs.supplier_id
+        left join hcs_asl ha
+        on hs.supplier_id = ha.supplier_id
+        left join hcm_item hi
+        on hc.item_id = hi.ITEM_ID
+        left join (select scvb.value, scvb.meaning
+        from sys_code_b scb, sys_code_value_b scvb
+        where scb.code_id = scvb.code_id
+        and scb.code = 'HQM_SUPPLIER_FILE_STATUS') a1
+        on hc.approval_status = a1.value
+        LEFT JOIN  (select scvb.value, scvb.meaning
+        from sys_code_b scb, sys_code_value_b scvb
+        where scb.code_id = scvb.code_id
+        and scb.code = 'HQM_PPAP_CLASS') a2 on hc.levels = a2.value
+        LEFT JOIN  (select scvb.value, scvb.meaning
+        from sys_code_b scb, sys_code_value_b scvb
+        where scb.code_id = scvb.code_id
+        and scb.code = 'HQM_PERSON_CERTIFICATE_TYPE') a3 on hc.type_value = a3.value
+        LEFT JOIN (select scvb.value, scvb.meaning
+        from sys_code_b scb, sys_code_value_b scvb
+        where scb.code_id = scvb.code_id
+        and scb.code = 'HQM_CETIFICATE_CLASS_II') a4
+        on hc.second_category = a4.value
+        <where>
+            <if test="certificateId != null">
+                hc.certificate_id =#{certificateId}
+            </if>
+        </where>
+    </select>
+
+
+    <select id="querySupplier" parameterType="com.hand.hcs.hcs_certificate_file_manage.dto.Certificate" resultMap="BaseResultMap">
+        select  hs.supplier_id,concat(hs.supplier_code,hs.supplier_name) supplier_code from hcs_suppliers hs
+        <where>
+            <if test="supplierId != null">
+                hs.supplier_id =#{supplierId}
+            </if>
+        </where>
+    </select>
+
+    <select id="queryFirstCategory"  resultMap="BaseResultMap">
+         select distinct hi.ITEM_CODE first_category, hs.supplier_id,concat(concat(hs.supplier_id,'-'),hi.ITEM_CODE) id_code
+         FROM hcs_suppliers hs
+         LEFT JOIN hcs_asl ha
+         ON hs.supplier_id = ha.supplier_id
+         INNER JOIN hcm_item hi
+         ON ha.item_id = hi.ITEM_ID
+         WHERE hs.supplier_id = #{supplierId}
+         UNION SELECT distinct case when  hc.first_category='SYS' THEN '体系' else hc.first_category end first_category, hs.supplier_id,concat(concat(hs.supplier_id,'-'),hc.first_category) id_code
+         FROM hcs_suppliers hs
+         INNER JOIN hcs_certificate hc
+         ON hs.supplier_id = hc.supplier_id
+         WHERE hs.supplier_id = #{supplierId}
+    </select>
+
+    <select id="querySecondCategory" resultMap="BaseResultMap">
+        select hc.*,case when  a1.meaning is null then hc.second_category else a1.meaning end sec_cate_mean
+        from hcs_certificate hc
+        left join (select scvb.value, scvb.meaning
+        from sys_code_b scb, sys_code_value_b scvb
+        where scb.code_id = scvb.code_id
+        and (scb.code = 'HQM_CETIFICATE_CLASS_II' or scb.code ='HQM_CETIFICATE_CLASS_II_SYS')) a1
+        on hc.second_category = a1.value
+        <where>
+            <if test="supplierId != null">
+                hc.supplier_id =#{supplierId}
+            </if>
+            <if test="firstCategory != null">
+               and hc.first_category =#{firstCategory}
+            </if>
+        </where>
+    </select>
+
+    <select id="queryMuliSupplier" parameterType="com.hand.hcs.hcs_certificate_file_manage.dto.Certificate" resultMap="BaseResultMap">
+        select * from  (SELECT hs.supplier_id,
+        concat(hs.supplier_code, hs.supplier_name) supplier_code
+        from hcs_suppliers hs) t
+        <where>
+            <if test="supplierId!= null">
+                t.supplier_id  =#{supplierId}
+            </if>
+        </where>
+    </select>
+
+    <select id="queryMuliItem" parameterType="com.hand.hcs.hcs_certificate_file_manage.dto.Certificate" resultMap="BaseResultMap">
+       select distinct hi.ITEM_ID, concat(hi.ITEM_CODE, hi.descriptions) item_code
+        from hcm_item hi
+        left join hcs_asl ha
+        on hi.ITEM_ID = ha.item_id
+        left join hcs_suppliers hs
+        on ha.supplier_id = hs.supplier_id
+        <where>
+            <if test="supplierId!= null">
+                hs.supplier_id = #{supplierId}
+            </if>
+        </where>
+
+
+    </select>
+
+
+    <select id="getRDengineer" resultType="java.lang.String">
+        select he.employee_code
+  from hcm_item_category_settings hics
+  left join hcm_position_category hpc
+    on hics.category_third_id = hpc.kid
+  left join hcm_position_role hpr
+    on hpc.position_id = hpr.kid
+  left join hcm_position_user_role hpur
+    on hpr.kid = hpur.position_id
+    LEFT JOIN sys_user su on hpur.user_id = su.user_id
+    left join hr_employee he on su.employee_id =he.employee_id
+        <where>
+            hpr.position_type = 'U1'
+            <if test="itemId!= null">
+              and  hics.item_id = #{itemId}
+            </if>
+        </where>
+    </select>
+
+    <select id="getSQE" resultType="java.lang.String">
+        select he.employee_code
+        from hqm_supplier_inspector_rel hsir
+        inner join hr_employee he
+        on hsir.sqe_inspector_id = he.employee_id
+        <where>
+            hsir.enable_flag = 'Y'
+            <if test="supplierId != null">
+             and hsir.supplier_id = #{supplierId}
+            </if>
+        </where>
+    </select>
+
+     <select id="selectAllRows" resultMap="BaseResultMap">
+    SELECT t.*, hs.supplier_code, hs.supplier_name, hi.item_code, hi.descriptions AS item_description
+  FROM hcs_certificate t
+  JOIN hcs_suppliers hs
+    ON t.supplier_id = hs.supplier_id
+  LEFT JOIN hcm_item hi
+    ON t.plant_id = hi.plant_id
+   AND t.item_id = hi.item_id
+ WHERE 1 = 1
+   AND t.supplier_id = #{supplierId}
+         and t.approval_status = 'U'
+   <if test="itemId != null">
+   AND t.item_id = #{itemId}
+   </if>
+   AND t.item_id IS NOT NULL
+UNION ALL
+SELECT t.*, hs.supplier_code, hs.supplier_name, hi.item_code, hi.descriptions AS item_description
+  FROM hcs_certificate t
+  JOIN hcs_suppliers hs
+    ON t.supplier_id = hs.supplier_id
+  LEFT JOIN hcm_item hi
+    ON t.plant_id = hi.plant_id
+   AND t.item_id = hi.item_id
+ WHERE 1 = 1
+   AND t.supplier_id = #{supplierId}
+   AND t.item_id IS NULL
+   and t.approval_status = 'U'
+    </select>
+</mapper>

@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.spc.pspc_entirety_statistic.mapper.EntiretyStatisticMapper">
+    <resultMap id="BaseResultMap" type="com.hand.spc.pspc_entirety_statistic.dto.EntiretyStatistic">
+        <result column="ENTIRETY_STATISTIC_ID" property="entiretyStatisticId" jdbcType="DECIMAL" />
+        <result column="TENANT_ID" property="tenantId" jdbcType="DECIMAL" />
+        <result column="SITE_ID" property="siteId" jdbcType="DECIMAL" />
+        <result column="SAMPLE_SUBGROUP_ID" property="sampleSubgroupId" jdbcType="DECIMAL" />
+        <result column="ENTITY_CODE" property="entityCode" jdbcType="VARCHAR" />
+        <result column="ENTITY_VERSION" property="entityVersion" jdbcType="VARCHAR" />
+        <result column="CHART_DETAIL_TYPE" property="chartDetailType" jdbcType="VARCHAR" />
+        <result column="CONTROL_LIMIT_USAGE" property="controlLimitUsage" jdbcType="VARCHAR" />
+        <result column="ENTIRETY_BAR" property="entiretyBar" jdbcType="DECIMAL" />
+        <result column="ENTIRETY_SIGMA" property="entiretySigma" jdbcType="DECIMAL" />
+        <result column="ENTIRETY_USL" property="entiretyUsl" jdbcType="DECIMAL" />
+        <result column="ENTIRETY_LSL" property="entiretyLsl" jdbcType="DECIMAL" />
+        <result column="ENTIRETY_UCL" property="entiretyUcl" jdbcType="DECIMAL" />
+        <result column="ENTIRETY_CL" property="entiretyCl" jdbcType="DECIMAL" />
+        <result column="ENTIRETY_LCL" property="entiretyLcl" jdbcType="DECIMAL" />
+        <result column="ENTIRETY_AD" property="entiretyAd" jdbcType="DECIMAL" />
+        <result column="ENTIRETY_P" property="entiretyP" jdbcType="DECIMAL" />
+        <result column="ENTIRETY_CP" property="entiretyCp" jdbcType="DECIMAL" />
+        <result column="ENTIRETY_CPK" property="entiretyCpk" jdbcType="DECIMAL" />
+        <result column="ENTIRETY_PP" property="entiretyPp" jdbcType="DECIMAL" />
+        <result column="ENTIRETY_PPK" property="entiretyPpk" jdbcType="DECIMAL" />
+    </resultMap>
+    <select id="selectByMaxNum" resultMap="BaseResultMap" parameterType="com.hand.spc.pspc_sample_subgroup.dto.SampleSubgroup">
+        SELECT
+            entirety_ucl	,
+            entirety_cl	,
+            entirety_lcl
+        FROM
+            pspc_entirety_statistic
+        WHERE
+        sample_subgroup_id IN (
+        SELECT
+            sample_subgroup_id
+        FROM
+            pspc_sample_subgroup
+        WHERE
+            subgroup_num =(
+            SELECT
+                MAX( subgroup_num )
+            FROM
+                pspc_sample_subgroup
+            WHERE
+                entity_code = #{entityCode}
+                AND entity_version = #{entityVersion}
+                AND tenant_id = #{tenantId}
+		        AND site_id = #{siteId}
+            )
+            AND entity_code = #{entityCode}
+            AND entity_version = #{entityVersion}
+            AND tenant_id = #{tenantId}
+            AND site_id = #{siteId}
+        )
+        AND chart_detail_type = 'M'
+    </select>
+
+
+</mapper>

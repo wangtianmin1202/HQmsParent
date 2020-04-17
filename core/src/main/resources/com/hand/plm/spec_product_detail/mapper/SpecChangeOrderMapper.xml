@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.plm.spec_product_detail.mapper.SpecChangeOrderMapper">
+    <resultMap id="BaseResultMap" type="com.hand.plm.spec_product_detail.dto.SpecChangeOrder">
+        <result column="CHANGE_ORDER_ID" property="changeOrderId" jdbcType="DECIMAL" />
+        <result column="CHANGE_ORDER_NUM" property="changeOrderNum" jdbcType="VARCHAR" />
+        <result column="PRODUCT_NAME" property="productName" jdbcType="VARCHAR" />
+        <result column="SPEC_CLAUSE" property="specClause" jdbcType="VARCHAR" />
+        <result column="CHANGE_MSG" property="changeMsg" jdbcType="VARCHAR" />
+        <result column="CHANGE_TYPE" property="changeType" jdbcType="VARCHAR" />
+        <result column="PENDDING_VERSION" property="penddingVersion" jdbcType="VARCHAR" />
+        <result column="COMFIRM_BY" property="comfirmBy" jdbcType="VARCHAR" />
+        <result column="WAIT_BY" property="waitBy" jdbcType="VARCHAR" />
+        <result column="APPROVAL_STATUS" property="approvalStatus" jdbcType="VARCHAR" />
+        <result column="STATUS" property="status" jdbcType="VARCHAR" />
+        <result column="CHANGE_ORDER_CODE" property="changeOrderCode" jdbcType="VARCHAR" />
+        <result column="LAST_UPDATE_DATE" property="lastUpdateDate" jdbcType="TIMESTAMP" />
+        <result column="LAST_UPDATED_BY" property="lastUpdatedBy" jdbcType="DECIMAL" />
+    </resultMap>
+
+ 	<select id="getChangeOrderCode" resultType="java.lang.String">
+        select lpad(NVL(MAX(sco.CHANGE_ORDER_ID),0)+1,4,'0') from PLM_SPEC_CHANGE_ORDER sco
+    </select>
+    
+    <select id="queryAll" resultMap="BaseResultMap">
+		SELECT REQUEST_ID,
+		       PROGRAM_ID,
+		       OBJECT_VERSION_NUMBER,
+		       CREATED_BY,
+		       CREATION_DATE,
+		       LAST_UPDATED_BY,
+		       LAST_UPDATE_DATE,
+		       LAST_UPDATE_LOGIN,
+		       CHANGE_ORDER_ID,
+		       CHANGE_ORDER_NUM,
+		       PRODUCT_NAME,
+		       SPEC_CLAUSE,
+		       CHANGE_MSG,
+		       CHANGE_TYPE,
+		       PENDDING_VERSION,
+		       COMFIRM_BY,
+		       WAIT_BY,
+		       APPROVAL_STATUS,
+		       STATUS,
+		       CHANGE_ORDER_CODE
+		  FROM PLM_SPEC_CHANGE_ORDER
+		 ORDER BY change_order_Id ASC
+    </select>
+</mapper>

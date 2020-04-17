@@ -1,0 +1,132 @@
+<#include "../include/header.html">
+
+<script src="${base.contextPath}/common/code?YES_NO=SYS.YES_NO" type="text/javascript"></script>
+<script type="text/javascript">
+	var specNumber = "${RequestParameters.rightSpecNumber!'-1'}";
+	var BaseUrl = _basePath;
+    var viewModel = Hap.createGridViewModel(null,{
+    	model:{
+    		
+    	},
+    	closeWin:function(e) {
+    		window.parent.$("#newWindow").data("kendoWindow").close();
+    	},
+    	 save:function(){
+    		var data = viewModel.model.toJSON();
+    		data.__status = "add";
+    		
+    		var validator = $("#mainForm").data("kendoValidator");
+    		if(validator.validate()) {
+    			
+    			Hap.request({
+    				url: BaseUrl + "/hqm/invalid/pattern/add",
+    				data: kendo.stringify(data),
+    				success:function(data){
+    					if(data.success){
+    						viewModel.closeWin();
+    					}
+    				}
+    			})
+    		}
+    	}, 
+    });
+    viewModel.model.specNumber = specNumber;
+</script>
+
+<script>
+function clearNoNum(obj) { 
+	obj.value = obj.value.replace(/[^\d]/g,"");
+}
+</script>
+
+<body>
+
+<div id="page-content">
+	<form id = "mainForm" style="paddiing-bottom:50px;padding-top:15px" class="form-horizontal" method="post" enctype="application/json;charset=UTF-8">
+		<div class="row">
+			<div class="col-sm-6">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<!-- <label class="col-sm-4 control-label">失效模式编码</label> -->
+						<div class="col-sm-8">
+						失效模式编码
+							<input style="width:250px;margin-left:70px;" id="invalidPatternNumber"  data-role="maskedtextbox" class="k-textbox"
+								data-bind="value:model.invalidPatternNumber"   placeholder='-------------------auto-------------------'' disabled>
+							<input style="display:none;" id="specNumber"  data-role="maskedtextbox" class="k-textbox"
+								data-bind="value:model.specNumber"    disabled>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-sm-6">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<!-- <label class="col-sm-4 control-label"></label> -->
+						<div class="col-sm-8">
+						失效模式<span style="color:red;">*</span>
+							<input style="width:250px;margin-left:88px;" id="invalidPatternName"  
+								data-bind="value:model.invalidPatternName"  >
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-sm-6">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<!-- <label class="col-sm-4 control-label"></label> -->
+						<div class="col-sm-8">
+						SEV<span style="color:red;">*</span>
+							<input style="width:250px;margin-left:113px;" id="sev" 
+								data-bind="value:model.sev"  onkeyup="clearNoNum(this)">
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		
+		<div class="row" style="margin-top: 10px;margin-right:6%;font-size:14px;font-style:initial">
+       
+    		 <div class="col-sm-3"style="padding-left:0px;">
+		    	<lable class="col-xs-5 control-lable" style="margin-left:12px;">失效模式后果<span style="color:red;">*</span></lable>	
+		    	<div class="col-xs-7"style="padding-left:0px">
+		    	<textarea id="invalidPatternConsequenceArea" name="textarea" style="width:250px;margin-top:-34px;margin-left:176px;height:60px;"data-bind="value:model.invalidPatternConsequence"></textarea>
+    			</div>
+    			<script>
+                	$("#invalidPatternConsequenceArea").kendoTextArea({
+                    });
+                </script>
+		    		  		
+		    </div>
+		  
+    	</div>
+		
+		
+		
+	</form>
+	<div style="clear:both">
+		<div id="grid"></div>
+	</div>
+	<div id="mainBottom" class="text-right" style="bottom:15px;position:fixed;float:left;padding-top:15px;border-top:1px solid #e8e1eb;
+		width:100%;background:#fff;margin-right:30px">
+		<span class="btn btn-primary" data-bind="click:save" type="submit" style="margin-right:5px">保存</span>
+		<span class="btn btn-default" data-bind="click:closeWin" type="button" style="margin-right:25px">取消</span>
+	</div>
+	<script>
+		kendo.bind($('#mainForm'), viewModel);
+		kendo.bind($('#mainBottom'), viewModel);
+	</script>
+	<script>
+		$('#mainForm').kendoValidator({
+			messages:{
+				required:'<@spring.message "hap.validation.notempty"/>'
+			},
+			invalidMessageType:"tooltip"
+		});
+	</script>
+</div>
+</body>
+</html>

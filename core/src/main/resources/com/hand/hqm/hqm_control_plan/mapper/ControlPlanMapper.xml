@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_control_plan.mapper.ControlPlanMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_control_plan.dto.ControlPlan">
+        <result column="CONTROL_PLAN_ID" property="controlPlanId" jdbcType="DECIMAL" />
+        <result column="CONTROL_PLAN_CODE" property="controlPlanCode" jdbcType="VARCHAR" />
+        <result column="CONTROL_PLAN_NAME" property="controlPlanName" jdbcType="VARCHAR" />
+        <result column="WRITER_ID" property="writerId" jdbcType="DECIMAL" />
+        <result column="LEVEL_ID" property="levelId" jdbcType="DECIMAL" />
+        <result column="WRITER" property="writer" jdbcType="VARCHAR" />
+        <result column="MAIN_STAFF_ID" property="mainStaffId" jdbcType="DECIMAL" />
+        <result column="MAIN_STAFF" property="mainStaff" jdbcType="VARCHAR" />
+        <result column="CONTROL_OBJECT" property="controlObject" jdbcType="VARCHAR" />
+        <result column="CREATION_DATE" property="creationDate" jdbcType="DATE" />
+        <result column="LAST_UPDATE_DATE" property="lastUpdateDate" jdbcType="DATE" />
+        <result column="CONTROL_VERSION" property="controlVersion" jdbcType="DECIMAL" /> 
+        <result column="CONTROL_PLAN_TYPE" property="controlPlanType" jdbcType="DECIMAL" /> 
+    </resultMap>
+    <select id="queryControlPlanByLevelId" resultMap="BaseResultMap" parameterType="Long">
+    	select * from HQM_CONTROL_PLAN where LEVEL_ID = #{levelId}
+    </select>
+    
+    <select id="selectControlPlan" resultMap="BaseResultMap" parameterType="com.hand.hqm.hqm_control_plan.dto.ControlPlan">
+            select        
+                  hcp.control_plan_id,
+                  hcp.control_plan_code,
+                  hcp.control_plan_name,
+                  hcp.writer_id,
+                  hcp.control_object,
+                  hcp.control_plan_type,
+                  hcp.created_by,
+                  hcp.creation_date,
+                  hcp.last_updated_by,
+                  hcp.last_update_date,
+                  hcp.last_update_login,
+                  hcp.request_id,
+                  hcp.program_id,
+                  hcp.object_version_number,
+                  hcp.attribute_category,
+                  hcp.attribute1,
+                  hcp.attribute2,
+                  hcp.attribute3,
+                  hcp.create_time,
+                  hcp.last_modify_time,
+                  hcp.writer,
+                  hcp.main_staff_id,
+                  hcp.main_staff,
+                  nvl(hcp.control_version,0) control_version
+           from HQM_CONTROL_PLAN hcp
+           where 1=1
+           <if test="controlPlanCode != null and controlPlanCode != ''">
+                and hcp.control_plan_code like concat('%',concat(#{controlPlanCode,jdbcType=VARCHAR},'%'))
+            </if>
+            <if test="controlObject != null and controlObject != ''">
+                and hcp.control_object like concat('%',concat(#{controlObject,jdbcType=VARCHAR},'%'))
+            </if>
+            <if test="writer != null and writer != ''">
+                and hcp.writer like concat('%',concat(#{writer,jdbcType=VARCHAR},'%'))
+            </if>
+           	<if test = "creationStartTime != null">
+			 	and hcp.creation_date &gt;= to_date(#{creationStartTime}, 'yyyy-mm-dd hh24:mi:ss')
+			 </if>
+			 <if test = "creationEndTime != null">
+			 	and hcp.creation_date &lt;= to_date(#{creationEndTime}, 'yyyy-mm-dd hh24:mi:ss')
+			 </if>
+            <if test="mainStaff != null and mainStaff != ''">
+                and hcp.main_staff like concat('%',concat(#{mainStaff,jdbcType=VARCHAR},'%'))
+            </if>
+            order by hcp.control_plan_id 
+           
+    </select>
+	<delete id="deleteFeaturesByControlPlan" parameterType="Long">
+		delete from HQM_CONTROL_PLAN_FEATURES where control_plan_id=#{controlPlanId}
+	</delete>
+
+</mapper>

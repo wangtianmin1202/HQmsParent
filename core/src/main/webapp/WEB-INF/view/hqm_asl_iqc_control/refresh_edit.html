@@ -1,0 +1,219 @@
+
+<#include "../include/header.html">
+<!--
+ * @description: ASL批量刷新
+ * @author: tianmin.wang
+ * @date: 20190917
+ -->
+<script src="${base.contextPath}/common/code?yesNo=SYS.YES_NO"></script>
+<script src="${base.contextPath}/common/code?samplePlanType=HQM_IQC_SAMPLE_PLAN_TYPE"></script>
+<body>
+
+<script type="text/javascript">
+	function isEmpty(val){
+		if(val==''||val==null||val==undefined){
+			return true;
+		}else{
+			return false;
+		}
+	}
+	var viewModel = kendo.observable({
+		model:{
+		},
+		save: function(){
+			var selected = window.parent.grid.selectedDataItems();
+			$.each(selected,function(index,element){
+				if(!isEmpty(viewModel.model.supplierId)){
+					element.set("supplierId",viewModel.model.supplierId);
+					element.set("supplierCode",viewModel.model.supplierCode);
+					element.set("supplierName",viewModel.model.supplierName);
+					element.set('supplierSitId',viewModel.model.supplierSitId);
+					element.set('supplierSiteCode',viewModel.model.supplierSiteCode);
+					element.set('supplierSiteDescription',viewModel.model.supplierSiteDescription);
+				}
+				if(!isEmpty(viewModel.model.isInspection)){
+					element.set("isInspection",viewModel.model.isInspection);
+				}
+				if(!isEmpty(viewModel.model.samplePlanTypeNow)){
+					element.set("samplePlanTypeNow",viewModel.model.samplePlanTypeNow);
+				}
+				if(!isEmpty(viewModel.model.switchScore)){
+					element.set("switchScore",viewModel.model.switchScore);
+				}
+				if(!isEmpty(viewModel.model.enableFlag)){
+					element.set("enableFlag",viewModel.model.enableFlag);
+				}
+				if(!isEmpty(viewModel.model.changeFlag)){
+					element.set("changeFlag",viewModel.model.changeFlag);
+				}
+				
+			});
+			window.parent.$("#childrenWindow").data("kendoWindow").close();
+		},
+		reSet: function(){
+            var formData = this.model.toJSON();
+            for (var k in formData) {
+                this.model.set(k, null);
+            }
+        },
+		closeWin: function(e){
+			window.parent.$("#childrenWindow").data("kendoWindow").close();
+        }
+	});
+
+</script>
+<div id="mainBottom" class="text-left" style="margin-left:5%;float: left;border-top:1px solid #ebebeb;background: #fff;margin-top: 5px;">
+        <span class="btn btn-primary" data-bind="click:save" style="margin-right:5px"><@spring.message "hap.save"/></span>
+        <span class="btn btn-default" data-bind="click:reSet" style="margin-right:5px;"><@spring.message "hqm.qc.reset"/></span>
+        <span class="btn btn-default" data-bind="click:closeWin" style="margin-right:5px;"><@spring.message "hap.cancel"/></span>
+</div>
+<div id="page-content" style="float: left;width:100%; background: #fff;"> <!--border-top:1px solid #ebebeb; modified by jy 20190925  -->
+	
+	<form id="mainform"  class="form-horizontal" method="post" enctype="application/json;charset=UTF-8">
+	
+	 	<div class="container">
+	 	<div class="row" style="margin-top:10px">
+	 				<label class="col-xs-3 control-label" style="text-align:right;font-size:14px;"><@spring.message "hqm.qc.supplier"/>:</label>
+					<div class="col-xs-9">
+                    <input id="supplierLov" style="width:100%;" name="supplierLov"
+                               data-label="<@spring.message 'hqm.qc.supplier'/>"
+								data-bind="enabled: model.isEnabled,value:model.supplierId,text:model.supplierCode">
+					<span data-for="supplierLov" class=".k-invalid-msg"></span>
+					</div>
+					<script>
+					$("#supplierLov").kendoLov($.extend
+						    (<@lov"LOV_SUPPLIER"/>, {
+						        textField: 'supplierCode',
+						        valueField:'supplierId',
+						        select:function(e){
+						        	console.log(e.item);
+				    	        	viewModel.model.supplierCode = e.item.supplierCode;
+				    	        	viewModel.model.supplierName = e.item.supplierName;
+				    	        	viewModel.model.supplierSitId = e.item.supplierSitId;
+				    	        	viewModel.model.supplierSiteCode = e.item.supplierSiteCode;
+				    	        	viewModel.model.supplierSiteDescription = e.item.supplierSiteDescription;
+				    	        }
+						    }));
+					</script>
+        </div>
+        <div class="row" style="margin-top:10px">
+					<label class="col-xs-3 control-label" style="text-align:right;font-size:14px;"><@spring.message "hqm.qc.internallyenabled"/>:</label>
+					<div class="col-xs-9">
+                        <input style="width:100%" name="isInspection"
+                        		 id="isInspection"
+                        		 data-label="<@spring.message 'hqm.qc.internallyenabled'/>"
+                               data-bind="value:model.isInspection">
+						<span data-for="isInspection" class=".k-invalid-msg"></span>
+						</div>
+						<script type="text/javascript">
+							$("#isInspection").kendoComboBox({
+						        dataTextField: "meaning",
+						        dataValueField: "value",
+						        valuePrimitive: true,
+						        dataSource: yesNo
+							});
+						</script>
+					
+			</div>
+			<div class="row" style="margin-top:10px">
+					<label class="col-xs-3 control-label" style="text-align:right;font-size:14px;"><@spring.message "hqm.qc.sampling plan"/>:</label>
+					<div class="col-xs-9">
+                        <input style="width:100%;" name="samplePlanTypeNow"
+                        		 id="samplePlanTypeNow"
+                        		 data-label="<@spring.message 'hqm.qc.sampling plan'/>"
+                               data-bind="value:model.samplePlanTypeNow">
+						<span data-for="samplePlanTypeNow" class=".k-invalid-msg"></span>
+						</div>
+						<script type="text/javascript">
+							$("#samplePlanTypeNow").kendoComboBox({
+						        dataTextField: "meaning",
+						        dataValueField: "value",
+						        valuePrimitive: true,
+						        dataSource: samplePlanType
+							});
+						</script>
+					
+			</div>
+			<div class="row" style="margin-top:10px">
+					<label class="col-xs-3 control-label" style="text-align:right;font-size:14px;"><@spring.message "hqm.qc.transferscore"/>:</label>
+					<div class="col-xs-9">
+                        <input style="width:100%;" name="switchScore"
+                        		 id="switchScore"
+                        		 data-label="<@spring.message 'hqm.qc.transferscore'/>"
+                               data-bind="value:model.switchScore">
+						<span data-for="switchScore" class=".k-invalid-msg"></span>
+						</div>
+						<script type="text/javascript">
+							$("#switchScore").kendoNumericTextBox({
+						        
+							});
+						</script>
+					
+			</div>
+			<div class="row" style="margin-top:10px">
+					<label class="col-xs-3 control-label" style="text-align:right;font-size:14px;"><@spring.message "hqm.qc.enableflag"/>:</label>
+					<div class="col-xs-9">
+                        <input style="width:100%;" name="enableFlag"
+                        		 id="enableFlag"
+                        		 data-label="<@spring.message 'hqm.qc.enableflag'/>"
+                               data-bind="value:model.enableFlag">
+						<span data-for="enableFlag" class=".k-invalid-msg"></span>
+						</div>
+						<script type="text/javascript">
+							$("#enableFlag").kendoComboBox({
+						        dataTextField: "meaning",
+						        dataValueField: "value",
+						        valuePrimitive: true,
+						        dataSource: yesNo
+							});
+						</script>
+					
+			</div>
+			<div class="row" style="margin-top:10px">
+					<label class="col-xs-3 control-label" style="text-align:right;font-size:14px;"><@spring.message "hqm.qc.enablescenariochanges"/>:</label>
+					<div class="col-xs-9">
+                        <input style="width:100%;" name="changeFlag"
+                        		 id="changeFlag"
+                        		 data-label="<@spring.message 'hqm.qc.enablescenariochanges'/>"
+                               data-bind="value:model.changeFlag">
+						<span data-for="changeFlag" class=".k-invalid-msg"></span>
+						</div>
+						<script type="text/javascript">
+							$("#changeFlag").kendoComboBox({
+						        dataTextField: "meaning",
+						        dataValueField: "value",
+						        valuePrimitive: true,
+						        dataSource: yesNo
+							});
+						</script>
+					
+			</div>
+		</div>
+	
+	</form>
+</div>
+
+
+<script type="text/javascript">
+    kendo.bind($('#mainBottom'),viewModel);
+	kendo.bind($('#mainform'), viewModel);
+
+    function isNotEmpty(obj) {
+        if(obj != undefined && obj != null && obj != ""){
+            return true;
+        }else{
+            return false;
+        }
+    }
+    var initMinDate = new Date(1900, 0, 1);
+    var initMaxDate = new Date(2099, 11, 31);
+	//验证
+	$("#mainform").kendoValidator({
+    	messages: {
+            required: '<@spring.message "hap.validation.notempty"/>'
+    	},
+		invalidMessageType : "tooltip"
+    });
+</script>
+</body>
+</html>

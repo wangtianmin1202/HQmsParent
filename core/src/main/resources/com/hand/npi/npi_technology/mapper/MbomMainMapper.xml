@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.npi.npi_technology.mapper.MbomMainMapper">
+    <resultMap id="BaseResultMap" type="com.hand.npi.npi_technology.dto.MbomMain">
+        <result column="SKU_ID" property="skuId" jdbcType="DECIMAL" />
+        <result column="SKU_CODE" property="skuCode" jdbcType="VARCHAR" />
+        <result column="PLANT_ID" property="plantId" jdbcType="VARCHAR" />
+        <result column="ITEM_ID" property="itemId" jdbcType="VARCHAR" />
+        <result column="USAGE" property="usage" jdbcType="VARCHAR" />
+        <result column="DESCRIPTION" property="description" jdbcType="VARCHAR" />
+        <result column="BASE_QTY" property="baseQty" jdbcType="DECIMAL" />
+        <result column="EFFECTIVE_DATE" property="effectiveDate" jdbcType="DATE" />
+        <result column="VERSION" property="version" jdbcType="VARCHAR" />
+        <result column="CHANGE_NUMBER" property="changeNumber" jdbcType="VARCHAR" />
+    </resultMap>
+
+
+</mapper>

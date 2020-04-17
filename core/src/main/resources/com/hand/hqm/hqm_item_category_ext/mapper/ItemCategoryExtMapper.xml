@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_item_category_ext.mapper.ItemCategoryExtMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_item_category_ext.dto.ItemCategoryExt">
+    	<result column="KID" property="kid" jdbcType="DECIMAL"/>
+        <result column="ATTRIBUTE_ID" property="attributeId" jdbcType="DECIMAL"/>
+        <result column="ITEM_CATEGORY" property="itemCategory" jdbcType="VARCHAR"/>
+        <result column="SAMPLE_PROCEDURE_TYPE" property="sampleProcedureType" jdbcType="VARCHAR"/>
+        <result column="INSPECTION_ATTRIBUTE" property="inspectionAttribute" jdbcType="VARCHAR"/>
+        <result column="ORDER_CODE" property="orderCode" jdbcType="DECIMAL"/>
+        <result column="INSPECTION_LEVELS" property="inspectionLevels" jdbcType="VARCHAR"/>
+        <result column="QUALITY_CHARACTER_GRADE" property="qualityCharacterGrade" jdbcType="VARCHAR"/>
+        <result column="ACCEPTANCE_QUALITY_LIMIT" property="acceptanceQualityLimit" jdbcType="VARCHAR"/>
+        <result column="SOURCE_TYPE" property="sourceType" jdbcType="VARCHAR"/>
+        <result column="ATTRIBUTE_TYPE" property="attributeType" jdbcType="VARCHAR"/>
+        <result column="STANDARD_TYPE" property="standardType" jdbcType="VARCHAR"/>
+        <result column="FREQUENCY_TYPE" property="frequencyType" jdbcType="VARCHAR"/>
+        <result column="FREQUENCY" property="frequency" jdbcType="DECIMAL"/>
+        <result column="INSPECTION_TOOL" property="inspectionTool" jdbcType="VARCHAR"/>
+        <result column="ENABLE_FLAG" property="enableFlag" jdbcType="VARCHAR"/>
+        <result column="REMARK" property="remark" jdbcType="VARCHAR"/>
+        <result column="GLOBAL_ATTRIBUTE1" property="globalAttribute1" jdbcType="VARCHAR"/>
+        <result column="GLOBAL_ATTRIBUTE2" property="globalAttribute2" jdbcType="VARCHAR"/>
+        <result column="GLOBAL_ATTRIBUTE3" property="globalAttribute3" jdbcType="VARCHAR"/>
+        <result column="GLOBAL_ATTRIBUTE4" property="globalAttribute4" jdbcType="VARCHAR"/>
+        <result column="GLOBAL_ATTRIBUTE5" property="globalAttribute5" jdbcType="VARCHAR"/>
+        <result column="GLOBAL_ATTRIBUTE6" property="globalAttribute6" jdbcType="VARCHAR"/>
+        <result column="GLOBAL_ATTRIBUTE7" property="globalAttribute7" jdbcType="VARCHAR"/>
+        <result column="GLOBAL_ATTRIBUTE8" property="globalAttribute8" jdbcType="VARCHAR"/>
+        <result column="GLOBAL_ATTRIBUTE9" property="globalAttribute9" jdbcType="VARCHAR"/>
+        <result column="GLOBAL_ATTRIBUTE10" property="globalAttribute10" jdbcType="VARCHAR"/>
+        <result column="GLOBAL_ATTRIBUTE11" property="globalAttribute11" jdbcType="VARCHAR"/>
+        <result column="GLOBAL_ATTRIBUTE12" property="globalAttribute12" jdbcType="VARCHAR"/>
+        <result column="GLOBAL_ATTRIBUTE13" property="globalAttribute13" jdbcType="VARCHAR"/>
+        <result column="GLOBAL_ATTRIBUTE14" property="globalAttribute14" jdbcType="VARCHAR"/>
+        <result column="GLOBAL_ATTRIBUTE15" property="globalAttribute15" jdbcType="VARCHAR"/>
+        
+        <result column="ITEM_CATEGORY_DESCRIPTION" property="itemCategoryDescription" jdbcType="VARCHAR"/>
+        <result column="CATEGORY_CODE" property="categoryCode" jdbcType="VARCHAR"/>
+    </resultMap>
+    <select id="inspectionAttributeLov" resultMap="BaseResultMap"
+            parameterType="com.hand.hqm.hqm_item_category_ext.dto.ItemCategoryExt">
+        SELECT t.inspection_attribute FROM hqm_item_category_ext t WHERE 1 = 1
+        <if test="inspectionAttribute!=null">
+            AND t.inspection_attribute LIKE concat('%',concat(#{inspectionAttribute},'%'))
+        </if>
+    </select>
+    <select id="categroySelect" resultMap="BaseResultMap"
+            parameterType="com.hand.hqm.hqm_item_category_ext.dto.ItemCategoryExt">
+        SELECT t.item_category, hic.description AS item_category_description, hic.category_code,t.source_type
+		  FROM hqm_item_category_ext t, hqm_inspection_attribute h, hcm_item_category hic
+		 WHERE t.attribute_id = h.attribute_id
+		   AND t.item_category = hic.category_id
+   		<if test="itemCategory!=null">
+            AND t.item_category = #{itemCategory}
+        </if>
+        <if test="sampleProcedureType!=null">
+            AND t.sample_procedure_type = #{sampleProcedureType}
+        </if>
+        <if test="sourceType!=null">
+            AND t.source_type = #{sourceType}
+        </if>
+ 	GROUP BY t.item_category, hic.description, hic.category_code,t.source_type
+    </select>
+    <select id="myselect" resultMap="BaseResultMap"
+            parameterType="com.hand.hqm.hqm_item_category_ext.dto.ItemCategoryExt">
+        SELECT 
+       hic.description AS item_category_description,
+       hic.category_code,
+       t.*
+  FROM hqm_item_category_ext t, hqm_inspection_attribute h, hcm_item_category hic
+ WHERE t.attribute_id = h.attribute_id
+   AND t.item_category = hic.category_id
+        <if test="enableFlag!=null">
+            AND t.enable_flag = #{enableFlag}
+        </if>
+        <if test="inspectionTool!=null">
+            AND t.inspection_tool = #{inspectionTool}
+        </if>
+        <if test="frequencyType!=null">
+            AND t.frequency_type = #{frequencyType}
+        </if>
+        <if test="standardType!=null">
+            AND t.standard_type = #{standardType}
+        </if>
+        <if test="attributeType!=null">
+            AND t.attribute_type = #{attributeType}
+        </if>
+        <if test="sourceType!=null">
+            AND t.source_type = #{sourceType}
+        </if>
+        <if test="acceptanceQualityLimit!=null">
+            AND t.acceptance_quality_limit = #{acceptanceQualityLimit}
+        </if>
+        <if test="qualityCharacterGrade!=null">
+            AND t.quality_character_grade = #{qualityCharacterGrade}
+        </if>
+        <if test="inspectionLevels!=null">
+            AND t.inspection_levels = #{inspectionLevels}
+        </if>
+        <if test="itemCategory!=null">
+            AND t.item_category = #{itemCategory}
+        </if>
+        <if test="sampleProcedureType!=null">
+            AND t.sample_procedure_type = #{sampleProcedureType}
+        </if>
+        <if test="inspectionAttribute!=null">
+            AND t.inspection_attribute = #{inspectionAttribute}
+        </if>
+        ORDER BY t.item_category,t.order_code DESC
+    </select>
+    <select id="selectGroup" resultMap="BaseResultMap"
+            parameterType="com.hand.hqm.hqm_item_category_ext.dto.ItemCategoryExt">
+        SELECT t.item_category,
+       hic.description AS item_category_description,
+       hic.category_code,
+       h.source_type,
+       t.enable_flag
+  FROM hqm_item_category_ext t, hqm_inspection_attribute h, hcm_item_category hic
+ WHERE t.attribute_id = h.attribute_id
+   AND t.item_category = hic.category_id
+        <if test="enableFlag!=null">
+            AND t.enable_flag = #{enableFlag}
+        </if>
+        <if test="inspectionTool!=null">
+            AND t.inspection_tool = #{inspectionTool}
+        </if>
+        <if test="frequencyType!=null">
+            AND t.frequency_type = #{frequencyType}
+        </if>
+        <if test="standardType!=null">
+            AND t.standard_type = #{standardType}
+        </if>
+        <if test="attributeType!=null">
+            AND t.attribute_type = #{attributeType}
+        </if>
+        <if test="sourceType!=null">
+            AND t.source_type = #{sourceType}
+        </if>
+        <if test="acceptanceQualityLimit!=null">
+            AND t.acceptance_quality_limit = #{acceptanceQualityLimit}
+        </if>
+        <if test="qualityCharacterGrade!=null">
+            AND t.quality_character_grade = #{qualityCharacterGrade}
+        </if>
+        <if test="inspectionLevels!=null">
+            AND t.inspection_levels = #{inspectionLevels}
+        </if>
+        <if test="itemCategory!=null">
+            AND t.item_category = #{itemCategory}
+        </if>
+        <if test="sampleProcedureType!=null">
+            AND t.sample_procedure_type = #{sampleProcedureType}
+        </if>
+        <if test="inspectionAttribute!=null">
+            AND t.inspection_attribute = #{inspectionAttribute}
+        </if>
+        GROUP BY t.item_category,
+       hic.description,
+       hic.category_code,
+       h.source_type,
+       t.enable_flag
+    </select>
+</mapper>

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.sys.sys_function_button_control.mapper.FunctionButtonControlMapper">
+    <resultMap id="BaseResultMap" type="com.hand.sys.sys_function_button_control.dto.FunctionButtonControl">
+        <result column="control_id" property="controlId" jdbcType="DECIMAL" />
+        <result column="function_id" property="functionId" jdbcType="DECIMAL" />
+        <result column="function_code" property="functionCode" jdbcType="VARCHAR" />
+        <result column="function_name" property="functionName" jdbcType="VARCHAR" />
+        <result column="button_code" property="buttonCode" jdbcType="VARCHAR" />
+        <result column="button_name" property="buttonName" jdbcType="VARCHAR" />
+        <result column="user_type" property="userType" jdbcType="VARCHAR" />
+    </resultMap>
+
+    <select id="getButtonById"  resultMap="BaseResultMap">
+        SELECT t.control_id,t.button_code,t.button_name,t.user_type FROM SYS_FUNCTION_BUTTON_CONTROL t where t.function_id = #{id}
+    </select>
+
+    <select id="getButtonByFunctionCode" resultMap="BaseResultMap" >
+        SELECT T.CONTROL_ID,T.FUNCTION_ID,T.FUNCTION_CODE,T.FUNCTION_NAME,T.BUTTON_CODE,T.BUTTON_NAME,t.user_type FROM SYS_FUNCTION_BUTTON_CONTROL t where t.function_code= #{code}
+    </select>
+</mapper>

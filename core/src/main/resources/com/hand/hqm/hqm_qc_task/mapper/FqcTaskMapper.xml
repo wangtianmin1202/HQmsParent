@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_qc_task.mapper.FqcTaskMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_qc_task.dto.FqcTask">
+        <result column="TASK_ID" property="taskId" jdbcType="DECIMAL" />
+        <result column="PLANT_ID" property="plantId" jdbcType="DECIMAL" />
+        <result column="SOURCE_ORDER" property="sourceOrder" jdbcType="VARCHAR" />
+        <result column="PROD_LINE_CODE" property="prodLineCode" jdbcType="VARCHAR" />
+        <result column="PROD_LINE_ID" property="prodLineId" jdbcType="DECIMAL" />
+        <result column="ORIGINAL_ORDER" property="originalOrder" jdbcType="VARCHAR" />
+        <result column="SOURCE_TYPE" property="sourceType" jdbcType="VARCHAR" />
+        <result column="ITEM_ID" property="itemId" jdbcType="DECIMAL" />
+        <result column="ITEM_VERSION" property="itemVersion" jdbcType="VARCHAR" />
+        <result column="SPREADING" property="spreading" jdbcType="VARCHAR" />
+        <result column="PRODUCTION_BATCH" property="productionBatch" jdbcType="VARCHAR" />
+        <result column="INSPECTION_TYPE" property="inspectionType" jdbcType="VARCHAR" />
+        <result column="PRODUCT_QTY" property="productQty" jdbcType="DECIMAL" />
+        <result column="SAMPLE_QTY" property="sampleQty" jdbcType="DECIMAL" />
+        <result column="PRODUCT_DATE" property="productDate" jdbcType="DATE" />
+        <result column="TASK_FROM" property="taskFrom" jdbcType="VARCHAR" />
+        <result column="IS_URGENCY" property="isUrgency" jdbcType="VARCHAR" />
+        <result column="SOLVE_STATUS" property="solveStatus" jdbcType="VARCHAR" />
+        <result column="ERROR_MSG" property="errorMsg" jdbcType="VARCHAR" />
+        <result column="INSPECTION_NUM" property="inspectionNum" jdbcType="VARCHAR" />
+        <result column="INSPECTION_RES" property="inspectionRes" jdbcType="VARCHAR" />
+        <result column="DEAL_METHOD" property="dealMethod" jdbcType="VARCHAR" />
+        <result column="ITEM_CODE" property="itemCode" jdbcType="VARCHAR" />
+        <result column="ITEM_DESCRIPTIONS" property="itemDescriptions" jdbcType="VARCHAR" />
+        <result column="PLANT_CODE" property="plantCode" jdbcType="VARCHAR" />
+        <result column="REL_ORDER" property="relOrder" jdbcType="VARCHAR" />
+        <result column="RECHECK_SAMPLE_WAY" property="recheckSampleWay" jdbcType="VARCHAR" />
+    </resultMap>
+
+<select id="reSelect" resultMap="BaseResultMap" parameterType="com.hand.hqm.hqm_qc_task.dto.FqcTask">
+SELECT t.*, hi.item_code, hi.descriptions AS item_descriptions, hp.plant_code
+  FROM hqm_fqc_task t, hcm_item hi, hcm_plant hp
+ WHERE t.item_id = hi.item_id
+   AND t.plant_id = hi.plant_id
+   AND t.plant_id = hp.plant_id
+   AND t.inspection_num IS NULL
+<if test="itemId != null">
+AND t.item_id = #{itemId}
+</if>
+<if test="productDateFrom != null"> 
+   AND t.product_date &gt;= to_date(#{productDateFrom},'yyyy-mm-dd hh24:mi:ss')
+   </if>
+   <if test="productDateTo != null">
+   AND t.product_date &lt;= to_date(#{productDateTo},'yyyy-mm-dd hh24:mi:ss')
+   </if>
+   <if test="sourceOrder != null">
+   AND t.source_order = #{sourceOrder}
+   </if>
+</select>
+<select id="getFqcTaskEarlistBySourceOrder" resultMap="BaseResultMap">
+
+SELECT tt.* FROM (SELECT t.* FROM hqm_fqc_task t WHERE t.source_order = #{0} ORDER BY t.creation_date) tt WHERE rownum = 1
+
+</select>
+</mapper>

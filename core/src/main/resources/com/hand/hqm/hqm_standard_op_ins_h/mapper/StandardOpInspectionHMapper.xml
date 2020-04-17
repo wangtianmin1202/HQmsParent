@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_standard_op_ins_h.mapper.StandardOpInspectionHMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_standard_op_ins_h.dto.StandardOpInspectionH">
+        <result column="HEAD_ID" property="headId" jdbcType="DECIMAL" />
+        <result column="PLANT_ID" property="plantId" jdbcType="DECIMAL" />
+        <result column="PROD_LINE_ID" property="prodLineId" jdbcType="DECIMAL" />
+        <result column="STANDARD_OP_ID" property="standardOpId" jdbcType="DECIMAL" />
+        <result column="WORKSTATION_ID" property="workstationId" jdbcType="DECIMAL" />
+        <result column="VERSION" property="version" jdbcType="VARCHAR" />
+        <result column="ENABLE_FLAG" property="enableFlag" jdbcType="VARCHAR" />
+        
+        <result column="PLANT_CODE" property="plantCode" jdbcType="VARCHAR" />
+        <result column="PROD_LINE_CODE" property="prodLineCode" jdbcType="VARCHAR" />
+        <result column="STANDARD_OP_CODE" property="standardOpCode" jdbcType="VARCHAR" />
+        <result column="STANDARD_OP_DES" property="standardOpDes" jdbcType="VARCHAR" />
+        <result column="WORKSTATION_CODE" property="workstationCode" jdbcType="VARCHAR" />
+        <result column="SOURCE_TYPE" property="sourceType" jdbcType="VARCHAR" />
+        <result column="SOURCE_TYPE_DES" property="sourceTypeDes" jdbcType="VARCHAR" />
+        
+    </resultMap>
+ <select id="myselect" resultMap="BaseResultMap"  parameterType="com.hand.hqm.hqm_standard_op_ins_h.dto.StandardOpInspectionH">   
+        SELECT h.head_id,
+       h.plant_id,
+       hp.plant_code,
+       h.prod_line_id,
+       hpl.prod_line_code,
+       h.standard_op_id,
+       hsh.standard_op_code,
+       hsh.standard_op_des,
+       h.workstation_id,
+       hsl.workstation_code,
+       h.version,
+       h.enable_flag,
+       h.source_type
+  FROM hqm_standard_op_inspection_h h
+  LEFT JOIN hqm_sop_pqc_control_l hsl
+    ON h.workstation_id = hsl.workstation_id, hcm_plant hp, hcm_production_line hpl,
+ hqm_sop_pqc_control_h hsh
+ WHERE hp.plant_id = h.plant_id
+   AND h.prod_line_id = hpl.prod_line_id
+   AND hsh.standard_op_id = h.standard_op_id
+	  <if test="headId!= null">
+     AND  h.head_id = #{headId}
+   </if>
+    <if test="prodLineId!= null">
+     AND  h.prod_line_id = #{prodLineId}
+   </if>
+   <if test="plantId != null">
+     AND  h.plant_id = #{plantId}
+   </if>
+   <if test="workstationId != null">
+     AND  h.workstation_id = #{workstationId}
+   </if>
+   <if test="standardOpCode != null">
+     AND  hsh.standard_op_code = #{standardOpCode}
+   </if>
+   <if test="standardOpDes != null">
+     AND  hsh.standard_op_des LIKE concat('%',concat(#{standardOpDes},'%')) 
+   </if>
+   <if test="sourceType != null">
+     AND  h.source_type = #{sourceType}
+   </if>
+   <if test="version != null">
+     AND  h.version = #{version}
+   </if>
+   <if test="workstationId != null">
+     AND  h.workstation_id = #{workstationId}
+   </if>
+   <if test="enableFlag != null">
+     AND  h.enable_flag = #{enableFlag}
+   </if>
+   ORDER BY h.creation_date DESC
+   </select>
+  
+  
+   <select id="lovStanOpInsH" resultMap="BaseResultMap" parameterType="com.hand.hqm.hqm_standard_op_ins_h.dto.StandardOpInspectionH">
+       SELECT hp.plant_id,
+       hp.plant_code,
+       hpl.prod_line_code,
+       hpl.prod_line_id,
+       hsh.standard_op_code,
+       hsh.standard_op_id,
+       hsh.standard_op_des,
+       hsl.workstation_code,
+       hsl.workstation_id,
+       h.source_type,
+       h.head_id,
+       scvb.meaning AS source_type_des
+  FROM hcm_plant hp, hqm_standard_op_inspection_h h
+  JOIN hqm_sop_pqc_control_h hsh
+    ON h.prod_line_id = hsh.prod_line_id
+   AND h.standard_op_id = hsh.standard_op_id
+  JOIN hcm_production_line hpl
+    ON hsh.prod_line_id = hpl.prod_line_id
+   AND h.plant_id = hpl.plant_id
+  LEFT JOIN hqm_sop_pqc_control_l hsl
+    ON hsl.standard_op_id = hsh.standard_op_id
+   AND h.workstation_id = hsl.workstation_id, sys_code_b scb, sys_code_value_b scvb
+ WHERE 1 = 1
+   AND hpl.plant_id = hp.plant_id
+   AND scb.code_id = scvb.code_id
+   AND scb.code = 'HQM_PQC_SOURCE_TYPE'
+   AND scvb.value = h.source_type
+   AND hsh.enable_flag = 'Y'
+   <if test="prodLineCode!= null">
+     AND  hpl.prod_line_code = #{prodLineCode}
+   </if>
+   <if test="plantCode != null">
+     and  h.plant_code = #{plantCode}
+   </if>
+   <if test="standardOpCode != null">
+     and hsh.standard_op_code = #{standardOpCode}
+   </if>
+   <if test="standardOpDes != null">
+     and  hsh.standard_op_des = #{standardOpDes}
+   </if>
+   <if test="workstationCode != null">
+     and  hsl.workstation_code = #{workstationCode}
+   </if>
+    </select>
+<select id="lovStanOpInsHNoIns" resultMap="BaseResultMap" parameterType="com.hand.hqm.hqm_standard_op_ins_h.dto.StandardOpInspectionH">
+       SELECT hp.plant_id,
+       hp.plant_code,
+       hpl.prod_line_code,
+       hpl.prod_line_id,
+       hsh.standard_op_code,
+       hsh.standard_op_id,
+       hsh.standard_op_des,
+       hsl.workstation_code,
+       hsl.workstation_id
+  FROM hcm_plant hp, hcm_production_line hpl, hqm_sop_pqc_control_h hsh
+  LEFT JOIN hqm_sop_pqc_control_l hsl
+    ON hsl.standard_op_id = hsh.standard_op_id
+ WHERE 1 = 1
+   AND hsh.prod_line_id = hpl.prod_line_id
+   AND hpl.plant_id = hp.plant_id
+   <if test="prodLineCode!= null">
+     AND  hpl.prod_line_code = #{prodLineCode}
+   </if>
+   <if test="plantCode != null">
+     and  h.plant_code = #{plantCode}
+   </if>
+   <if test="standardOpCode != null">
+     and hsh.standard_op_code = #{standardOpCode}
+   </if>
+   <if test="standardOpDes != null">
+     and  hsh.standard_op_des = #{standardOpDes}
+   </if>
+   <if test="workstationCode != null">
+     and  hsl.workstation_code = #{workstationCode}
+   </if>
+    </select>
+</mapper>

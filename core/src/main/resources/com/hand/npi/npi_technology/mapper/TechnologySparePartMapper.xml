@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.npi.npi_technology.mapper.TechnologySparePartMapper">
+    <resultMap id="BaseResultMap" type="com.hand.npi.npi_technology.dto.TechnologySparePart">
+        <result column="SPARE_PART_ID" property="sparePartId" jdbcType="DECIMAL" />
+        <result column="SPARE_PART_CODE" property="sparePartCode" jdbcType="VARCHAR" />
+        <result column="SPARE_PART_NAME" property="sparePartName" jdbcType="VARCHAR" />
+        <result column="SPARE_PART_LEVEL" property="sparePartLevel" jdbcType="VARCHAR" />
+        <result column="PARENT_ID" property="parentId" jdbcType="DECIMAL" />
+    </resultMap>
+
+	<select id="queryRootData" resultMap="BaseResultMap">
+		select 
+			t.*
+		from NPI_TECHNOLOGY_SPARE_PART t
+		where t.parent_id is null
+		order by t.spare_part_id
+		<if test="sparePartId != null ">
+        	and t.spare_part_id = #{sparePartId}  
+        </if>
+	</select>
+	
+	<select id="queryLeafData" resultMap="BaseResultMap">
+		select 
+			t.*
+		from NPI_TECHNOLOGY_SPARE_PART t
+		where t.parent_id = #{parentId}
+		order by t.spare_part_id
+	</select>
+	
+	<select id="queryThreeLevelByOneLevel" resultMap="BaseResultMap">
+		SELECT 
+			t3.* 
+		FROM NPI_TECHNOLOGY_SPARE_PART t1
+		LEFT JOIN NPI_TECHNOLOGY_SPARE_PART t2 ON t2.parent_id = t1.spare_part_id
+		LEFT JOIN NPI_TECHNOLOGY_SPARE_PART t3 ON t3.parent_id = t2.spare_part_id
+		WHERE 
+			t1.spare_part_id = #{sparePartId} 
+			AND t3.spare_part_id IS NOT NULL
+	</select>
+	<select id="querySparePartLov" resultMap="BaseResultMap" parameterType="com.hand.npi.npi_technology.dto.TechnologySparePart">
+		SELECT 
+			t1.* 
+		FROM NPI_TECHNOLOGY_SPARE_PART t1
+		WHERE 
+			t1.SPARE_PART_LEVEL = 3
+			<if test="sparePartCode != null ">
+	        	and t1.SPARE_PART_CODE LIKE concat('%',concat(#{sparePartCode},'%')) 
+	        </if>
+	        <if test="sparePartName != null ">
+	        	and t1.SPARE_PART_NAME LIKE concat('%',concat(#{sparePartName},'%'))  
+	        </if>
+	</select>
+	
+	<select id="hasChild" resultType="java.lang.Long">
+		select count(1) from NPI_TECHNOLOGY_SPARE_PART t where t.parent_id = #{parentId} 
+	</select>
+</mapper>

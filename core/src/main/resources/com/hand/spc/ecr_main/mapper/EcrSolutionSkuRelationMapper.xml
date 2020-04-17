@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.spc.ecr_main.mapper.EcrSolutionSkuRelationMapper">
+    <resultMap id="BaseResultMap" type="com.hand.spc.ecr_main.dto.EcrSolutionSkuRelation">
+        <result column="RELATION_ID" property="relationId" jdbcType="DECIMAL" />
+        <result column="ITEM_SKU_ID" property="itemSkuId" jdbcType="DECIMAL" />
+        <result column="ITEM_ECR_ID" property="itemEcrId" jdbcType="DECIMAL" />
+           <result column="BOM_USE" property="bomUse" jdbcType="DECIMAL" />
+        <result column="ECR_USE" property="ecrUse" jdbcType="DECIMAL" />
+        <result column="SUB_ITEM_FLAG" property="subItemFlag" jdbcType="VARCHAR" />
+        <result column="SUB_ITEM" property="subItem" jdbcType="VARCHAR" />
+        <result column="ITEM_CHANGE_TYPE" property="itemChangeType" jdbcType="VARCHAR" />
+        <result column="sub_item_qty" property="subItemQty" jdbcType="DECIMAL" />
+    </resultMap>
+
+	<select id="getSpItem" resultMap="BaseResultMap">
+		 select nsd.sp_part_number  SUB_ITEM,nsd.sp_quantity sub_item_qty
+		   from NPI_SPBOM_MAIN NSM, Npi_Spbom_Detail NSD 
+		  WHERE NSM.SKU_ID = NSD.SKU_ID
+		    AND NSM.ITEM_ID = #{skuId}
+		    and nsd.item_id = #{itemId}
+	</select>
+</mapper>

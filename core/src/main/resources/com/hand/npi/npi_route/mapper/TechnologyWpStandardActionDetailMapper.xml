@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.npi.npi_route.mapper.TechnologyWpStandardActionDetailMapper">
+    <resultMap id="BaseResultMap" type="com.hand.npi.npi_route.dto.TechnologyWpStandardActionDetail">
+        <result column="WP_STD_ACT_DETAIL_ID" property="wpStdActDetailId" jdbcType="DECIMAL" />
+        <result column="STANDARD_ACTION_ID" property="standardActionId" jdbcType="DECIMAL" />
+        <result column="ACTION_NAME" property="actionName" jdbcType="DECIMAL" />
+        <result column="ACTION_TIMES" property="actionTimes" jdbcType="DECIMAL" />
+        <result column="MATTER_WORK_HOURS" property="matterWorkHours" jdbcType="DECIMAL" />
+        <result column="STANDARD_WORKING_HOURS" property="standardWorkingHours" jdbcType="DECIMAL" />
+        <result column="ROUTE_WP_REF_ID" property="routeWpRefId" jdbcType="DECIMAL" />
+    </resultMap>
+	
+	<select id="queryActionInfo" resultMap="BaseResultMap">
+        select t.*,t1.ACTION_NAME from NPI_WP_STD_ACT_DETAIL t
+        join NPI_TECHNOLOGY_STANDARD_ACTION t1 
+            on t.STANDARD_ACTION_ID = t1.STANDARD_ACTION_ID
+		where t.ROUTE_WP_REF_ID = #{routeWpRefId}
+	</select>
+
+</mapper>

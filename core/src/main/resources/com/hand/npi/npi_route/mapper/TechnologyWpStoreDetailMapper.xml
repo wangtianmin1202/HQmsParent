@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.npi.npi_route.mapper.TechnologyWpStoreDetailMapper">
+    <resultMap id="BaseResultMap" type="com.hand.npi.npi_route.dto.TechnologyWpStoreDetail">
+        <result column="WP_STORE_MAT_REF_ID" property="wpStoreMatRefId" jdbcType="DECIMAL" />
+        <result column="QTY" property="qty" jdbcType="DECIMAL" />
+        <result column="WP_ID" property="wpId" jdbcType="DECIMAL" />
+        <result column="ITEM_ID" property="itemId" jdbcType="DECIMAL" />
+        <result column="ITEM_VERSION" property="itemVersion" jdbcType="VARCHAR" />
+        <result column="MAT_TYPE" property="matType" jdbcType="VARCHAR" />
+    </resultMap>
+
+
+</mapper>

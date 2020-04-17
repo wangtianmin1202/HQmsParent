@@ -1,0 +1,1353 @@
+<#include "../include/header.html">
+<script src="${base.contextPath}/common/code?HQM_MEASURE_TOOL_TYPE=HQM_MEASURE_TOOL_TYPE"></script>
+<script src="${base.contextPath}/common/code?HQM_MET_CHEAK_CYCLE=HQM_MET_CHEAK_CYCLE"></script>
+<script src="${base.contextPath}/common/code?HQM_CHECK_TYPE=HQM_CHECK_TYPE"></script>
+<script src="${base.contextPath}/common/code?HQM_MEASURE_TOOL_STATUS=HQM_MEASURE_TOOL_STATUS"></script>
+<script src="${base.contextPath}/common/code?HQM_MEASURE_TOOL_POSITION_STATUS=HQM_MET_POSITION_STATUS"></script>
+<script src="${base.contextPath}/common/code?HQM_MSA_TYPE=HQM_MSA_TYPE"></script>
+<script src="${base.contextPath}/common/code?HQM_MSA_CYCLE=HQM_MSA_CYCLE"></script>
+<script src="${base.contextPath}/common/code?SYS_YES_NO=SYS.YES_NO"></script>
+<script src="${base.contextPath}/common/code?HQM_MSA_STATUS=HQM_MSA_STATUS"></script>
+<script src="${base.contextPath}/common/code?HQM_MSA_RESULT=HQM_MSA_RESULT"></script>
+<script src="${base.contextPath}/common/code?HQM_CHECK_RESULT=HQM_CHECK_RESULT"></script>
+<script src="${base.contextPath}/common/code?HQM_MET_UOM=HQM_MET_UOM"></script>
+<script src="${base.contextPath}/common/code?HQM_INSIDE_CHECK_AGENCY=HQM_INSIDE_CHECK_AGENCY"></script>
+<script src="${base.contextPath}/common/code?HQM_MSA_FLAG=HQM_MSA_FLAG"></script>
+<script src="${base.contextPath}/common/code?HQM_MET_POSITION_STAUS=HQM_MET_POSITION_STAUS"></script>
+<script type="text/javascript">
+	var parentData;
+    var viewModel = Hap.createGridViewModel("#grid");
+    function openLineWindow(id,type){
+   		var dialog = $("#lineWindow").kendoWindow({
+   			actions: ["Close"],
+   			width: 1200,
+   			height: 600,
+   			title: '<@spring.message "measuretool.msacontent"/>',
+   			visible: false,
+   			iframe: true,
+   			modal: true,
+   			content: 'measure_tool_msa.html?measureToolId='+id+ "&msaType=" +type
+   		}).data("kendoWindow");
+   		dialog.center().open();
+    }
+    function openHisWindow(id){
+    	var dialog = $("#hisWindow").kendoWindow({
+   			actions: ["Close"],
+   			width: 1400,
+   			height: 750,
+   			title: '<@spring.message "measuretool.his"/>',
+   			visible: false,
+   			iframe: true,
+   			modal: true,
+   			content: 'measure_tool_his.html?measureToolId='+id 
+   		}).data("kendoWindow");
+   		dialog.center().open(); 
+    }
+    //校验历史
+    function openCheckHisWindow(id){
+    	var dialog = $("#checkHisWindow").kendoWindow({
+   			actions: ["Close"],
+   			width: 1400,
+   			height: 750,
+   			title: '<@spring.message "qms.msa.checkhistory"/>',
+   			visible: false,
+   			iframe: true,
+   			modal: true,
+   			content: 'measure_tool_check_his.html?measureToolId='+id 
+   		}).data("kendoWindow");
+   		dialog.center().open(); 
+    }
+    //MSA历史
+    function openMsaHisWindow(measureToolId){
+    	var jsonData = {
+    			"measureToolId" : measureToolId
+    	}
+    	$.ajax({
+    		url:"${base.contextPath}/hqm/measure/tool/query",
+    		type: "POST",
+    		data: jsonData,
+    		jsonType: "json",
+    		success: function(resultData){
+    			if(resultData.success){
+    				parentData = resultData.rows[0]
+    				var dialog = $("#msaHisWindow").kendoWindow({
+    		   			actions: ["Close"],
+    		   			width: 1400,
+    		   			height: 750,
+    		   			title: '<@spring.message "qms.msa.history"/>',
+    		   			visible: false,
+    		   			iframe: true,
+    		   			modal: true,
+    		   			content: 'msa_plan_his.html'
+    		   		}).data("kendoWindow");
+    		   		dialog.center().open();
+    			}
+    		}
+    	})
+    	 
+    }
+    viewModel.create = function(){
+    	var dialog = $("#addWindow").kendoWindow({
+   			actions: ["Close"],
+   			width: 880,
+   			height: 560,
+   			title: '<@spring.message "measuretool.new"/>',
+   			visible: false,
+   			iframe: true,
+   			modal: true,
+   			content: 'measure_tool_add.html'
+   		}).data("kendoWindow");
+   		dialog.center().open();
+    }
+    //领用
+     viewModel.use = function(){
+    	var grid = $("#grid").data("kendoGrid");
+    	var checked = grid.selectedDataItems();
+    	var len = checked.length;
+    	if(len === 0){
+    		kendo.ui.showInfoDialog({
+    			title: "提示",
+    			message: "请先选择数据"
+    		})
+    		return;
+    	}
+    	for(var i=0;i<len;i++){
+    		if(checked[i].measureToolPositionStatus != 'I' || checked[i].measureToolStatus != '1'){
+    			kendo.ui.showInfoDialog({
+        			title: "提示",
+        			message: "只有库存状态为在库、量具状态为正常的量具才能领用"
+        		})
+        		return;
+    		}
+    	}
+   		parentData = checked;
+    	var dialog = $("#useWindow").kendoWindow({
+   			actions: ["Close"],
+//    			width: "400",
+//    			height: "300",
+			width: "800",
+   			height: "500",
+   			title: "领用",
+   			visible: false,
+   			iframe: true,
+   			modal: true,
+   			content: 'use.html'
+   		}).data("kendoWindow");
+   		dialog.center().open();
+
+    } 
+    //归还
+    viewModel.returnData = function(){
+    	var grid = $("#grid").data("kendoGrid");
+    	var checked = grid.selectedDataItems();
+    	var len = checked.length;
+    	if(len === 0){
+    		kendo.ui.showInfoDialog({
+    			title: "提示",
+    			message: "请先选择数据"
+    		})
+    		return;
+    	}
+    	for(var i=0;i<len;i++){
+    		checked[i].hisType = '1';
+    		if(checked[i].measureToolPositionStatus != 'O'){
+    			kendo.ui.showInfoDialog({
+        			title: "提示",
+        			message: "只有库存状态为领用的量具才能归还"
+        		})
+        		return;
+    		}
+    	}
+    	kendo.ui.showConfirmDialog({
+    		title: '<@spring.message "measuretool.return"/>',
+    		message: '<@spring.message "measuretool.return.notice"/>'
+    	}).done(function(e){
+    		if(e.button=='OK'){
+    			$.ajax({
+    				url:"${base.contextPath}/hqm/measure/tool/returnData",
+    				type:"POST",
+    				data: kendo.stringify(checked),
+    				contentType: "application/json",
+    				success: function (data){
+    					if(data.success){
+    						Hap.showToast({
+                    			type:'success',
+                    			"positionClass": "toast-bottom-right",
+                    			message:'归还成功',
+                    			hideDuration:10*1000
+                    		})	
+    			    		viewModel.query();
+    					}else{
+    						kendo.ui.showErrorDialog({
+    							title: "错误提示",
+    			    			message: data.message
+    			    		})
+    					}
+    				}
+    			})
+    		}
+    	})
+    } 
+   	//报表
+   	viewModel.reportData = function(){
+   		var dialog = $("#analyzeWindow").kendoWindow({
+			actions: ["Close"],
+			width: 405,
+			height: 275,
+			title: '<@spring.message "报表类型选择"/>',
+			visible: false,
+			iframe: true,
+			modal: true,
+			content: 'analyze_tool.html'
+		}).data("kendoWindow");
+		dialog.center().open();
+   	}
+    //报废
+    viewModel.scrap = function(){
+    	var grid = $("#grid").data("kendoGrid");
+    	var checked = grid.selectedDataItems();
+    	var len = checked.length;
+    	if(len === 0){
+    		kendo.ui.showInfoDialog({
+    			title: "提示",
+    			message: "请先选择数据"
+    		})
+    		return;
+    	}
+//     	for(var i=0;i<len;i++){
+//     		if(checked[i].measureToolStatus == '3'){
+//     			kendo.ui.showInfoDialog({
+//         			title: "提示",
+//         			message: "存在已报废量具，不能报废"
+//         		})
+//         		return;
+//     		}
+//     		if(checked[i].measureToolPositionStatus == 'O'){
+//     			kendo.ui.showInfoDialog({
+//         			title: "提示",
+//         			message: "领用状态的量具不允许报废"
+//         		})
+//         		return;
+//     		}
+//     		checked[i].hisType = '4';
+//     	}
+    	for(var i=0;i<len;i++){
+    		if(checked[i].measureToolStatus == '3'){
+    			kendo.ui.showInfoDialog({
+        			title: "提示",
+        			message: "存在已报废量具，不能报废"
+        		})
+        		return;
+    		}
+    		if(checked[i].measureToolPositionStatus != 'I'){
+    			kendo.ui.showInfoDialog({
+        			title: "提示",
+        			message: "只有库存状态为在库的量具才允许报废"
+        		})
+        		return;
+    		}
+    		checked[i].hisType = '3';
+    	}
+   		parentData = checked;
+    	var dialog = $("#scrapWindow").kendoWindow({
+   			actions: ["Close"],
+   			width: 820,
+   			height: 540,
+   			title: '<@spring.message "measuretool.scrap"/>',
+   			visible: false,
+   			iframe: true,
+   			modal: true,
+   			content: 'scrap.html'
+   		}).data("kendoWindow");
+   		dialog.center().open();
+    }
+    //检验结果
+    viewModel.checkResult = function(){
+    	var grid = $("#grid").data("kendoGrid");
+    	var checked = grid.selectedDataItems();
+    	var len = checked.length;
+    	if(len === 0){
+    		kendo.ui.showInfoDialog({
+    			title: "提示",
+    			message: "请先选择数据"
+    		})
+    		return;
+    	}
+   		parentData = checked;
+    	var dialog = $("#checkResultWindow").kendoWindow({
+   			actions: ["Close"],
+   			width: "320",
+   			height: "270",
+   			title: '<@spring.message "measuretool.check.result"/>',
+   			visible: false,
+   			iframe: true,
+   			modal: true,
+   			content: 'checkResult.html'
+   		}).data("kendoWindow");
+   		dialog.center().open();
+    }
+    //维修
+    viewModel.repair = function(){
+    	var grid = $("#grid").data("kendoGrid");
+    	var checked = grid.selectedDataItems();
+    	var len = checked.length;
+    	if(len === 0){
+    		kendo.ui.showInfoDialog({
+    			title: "提示",
+    			message: "请先选择数据"
+    		})
+    		return;
+    	}else if(len > 1){
+    		kendo.ui.showInfoDialog({
+    			title: "提示",
+    			message: "一次只能维修一个量具"
+    		})
+    		return;
+    	}
+   		parentData = checked;
+    	var dialog = $("#repairWindow").kendoWindow({
+   			actions: ["Close"],
+   			width: "820",
+   			height: "340",
+   			title: "量具维修",
+   			visible: false,
+   			iframe: true,
+   			modal: true,
+   			content: 'repair.html'
+   		}).data("kendoWindow");
+   		dialog.center().open();
+    }
+    //编辑
+    viewModel.edit = function(){
+    	var grid = $("#grid").data("kendoGrid");
+    	var checked = grid.selectedDataItems();
+    	var len = checked.length;
+    	if(len === 0){
+    		kendo.ui.showInfoDialog({
+    			title: "提示",
+    			message: "请先选择数据"
+    		})
+    		return;
+    	}else if(len > 1){
+    		kendo.ui.showInfoDialog({
+    			title: "提示",
+    			message: "一次只能编辑一个量具"
+    		})
+    		return;
+    	}
+   		parentData = checked;
+    	var dialog = $("#editWindow").kendoWindow({
+   			actions: ["Close"],
+   			width: 1200,
+   			height: 750,
+   			title: '<@spring.message "iso.manager.edit"/>',
+   			visible: false,
+   			iframe: true,
+   			modal: true,
+   			content: 'measure_tool_edit.html'
+   		}).data("kendoWindow");
+   		dialog.center().open();
+    }
+    //msa
+    viewModel.msa = function(){
+    	var grid = $("#grid").data("kendoGrid");
+    	var checked = grid.selectedDataItems();
+    	var len = checked.length;
+    	if(len === 0){
+    		kendo.ui.showInfoDialog({
+    			title: "提示",
+    			message: "请先选择数据"
+    		})
+    		return;
+    	}else if(len > 1){
+    		kendo.ui.showInfoDialog({
+    			title: "提示",
+    			message: "一次只能编辑一个量具"
+    		})
+    		return;
+    	}else if(isNotEmpty(checked[0].msaFlag)){
+    		kendo.ui.showInfoDialog({
+    			title: "提示",
+    			message: '<@spring.message "measuretool.msa.error"/>'
+    		})
+    		return;
+    	}
+   		parentData = checked;
+    	var dialog = $("#msaWindow").kendoWindow({
+   			actions: ["Close"],
+   			width: 1200,
+   			height: 750,
+   			title: "MSA",
+   			visible: false,
+   			iframe: true,
+   			modal: true,
+   			content: 'msa_add.html'
+   		}).data("kendoWindow");
+   		dialog.center().open();
+    }
+    function checkStr(str){
+		if(str == null || str === '' ||typeof(str) == "undefined"){
+    		return false;
+    	}
+		return true;
+    }
+    
+	viewModel.model.set('enableFlag','Y')
+  
+</script>
+<body>
+<div id="msaHisWindow"></div>
+<div id="checkHisWindow"></div>
+<div id="msaWindow"></div>
+<div id="editWindow"></div>
+<div id="repairWindow"></div>
+<div id="checkResultWindow"></div>
+<div id="useWindow"></div>
+<div id="scrapWindow"></div>
+<div id="addWindow"></div>
+<div id="lineWindow"></div>
+<div id="hisWindow"></div>
+<div id="analyzeWindow"></div>
+<!-- 报表 -->
+<div id="purchaseDateReport"></div>
+<div id="checkReport"></div>
+<div id="departmentUsageReport"></div>
+<div id="msaReport"></div>
+<div id="page-content">
+    <div class="pull-left" id="toolbar-btn" style="padding-bottom:10px;">
+    	<span id="add" type="button" class="btn btn-primary"
+                         style="float:left;margin-right:5px" data-bind="click:create"><i class="fa fa-plus-square" style="margin-right:3px;"></i><@spring.message "hap.new"/></span>    
+<!--         <span class="btn btn-success k-grid-save-changes" style="float:left;margin-right:5px;"data-bind="click:save"><i class="fa fa-save" style="margin-right:3px;"></i><@spring.message "hap.save"/></span>         -->
+
+    	<span class="btn btn-success k-grid-save-changes" style="float:left;margin-right:5px;" data-bind="click:edit"><@spring.message "measuretool.edit"/></span>
+<!--         <span class="btn btn-primary k-grid-add" style="float:left;margin-right:5px;" data-bind="click:use"><@spring.message "领用"/></span> -->
+        <span class="btn btn-primary fa fa-share" data-bind="click:returnData" style="float:left;margin-right:5px;">&nbsp;<@spring.message "measuretool.return"/></span>
+<!--         <span class="btn btn-danger fa fa-trash-o" data-bind="click:scrap" style="float:left;margin-right:5px;">&nbsp;<@spring.message "measuretool.scrap"/></span> -->
+    	<!-- <span class="btn btn-primary k-grid-add" style="float:left;margin-right:5px;" data-bind="click:checkResult"><@spring.message "measuretool.check.result"/></span>-->
+<!--     	<span class="btn btn-primary k-grid-add" style="float:left;margin-right:5px;" data-bind="click:repair"><@spring.message "measuretool.repair"/></span> -->
+
+    	<span id="msa" class="btn btn-primary k-grid-add" style="float:left;margin-right:5px;" data-bind="click:msa"><@spring.message "measuretool.msa"/></span>
+    	<span class="btn btn-primary k-grid-excel" style="float:left;margin-right:5px;" data-bind="click:exportExcel">
+    		<i class="fa fa-file-excel-o" style="margin-right:3px"></i><@spring.message "measuretool.export"/></span>
+    	<!-- 报表 -->	
+    	<span class="btn btn-primary fa fa-book" data-bind="click:reportData" style="float:left;margin-right:5px;">&nbsp;<@spring.message "报表"/></span>	
+    </div>
+    <script>kendo.bind($('#toolbar-btn'), viewModel);</script>
+    <div id="queryPanel" class="pull-right" id="query-form" style="padding-bottom:10px;">
+    
+    	<div class="k-query-simple" id="query-form">
+    		<!-- 工厂 -->
+			<input  id="plantId" style="margin-right:5px;" placeholder="<@spring.message 'measuretool.plantcode'/>" data-bind="value:model.plantId" >
+			<script>
+				$("#plantId").kendoLov($.extend
+				    (<@lov"LOV_HCM_PLANT"/>, {
+				        textField: 'plantCode',
+				        valueField:'plantId',
+				     	query: function(e){
+		       	        	e.param['enableFlag'] = 'Y';
+		       	        }
+				    }));
+			</script>
+    		<!-- 设备编号 -->
+            <input type="text" data-role="maskedtextbox" style="float:left;width:150px;margin-right:5px;" placeholder='<@spring.message "MeasureTool.measureToolNum"/>'
+                   data-bind="value:model.measureToolNum" class="k-textbox">
+            <!-- 类型 -->
+            <input id="measureToolType" style="width:150px;margin-right:5px;" placeholder='<@spring.message "MeasureTool.measureToolType"/>'
+			       data-bind="value:model.measureToolType">  
+            <script>
+	                $("#measureToolType").kendoComboBox({
+	               	    dataTextField: "meaning",
+	               	    dataValueField: "value",
+	               	    valuePrimitive: true,
+	               	    dataSource: HQM_MEASURE_TOOL_TYPE
+	               	});	                   
+			</script>        
+            <!-- 校验方式 -->
+            <input id="checkType" style="width:150px;margin-right:5px;" placeholder='<@spring.message "MeasureTool.checkType"/>'
+			       data-bind="value:model.checkType">  
+            <script>
+	                $("#checkType").kendoComboBox({
+	               	    dataTextField: "meaning",
+	               	    dataValueField: "value",
+	               	    valuePrimitive: true,
+	               	    dataSource: HQM_CHECK_TYPE
+	               	});	                   
+			</script> 
+        </div>
+        <script>kendo.bind($('#query-form'), viewModel);</script>
+        <div class="k-query-detail" id="query-form2">
+            <div class="rows" style="margin-top:5px">
+            <!-- 状态 -->
+            <input id="measureToolStatus" style="width:150px;margin-right:5px;" placeholder='<@spring.message "MeasureTool.measureToolStatus"/>'
+			       data-bind="value:model.measureToolStatus">  
+            <script>
+	                $("#measureToolStatus").kendoComboBox({
+	               	    dataTextField: "meaning",
+	               	    dataValueField: "value",
+	               	    valuePrimitive: true,
+	               	    dataSource: HQM_MEASURE_TOOL_STATUS
+	               	});	                   
+			</script>
+			<!-- 库存状态 -->
+            <input id="measureToolPositionStatus" style="width:150px;margin-right:5px;" placeholder='<@spring.message "MeasureTool.measureToolPositionStatus"/>'
+			       data-bind="value:model.measureToolPositionStatus">  
+            <script>
+	                $("#measureToolPositionStatus").kendoComboBox({
+	               	    dataTextField: "meaning",
+	               	    dataValueField: "value",
+	               	    valuePrimitive: true,
+	               	    dataSource: HQM_MEASURE_TOOL_POSITION_STATUS
+	               	});	                   
+			</script>
+            <!--   下次校验日期从 -->
+            <input type="text" data-role="datepicker" style="width:150px;margin-right:5px;" placeholder='<@spring.message "MeasureTool.startTime"/>'
+	                   data-bind="value:model.startTime" class="datepicker">
+            <!-- 下次校验日期至 -->
+            <input type="text" data-role="datepicker" style="width:150px;margin-right:5px;" placeholder='<@spring.message "MeasureTool.endTime"/>'
+            data-bind="value:model.endTime" class="datepicker">  
+
+            </div>
+            <div class="rows" style="margin-top:5px">
+            <!-- 是否需要MSA -->
+            <input id="msaFlag" style="width:150px;margin-right:5px;" placeholder='<@spring.message "MeasureTool.msaFlag"/>'
+			       data-bind="value:model.msaFlag">  
+            <script>
+	                $("#msaFlag").kendoComboBox({
+	               	    dataTextField: "meaning",
+	               	    dataValueField: "value",
+	               	    valuePrimitive: true,
+	               	    dataSource: HQM_MSA_FLAG
+	               	});	                   
+			</script>
+			<!-- MSA结果 -->
+            <input id="msaResult" style="width:150px;margin-right:5px;" placeholder='<@spring.message "MeasureTool.msaResult"/>'
+			       data-bind="value:model.msaResult">  
+            <script>
+	                $("#msaResult").kendoComboBox({
+	               	    dataTextField: "meaning",
+	               	    dataValueField: "value",
+	               	    valuePrimitive: true,
+	               	    dataSource: HQM_MSA_RESULT
+	               	});	                   
+			</script>
+			<!-- MSA状态 -->
+            <input id="msaStatus" style="width:150px;margin-right:5px;" placeholder='<@spring.message "MeasureTool.msaStatus"/>'
+			       data-bind="value:model.msaStatus">  
+            <script>
+	                $("#msaStatus").kendoComboBox({
+	               	    dataTextField: "meaning",
+	               	    dataValueField: "value",
+	               	    valuePrimitive: true,
+	               	    dataSource: HQM_MSA_STATUS
+	               	});	                   
+			</script>
+			<!-- 是否有效 -->
+            <input id="enableFlag" style="width:150px;margin-right:5px;" placeholder='<@spring.message "MeasureTool.enableFlag"/>'
+			       data-bind="value:model.enableFlag">  
+            <script>
+	                $("#enableFlag").kendoComboBox({
+	               	    dataTextField: "meaning",
+	               	    dataValueField: "value",
+	               	    valuePrimitive: true,
+	               	    dataSource: SYS_YES_NO
+	               	});	                   
+			</script>
+            </div>
+        </div>
+        <script>kendo.bind($('#query-form2'), viewModel);</script>
+    
+        
+        <div style="clear:both"></div>
+    </div>
+    <script>
+    kendo.bind($('#query-form'), viewModel);
+    $('#queryPanel').kendoQueryPanel({
+        queryFunction: function () {
+            viewModel.query();
+        },
+        resetFunction: function () {
+            viewModel.reset();
+        }
+    });
+    </script>
+    <div style="clear:both">
+        <div id="grid"></div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    Hap.initEnterQuery('#query-form', viewModel.query);
+    var BaseUrl = _basePath;
+    dataSource = new kendo.data.DataSource({
+        transport: {
+            read: {
+                url: BaseUrl + "/hqm/measure/tool/query",
+                type: "POST",
+                dataType: "json"
+            },
+            update: {
+                url: BaseUrl + "/hqm/measure/tool/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            destroy: {
+                url: BaseUrl + "/hqm/measure/tool/remove",
+                type: "POST",
+                contentType: "application/json"
+            },
+            create: {
+                url: BaseUrl + "/hqm/measure/tool/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            parameterMap: function (options, type) {
+                if (type !== "read" && options.models) {
+                	if(type == "update"){
+                		$.each(options.models,function(i,n){
+                			if(checkStr(n.dirtyFields.userName) && checkStr(n.dirtyFields.name) && checkStr(n.userName) && checkStr(n.name)){
+                				if(!checkStr(n.firstUseDate)){
+                					n.firstUseDate = new Date();
+                				}
+               					n.outboundDate = new Date();
+                				n.measureToolPositionStatus = 'O'
+                				n.updateFlag='Y'
+                			}else if(checkStr(n.dirtyFields.userName) || checkStr(n.dirtyFields.name)){
+                				n.updateFlag='N'
+                			} 
+	                	})              		
+                	}
+                    var datas = Hap.prepareSubmitParameter(options, type)
+                    return kendo.stringify(datas);
+                } else if (type === "read") {
+                    return Hap.prepareQueryParameter(viewModel.model.toJSON(), options)
+                }
+            }
+        },
+        batch: true,
+        serverPaging: true,
+        pageSize: 20,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+                id: "measureToolId",
+                fields: {},
+                editable: function(col){
+//                 	if(this.enableFlag == 'N'){
+//                 		if(col == 'enableFlag'){
+//                 			return true;
+//                 		}else{
+//                 			return false;	
+//                 		}
+//                 	}
+//                 	if(col == 'enableFlag' || col == 'supplierName' || col == 'positionTitle' || col == 'keyProcess' || col == 'measureToolStatus'){
+//                 		return true;
+//                 	}else if(this.measureToolPositionStatus == 'I' && this.measureToolStatus == '1'){
+//                 		if(col == 'name' || col == 'userName'){
+//                 			return true;
+//                 		}
+//                 	}else{
+//                 		return false; 
+//                 	}
+					return false;
+                }
+            }
+        }
+    });
+
+    $("#grid").kendoGrid({
+    	excel: {
+    		fileName:"量具台账.xlsx",
+    		filterable: true,
+    	},
+    	excelExport: function(e){
+    		var rows = e.workbook.sheets[0].rows;
+    		var datas = e.data;
+    		
+    		for(var i=1;i<rows.length; i++){
+    			rows[i].cells[2].value = Hap.getCodeMeaning(HQM_MEASURE_TOOL_TYPE,datas[i-1].measureToolType);
+    			rows[i].cells[11].value = Hap.getCodeMeaning(HQM_MET_UOM,datas[i-1].uom);
+    			rows[i].cells[15].value = Hap.getCodeMeaning(HQM_MET_CHEAK_CYCLE,datas[i-1].checkCycle);
+    			rows[i].cells[20].value = Hap.getCodeMeaning(HQM_CHECK_TYPE,datas[i-1].checkType);
+    			rows[i].cells[21].value = Hap.getCodeMeaning(HQM_CHECK_RESULT,datas[i-1].checkResult);
+    			rows[i].cells[23].value = Hap.getCodeMeaning(HQM_MEASURE_TOOL_STATUS,datas[i-1].measureToolStatus);
+    			rows[i].cells[24].value = Hap.getCodeMeaning(HQM_MEASURE_TOOL_POSITION_STATUS,datas[i-1].measureToolPositionStatus);
+    			rows[i].cells[27].value = Hap.getCodeMeaning(SYS_YES_NO,datas[i-1].msaFlag);
+    			rows[i].cells[28].value = Hap.getCodeMeaning(HQM_MSA_TYPE,datas[i-1].msaType);
+    			rows[i].cells[29].value = Hap.getCodeMeaning(HQM_MSA_CYCLE,datas[i-1].msaCycle);
+    			rows[i].cells[31].value = Hap.getCodeMeaning(HQM_MSA_RESULT,datas[i-1].msaResult);
+    			rows[i].cells[32].value = Hap.getCodeMeaning(HQM_MSA_STATUS,datas[i-1].msaStatus);
+    			//rows[i].cells[33].value = Hap.getCodeMeaning(SYS_YES_NO,datas[i-1].enableFlag);
+    		}
+    	},
+        dataSource: dataSource,
+        resizable: true,
+        scrollable: true,
+        sortable:true,
+        navigatable: false,
+        selectable: 'multiple, rowbox',
+        dataBound: function (e) {
+            if (parent.autoResizeIframe) {
+                parent.autoResizeIframe('${RequestParameters.functionCode!}')
+            }
+            var rows = e.sender.tbody.children();
+            var rowsLock = this.items();
+            for (var j = 0; j < rows.length; j++) {
+                var row = $(rows[j]);
+                var rowLock = $(rowsLock[j]);
+                var dataItem = e.sender.dataItem(row);
+
+                var measureToolStatus = dataItem.get("measureToolStatus");
+                var cells = row.children();
+                var cellsLock = rowLock.children();
+//                 if (measureToolStatus === '3') {  
+//                     for (var idx = 0; idx < cells.length; idx++) {
+//                         var mytd = cells[idx];
+//                         cells[idx].bgColor = "red"; //设置行背景颜色
+//                      }
+                    
+//                 }
+                if (measureToolStatus === '3') {
+                    for (var idx = 0; idx < cells.length; idx++) {
+                        var mytd = cells[idx];                        
+//                         if (idx == 0) {
+//                             var chk = mytd.children[0];
+//                             $(chk).prop("checked", true); //设置选择框
+//                         }                        
+//                         $(mytd).css("font-weight", "bold"); //设置字体
+                        $(mytd).css("color", "red");//设置字体颜色
+//                         $(mytd).css("text-decoration", "line-through");//加删除线
+//                         $(mytd).height(100);//设置行高
+                    }
+                    for(var idx = 0; idx < cellsLock.length; idx++){
+                    	var mytdLock = cellsLock[idx];
+                    	$(mytdLock).css("color", "red");//设置字体颜色
+                    }
+
+                }
+            }   
+            
+        },
+        pageable: {
+            pageSizes: [5, 10, 20, 50],
+            refresh: true,
+            buttonCount: 5
+        },
+        columns: [
+                    {
+                field: "measureToolNum",
+                title: '<@spring.message "measuretool.measuretoolnum"/>',
+                width: 150,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+                locked:true
+            },
+                    {
+                field: "descriptions",
+                title: '<@spring.message "measuretool.descriptions"/>',
+                width: 150,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+                locked:true
+            },
+            {
+                field: "measureToolType",
+                title: '<@spring.message "measuretool.measuretooltype"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+                template: function (dataItem) {
+                    var v = dataItem.measureToolType ? dataItem.measureToolType : "";
+                    $.each(HQM_MEASURE_TOOL_TYPE, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return v;
+                        }
+                    });
+                    return v;
+                },
+                editor: function (container, options) {
+                    $('<input name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            dataTextField: "meaning",
+                            dataValueField: "value",
+                            valuePrimitive: true,
+                            dataSource:HQM_MEASURE_TOOL_TYPE
+                        });
+                },
+                locked:true
+            },
+            {
+                field: "purchaseDate",
+                title: '<@spring.message "measuretool.purchasedate"/>',
+                width: 150,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"}
+            },
+            {
+                field: "outboundDate",
+                title: '<@spring.message "measuretool.outbounddate"/>',
+                width: 150,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"}
+            }, 
+            {
+                field: "returnDate",
+                title: '<@spring.message "measuretool.returndate"/>',
+                width: 150,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"}
+            },  
+        	{
+                field: "plantCode",
+                title: '<@spring.message "measuretool.plantCode"/>',
+                width: 150,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"}
+            },
+                    
+            {
+                field: "measureToolSupplierName",
+                title: '<@spring.message "measuretool.measuretoolsupplier"/>',
+                width: 200,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+            {
+                field: "measureToolMaker",
+                title: '<@spring.message "measuretool.measureToolMaker"/>',
+                width: 200,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+            {
+                field: "measuringRange",
+                title: '<@spring.message "measuretool.measuringrange"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"}
+            },
+            {
+                field: "measurementAccuracy",
+                title: '<@spring.message "measuretool.measurementaccuracy"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"}
+            },
+            {
+                field: "uom",
+                title: '<@spring.message "measuretool.uom"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+                template: function (dataItem) {
+                    var v = dataItem.uom ? dataItem.uom : "";
+                    $.each(HQM_MET_UOM, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return v;
+                        }
+                    });
+                    return v;
+                },
+                editor: function (container, options) {
+                    $('<input name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            dataTextField: "meaning",
+                            dataValueField: "value",
+                            valuePrimitive: true,
+                            dataSource: HQM_MET_UOM
+                        });
+                }
+            },
+            
+            {
+                field: "firstUseDate",
+                title: '<@spring.message "measuretool.firstusedate"/>',
+                width: 150,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"}
+            },
+            {
+                field: "name",
+                title: '<@spring.message "measuretool.usedepartment"/>',
+                width: 200,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+                template: function (Item) {
+                    return Item['name'] || ''
+                },
+                editor: function (container, options) {
+                    $('<input  name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoLov($.extend(<@lov "LOV_UNIT_HQM"/>, {
+                        query: function (e) {
+                            //e.param['plantId'] = viewModel.model.plantId;
+                        },
+                        textField: 'name',
+                        model: options.model,
+                        select:function(e) {
+                       		options.model.useDepartment = e.item.unitId
+                        }
+                    }));
+                }, 
+            },
+            {
+                field: "userName",
+                title: '<@spring.message "measuretool.principal"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+                template: function (Item) {
+                    return Item['userName'] || ''
+                },
+                editor: function (container, options) {
+                    $('<input name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoLov($.extend(<@lov "LOV_USER"/>, {
+                        query: function (e) {
+                        },
+                        textField: 'userName',
+                        model: options.model,
+                        select:function(e) {
+                        	options.model.principal = e.item.userId
+                        }
+                    }));
+                },
+            },
+            {
+                field: "checkCycle",
+                title: '<@spring.message "measuretool.checkcycle"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+                template: function (dataItem) {
+                    var v = dataItem.checkCycle ? dataItem.checkCycle : "";
+                    $.each(HQM_MET_CHEAK_CYCLE, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return v;
+                        }
+                    });
+                    return v;
+                },
+                editor: function (container, options) {
+                    $('<input name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            dataTextField: "meaning",
+                            dataValueField: "value",
+                            valuePrimitive: true,
+                            dataSource:HQM_MET_CHEAK_CYCLE
+                        });
+                }
+            },
+            {
+                field: "keyProcess",
+                title: '<@spring.message "measuretool.keyprocess"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"}
+            },
+                    {
+                field: "positionTitle",
+                title: '<@spring.message "measuretool.positiontitle"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"}
+            },
+            {
+                field: "lastCheckDate",
+                title: '<@spring.message "measuretool.lastcheckdate"/>',
+                width: 150,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"}
+            },
+                    {
+                field: "nextCheckDate",
+                title: '<@spring.message "measuretool.nextcheckdate"/>',
+                width: 150,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"}
+            },
+            
+            {
+                field: "checkType",
+                title: '<@spring.message "measuretool.checktype"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+                template: function (dataItem) {
+	                    var v = dataItem.checkType ? dataItem.checkType : "";
+	                    $.each(HQM_CHECK_TYPE, function (i, n) {
+	                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+	                            v = n.meaning;
+	                            return v;
+	                        }
+	                    });
+	                    return v;
+                },
+                editor: function (container, options) {
+                    $('<input name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            dataTextField: "meaning",
+                            dataValueField: "value",
+                            valuePrimitive: true,
+                            dataSource:HQM_CHECK_TYPE
+                        });
+                }
+            },
+            {
+                field: "checkResult",
+                title: '<@spring.message "measuretool.checkResult"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+                template: function (dataItem) {
+                    var v = dataItem.checkResult ? dataItem.checkResult : "";
+                    $.each(HQM_CHECK_RESULT, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return v;
+                        }
+                    });
+                    return v;
+                },
+                editor: function (container, options) {
+                    $('<input name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            dataTextField: "meaning",
+                            dataValueField: "value",
+                            valuePrimitive: true,
+                            dataSource:HQM_CHECK_RESULT
+                        });
+                }
+            },
+                    {
+                field: "supplierName",
+                title: '<@spring.message "measuretool.checkedby"/>',
+                width: 200,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+                template: function (Item) {
+                	if(Item.checkType == '1'){
+                		var v = HQM_INSIDE_CHECK_AGENCY[0].meaning ? HQM_INSIDE_CHECK_AGENCY[0].meaning : "";
+//                         $.each(HQM_INSIDE_CHECK_AGENCY, function (i, n) {
+//                             if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+//                                 v = n.meaning;
+//                                 return v;
+//                             }
+//                         });
+                        return v;
+                	}else{                		
+	                    return Item['supplierName'] || ''
+                	}
+                },
+                editor: function (container, options) {
+                    $('<input name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoLov($.extend(<@lov "LOV_SUPPLIER_MSA"/>, {
+                        query: function (e) {
+                        },
+                        textField: 'supplierName',
+                        model: options.model,
+                        select:function(e) {
+                        	options.model.checkedBy = e.item.supplierId
+                        }
+                    }));
+                },
+            },
+            
+            
+            {
+                field: "measureToolStatus",
+                title: '<@spring.message "measuretool.measuretoolstatus"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+                template: function (dataItem) {
+                    var v = dataItem.measureToolStatus ? dataItem.measureToolStatus : "";
+                    $.each(HQM_MEASURE_TOOL_STATUS, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return v;
+                        }
+                    });
+//                     if(dataItem.measureToolStatus === '3'){
+//                     	console.log($(this).html())
+//                     }
+                    return v;
+                },
+                editor: function (container, options) {
+                    $('<input name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            dataTextField: "meaning",
+                            dataValueField: "value",
+                            valuePrimitive: true,
+                            dataSource:HQM_MEASURE_TOOL_STATUS
+                        });
+                }
+            },
+              
+                    {
+                field: "measureToolPositionStatus",
+                title: '<@spring.message "measuretool.measuretoolpositionstatus"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+                template: function (dataItem) {
+                    var v = dataItem.measureToolPositionStatus ? dataItem.measureToolPositionStatus : "";
+                    $.each(HQM_MET_POSITION_STAUS, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return v;
+                        }
+                    });
+                    return v;
+                },
+                editor: function (container, options) {
+                    $('<input name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            dataTextField: "meaning",
+                            dataValueField: "value",
+                            valuePrimitive: true,
+                            dataSource:HQM_MEASURE_TOOL_POSITION_STATUS
+                        });
+                }
+            },
+                    {
+                field: "borrowedSupplierName",
+                title: '<@spring.message "外借供应商"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+            {
+                field: "scrapReason",
+                title: '<@spring.message "measuretool.scrapreasongrid"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"}
+            },
+            {
+                field: "repairReason",
+                title: '<@spring.message "measuretool.repairreasongrid"/>',
+                width: 150,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"}
+            },
+            
+                    
+            {
+                field: "msaFlag",
+                title: '<@spring.message "measuretool.msaflag"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+                template: function (dataItem) {
+                    var v = dataItem.msaFlag ? dataItem.msaFlag : "";
+                    $.each(HQM_MSA_FLAG, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return v;
+                        }
+                    });
+                    return v;
+                },
+                editor: function (container, options) {
+                    $('<input name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            dataTextField: "meaning",
+                            dataValueField: "value",
+                            valuePrimitive: true,
+                            dataSource:HQM_MSA_FLAG
+                        });
+                }
+            },     
+                  
+            {
+                field: "msaType",
+                title: '<@spring.message "measuretool.msatype"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+                template: function (dataItem) {
+                    var v = dataItem.msaType ? dataItem.msaType : "";
+                    $.each(HQM_MSA_TYPE, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return v;
+                        }
+                    });
+                    return v;
+                },
+                editor: function (container, options) {
+                    $('<input name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            dataTextField: "meaning",
+                            dataValueField: "value",
+                            valuePrimitive: true,
+                            dataSource:HQM_MSA_TYPE
+                        });
+                }
+            },
+            {
+                field: "msaCycle",
+                title: '<@spring.message "measuretool.msacycle"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+                template: function (dataItem) {
+                    var v = dataItem.msaCycle ? dataItem.msaCycle : "";
+                    $.each(HQM_MSA_CYCLE, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return v;
+                        }
+                    });
+                    return v;
+                },
+                editor: function (container, options) {
+                    $('<input name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            dataTextField: "meaning",
+                            dataValueField: "value",
+                            valuePrimitive: true,
+                            dataSource:HQM_MSA_CYCLE
+                        });
+                }
+            },
+            {
+                field: "judgementStandard",
+                title: '<@spring.message "measuretool.judgementstandard"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"}
+            },
+            {
+                field: "msaResult",
+                title: '<@spring.message "measuretool.msaresult"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+                template: function (dataItem) {
+                    var v = dataItem.msaResult ? dataItem.msaResult : "";
+                    $.each(HQM_MSA_RESULT, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return v;
+                        }
+                    });
+                    return v;
+                },
+                editor: function (container, options) {
+                    $('<input name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            dataTextField: "meaning",
+                            dataValueField: "value",
+                            valuePrimitive: true,
+                            dataSource:HQM_MSA_RESULT
+                        });
+                }
+            },
+            {
+                field: "msaStatus",
+                title: '<@spring.message "measuretool.msastatus"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+                template: function (dataItem) {
+                    var v = dataItem.msaStatus ? dataItem.msaStatus : "";
+                    $.each(HQM_MSA_STATUS, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return v;
+                        }
+                    });
+                    return v;
+                },
+                editor: function (container, options) {
+                    $('<input name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            dataTextField: "meaning",
+                            dataValueField: "value",
+                            valuePrimitive: true,
+                            dataSource:HQM_MSA_STATUS
+                        });
+                }
+            },
+            
+            {
+                field: "",
+                title: '<@spring.message "measuretool.msaContent"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+                template: function(rowdata){
+                	data = rowdata;
+                	if(rowdata.msaFlag == 'N'){
+                		return '<span></span>'
+                	}else{
+	                	return '<a style="color:blue" href="javascript:void(0)" onclick="openLineWindow('+rowdata.measureToolId+','+rowdata.msaType+')"><@spring.message "measuretool.msacontent"/></a>'                		
+                	}
+                },
+            },
+            {
+                field: "",
+                title: '<@spring.message "measuretool.his"/>',
+                width: 200,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+                template: function(rowdata){
+                	data = rowdata;
+                	return '<a style="color:blue" href="javascript:void(0)" onclick="openHisWindow('+rowdata.measureToolId+')"><span><@spring.message "measuretool.his"/></span></a>&nbsp;'
+                		  +'<a style="color:blue" href="javascript:void(0)" onclick="openCheckHisWindow('+rowdata.measureToolId+')"><span><@spring.message "qms.msa.checkhistory"/></span></a>&nbsp;'
+                		  +'<a style="color:blue" href="javascript:void(0)" onclick="openMsaHisWindow('+rowdata.measureToolId+')"><span><@spring.message "qms.msa.history"/></span></a>'
+                },
+            },
+            
+//                     {
+//                 field: "enableFlag",
+//                 title: '<@spring.message "measuretool.enableflag"/>',
+//                 width: 120,
+//                 attributes: {style: "text-align:center;white-space: nowrap;"},
+//                 headerAttributes: {style: "text-align:center"},
+//                 template: function (dataItem) {
+//                     var v = dataItem.enableFlag ? dataItem.enableFlag : "";
+//                     $.each(SYS_YES_NO, function (i, n) {
+//                         if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+//                             v = n.meaning;
+//                             return v;
+//                         }
+//                     });
+//                     return v;
+//                 },
+//                 editor: function (container, options) {
+//                     $('<input name="' + options.field + '"/>')
+//                         .appendTo(container)
+//                         .kendoDropDownList({
+//                             dataTextField: "meaning",
+//                             dataValueField: "value",
+//                             valuePrimitive: true,
+//                             dataSource:SYS_YES_NO
+//                         });
+//                 }
+//             },                            
+        ],
+        editable: true
+    });
+    Hap.autoResizeGrid('#grid');
+</script>
+</body>
+</html>

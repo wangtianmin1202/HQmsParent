@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_item_type_tests_his.mapper.ItemTypeTestsHisMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_item_type_tests_his.dto.ItemTypeTestsHis">
+        <result column="EVENT_ID" property="eventId" jdbcType="DECIMAL" />
+        <result column="EVENT_BY" property="eventBy" jdbcType="DECIMAL" />
+        <result column="EVENT_TIME" property="eventTime" jdbcType="DATE" />
+        <result column="KID" property="kid" jdbcType="DECIMAL" />
+        <result column="PLANT_ID" property="plantId" jdbcType="DECIMAL" />
+        <result column="TEST_TYPE" property="testType" jdbcType="VARCHAR" />
+        <result column="ITEM_ID" property="itemId" jdbcType="DECIMAL" />
+        <result column="CATEGORY_ID" property="categoryId" jdbcType="DECIMAL" />
+        <result column="TRIGGER_NUM" property="triggerNum" jdbcType="DECIMAL" />
+        <result column="TYPE_CHANGE_TIME" property="typeChangeTime" jdbcType="DECIMAL" />
+        <result column="ENABLE_FLAG" property="enableFlag" jdbcType="VARCHAR" />
+        <result column="TOTAL_QTY" property="totalQty" jdbcType="DECIMAL" />
+        <result column="LAST_TIME" property="lastTime" jdbcType="DATE" />
+    </resultMap>
+
+
+</mapper>

@@ -1,0 +1,226 @@
+<!--
+ * description: PQC工序修改
+ * author:tianmin.wang 
+ * date:20190807
+ -->
+<#include "../include/header.html">
+<script src="${base.contextPath}/common/code?yesNo=SYS.YES_NO"></script><!-- 是否 -->
+<script src="${base.contextPath}/common/code?hqmIqcInspectionType=HQM_INSPECTION_TYPE"></script><!-- 检验类型 -->
+<script src="${base.contextPath}/common/code?hqmFqcSourceType=HQM_FQC_SOURCE_TYPE"></script>
+<script src="${base.contextPath}/common/code?hqmFqcInspectionFrom=HQM_FQC_INSPECTION_FROM"></script>
+<body>
+
+<script type="text/javascript">
+	function getInspectionLine(){
+		$.ajax({
+            url: '${base.contextPath}/hqm/pqc/inspection/l/select',
+            type: 'POST',
+            data: {
+            	lineId:lineId,
+            },
+            async: false,
+            dataType: "json",
+            success: function (response) {
+                if (response.success) {
+                	if(response.rows!=undefined&&response.rows.length!=0){
+                		viewModel.set("model",response.rows[0]);
+                	}else{
+                		kendo.ui.showWarningDialog({
+                            message: "无对应检验单信息"
+                        });
+                	}
+                } else {
+                	kendo.ui.showWarningDialog({
+                        message: "检验单信息获取失败"
+                    });
+                }
+            }
+        }); 
+	}
+</script>
+<script type="text/javascript">
+	var lineId = "${RequestParameters.lineId!'0'}";
+	var sourceType = "${RequestParameters.sourceType!'-1'}";
+	var viewModel = kendo.observable({
+		model: {
+			lineId:lineId,
+			productionQty:1,
+		},
+		save: function(e){
+		 	var data = viewModel.model;
+			var validator = $("#mainform").data("kendoValidator");
+// 			console.log(data);
+// 			return;
+			
+			for(var name in data){
+				
+				if(data[name]==''||data[name]==null||name=='inspectionDate'){
+					delete data[name]
+				}
+			}
+			console.log(data);
+			if (validator.validate()) {
+				$.ajax({
+		            url: '${base.contextPath}/hqm/pqc/inspection/l/detaileditsave',
+		            type: 'POST',
+		            data: JSON.parse(JSON.stringify(data)),
+		            async: false,
+		            dataType: "json",
+		            success: function (response) {
+		                if (response.success) {
+		                	window.parent.getInspectionInfo();
+		                	window.parent.openDetailWindow(lineId);
+		                	window.parent.$("#childWindow").data("kendoWindow").close();
+		                } else {
+		                	kendo.ui.showWarningDialog({
+		                        message: response.message
+		                    });
+		                }
+		            }
+		        }); 
+			}
+		},
+		closeWin: function(e){
+        	window.parent.$("#childWindow").data("kendoWindow").close();
+        }
+	});
+
+</script>
+
+<div id="page-content">
+	<form id="mainform"  class="form-horizontal" method="post" enctype="application/json;charset=UTF-8">
+
+	<div class="row" style="margin-left: 5px;">
+	 	<div class="col-sm-12">
+	 		<!-- 工序编码+工位编码 -->
+	 	  	<div class="form-group">
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message "工序编码"/>:</label>
+					<div class="col-sm-9">
+                        <input id="lovStandOp" required disabled style="width:100%" name="standardOpId"
+								data-bind="value:model.standardOpId,text:model.standardOpCode">
+						<span data-for="standardOpId" class=".k-invalid-msg"></span>
+					</div>
+					<script>
+					$("#lovStandOp").kendoLov($.extend
+				    	    (<@lov"LOV_STANDARD"/>, {
+				    	        textField: 'standardOpCode',
+				    	        valueField:'standardOpId',
+				    	        change:function(){
+				    	        	viewModel.model.workstationId = this._dataItem.workstationId;
+				    	        	viewModel.model.set('standardOpDes',this._dataItem.standardOpDes);
+				    	        	viewModel.model.set('workstationCode',this._dataItem.workstationCode);
+				    	        	viewModel.model.set('workstationDes',this._dataItem.workstationDes);
+				    	        }
+				    	    }));
+					</script>
+				</div>
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message "工位编码"/>:</label>
+					<div class="col-sm-9">
+                        <input  style="width:100%" name="workstationCode" disabled data-bind="value:model.workstationCode" data-role="maskedtextbox">
+						<span data-for="workstationCode" class=".k-invalid-msg"></span>
+					</div>
+					<script>
+					</script>
+				</div>
+            </div>
+			<!-- 物料+描述 -->
+			<div class="form-group">
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message "物料"/>:</label>
+					<div class="col-sm-9">
+						<input required style="width:100%" id="lovItem" name="itemId" data-bind="value:model.itemId,text:model.itemCode">
+						<span data-for="supplierId" class=".k-invalid-msg"></span>
+					</div>
+					<script>
+					$("#lovItem").kendoLov($.extend
+						    (<@lov"STANDARD_OP_ITEM_LOV_DISTINCT"/>, {
+						        textField: 'itemCode',
+						        valueField:'itemId',
+						        query:function(e){
+						        	e.param.standardOpId = viewModel.model.standardOpId;
+						        	e.param.workstationId = viewModel.model.workstationId;
+						        	e.param.plantId = viewModel.model.plantId;
+						        	e.param.prodLineId = viewModel.model.prodLineId;
+						        },
+						        change:function() {
+						        	viewModel.model.set('itemDescriptions',this._dataItem.itemDescriptions);
+		                        }
+						    }));
+					</script>
+				</div>
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message "物料描述"/>:</label>
+					<div class="col-sm-9">
+						<input  style="width:100%" name="itemDescriptions" disabled data-bind="value:model.itemDescriptions" data-role="maskedtextbox">
+						<span data-for="itemDescriptions" class=".k-invalid-msg"></span>
+					</div>
+				</div>
+			</div>
+			<!-- 来源工单 + 生产数量 -->
+			<div class="form-group">
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message "fqcinspectionh.sourceorder"/>:</label>
+					<div class="col-sm-9">
+                        <input style="width:100%" name="sourceOrder"
+                               data-label="<@spring.message 'fqcinspectionh.sourceorder'/>" id="sourceOrder"
+                               data-bind="value:model.sourceOrder" data-role="maskedtextbox">
+						<span data-for="sourceOrder" class=".k-invalid-msg"></span>
+					</div>
+				</div>
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message "生产数量"/>:</label>
+					<div class="col-sm-9">
+                        <input id="productionQtyNumberic" required style="width:100%" name="productionQty"
+                               data-bind="value:model.productionQty">
+						<span data-for="productionQty" class=".k-invalid-msg"></span>
+					</div>
+					<script type="text/javascript">
+						$("#productionQtyNumberic").kendoNumericTextBox({
+	                        min: 1,
+	                        step: 1,
+	                        format: "0"
+	                    });
+					</script>
+				</div>
+			</div>
+		</div>
+	  </div>
+
+
+	</form>
+</div>
+<div id="mainBottom" class="text-right" style="bottom: 15px;position: fixed;  float: left;padding-top:15px;border-top:1px solid #ebebeb;width:100%; background: #fff;">
+        <span class="btn btn-primary" data-bind="click:save" type="submit" style="margin-right:5px"><@spring.message "hap.save"/></span>
+        <span class="btn btn-default" data-bind="click:closeWin" type="button" style="margin-right:25px;"><@spring.message "hap.cancel"/></span>
+</div>
+
+<script type="text/javascript">
+    kendo.bind($('#mainBottom'),viewModel);
+	kendo.bind($('#mainform'), viewModel);
+
+    function isNotEmpty(obj) {
+        if(obj != undefined && obj != null && obj != ""){
+            return true;
+        }else{
+            return false;
+        }
+    }
+    var initMinDate = new Date(1900, 0, 1);
+    var initMaxDate = new Date(2099, 11, 31);
+	//验证
+	$("#mainform").kendoValidator({
+    	messages: {
+            required: '<@spring.message "hap.validation.notempty"/>'
+    	},
+		invalidMessageType : "tooltip"
+    });
+</script>
+<script>
+	$(function(){
+		getInspectionLine();
+	});
+</script>
+</body>
+</html>

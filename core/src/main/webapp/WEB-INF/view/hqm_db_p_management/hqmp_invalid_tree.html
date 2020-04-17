@@ -1,0 +1,963 @@
+<#include "../include/header.html">
+<script src="${base.contextPath}/common/code?seriousData=HQM_FMEA_SEVERITY_RANGE"></script>
+<script src="${base.contextPath}/common/code?specialCharacterTypeData=HQM_FMEA_SPECIAL_TYPE"></script>
+<script src="${base.contextPath}/common/code?occurrenceData=HQM_FMEA_OCCURRENCE_RANGE"></script>
+<script src="${base.contextPath}/common/code?detectionData=HQM_FMEA_DETECTION_RANGE"></script>
+
+<script type="text/javascript">
+    var viewModel = kendo.observable({
+        model: { },
+        query: function (e) {
+            $('#grid').data('kendoTreeList').dataSource.read();
+        },
+        create:function (e) {
+            editDialog1.title('<@spring.message "fmea.newprocess"/>');
+            $('#invalidId').val('');
+            $('#parentInvalid').val('');
+            $('#parentInvalid').parents('div .row').css('display','none');
+            $('#row1').css('display','none')
+            $('#row2').css('display','none')
+            $('#row3').css('display','none')
+            $('#row4').css('display','none')
+            $('#row5').css('display','none')
+            $('#cjname1').text('<@spring.message "fmea.query.process"/>')
+            $("#invalidName").attr("disabled",false);
+		    $('#invalidName').css('background-color','#fff8c5');
+		    $('#stuFlag').val('');
+		    $('#stuFlag').val(true);
+            editDialog1.center().open();
+        }
+    });
+    
+    function downLoadTemp(){
+    	window.location.href="${base.contextPath}/resources/excelModel/PFMEA_DATA_TEMPLATES.xlsx";
+    }
+    
+    viewModel.importExcel = function(){
+    	var newModelWindow = $('#excelimport').kendoWindow({
+            title: '<@spring.message "fmea.import"/>',
+            width: 500,
+            height: 300,
+            modal: true,
+            close: function() {
+                $('#grid').data('kendoTreeList').dataSource.read();
+            } 
+        }).data('kendoWindow');
+    	newModelWindow.center().open();
+    }
+    
+    $(document).ready(function() {
+    	$('#grid').css('height',window.screen.height*0.65);
+    	//alert(window.screen.height);
+    });
+</script>
+<style>
+    #editDialog .row{
+        margin-top: 10px;
+    }
+    #editDialog .row label{
+        text-align: right;
+        line-height: 30px;
+        font-size: 14px;
+    }
+    .btn-foot{
+        width: 95%;
+        position: absolute;
+        bottom: 20px;
+    }
+</style>
+<body>
+<input data-role="maskedtextbox" id="ranks" style="display: none">
+<input data-role="maskedtextbox" id="stuFlag" style="display: none"><!--新增结构层级标识  -->
+<input data-role="maskedtextbox" id="funFlag" style="display: none"><!--新增功能层级标识  -->
+<input data-role="maskedtextbox" id="invalidFlag" style="display: none"><!--新增失效层级标识  -->
+<input data-role="maskedtextbox" id="editInvalidFlag" style="display: none"><!--编辑失效层级标识  -->
+<input data-role="maskedtextbox" id="invalidId" style="display: none">
+<div id="page-content">
+    <div class="pull-left" id="toolbar-btn" style="padding-bottom:10px;">
+        <span class="btn btn-primary" onclick="expand()" style="float:left;margin-right:5px;"><i class="fa fa-plus-square-o" style="margin-right:3px;"></i><@spring.message "hap.expand"/></span>
+        <span class="btn btn-warning" onclick="collapse()"  style="float:left;margin-right:5px;"><i class="fa fa-minus-square-o" style="margin-right:3px;"></i><@spring.message "hap.collapse"/></span>
+        <span class="btn btn-primary k-grid-add" style="float:left;margin-right:5px;" data-bind="click:create"><@spring.message "fmea.newprocess"/></span>
+        <span onclick="downLoadTemp()" class="btn btn-danger" style="float:left;margin-left:5px;"><@spring.message "fmea.templatedownload"/></span>
+        <span  data-bind="click:importExcel" class="btn btn-danger" style="float:left;margin-left:5px;">导入</span>
+    </div>
+    <script>kendo.bind($('#toolbar-btn'), viewModel);</script>
+    <div class="pull-right" id="query-form" style="padding-bottom:10px;">
+        <input type="text" data-role="maskedtextbox" style="width:150px;margin-right:5px;" placeholder='<@spring.message "fmea.query.process"/>'
+               data-bind="value:model.invalidName" class="k-textbox">
+        <span class="btn btn-primary" style="width:70px" data-bind="click:query" type="submit"><@spring.message "hap.query"/></span>
+        <div style="clear:both"></div>
+    </div>
+    <script>kendo.bind($('#query-form'), viewModel);</script>
+    <div style="clear:both">
+        <div id="grid"></div>
+    </div>
+</div>
+<div id="editDialog" style="display: none">
+    <div id="myform" class="container" style="width: 95%">
+        <div class="row">
+            <label  id='cjname' class="col-sm-3 col-md-3"><span style='color:red'>*&nbsp;&nbsp;</span>潜在失效模式</label>
+            <div class="col-sm-2 sol-md-2" id="classifyItem-div">
+                <input  id="invalidName" class="k-textbox" required>
+            </div>
+        </div>
+    
+        <div class="row" id="row1">
+            <label class="col-sm-3 col-md-3"><@spring.message "fmea.failure.effect"/></label>
+            <div class="col-sm-2 sol-md-2" id="classifyItem-div">
+                <input  id="invalidConsequence" class="k-textbox" >
+            </div>
+             <label class="col-sm-3 col-md-3"><span style='color:red'>*&nbsp;&nbsp;</span><@spring.message "fmea.severity"/></label>
+            <div class="col-sm-2 sol-md-2" id="classifyItem-div">
+                <input  id="serious" data-bind="value:model.serious" required >
+            </div>
+        </div>
+
+        <div class="row" id="row2">
+            <label class="col-sm-3 col-md-3"><@spring.message "fmea.class"/></label>
+            <div class="col-sm-2 sol-md-2" id="classifyItem-div">
+                <input  id="specialCharacterType" data-bind="value:model.specialCharacterType" >
+            </div>
+             <label class="col-sm-3 col-md-3"><@spring.message "fmea.failure.cause"/></label>
+            <div class="col-sm-2 sol-md-2" id="classifyItem-div">
+                <input  id="invalidReason" class="k-textbox" >
+            </div>
+        </div>
+                
+        <div class="row" id="row3">
+            <label class="col-sm-3 col-md-3"><@spring.message "fmea.current.preventive.measure"/></label>
+            <div class="col-sm-2 sol-md-2" id="classifyItem-div">
+                <input  id="preventMeasure" class="k-textbox" >
+            </div>
+             <label class="col-sm-3 col-md-3"><span style='color:red'>*&nbsp;&nbsp;</span><@spring.message "fmea.occurrence"/></label>
+            <div class="col-sm-2 sol-md-2" id="classifyItem-div">
+                <input  id="occurrence" data-bind="value:model.occurrence" required>
+            </div>
+        </div>
+        
+        <div class="row" id="row4">
+            <label class="col-sm-3 col-md-3"><@spring.message "fmea.current.testing.measure"/></label>
+            <div class="col-sm-2 sol-md-2" id="classifyItem-div">
+                <input  id="detectMeasure" class="k-textbox" >
+            </div>
+             <label class="col-sm-3 col-md-3"><span style='color:red'>*&nbsp;&nbsp;</span><@spring.message "fmea.detection"/></label>
+            <div class="col-sm-2 sol-md-2" id="classifyItem-div">
+                <input  id="detection" data-bind="value:model.detection" required>
+            </div>
+        </div>
+
+        <div class="row" id="row5">
+            <label class="col-sm-3 col-md-3"><@spring.message "fmea.rpn"/></label>
+            <div class="col-sm-2 sol-md-2" id="classifyItem-div">
+                <input  id="rpn" class="k-textbox" disabled >
+            </div>
+        </div>
+      </div>
+        <div class="row" style="display:none">
+            <label class="col-sm-3 col-md-3">父层级:</label>
+            <div class="col-sm-2 sol-md-2">
+                <input id="parentInvalid">
+            </div>
+            <script>
+                /* var parentInvalid = $("#parentInvalid").kendoLov($.extend(<@lov "PSPC_ATTACHMENT"/>,{
+                    textField: 'invalidName',
+                    valueField:'invalidId',
+                    select:function (e) {
+                    }
+                })).data('kendoLov'); */
+            </script>
+        </div>
+        <script>kendo.bind($('#myform'), viewModel);</script>
+    <div class="btn-foot">
+        <div class="pull-right">
+            <span class="btn btn-primary k-grid-add" onclick="saveAttachment()" style="float:left;margin-right:5px;" ><@spring.message "hap.ok"/></span>
+            <span class="btn btn-default" onclick="closeDialog('editDialog')" style="float:left;margin-right:10px;" ><@spring.message "hap.cancel"/></span>
+        </div>
+    </div>
+</div>
+
+<div id="editDialog1" style="display: none">
+		<div id="myform1" class="container"
+			style="width: 95%; margin-top: 15px;">
+			<div class="row">
+				<div class="form-group col-sm-6" style="padding: 0px">
+					<label id='cjname1' class="col-sm-2 control-label">工序/要求</label>
+					<div class="col-sm-5" id="classifyItem-div">
+						<input id="processFunctionName" class="k-textbox" onkeypress="javascript:if(event.keyCode == 32)event.returnValue = false;" required>
+					</div>
+				</div>
+			</div>
+		</div>
+		<script>
+			kendo.bind($('#myform1'), viewModel);
+		</script>
+    <div class="btn-foot">
+        <div class="pull-right">
+            <span class="btn btn-primary k-grid-add" onclick="saveAttachment()" style="float:left;margin-right:5px;" ><@spring.message "hap.ok"/></span>
+            <span class="btn btn-default" onclick="closeDialog1('editDialog1')" style="float:left;margin-right:10px;" ><@spring.message "hap.cancel"/></span>
+        </div>
+    </div>
+</div>
+<div id="excelimport" style="display:none">
+	<form id="mainform" class="form-horizontal">
+	<div class="row" style="width:95%">
+		<div class="form-group">
+			<label class="col-sm-3 control-label"></label>
+			<div class="col-sm-7">
+			<div class="demo-section k-content">
+				<input name="files" id="files1" type="file" accept=".xlsx" />
+			</div>
+
+			<script>
+			$(document).ready(function() {
+				$("#files1").kendoUpload({
+					async: {
+                    saveUrl: "${base.contextPath}/hqmp/db/excelimport?${_csrf.parameterName}=${_csrf.token}",
+					autoUpload: true },
+					upload : function(e){},
+                    success : function(e){
+                    	var response = e.response;
+                    	if(response.success){
+                    		console.log(e);
+                    		//$("#grid").dataSource.data(response.rows);
+                    		kendo.ui.showInfoDialog({ message: "导入成功"+response.rows.length }).done(function (e) {
+                                    if(e.button=='OK'){
+                                    	window.$("#excelimport").data("kendoWindow").close();
+                                    	$("#grid").data('kendoGrid').dataSource.read();
+                                    }});
+                    	}else{
+                    		kendo.ui.showErrorDialog({ message: response.message }).done(function (e) {
+                                	window.$("#excelimport").data("kendoWindow").close(); 
+                                	self.location.reload();});
+                    	}
+                    },
+					showFileList:true
+				});
+			});
+				</script>
+			</div>
+		</div>
+	</div>
+	</form>
+</div>
+<script>
+
+$("#serious").kendoComboBox({
+    dataTextField: "meaning",
+    dataValueField: "value",
+    valuePrimitive: true,
+    dataSource: seriousData,
+    change:function(){
+    	var num=$('#serious').val()*$('#occurrence').val()*$('#detection').val();
+     	$('#rpn').val(num);
+    }
+});
+
+$("#specialCharacterType").kendoComboBox({
+    dataTextField: "meaning",
+    dataValueField: "value",
+    valuePrimitive: true,
+    dataSource: specialCharacterTypeData
+});
+$("#occurrence").kendoComboBox({
+    dataTextField: "meaning",
+    dataValueField: "value",
+    valuePrimitive: true,
+    dataSource: occurrenceData,
+    change:function(){
+    	var num=$('#serious').val()*$('#occurrence').val()*$('#detection').val();
+     	$('#rpn').val(num);
+    }
+});
+
+$("#detection").kendoComboBox({
+    dataTextField: "meaning",
+    dataValueField: "value",
+    valuePrimitive: true,
+    dataSource: detectionData,
+    change:function(){
+	var num=$('#serious').val()*$('#occurrence').val()*$('#detection').val();
+ 	$('#rpn').val(num);
+    }
+});
+
+
+
+
+    var editDialog = $("#editDialog").kendoWindow({
+        width: 1000,
+        height: 500,
+        title: '新增分类组',
+        visible: false,
+        modal: true,
+        actions: [
+            "Close"
+        ],
+        close:function() {
+            //关闭时清空
+            $('#invalidId').val('');
+            $("#parentInvalid").val('');
+            $('#invalidName').val('');
+            $('#invalidConsequence').val('');
+            $('#serious').val('');
+            $('#specialCharacterType').val('');
+            $('#invalidReason').val('');
+            $("#preventMeasure").val('');
+            $('#occurrence').val('');
+            $('#detectMeasure').val('');
+            $('#detection').val('');
+            $('#rpn').val('');
+            $('#ranks').val('');
+            $('#stuFlag').val('');
+            $("#funFlag").val('');
+            $("#invalidFlag").val('');
+            $('#editInvalidFlag').val('');
+            viewModel.model.set('serious',''); 
+            viewModel.model.set('specialCharacterType','');
+            viewModel.model.set('occurrence',''); 
+            viewModel.model.set('detection',''); 
+            //$('#attachment').attr('disabled',false);
+            //$('#attachment').css('background-color','#FFFFFF');
+        }
+    }).data("kendoWindow");
+    
+    var editDialog1 = $("#editDialog1").kendoWindow({
+        width: 800,
+        height: 200,
+        title: '结构或功能弹窗',
+        visible: false,
+        modal: true,
+        actions: [
+            "Close"
+        ],
+        close:function() {
+            //关闭时清空
+            $('#invalidId').val('');
+            $("#parentInvalid").val('');
+            $('#processFunctionName').val('');
+            $('#invalidName').val('');
+            $('#invalidConsequence').val('');
+            $('#serious').val('');
+            $('#specialCharacterType').val('');
+            $('#invalidReason').val('');
+            $("#preventMeasure").val('');
+            $('#occurrence').val('');
+            $('#detectMeasure').val('');
+            $('#detection').val('');
+            $('#rpn').val('');
+            $('#ranks').val('');
+            $('#stuFlag').val('');
+            $("#funFlag").val('');
+            $("#invalidFlag").val('');
+            $('#editInvalidFlag').val('');
+            viewModel.model.set('serious',''); 
+            viewModel.model.set('specialCharacterType','');
+            viewModel.model.set('occurrence',''); 
+            viewModel.model.set('detection',''); 
+            //$('#attachment').attr('disabled',false);
+            //$('#attachment').css('background-color','#FFFFFF');
+        }
+    }).data("kendoWindow");
+</script>
+<script type="text/javascript">
+    function treelist(arr, childrens, parentId,parentCode) {
+        for (var i = 0; i < childrens.length; i++) {
+            childrens[i].parentId = parentId;
+            childrens[i].parentCode = parentCode;
+            childrens[i].hasChildren = true;
+            arr.push(childrens[i])
+            if (childrens[i].children && childrens[i].children.length > 0) {
+                treelist(arr, childrens[i].children, childrens[i].id,childrens[i].functionCode);
+            } else {
+                childrens[i].hasChildren = false;
+            }
+        }
+    }
+
+    Hap.initEnterQuery('#query-form', viewModel.query);
+    var BaseUrl = _basePath;
+    dataSource = new kendo.data.TreeListDataSource({
+        transport: {
+            read: {
+                url: BaseUrl + "/hdmp/invalid/query/tree/data",
+                type: "POST",
+                dataType: "json"
+            },
+            update: {
+                url: BaseUrl + "/hdmp/invalid/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            destroy: {
+                url: BaseUrl + "/hdmp/invalid/remove",
+                type: "POST",
+                contentType: "application/json"
+            },
+            create: {
+                url: BaseUrl + "/hdmp/invalid/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            parameterMap: function (options, type) {
+                if (type !== "read" && options.models) {
+                    var datas = Hap.prepareSubmitParameter(options, type)
+                    return kendo.stringify(datas);
+                } else if (type === "read") {
+                    return Hap.prepareQueryParameter(viewModel.model.toJSON(), options)
+                }
+            }
+        },
+        requestEnd: function (e) {
+            var response = e.response;
+            if (!response)
+                return;
+            var datas = [];
+            treelist(datas, response.rows || [], null,null);
+            response.rows = datas;
+        },
+        batch: true,
+        serverPaging: true,
+        pageSize: 10,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+                id: "id",
+                parentId: 'parentId',
+                fields: {},
+                expanded: true
+            }
+        }
+    });
+
+    var grid = $("#grid").kendoTreeList({
+        dataSource: dataSource,
+        resizable: true,
+        scrollable: true,
+        navigatable: false,
+        selectable: 'multiple, rowbox',
+        dataBound: function () {
+            if (parent.autoResizeIframe) {
+                parent.autoResizeIframe('${RequestParameters.functionCode!}')
+            }
+        },
+        pageable: {
+            pageSizes: [5, 10, 20, 50],
+            refresh: true,
+            buttonCount: 5
+        },
+        columns: [{
+            field: "invalidName",
+            title: ' ',
+            width: 150,
+            headerAttributes: {
+                style: "text-align: center"
+            }
+        },
+        {
+            field: "invalidConsequence",
+            title: '<@spring.message "fmea.failure.effect"/>',
+            width: 120,
+            template: function (dataItem) {
+                return dataItem.invalidConsequence == "null" ? "" : dataItem.invalidConsequence;
+            },
+        },
+         {
+            field: "serious",
+            title: '<@spring.message "fmea.severity"/>',
+            width: 50,
+            template: function (dataItem) {
+                return dataItem.serious == "null" ? "" : dataItem.serious;
+            },
+        },
+        {
+            field: "specialCharacterType",
+            title: '<@spring.message "fmea.class"/>',
+            width: 50,
+            template: function (dataItem) {
+            	var v= (dataItem.specialCharacterType == "null" ? "" : dataItem.specialCharacterType);
+            	$.each(specialCharacterTypeData, function (i, n) {
+                    if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                        v = n.meaning;
+                        return v;
+                    }
+                });
+                return v;
+               
+            },
+        },
+        {
+            field: "invalidReason",
+            title: '<@spring.message "fmea.failure.cause"/>',
+            width: 120,
+            template: function (dataItem) {
+                return dataItem.invalidReason == "null" ? "" : dataItem.invalidReason;
+            },
+        },
+        
+        {
+            field: "preventMeasure",
+            title: '<@spring.message "fmea.current.preventive.measure"/>',
+            width: 150,
+            template: function (dataItem) {
+                return dataItem.preventMeasure == "null" ? "" : dataItem.preventMeasure;
+            },
+        },
+                {
+            field: "occurrence",
+            title: '<@spring.message "fmea.occurrence"/>',
+            width: 50,
+            template: function (dataItem) {
+                return dataItem.occurrence == "null" ? "" : dataItem.occurrence;
+            },
+        },
+        {
+            field: "detectMeasure",
+            title: '<@spring.message "fmea.current.testing.measure"/>',
+            width: 150,
+            template: function (dataItem) {
+                return dataItem.detectMeasure == "null" ? "" : dataItem.detectMeasure;
+            },
+        },
+                {
+            field: "detection",
+            title: '<@spring.message "fmea.detection"/>',
+            width: 50,
+            template: function (dataItem) {
+                return dataItem.detection == "null" ? "" : dataItem.detection;
+            },
+        },
+                {
+            field: "rpn",
+            title: '<@spring.message "fmea.rpn"/>',
+            width: 50,
+            template: function (dataItem) {
+                return dataItem.rpn == "null" ? "" : dataItem.rpn;
+            },
+        },
+          {
+              title: '<@spring.message "fmea.operating"/>',
+              width: 120,
+              headerAttributes: {
+                  style: "text-align: center"
+              },
+              attributes: {
+                  style: "text-align: center;"
+              },
+              template:function (dataItem) {
+            	  var rpn= (dataItem.rpn == null ? "" : dataItem.rpn);
+            	  var invalidReason= (dataItem.invalidReason == null ? "" : dataItem.invalidReason);
+            	  var invalidConsequence= (dataItem.invalidConsequence == null ? "" : dataItem.invalidConsequence);
+            	  var serious= (dataItem.serious == null ? "" : dataItem.serious);
+            	  var specialCharacterType= (dataItem.specialCharacterType == null ? "" : dataItem.specialCharacterType);
+            	  var preventMeasure= (dataItem.preventMeasure == null ? "" : dataItem.preventMeasure);
+            	  var occurrence= (dataItem.occurrence == null ? "" : dataItem.occurrence);
+            	  var detectMeasure= (dataItem.detectMeasure == null ? "" : dataItem.detectMeasure);
+            	  var detection= (dataItem.detection == null ? "" : dataItem.detection);
+            	  if(dataItem.ranks==3){
+            		  return '<a href="#" onclick="edit(\'' + dataItem.invalidId + '\',\''+dataItem.invalidName + '\',\''+invalidConsequence+'\',\''+ serious +'\',\'' +
+            		  specialCharacterType + '\',\''+invalidReason + '\',\''+preventMeasure+'\',\''+ occurrence +'\',\'' +detectMeasure +'\',\''+ 
+            		  detection +'\',\''+rpn+'\',\''+dataItem.parentInvalidId + '\',\''+dataItem.ranks+'\')"><@spring.message "fmea.edit"/></a>&nbsp;&nbsp;&nbsp;&nbsp;'+
+                      '<a href="#" onclick="deleteRow('+dataItem.id+',\''+ dataItem.functionCode +'\')"><@spring.message "fmea.delect"/></a>'; 
+            	  } else if(dataItem.ranks==2){
+            		  return '<a href="#" onclick="edit(\'' + dataItem.invalidId + '\',\''+dataItem.invalidName + '\',\''+dataItem.invalidConsequence+'\',\''+ dataItem.serious +'\',\'' +
+            		  dataItem.specialCharacterType + '\',\''+dataItem.invalidReason + '\',\''+dataItem.preventMeasure+'\',\''+ dataItem.occurrence +'\',\'' +dataItem.detectMeasure +'\',\''+ 
+            		  dataItem.detection +'\',\''+rpn+'\',\''+dataItem.parentInvalidId + '\',\''+dataItem.ranks+'\')"><@spring.message "fmea.edit"/></a>&nbsp;&nbsp;&nbsp;&nbsp;'+
+                      '<a href="#" onclick="addSon(\'' + dataItem.invalidId + '\',\''+ dataItem.invalidName + '\',\''+dataItem.ranks+'\')"><@spring.message "fmea.newfailure"/></a>&nbsp;&nbsp;&nbsp;&nbsp;'+
+                      '<a href="#" onclick="deleteRow('+dataItem.id+',\''+ dataItem.functionCode +'\')"><@spring.message "fmea.delect"/></a>';
+            	  }else{
+            		  return '<a href="#" onclick="edit(\'' + dataItem.invalidId + '\',\''+dataItem.invalidName + '\',\''+dataItem.invalidConsequence+'\',\''+ dataItem.serious +'\',\'' +
+            		  dataItem.specialCharacterType + '\',\''+dataItem.invalidReason + '\',\''+dataItem.preventMeasure+'\',\''+ dataItem.occurrence +'\',\'' +dataItem.detectMeasure +'\',\''+ 
+            		  dataItem.detection +'\',\''+rpn+'\',\''+dataItem.parentInvalidId + '\',\''+dataItem.ranks+'\')"><@spring.message "fmea.edit"/></a>&nbsp;&nbsp;&nbsp;&nbsp;'+
+                      '<a href="#" onclick="addSon(\'' + dataItem.invalidId + '\',\''+ dataItem.invalidName + '\',\''+dataItem.ranks+'\')"><@spring.message "fmea.newrequest"/></a>&nbsp;&nbsp;&nbsp;&nbsp;'+
+                      '<a href="#" onclick="deleteRow('+dataItem.id+',\''+ dataItem.functionCode +'\')"><@spring.message "fmea.delect"/></a>';
+            	  }
+            	  
+                 
+              }
+          }
+        ],
+        editable: false
+    }).data('kendoTreeList');
+    
+    /**
+     * 新增下级
+     */
+    function addSon(invalidId,invalidName,ranks) {
+    	 viewModel.model.set('serious',''); 
+         viewModel.model.set('specialCharacterType','');
+         viewModel.model.set('occurrence',''); 
+         viewModel.model.set('detection',''); 
+    	$("#invalidName").attr("disabled",false);
+		//$('#invalidName').css('background-color','#fff8c5');
+    	if(ranks==1){//新增要求
+    		$('#row1').css('display','none')
+            $('#row2').css('display','none')
+            $('#row3').css('display','none')
+            $('#row4').css('display','none')
+            $('#row5').css('display','none')
+            $('#cjname1').text('<@spring.message "fmea.request"/>')
+            $('#funFlag').val(true);
+    		editDialog1.title('<@spring.message "fmea.newrequest"/>');
+    		editDialog1.center().open();
+    	}
+    	if(ranks==2){//新增失效
+    		$('#row1').css('display','block')
+            $('#row2').css('display','block')
+            $('#row3').css('display','block')
+            $('#row4').css('display','block')
+            $('#row5').css('display','block')
+            $('#cjname').text('<@spring.message "fmea.potential.failure"/>')
+            $('#invalidFlag').val(true);
+    		editDialog.title('');
+    		editDialog.center().open();
+    	}
+        //父层级赋值
+        $("#parentInvalid").val(invalidId);
+        //获取ranks
+        $('#ranks').val('');
+        $('#ranks').val(ranks);
+        //父层级不可修改
+        $("#parentInvalid").attr("disabled",true);
+    }
+
+    /**
+     * 编辑
+     */
+    function edit(invalidId,invalidName,invalidConsequence,serious,specialCharacterType,invalidReason,preventMeasure,occurrence,detectMeasure,detection,rpn,parentInvalidId,ranks) {
+        editDialog.title('<@spring.message "fmea.edit"/>');
+        $('#ranks').val('');
+        $('#ranks').val(ranks);
+        viewModel.model.set('serious',''); 
+        viewModel.model.set('specialCharacterType','');
+        viewModel.model.set('occurrence',''); 
+        viewModel.model.set('detection',''); 
+        $('#invalidName').css('background-color','#fff8c5');
+        $('#serious').css('background-color','#fff8c5');
+        $('#occurrence').css('background-color','#fff8c5');
+        $('#detection').css('background-color','#fff8c5');
+    	if(ranks==3){//编辑失效
+    		$('#row1').css('display','block')
+            $('#row2').css('display','block')
+            $('#row3').css('display','block')
+            $('#row4').css('display','block')
+            $('#row5').css('display','block')
+            //$("#invalidName").attr("disabled",true);
+    		//$('#invalidName').css('background-color','#d4d3cf');
+    		$('#editInvalidFlag').val(true);
+            $('#cjname').text('<@spring.message "fmea.potential.failure"/>')
+            editDialog.title('<@spring.message "fmea.edit"/>');
+    		editDialog.center().open();
+    	}else if(ranks==2){//编辑功能
+    		$('#row1').css('display','none')
+            $('#row2').css('display','none')
+            $('#row3').css('display','none')
+            $('#row4').css('display','none')
+            $('#row5').css('display','none')
+            $("#invalidName").attr("disabled",false);
+    		//$('#invalidName').css('background-color','#fff8c5');
+            $('#cjname').text('<@spring.message "fmea.request"/>')
+            $('#funFlag').val(true);
+            editDialog1.title('<@spring.message "fmea.edit"/>');
+    		editDialog1.center().open();
+    	}else{//编辑结构
+    		$('#row1').css('display','none')
+            $('#row2').css('display','none')
+            $('#row3').css('display','none')
+            $('#row4').css('display','none')
+            $('#row5').css('display','none')
+            $("#invalidName").attr("disabled",false);
+    		//$('#invalidName').css('background-color','#fff8c5');
+            $('#cjname').text('<@spring.message "fmea.process"/>')
+            $('#stuFlag').val(true);
+            editDialog1.title('<@spring.message "fmea.edit"/>');
+    		editDialog1.center().open();
+    	}
+        //$('#invalidConsequence').attr('disabled',true);
+        $('#invalidId').val(invalidId);
+        $('#processFunctionName').val(invalidName);
+        $('#invalidName').val(invalidName);
+        $('#invalidConsequence').val(invalidConsequence);
+        $('#serious').val(serious);
+        $('#specialCharacterType').val(specialCharacterType);
+        $('#invalidReason').val(invalidReason);
+        $('#preventMeasure').val(preventMeasure);
+        $('#occurrence').val(occurrence);
+        $('#detectMeasure').val(detectMeasure);
+        $('#detection').val(detection);
+        $('#rpn').val(rpn);
+        
+        viewModel.model.set('serious',serious); 
+        viewModel.model.set('specialCharacterType',specialCharacterType);
+        viewModel.model.set('occurrence',occurrence); 
+        viewModel.model.set('detection',detection); 
+        // $('#attachment').css('background-color','#F5F5F5');
+        //有父层级再赋值
+        if(parentInvalidId != 'null'){
+        	$("#parentInvalid").val(parentInvalidId);
+        }
+    }
+    
+
+    /**
+     * 保存编辑
+     */
+    function saveAttachment() {
+    	//第一层和第二层
+    	if($('#stuFlag').val()||$('#funFlag').val()){//结构 功能层级
+    		if($('#processFunctionName').val()==null||$('#processFunctionName').val()==""||$('#processFunctionName').val()==undefined){
+        		alert("请维护层级数据")
+        	}else{
+        		var obj = {
+          	            'invalidId':$('#invalidId').val(),
+          	            'invalidName':$('#processFunctionName').val(),
+          	            'parentInvalidId':$("#parentInvalid").val(),
+          	            'ranks':$("#ranks").val(),
+          	            'tenantId':-1,
+          	            'siteId':-1
+          	        };
+        		$.ajax({
+      	            type: "POST",
+      	            url: BaseUrl + "/hdmp/invalid/save/or/update",
+      	            data:obj,//json序列化
+      	            datatype:"json", //此处不能省略
+      	            success:function(data){
+      	                if(data.success){
+      	                    Hap.showToast({
+      	                        type:'success',  //1.success 2.error
+      	                        message: '保存成功',
+      	                        hideDuration:2000,
+      	                        "positionClass": "toast-bottom-right",
+      	                    });
+      	                    editDialog1.close();
+      	                    grid.dataSource.read();
+      	                }else{
+      	                    alert(data.message);
+      	                }
+      	            },
+      	            error:function(data){
+      	                alert(JSON.stringify(data));
+      	            }
+      	        });
+        	}
+      			
+    	}else if($('#editInvalidFlag').val()){//编辑失效层级
+    		if($('#serious').val()==null||$('#serious').val()==""||$('#serious').val()==undefined){
+        		alert("请维护严重度")
+        	}else if($('#occurrence').val()==null||$('#occurrence').val()==""||$('#occurrence').val()==undefined){
+        		alert("请维护频度")
+        	}else if($('#detection').val()==null||$('#detection').val()==""||$('#detection').val()==undefined){
+        		alert("请维护检测度")
+        	}else{
+        		var obj = {
+          	            'invalidId':$('#invalidId').val(),
+          	            'invalidName':$('#invalidName').val(),
+          	            'invalidConsequence':$('#invalidConsequence').val(),
+          	            'serious':$('#serious').val(),
+          	            'specialCharacterType':$('#specialCharacterType').val(),
+          	            'invalidReason':$('#invalidReason').val(),
+          	            'preventMeasure':$('#preventMeasure').val(),
+          	            'occurrence':$('#occurrence').val(),
+          	            'detectMeasure':$('#detectMeasure').val(),
+          	            'detection':$('#detection').val(),
+          	            'rpn':$('#rpn').val(),
+          	            'parentInvalidId':$("#parentInvalid").val(),
+          	            'ranks':$("#ranks").val(),
+          	            'tenantId':-1,
+          	            'siteId':-1
+          	        };
+        		$.ajax({
+      	            type: "POST",
+      	            url: BaseUrl + "/hdmp/invalid/save/or/update",
+      	            data:obj,//json序列化
+      	            datatype:"json", //此处不能省略
+      	            success:function(data){
+      	                if(data.success){
+      	                    Hap.showToast({
+      	                        type:'success',  //1.success 2.error
+      	                        message: '保存成功',
+      	                        hideDuration:2000,
+      	                        "positionClass": "toast-bottom-right",
+      	                    });
+      	                    editDialog.close();
+      	                    grid.dataSource.read();
+      	                }else{
+      	                    alert(data.message);
+      	                }
+      	            },
+      	            error:function(data){
+      	                alert(JSON.stringify(data));
+      	            }
+      	        });
+        	}
+    	}else{//新增失效层级
+    		if($('#invalidName').val()==null||$('#invalidName').val()==""||$('#invalidName').val()==undefined){
+        		alert("请维护层级数据")
+        	}else if($('#serious').val()==null||$('#serious').val()==""||$('#serious').val()==undefined){
+        		alert("请维护严重度")
+        	}else if($('#occurrence').val()==null||$('#occurrence').val()==""||$('#occurrence').val()==undefined){
+        		alert("请维护频度")
+        	}else if($('#detection').val()==null||$('#detection').val()==""||$('#detection').val()==undefined){
+        		alert("请维护检测度")
+        	}else{
+        		var obj = {
+          	            'invalidId':$('#invalidId').val(),
+          	            'invalidName':$('#invalidName').val(),
+          	            'invalidConsequence':$('#invalidConsequence').val(),
+          	            'serious':$('#serious').val(),
+          	            'specialCharacterType':$('#specialCharacterType').val(),
+          	            'invalidReason':$('#invalidReason').val(),
+          	            'preventMeasure':$('#preventMeasure').val(),
+          	            'occurrence':$('#occurrence').val(),
+          	            'detectMeasure':$('#detectMeasure').val(),
+          	            'detection':$('#detection').val(),
+          	            'rpn':$('#rpn').val(),
+          	            'parentInvalidId':$("#parentInvalid").val(),
+          	            'ranks':$("#ranks").val(),
+          	            'tenantId':-1,
+          	            'siteId':-1
+          	        };
+        		$.ajax({
+      	            type: "POST",
+      	            url: BaseUrl + "/hdmp/invalid/save/or/update",
+      	            data:obj,//json序列化
+      	            datatype:"json", //此处不能省略
+      	            success:function(data){
+      	                if(data.success){
+      	                    Hap.showToast({
+      	                        type:'success',  //1.success 2.error
+      	                        message: '保存成功',
+      	                        hideDuration:2000,
+      	                        "positionClass": "toast-bottom-right",
+      	                    });
+      	                    editDialog.close();
+      	                    grid.dataSource.read();
+      	                }else{
+      	                    alert(data.message);
+      	                }
+      	            },
+      	            error:function(data){
+      	                alert(JSON.stringify(data));
+      	            }
+      	        });
+        	}
+  			
+  			
+  		}
+    	
+    }
+
+    /**
+     * 根据值获得快码的含义
+     */
+    function getMeanByValue(code,value) {
+        var m;
+        $.each(code, function (i, n) {
+            if (n.value == value) {
+                m = n.meaning;
+            }
+        });
+        return m || '';
+    }
+
+    /**
+     * 关闭弹窗
+     */
+    function closeDialog(dialogId) {
+        $('#'+dialogId).data('kendoWindow').close();
+    }
+
+    function closeDialog1(dialogId) {
+        $('#'+dialogId).data('kendoWindow').close();
+    }
+
+    /**
+     * 删除
+     */
+    function deleteRow(id,code) {
+        var obj = {
+            'invalidId':id,
+            'invalidName':code
+            
+        };
+        kendo.ui.showInfoDialog({
+            title:"提示",
+            message: "确定删除？",
+            buttons:[{text: "确定",
+                type: 'primary',
+                click: function (e) {
+                    e.dialog.destroy();
+                    $.ajax({
+                        type: "POST",
+                        url: BaseUrl + "/hdmp/invalid/delete/row",
+                        data:obj,//json序列化
+                        datatype:"json", //此处不能省略
+                        success:function(data){
+                            if(data.success){
+                                Hap.showToast({
+                                    type:'success',  //1.success 2.error
+                                    message: '删除成功',
+                                    hideDuration:2000,
+                                    "positionClass": "toast-bottom-right",
+                                });
+                                editDialog.close();
+                                grid.dataSource.read();
+                            }else{
+                                Hap.showToast({
+                                    type:'error',  //1.success 2.error
+                                    message: data.message,
+                                    hideDuration:2000,
+                                    "positionClass": "toast-bottom-right",
+                                });
+                            }
+                        },
+                        error:function(data){
+                            alert(JSON.stringify(data));
+                        }
+                    });
+
+                }
+            },{text: "取消",
+                type: 'default',
+                click: function (e) {
+                    e.dialog.destroy();
+                }
+            }]
+        })
+    }
+    /**
+     * 展开
+     */
+    function expand() {
+        var tree = grid.dataSource.data();
+        for (var i = 0; i < tree.length; i++) {
+            if (tree[i].hasChildren) {
+                grid.expand(tree[i]);
+            }
+        }
+    }
+    /**
+     * 合并
+     */
+    function collapse() {
+        var tree = grid.dataSource.data();
+        for (var i = 0; i < tree.length; i++) {
+            if (tree[i].hasChildren) {
+                grid.collapse(tree[i]);
+            }
+        }
+    }
+    
+    function getMeaningByValue(meaning,datasource){
+    	var v = meaning ? meaning : "";
+        $.each(datasource, function (i, n) {
+            if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                v = n.meaning;
+                return v;
+            }
+        })
+        return v;
+    }
+</script>
+</body>
+</html>

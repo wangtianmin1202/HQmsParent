@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_db_management.mapper.HQMFunctionMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_db_management.dto.HQMFunction">
+        <result column="FUNCTION_ID" property="functionId" jdbcType="DECIMAL" />
+        <result column="STRUCTURE_ID" property="structureId" jdbcType="DECIMAL" />
+        <result column="FUNCTION_NAME" property="functionName" jdbcType="VARCHAR" />
+    </resultMap>
+
+	<select id="functionNamecount" parameterType="string" resultMap="BaseResultMap">
+		select * from HQM_FUNCTION where function_name=#{functionName}
+	</select>
+</mapper>

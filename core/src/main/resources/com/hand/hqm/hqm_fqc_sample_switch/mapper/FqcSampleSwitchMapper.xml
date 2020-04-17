@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_fqc_sample_switch.mapper.FqcSampleSwitchMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_fqc_sample_switch.dto.FqcSampleSwitch">
+        <result column="SWITCH_ID" property="switchId" jdbcType="DECIMAL" />
+        <result column="SOURCE_SAMPLE_TYPE" property="sourceSampleType" jdbcType="VARCHAR" />
+        <result column="NEW_SAMPLE_TYPE" property="newSampleType" jdbcType="VARCHAR" />
+        <result column="SWITCH_RULE_VALUE_N" property="switchRuleValueN" jdbcType="DECIMAL" />
+        <result column="SWITCH_RULE_VALUE_M" property="switchRuleValueM" jdbcType="VARCHAR" />
+        <result column="ENABLE_FLAG" property="enableFlag" jdbcType="VARCHAR" />
+        <result column="INSPECTION_JUDGE" property="inspectionJudge" jdbcType="VARCHAR" />
+        <result column="SAMPLE_PROCEDURE_TYPE" property="sampleProcedureType" jdbcType="VARCHAR" />
+        
+    </resultMap>
+
+
+</mapper>

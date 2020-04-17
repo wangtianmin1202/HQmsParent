@@ -1,0 +1,813 @@
+<#include "../include/header.html">
+<!-- 
+tianmin.wang:2019-08-05
+ -->
+<script src="${base.contextPath}/common/code?yesNo=SYS.YES_NO"></script>
+<script src="${base.contextPath}/common/code?hqmIqcItemCategory=HQM_IQC_ITEM_CATEGORY"></script>
+<script src="${base.contextPath}/common/code?hqmIqcSampleStandardType=HQM_IQC_SAMPLE_STANDARD_TYPE"></script>
+<script src="${base.contextPath}/common/code?hqmIqcIinspectionLevels=HQM_IQC_INSPECTION_LEVELS"></script>
+<script src="${base.contextPath}/common/code?hqmIqcQualityGrade=HQM_IQC_QUALITY_GRADE"></script>
+<script src="${base.contextPath}/common/code?hqmIqcAql=HQM_IQC_AQL"></script>
+<script src="${base.contextPath}/common/code?hqmIqcSourceType=HQM_IQC_SOURCE_TYPE"></script>
+<script src="${base.contextPath}/common/code?hqmIqcAttributeCategory=HQM_IQC_ATTRIBUTE_CATEGORY"></script>
+<script src="${base.contextPath}/common/code?hqmIqcStandardType=HQM_IQC_STANDARD_TYPE"></script>
+<script src="${base.contextPath}/common/code?hqmIqcFrequencyType=HQM_IQC_FREQUENCY_TYPE"></script>
+<script src="${base.contextPath}/common/code?HQM_SOURCE_TYPE_TEMP=HQM_SOURCE_TYPE_TEMP"></script>
+<script>
+	function getMaxOrderCode(){
+		var maxCode = 0;
+		var all = $("#grid").data("kendoGrid").dataSource.data();
+		$.each(all,function(i,e){
+			if(e.orderCode>maxCode){
+				maxCode = e.orderCode;
+			}
+		});
+		return maxCode;
+	}
+	function replaceValue(obj1,obj2){
+    	var content1 = {};
+    	for(var name in JSON.parse(JSON.stringify(obj2))){
+    		if(name == "orderCode"||name == "uid"||name == "kid"||name == "_token")continue;
+    		content1[name] = obj2[name];
+    	}
+    	for(var name in JSON.parse(JSON.stringify(obj1))){
+    		if(name == "orderCode"||name == "uid"||name == "kid"||name == "_token")continue;
+    		obj2.set(name,obj1[name]);
+    	}
+    	for(var name in JSON.parse(JSON.stringify(content1))){
+    		if(name == "orderCode"||name == "uid"||name == "kid"||name == "_token")continue;
+    		obj1.set(name,content1[name]);
+    	}
+    }
+	function getAllByItemCategory(itemCategory,sourceType){
+		var data = new Array();
+		$.ajax({
+			url: '${base.contextPath}/hqm/item/category/ext/query',
+			type: 'POST',
+			data: {
+				itemCategory:itemCategory,
+				sourceType:sourceType,
+			},
+			async: false,
+			dataType: "json",
+			success: function (response) {
+			if (response.success) {
+				data = response.rows;
+			} else {
+			kendo.ui.showWarningDialog({
+			message: response.message
+			});
+				}
+			}
+		});
+		return data;
+	}
+	function removeByItemCategory(itemCategory){
+		var dataAll = grid.dataSource.data();
+		$.each(dataAll,function(i,e){
+			if(e.itemCategory==itemCategory){
+				grid.dataSource.remove(e);
+			}
+		});
+	}
+	function refreshOrderCode(){
+		var data = grid.dataSource.data();
+		var countPar = data.length;
+		for(var i=0;i<data.length;i++){
+			data[i].set("orderCode",countPar);
+			countPar--;
+		}
+	}
+	function getSynchronize(replaceFlag,itemCategory,sourceType){
+		$("#childWindow").data("kendoWindow").close();
+		if(replaceFlag=='0'||itemCategory==undefined||itemCategory==null||itemCategory=='0')return;
+		var rows = getAllByItemCategory(itemCategory,sourceType);
+		if(replaceFlag=='2'){
+			//完全覆盖
+			var data = grid.dataSource.data();
+			$.each(data,function(j,v){
+				if(v.itemCategory==rows[0].itemCategory&&v.sourceType===rows[0].sourceType){
+					grid.dataSource.remove(v);
+				}
+			});
+			$.each(rows,function(i,e){
+				if(e.itemCategory==itemCategory&&e.sourceType==sourceType){
+					e.__status = 'add';
+					delete e["kid"];
+					grid.dataSource.data().unshift(e);
+				}
+			});
+		}else{
+			$.each(rows,function(i,e){
+					var data = grid.dataSource.data();
+					var have = false;
+					$.each(data,function(j,v){
+						if(v.itemCategory==e.itemCategory&&v.attributeId==e.attributeId&&v.sourceType==e.sourceType){
+							have = true;
+// 							e.__status = 'update';
+// 							v=e;
+							return false;
+						}
+					});
+					if(!have){
+						e.__status = 'add';
+						delete e["kid"];
+						grid.dataSource.data().unshift(e);
+					}
+				}
+			);
+			
+		}
+		refreshOrderCode();
+	}
+</script>
+<script>
+	var itemCategory = "${RequestParameters.itemCategory!''}";
+	var jumpFlag = "${RequestParameters.jumpFlag!'-1'}";
+	var categoryCode = "${RequestParameters.categoryCode!''}";
+	var itemCategoryDescription = "${RequestParameters.itemCategoryDescription!''}";
+	var viewModelLine = Hap.createGridViewModel("#grid");
+	var sourceType = "${RequestParameters.sourceType!''}";
+	viewModelLine.model.itemCategory = itemCategory;
+	var viewModel = kendo.observable({
+		model:{
+			itemCategory:itemCategory,
+			categoryCode:categoryCode,
+			categoryDescriptions:itemCategoryDescription,
+			enableFlag:"Y",
+			sourceType:sourceType,
+		},
+		save:function(){
+			$("#grid").data("kendoGrid").saveChanges();
+			//viewModelLine.query();
+// 			viewModelLine.save();
+			
+// 			$("#grid").data("kendoGrid").dataSource.sync("destroy");
+		}
+// 		save:function(){
+// // 			$("#grid").data("kendoGrid").dataSource.sync("destroy");
+// // 			$("#grid").data("kendoGrid").saveChanges();
+// // 			$("#grid").data("kendoGrid").dataSource.fetch();
+// // 			kendo.ui.showInfoDialog({message:"成功"});
+// 			var data = new Array();
+// 			data = $("#grid").data("kendoGrid").dataSource.data();
+// 			$.ajax({
+// 				url: '${base.contextPath}/hqm/item/category/ext/submit',
+// 				type: 'POST',
+// 				data: kendo.stringify(data),
+// 				async: false,
+// 				contentType: "application/json",
+// 				success: function (response) {
+// 					if (response.success) {
+// 						if(response.message!="FLAG"){
+// 						$("#grid").data("kendoGrid").dataSource.sync("destroy");
+						
+// 						kendo.ui.showInfoDialog({message:"成功"});
+// 						}else{
+// // 							$("#grid").data("kendoGrid").dataSource.sync("destroy");
+// // 							$("#grid").data("kendoGrid").dataSource.fetch();
+// 						}
+// 					} else {
+// 						kendo.ui.showWarningDialog({
+// 						message: response.message
+// 						});
+// 					}	
+// 				}
+// 			});
+// 		},
+		
+	});
+</script>
+<body>
+<div id="childWindow"></div>
+<div id="page-content">
+	<div >
+		<div class="row" style="height:40%">
+			<div class="pull-left" id="toolbar-btn" style="padding-bottom:10px;">
+		        <span class="btn btn-success k-grid-save-changes fa fa-save" style="float:left;margin-right:5px;" data-bind="click:save">&nbsp;<@spring.message "hap.save"/></span>
+	    	</div>
+	    	<script>kendo.bind($('#toolbar-btn'), viewModel);</script>
+    	</div>
+    	<div class="row" style="font-size:14px" id="validateRow">
+					<div class="col-sm-3" style="display:none">
+						<div class="col-sm-3">
+							<span>工厂</span>
+						</div>
+						<div class="col-sm-9">
+							<input id="plantLov" style="width:200px;" data-bind="value:model.plantId"/>
+						</div>
+					</div>
+					<div class="col-sm-3">
+					   <lable class="col-xs-5 control-lable" style="text-align:right;padding:0px;margin-top:1%"><@spring.message "物料类别："/></lable>
+						<div class="col-xs-7" style="padding:0px">
+							<input id="itemCategoryCode" style="width:200px;" required data-bind="value:model.itemCategory,text:model.categoryCode"/>
+							<script>
+								kendo.bind($("#itemCategoryCode"),viewModel);
+								$("#itemCategoryCode").kendoLov($.extend
+			    					    (<@lov"LOV_ITEM_CATEGORY"/>, {
+			    					        textField: 'categoryCode',
+			    					        valueField:'categoryId',
+			    					        change:function(e){
+			    					        	viewModel.model.itemCategory = this._dataItem.categoryId;
+			    					        	viewModel.model.set('categoryDescriptions',this._dataItem.description);
+			    					        }
+			    					    }));
+							</script>
+						</div>
+					</div>
+					<div class="col-sm-3">
+						<lable class="col-xs-5 control-lable" style="text-align:right;padding:0px;margin-top:1%"><@spring.message "类别描述："/></lable>
+						<div class="col-xs-7" style="padding:0px">
+							<input id="maskedtextbox1" data-role="maskedtextbox"  style="width:200px;" disabled data-bind="value:model.categoryDescriptions"/>
+							<script>
+								kendo.bind($("#maskedtextbox1"),viewModel);
+							</script>
+						</div>
+					</div>
+					<div class="col-sm-3" >
+						<lable class="col-xs-5 control-lable" style="text-align:right;padding:0px;margin-top:1%"><@spring.message "有效性："/></lable>
+						<div class="col-xs-7" style="padding:0px">
+							<input  id="enableFlagComboBox" style="width:200px;" required data-bind="value:model.enableFlag"/>
+							 <script>
+								kendo.bind($("#enableFlagComboBox"),viewModel);
+								$("#enableFlagComboBox").kendoComboBox({
+							        dataTextField: "meaning",
+							        dataValueField: "value",
+							        valuePrimitive: true,
+							        dataSource: yesNo
+							    });
+							</script>
+						</div>
+					</div>
+					<div class="col-sm-3" >
+						<lable class="col-xs-5 control-lable" style="text-align:right;padding:0px;margin-top:1%"><@spring.message "来源类型："/></lable>
+						<div class="col-xs-7" style="padding:0px">
+							<input  id="sourceTypeComboBox" style="width:200px;" required data-bind="value:model.sourceType"/>
+							 <script>
+								kendo.bind($("#sourceTypeComboBox"),viewModel);
+								$("#sourceTypeComboBox").kendoComboBox({
+							        dataTextField: "meaning",
+							        dataValueField: "value",
+							        valuePrimitive: true,
+							        dataSource: HQM_SOURCE_TYPE_TEMP
+							    });
+							</script>
+						</div>
+					</div>
+				
+    	</div>
+	</div>
+	<div >
+		<div style="clear:both;margin-top:20px">
+			<div id="grid"></div>
+		</div>
+	</div>
+	
+</div>
+<script>
+var BaseUrl = _basePath;
+dataSource = new kendo.data.DataSource({
+    transport: {
+        read: {
+            url: BaseUrl + "/hqm/item/category/ext/query",
+            type: "POST",
+            dataType: "json"
+        },
+        update: {
+            url: BaseUrl + "/hqm/item/category/ext/submit",
+            type: "POST",
+            contentType: "application/json"
+        },
+        destroy: {
+            url: BaseUrl + "/hqm/item/category/ext/removebatch",
+            type: "POST",
+            contentType: "application/json"
+        },
+        create: {
+            url: BaseUrl + "/hqm/item/category/ext/submit",
+            type: "POST",
+            contentType: "application/json"
+        },
+        parameterMap: function (options, type) {
+            if (type !== "read" && options.models) {
+                var datas = Hap.prepareSubmitParameter(options, type)
+                return kendo.stringify(datas);
+            } else if (type === "read") {
+            	viewModelLine.model.sourceType = viewModel.model.sourceType;
+                return Hap.prepareQueryParameter(viewModelLine.model.toJSON(), options)
+            }
+        }
+    },
+    batch: true,
+    serverPaging: true,
+    pageSize: 10,
+    schema: {
+        data: 'rows',
+        total: 'total',
+        model: {
+            id: "kid",
+            fields: {
+                enableFlag: {
+                    type: 'string',
+                    validation: {
+                        required: true,
+                        required: {message: "有效性为必输项"},
+                    },
+                },
+
+                itemCategory: {
+                    type: 'string',
+                    validation: {
+                        required: true,
+                        required: {message: "IQC物料类别为必输项"},
+                    },
+                },
+                sampleProcedureType: {
+                    type: 'string',
+                    validation: {
+                        required: true,
+                        required: {message: "抽样标准类型为必输项"},
+                    },
+                },
+                inspectionAttribute: {
+                    type: 'string',
+                    validation: {
+                        required: true,
+                        required: {message: "检验项目为必输项"},
+                    },
+                },
+                
+                inspectionLevels: {
+                    type: 'string',
+                    validation: {
+                        required: true,
+                        required: {message: "检验水平为必输项"},
+                    },
+                },
+                qualityCharacterGrade: {
+                    type: 'string',
+                    validation: {
+                        required: true,
+                        required: {message: "质量等级特性为必输项"},
+                    },
+                },
+                acceptanceQualityLimit:{
+                    type: 'string',
+                    validation: {
+                        required: true,
+                        required: {message: "AQL值为必输项"},
+                    },
+                },
+                sourceType:{
+                    type: 'string',
+                    validation: {
+                        required: true,
+                        required: {message: "来源类型为必输项"},
+                    },
+                },
+                standardType:{
+                    type: 'string',
+                    validation: {
+                        required: true,
+                        required: {message: "规格类型为必输项"},
+                    },
+                },
+                attributeType:{
+                    type: 'string',
+                    validation: {
+                        required: true,
+                        required: {message: "检验类型为必输项"},
+                    },
+                },
+                frequencyType:{
+                    type: 'string',
+                    validation: {
+                        required: true,
+                        required: {message: "检验频次类型为必输项"},
+                    },
+                },
+                
+                inspectionTool:{
+                    type: 'string',
+                    validation: {
+                        required: true,
+                        required: {message: "检验工具为必输项"},
+                    },
+                },
+                enableFlag:{
+                    type: 'string',
+                    defaultValue:"Y",
+                    validation: {
+                        required: true,
+                        required: {message: "有效性为必输项"},
+                    },
+                },
+            },
+            editable: function (col) {
+            	if(col=="inspectionAttribute"){
+            		return true;
+            	}
+                return true;
+            },
+        }
+    }
+});
+
+var grid = $("#grid").kendoGrid({
+    dataSource: dataSource,
+    resizable: true,
+    scrollable: true,
+    navigatable: false,
+    autoBind:false,
+    selectable: 'rowbox',
+    dataBound: function () {
+        if (parent.autoResizeIframe) {
+            parent.autoResizeIframe('${RequestParameters.functionCode!}')
+        }
+    },
+    pageable: {
+        pageSizes: [5, 10, 20, 50],
+//         refresh: true,
+        buttonCount: 5
+    },
+    toolbar: [{
+        template: '<span id="createButton" class=" btn btn-primary fa fa-plus-square">&nbsp;新建</span>'
+    }, {
+        template: '<span id="deleteButton"  class="btn btn-danger fa fa-trash-o">&nbsp;删除</span>'
+    },{
+        template: '<span id="moveUpButton" class="btn btn-primary fa fa-arrow-circle-up">&nbsp;上移</span>'
+    }, {
+        template: '<span id="moveLowButton" class="btn btn-primary fa fa-arrow-circle-down ">&nbsp;下移</span>'
+    }, 
+//     {
+//         template: '<span id="synchronizeButton" class="btn btn-default">同步</span>'
+//     }
+    ],
+    columns: [
+    	{
+            field: "orderCode",
+            title: '<@spring.message "itemcategoryext.ordercode"/>',//排序码
+            width: 120,
+            template: function (dataItem) {
+                var v = dataItem.orderCode ? dataItem.orderCode : (getMaxOrderCode()+1);
+                return v;
+            },
+            editor:function(container, options){
+            	 var val = options.model.orderCode?options.model.orderCode : (getMaxOrderCode()+1);
+            	 $('<span>' + val + '</span>').appendTo(container);
+            }
+        },
+        
+        {
+            field: "inspectionAttribute",
+            title: '<@spring.message "itemcategoryext.inspectionattribute"/>',//检验项目
+            width: 120,
+            template: function (item) {
+                return item['inspectionAttribute'] || ''
+            },
+            editor: function (container, options) {
+	                $('<input name="' + options.field + '"/>')
+	                    .appendTo(container)
+	                    .kendoLov($.extend(<@lov "LOV_HQM_INSPECTION_ATTRIBUTE"/>, {
+	                    
+	                    textField: 'inspectionAttribute',
+	                    model: options.model,
+	                    query:function(e){
+	                    	e.param.sourceType = viewModel.model.sourceType;
+	                    },
+	                    change:function() {
+	                        var v = this.value();
+	                        if (v == undefined  || v == ""){
+	                        }else{
+	                            options.model.attributeId = this._dataItem.attributeId;
+	                            options.model.set('inspectionAttribute',this._dataItem.inspectionAttribute);
+	                            options.model.set('sampleProcedureType',this._dataItem.sampleProcedureType);
+	                            options.model.set('standardType',this._dataItem.standardType);
+	                            options.model.set('inspectionLevels',this._dataItem.inspectionLevels);
+	                            options.model.set('qualityCharacterGrade',this._dataItem.qualityCharacterGrade);
+	                            options.model.set('acceptanceQualityLimit',this._dataItem.acceptanceQualityLimit);
+	                            options.model.set('attributeType',this._dataItem.attributeType);
+	                            options.model.set('frequencyType',this._dataItem.frequencyType);
+	                            options.model.set('frequency',this._dataItem.frequency);
+	                            options.model.set('inspectionTool',this._dataItem.inspectionTool);
+	                            options.model.set('remark',this._dataItem.remark);
+	                            options.model.set('sourceType',this._dataItem.sourceType);
+	                        }
+	                    }
+	                }));
+            	}
+        },
+        {
+            field: "attributeType",
+            title: '<@spring.message "itemcategoryext.attributetype"/>',//检验项类型
+            width: 120,
+            template: function (dataItem) {
+                var v = dataItem.attributeType ? dataItem.attributeType : "";
+                $.each(hqmIqcAttributeCategory, function (i, n) {
+                    if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                        v = n.meaning;
+                        return v;
+                    }
+                });
+                return v;
+            },
+            editor: function (container, options) {
+            	var v = options.model.attributeType ? options.model.attributeType : "";
+            	$.each(hqmIqcAttributeCategory, function (i, n) {
+                    if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                        v = n.meaning;
+                    }
+                });
+            	$('<span">'+ v +'</span>').appendTo(container);
+            }
+        },
+        {
+            field: "sampleProcedureType",
+            title: '<@spring.message "itemcategoryext.sampleproceduretype"/>',//抽样标准类型
+            width: 120,
+            template: function (dataItem) {
+                var v = dataItem.sampleProcedureType ? dataItem.sampleProcedureType : "";
+                $.each(hqmIqcSampleStandardType, function (i, n) {
+                    if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                        v = n.meaning;
+                        return v;
+                    }
+                });
+                return v;
+            },
+            editor: function (container, options) {
+            	var v = options.model.sampleProcedureType ? options.model.sampleProcedureType : "";
+            	$.each(hqmIqcSampleStandardType, function (i, n) {
+                    if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                        v = n.meaning;
+                    }
+                });
+            	$('<span">'+ v +'</span>').appendTo(container);
+            }
+        },
+        {
+            field: "inspectionLevels",
+            title: '<@spring.message "itemcategoryext.inspectionlevels"/>',//检验水平
+            width: 120,
+            template: function (dataItem) {
+                var v = dataItem.inspectionLevels ? dataItem.inspectionLevels : "";
+                $.each(hqmIqcIinspectionLevels, function (i, n) {
+                    if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                        v = n.meaning;
+                        return v;
+                    }
+                });
+                return v;
+            },
+            editor: function (container, options) {
+            	var v = options.model.inspectionLevels ? options.model.inspectionLevels : "";
+            	$.each(hqmIqcIinspectionLevels, function (i, n) {
+                    if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                        v = n.meaning;
+                    }
+                });
+            	$('<span">'+ v +'</span>').appendTo(container);
+            }
+        },
+        {
+            field: "qualityCharacterGrade",
+            title: '<@spring.message "itemcategoryext.qualitycharactergrade"/>',//质量等级特性
+            width: 120,
+            template: function (dataItem) {
+                var v = dataItem.qualityCharacterGrade ? dataItem.qualityCharacterGrade : "";
+                $.each(hqmIqcQualityGrade, function (i, n) {
+                    if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                        v = n.meaning;
+                        return v;
+                    }
+                });
+                return v;
+            },
+            editor: function (container, options) {
+            	var v = options.model.qualityCharacterGrade ? options.model.qualityCharacterGrade : "";
+            	$.each(hqmIqcQualityGrade, function (i, n) {
+                    if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                        v = n.meaning;
+                    }
+                });
+            	$('<span">'+ v +'</span>').appendTo(container);
+            }
+        },
+        {
+            field: "acceptanceQualityLimit",
+            title: '<@spring.message "itemcategoryext.acceptancequalitylimit"/>',//AQL值
+            width: 120,
+            template: function (dataItem) {
+                var v = dataItem.acceptanceQualityLimit ? dataItem.acceptanceQualityLimit : "";
+                $.each(hqmIqcAql, function (i, n) {
+                    if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                        v = n.meaning;
+                        return v;
+                    }
+                });
+                return v;
+            },
+            editor: function (container, options) {
+            	var v = options.model.acceptanceQualityLimit ? options.model.acceptanceQualityLimit : "";
+            	$.each(hqmIqcAql, function (i, n) {
+                    if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                        v = n.meaning;
+                    }
+                });
+            	$('<span">'+ v +'</span>').appendTo(container);
+            }
+        },
+        {
+            field: "sourceType",
+            title: '<@spring.message "itemcategoryext.sourcetype"/>',//来源类型
+            width: 120,
+            template: function (dataItem) {
+                var v = dataItem.sourceType ? dataItem.sourceType : "";
+                $.each(HQM_SOURCE_TYPE_TEMP, function (i, n) {
+                    if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                        v = n.meaning;
+                        return v;
+                    }
+                });
+                return v;
+            },
+            editor: function (container, options) {
+            	var v = options.model.sourceType ? options.model.sourceType : "";
+            	$.each(HQM_SOURCE_TYPE_TEMP, function (i, n) {
+                    if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                        v = n.meaning;
+                    }
+                });
+            	$('<span">'+ v +'</span>').appendTo(container);
+            }
+        },
+        {
+            field: "standardType",
+            title: '<@spring.message "itemcategoryext.standardtype"/>',//规格类型
+            width: 120,
+            template: function (dataItem) {
+                var v = dataItem.standardType ? dataItem.standardType : "";
+                $.each(hqmIqcStandardType, function (i, n) {
+                    if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                        v = n.meaning;
+                        return v;
+                    }
+                });
+                return v;
+            },
+            editor: function (container, options) {
+            	var v = options.model.standardType ? options.model.standardType : "";
+            	$.each(hqmIqcStandardType, function (i, n) {
+                    if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                        v = n.meaning;
+                    }
+                });
+            	$('<span">'+ v +'</span>').appendTo(container);
+            }
+        },
+        
+      /*   {
+            field: "frequencyType",
+            title: '<@spring.message "itemcategoryext.frequencytype"/>',//检验频次类型
+            width: 120,
+            template: function (dataItem) {
+                var v = dataItem.frequencyType ? dataItem.frequencyType : "";
+                $.each(hqmIqcFrequencyType, function (i, n) {
+                    if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                        v = n.meaning;
+                        return v;
+                    }
+                });
+                return v;
+            },
+            editor: function (container, options) {
+            	var v = options.model.frequencyType ? options.model.frequencyType : "";
+            	$.each(hqmIqcFrequencyType, function (i, n) {
+                    if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                        v = n.meaning;
+                    }
+                });
+            	$('<span">'+ v +'</span>').appendTo(container);
+            }
+        },
+        {
+            field: "frequency",
+            title: '<@spring.message "itemcategoryext.frequency"/>',//检验频次
+            width: 120,
+            editor: function (container, options) {
+            	var v = options.model.frequency ? options.model.frequency : "";
+            	
+            	$('<span">'+ v +'</span>').appendTo(container);
+            }
+        }, */
+        {
+            field: "inspectionTool",
+            title: '<@spring.message "itemcategoryext.inspectiontool"/>',//检验工具
+            width: 120,
+            editor: function (container, options) {
+            	var v = options.model.inspectionTool ? options.model.inspectionTool : "";
+            	$('<span">'+ v +'</span>').appendTo(container);
+            }
+        },
+
+        {
+            field: "remark",
+            title: '<@spring.message "itemcategoryext.remark"/>',//备注
+            width: 120,
+            editor: function (container, options) {
+            	var v = options.model.remark ? options.model.remark : "";
+            	$('<span">'+ v +'</span>').appendTo(container);
+            }
+        },
+    ],
+    editable: true
+}).data("kendoGrid");
+Hap.autoResizeGrid('#grid');
+</script>
+<script type="text/javascript">
+$("#validateRow").kendoValidator({
+	messages: {
+        required: '<@spring.message "hap.validation.notempty"/>'
+	},
+	invalidMessageType : "tooltip"
+});
+$('#createButton').on('click', function () {
+	var validator = $("#validateRow").data("kendoValidator");
+	if (!validator.validate()){
+		return;
+	}
+	var countParameter = getMaxOrderCode();
+	var operationFlag = true;
+	if(viewModel.model.itemCategory==undefined||viewModel.model.itemCategory==null||viewModel.model.itemCategory==""){
+		operationFlag = false;
+		kendo.ui.showErrorDialog({
+			title:"错误",
+			message:"未选择物料类别"
+		});
+	}
+	if(!operationFlag)return;
+	countParameter++;
+	$("#grid").data("kendoGrid").addRow();
+	$("#grid").data("kendoGrid").dataSource.data()[0].enableFlag=viewModel.model.enableFlag;
+	$("#grid").data("kendoGrid").dataSource.data()[0].set('orderCode',countParameter);
+	$("#grid").data("kendoGrid").dataSource.data()[0].itemCategory = viewModel.model.itemCategory;
+	$("#grid").data("kendoGrid").dataSource.data()[0].__status = 'add';
+	
+});
+$('#deleteButton').on('click', function () {
+// 	var selected = $("#grid").data("kendoGrid").selectedDataItems();
+// 	$.each(selected,function(i,v){
+// 		$("#grid").data("kendoGrid").dataSource.remove(v);
+// 		$("#grid").data("kendoGrid").dataSource.sync("destroy");
+// 	});
+	viewModelLine.remove();
+	    });
+$('#moveUpButton').on('click', function () {
+	var items = grid.items()
+	$.each(items,function(i,v){
+		
+		if(v.className.split(' ').indexOf("k-state-selected")>=0){
+			
+			if(i > 0){
+				replaceValue(grid.dataSource.data()[i-1],grid.dataSource.data()[i]);
+				var gridnew = $("#grid").data("kendoGrid");
+				gridnew.select("tr:eq("+(i-1)+")");
+			}
+		}
+	});
+});
+$('#moveLowButton').on('click', function () {
+	var items = grid.items()
+	$.each(items,function(i,v){
+		if(v.className.split(' ').indexOf("k-state-selected")>=0){
+			if(i < items.length){
+				replaceValue(grid.dataSource.data()[i+1],grid.dataSource.data()[i]);
+				var gridnew = $("#grid").data("kendoGrid");
+				gridnew.select("tr:eq("+(i+1)+")");
+			}
+		}
+	});
+});
+$('#synchronizeButton').on('click', function () {
+	var win = $("#childWindow").kendoWindow({
+		width: window.innerWidth*0.95,
+        height: window.innerHeight*0.9,
+        title: '同步检验项目',
+        visible: false,
+        iframe: true,
+        modal: true,
+        content:'./item_category_ext_synchronize.html'
+	}).data("kendoWindow");
+	win.center().open();
+});
+</script>
+<script>
+	$(function(){
+		if(itemCategory!=''){
+			grid.dataSource.fetch();
+			
+		}
+	});
+</script>
+</body>
+</html>

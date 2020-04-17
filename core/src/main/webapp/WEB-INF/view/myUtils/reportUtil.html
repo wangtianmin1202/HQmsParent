@@ -1,0 +1,142 @@
+<!--自定义报表-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <#include "../include/header.html"/>
+    <style>
+        *{
+            margin:0px;padding:0px;
+        }
+        /*设置body宽高自适应*/
+        html,body
+        {
+            height:100%;
+            width: 100%;
+        }
+        .content-div
+        {
+            height:100%;
+            width: 100%;
+        }
+        .content-ifm
+        {
+            width: 50%;
+            float: left;
+            text-align: center;
+        }
+    </style>
+    <script type="text/javascript">
+        var viewModel = Hap.createGridViewModel("#grid");
+    </script>
+</head>
+<body>
+    <div class="content-div" id="content">
+        <div class="content-ifm" style="width: 100%">
+            <input required type="text"  style="width:90%;margin-top: 10px"
+                   placeholder='请输入项目路径。例如：/Users/XXXX/Desktop/HbiParent/core/src/main/java/com/hand/hcms'
+                   data-bind="value:model.projectUrl" class="k-textbox">
+        </div>
+        <div class="content-ifm">
+            <input required type="text"  style="width:80%;margin-top: 10px"
+                   placeholder='请输入包名称'
+                   data-bind="value:model.packageUrl" class="k-textbox">
+        </div>
+        <div class="content-ifm">
+            <input required type="text"  style="width:80%;margin-top: 10px"
+                   placeholder='请输入文件名称，英文'
+                   data-bind="value:model.createFileName" class="k-textbox">
+        </div>
+
+        <div style="width: 100%;text-align: center">
+            <textarea required type="text"  style="width:90%;margin-top: 10px"
+                   placeholder='请输入查询SQL,请指定列,例如:SELECT SU.USER_ID,SU.USER_NAME FROM SYS_USER SU JOIN SYS_USER_LOGIN SUL ON SUL.USER_ID = SU.USER_ID AND SU.USER_ID = 10001' rows="10"
+                      data-bind="value:model.querySql" class="k-textbox">
+
+            </textarea>
+        </div>
+        <div style="width: 100%;margin-top: 10px"></div>
+        <div class="content-ifm">
+            <span class="btn btn-primary" style="float:right;width:20%;margin-right: 10%" onclick="createReport()" >确定</span>
+        </div>
+        <div class="content-ifm">
+            <span class="btn btn-primary" style="float:left;width:20%;margin-left: 10%" onclick="resetContext()" >重置</span>
+        </div>
+        <div style="width: 100%;text-align: center;position:fixed; bottom:0;">
+                <p style="margin-left: 5%">查询SQL如果包含条件查询，请按照查询 MYBATIS 标准写法<br/>
+                    例如：SELECT SU.USER_ID,SU.USER_NAME FROM SYS_USER SU JOIN SYS_USER_LOGIN SUL ON SUL.USER_ID = SU.USER_ID WHERE 1=1 &lt;if test="userId != null"&gt;AND SU.USER_ID = # {userId}&lt;/if&gt;<br/>
+                    如果Sql语句有重新定义别名 请用标准下划线 命名法<br/>
+                    例如：SELECT SU.USER_ID AS USER_ID,SU.USER_NAME FROM SYS_USER SU
+                </p>
+        </div>
+        <script>
+            function createReport() {
+                if(!ifNotNull(viewModel.model.projectUrl)){
+                    kendo.ui.showInfoDialog({
+                        message: '请输入项目路径'
+                    });
+                    return;
+                }
+                if(!ifNotNull(viewModel.model.packageUrl)){
+                    kendo.ui.showInfoDialog({
+                        message: '请输入包名'
+                    });
+                    return;
+                }
+                if(!ifNotNull(viewModel.model.createFileName)){
+                    kendo.ui.showInfoDialog({
+                        message: '请输入文件名称'
+                    });
+                    return;
+                }else{
+                    var reg = new RegExp("[\\u4E00-\\u9FFF]+","g");
+                    if(reg.test(viewModel.model.createFileName)){
+                        kendo.ui.showInfoDialog({
+                            message: '文件名称：不允许有中文的存在'
+                        });
+                        return;
+                    }
+                }
+                // if(!ifNotNull(viewModel.model.functionName)){
+                //     kendo.ui.showInfoDialog({
+                //         message: '请输入包名'
+                //     });
+                //     return;
+                // }
+                if(!ifNotNull(viewModel.model.querySql)){
+                    kendo.ui.showInfoDialog({
+                        message: '请输入查询SQL'
+                    });
+                    return;
+                }
+
+                $.ajax({
+                    type:"GET",
+                    url:_basePath+"/createReportFile",
+                    data:viewModel.model.toJSON(),
+                    dataType:'json',
+                    async:false,
+                    success:function (result) {
+                        if(result.success){
+                            kendo.ui.showInfoDialog({
+                                message: result.message
+                            });
+                        }else{
+                            kendo.ui.showInfoDialog({
+                                message: result.message
+                            });
+                        }
+                    }
+                })
+
+            }
+            function resetContext() {
+                var formData = viewModel.model.toJSON();
+                for (var k in formData) {
+                    viewModel.model.set(k, null);
+                }
+            }
+        </script>
+    </div>
+    <script>kendo.bind($('#content'), viewModel);</script>
+</body>
+</html>

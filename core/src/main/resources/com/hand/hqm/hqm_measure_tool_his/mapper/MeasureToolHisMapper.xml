@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_measure_tool_his.mapper.MeasureToolHisMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_measure_tool_his.dto.MeasureToolHis">
+        <result column="MEASURE_TOOL_HIS_ID" property="measureToolHisId" jdbcType="DECIMAL" />
+        <result column="MEASURE_TOOL_ID" property="measureToolId" jdbcType="DECIMAL" />
+        <result column="MEASURE_TOOL_NUM" property="measureToolNum" jdbcType="VARCHAR" />
+        <result column="DESCRIPTIONS" property="descriptions" jdbcType="VARCHAR" />
+        <result column="MEASURE_TOOL_TYPE" property="measureToolType" jdbcType="VARCHAR" />
+        <result column="MEASURE_TOOL_POSITION_STATUS" property="measureToolPositionStatus" jdbcType="VARCHAR" />
+        <result column="MEASURE_TOOL_STATUS" property="measureToolStatus" jdbcType="VARCHAR" />
+        <result column="MEASURE_TOOL_SUPPLIER" property="measureToolSupplier" jdbcType="DECIMAL" />
+        <result column="MEASUREMENT_ACCURACY" property="measurementAccuracy" jdbcType="VARCHAR" />
+        <result column="PURCHASE_DATE" property="purchaseDate" jdbcType="DATE" />
+        <result column="CHECK_TYPE" property="checkType" jdbcType="VARCHAR" />
+        <result column="CHECK_CYCLE" property="checkCycle" jdbcType="VARCHAR" />
+        <result column="LAST_CHECK_DATE" property="lastCheckDate" jdbcType="DATE" />
+        <result column="NEXT_CHECK_DATE" property="nextCheckDate" jdbcType="DATE" />
+        <result column="CHECKED_BY" property="checkedBy" jdbcType="VARCHAR" />
+        <result column="USE_DEPARTMENT" property="useDepartment" jdbcType="DECIMAL" />
+        <result column="PRINCIPAL" property="principal" jdbcType="DECIMAL" />
+        <result column="MSA_FLAG" property="msaFlag" jdbcType="VARCHAR" />
+        <result column="ENABLE_FLAG" property="enableFlag" jdbcType="VARCHAR" />
+        <result column="REMARK" property="remark" jdbcType="VARCHAR" />
+        <result column="PLANT_ID" property="plantId" jdbcType="DECIMAL" />
+        <result column="MEASURING_RANGE" property="measuringRange" jdbcType="VARCHAR" />
+        <result column="FIRST_USE_DATE" property="firstUseDate" jdbcType="DATE" />
+        <result column="OUTBOUND_DATE" property="outboundDate" jdbcType="DATE" />
+        <result column="MSA_TYPE" property="msaType" jdbcType="VARCHAR" />
+        <result column="JUDGEMENT_STANDARD" property="judgementStandard" jdbcType="VARCHAR" />
+        <result column="MSA_STATUS" property="msaStatus" jdbcType="VARCHAR" />
+        <result column="KEY_PROCESS" property="keyProcess" jdbcType="VARCHAR" />
+        <result column="POSITION_TITLE" property="positionTitle" jdbcType="VARCHAR" />
+        <result column="MSA_RESULT" property="msaResult" jdbcType="VARCHAR" />
+        <result column="MSA_CYCLE" property="msaCycle" jdbcType="VARCHAR" />
+        <result column="CHECK_RESULT" property="checkResult" jdbcType="VARCHAR" />
+        <result column="MEASURE_TOOL_MAKER" property="measureToolMaker" jdbcType="VARCHAR" />
+        <result column="UOM" property="uom" jdbcType="VARCHAR" />
+        <result column="RETURN_DATE" property="returnDate" jdbcType="DATE" />
+        <result column="HIS_TYPE" property="hisType" jdbcType="VARCHAR" />
+        <result column="SCRAP_REASON" property="scrapReason" jdbcType="VARCHAR" />
+        <result column="REPAIR_REASON" property="repairReason" jdbcType="VARCHAR" />
+        <result column="LAST_UPDATE_DATE" property="lastUpdateDate" jdbcType="DATE" />
+        <result column="LAST_UPDATED_BY" property="laseUpdatedBy" jdbcType="DECIMAL" />
+        
+        <!-- 业务字段 -->
+        <result column="MEASURE_TOOL_NAME" property="measureToolName" jdbcType="VARCHAR"/>        
+    	<result column="START_TIME" property="startTime" jdbcType="VARCHAR" />
+        <result column="END_TIME" property="endTime" jdbcType="VARCHAR" />
+        <result column="USER_NAME" property="userName" jdbcType="VARCHAR" />
+        <result column="NAME" property="name" jdbcType="VARCHAR" />
+        <result column="USER_ID" property="userId" jdbcType="DECIMAL" />
+        <result column="UNIT_ID" property="unitId" jdbcType="DECIMAL" />
+   		<result column="MEANING" property="meaning" jdbcType="VARCHAR" />
+        <result column="analyst_id" property="analystId" jdbcType="DECIMAL" />
+        <result column="SUPPLIER_NAME" property="supplierName" jdbcType="VARCHAR" />
+        <result column="MEASURE_TOOL_SUPPLIER_NAME" property="measureToolSupplierName" jdbcType="VARCHAR" />
+        <result column="PLANT_CODE" property="plantCode" jdbcType="VARCHAR" />
+        <result column="PLANT_NAME" property="plantName" jdbcType="VARCHAR" />
+        <result column="UPDATED_NAME" property="updatedName" jdbcType="VARCHAR" />
+    </resultMap>
+
+	<!-- 量具台账查询 -->
+	<select id="query" resultMap="BaseResultMap" parameterType="com.hand.hqm.hqm_measure_tool.dto.MeasureTool">
+		select hmt.MEASURE_TOOL_HIS_ID,
+			   hmt.measure_tool_id,
+			   hmt.measure_tool_num,
+		       hmt.descriptions,
+		       hmt.measure_tool_type,
+		       hmt.measure_tool_supplier,
+		       hmt.measuring_range,
+		       hmt.measurement_accuracy,
+		       hmt.purchase_date,
+		       hmt.first_use_date,
+		       hmt.use_department,
+		       hmt.principal,
+		       hmt.check_cycle,
+		       hmt.last_check_date,
+		       hmt.next_check_date,
+		       hmt.check_type,
+		       hmt.checked_by,
+		       hmt.measure_tool_status,
+		       hmt.measure_tool_position_status,
+		       hmt.outbound_date,
+		       hmt.msa_flag,
+		       hmt.msa_type,
+		       hmt.judgement_standard,
+		       hmt.msa_result,
+		       hmt.msa_status,
+		       hmt.key_process,
+		       hmt.position_title,
+		       hmt.enable_flag,
+		       hmt.msa_cycle,
+		       hmt.check_result,
+		       su.user_name,
+		       HOUT.NAME,
+		       su.user_id,
+		       HOUB.UNIT_ID,
+		       hs.supplier_name MEASURE_TOOL_SUPPLIER_NAME,
+	           hsp.supplier_name SUPPLIER_NAME,
+	           hmt.PLANT_ID,
+	           hp.descriptions PLANT_NAME,
+	           hp.plant_code,
+	           hmt.uom,
+	           hmt.measure_tool_maker,
+	           hmt.return_date,
+	           hmt.his_type,
+	           hmt.scrap_reason,
+	           hmt.repair_reason,
+	           hmt.LAST_UPDATED_BY,
+	           hmt.LAST_UPDATE_DATE,
+	           sus.user_name updated_name
+		from hqm_measure_tool_his hmt
+		left join sys_user su on hmt.principal = su.user_id
+		left join hr_org_unit_b houb on hmt.use_department = houb.unit_id
+    	left join hr_org_unit_tl hout on houb.unit_id = hout.unit_id and hout.lang = #{request.locale,jdbcType=VARCHAR,javaType=java.lang.String}
+    	left join hcs_suppliers hs on hmt.measure_tool_supplier = hs.supplier_id
+    	left join hcs_suppliers hsp on hmt.checked_by = hsp.supplier_id
+    	join hcm_plant hp on  hmt.PLANT_ID = hp.plant_id  
+    	left join sys_user sus on hmt.LAST_UPDATED_BY = sus.user_id
+		where 1=1
+		and hmt.MEASURE_TOOL_ID = #{measureToolId}
+		and hp.enable_flag = 'Y'
+		<if test="plantId != null">
+			and hmt.PLANT_ID = #{plantId}
+		</if>
+		<if test="measureToolNum!=null">
+			and hmt.measure_tool_num like concat('%',concat(#{measureToolNum},'%'))
+		</if>
+		<if test="measureToolStatus!=null">
+			and hmt.measure_tool_status = #{measureToolStatus}
+		</if>
+		<if test="measureToolType!=null">
+			and hmt.measure_tool_type = #{measureToolType}
+		</if>
+		<if test="checkType!=null">
+			and hmt.check_type = #{checkType}
+		</if>
+		<if test = "startTime != null">
+			and hmt.next_check_date &gt;= to_date(#{startTime}, 'yyyy-mm-dd hh24:mi:ss')
+		</if>
+		<if test = "endTime != null">
+			and hmt.next_check_date &lt;= to_date(#{endTime}, 'yyyy-mm-dd hh24:mi:ss')
+		</if>
+		<if test="msaFlag!=null">
+			and hmt.msa_flag = #{msaFlag}
+		</if>
+		<if test="msaStatus!=null">
+			and hmt.msa_status = #{msaStatus}
+		</if>
+		<if test="msaResult!=null">
+			and hmt.msa_result = #{msaResult}
+		</if>
+		<if test="enableFlag!=null">
+			and hmt.enable_flag = #{enableFlag}
+		</if>
+		 order by hmt.last_update_date desc
+	</select>
+	<!-- 量具校验报表查询 -->
+	<select id="queryCheckType" resultType="com.hand.hqm.hqm_measure_tool_his.dto.MeasureToolHisVO" parameterType="com.hand.hqm.hqm_measure_tool_his.dto.MeasureToolHis">
+		select 
+	       case check_type when '1' then '上海科勒电子科技有限公司' end as checkType ,
+	       count(case when check_result = 'OK' then '1' end) as okNum,
+	       count(case when check_result = 'NG' then '2' end) as ngNum
+	    from HQM_MEASURE_TOOL_HIS t where his_type = 6 and check_type = '1'
+	    <if test = "checkDateStart != null and checkDateStart != ''">
+			and last_check_date  &gt;= to_date(#{checkDateStart}, 'yyyy-mm-dd hh24:mi:ss')
+		</if>
+		<if test = "checkDateEnd != null and checkDateEnd != ''">
+			and last_check_date  &lt;= to_date(#{checkDateEnd}, 'yyyy-mm-dd hh24:mi:ss')
+		</if>
+		group by check_type
+	    union
+	    select 
+	       checked_by  as checkType,
+	       count(case when check_result = 'OK' then '1' end) as okNum,
+	       count(case when check_result = 'NG' then '2' end) as ngNum
+	    from HQM_MEASURE_TOOL_HIS t where his_type = 6 and checked_by is not null
+	    <if test = "checkDateStart != null and checkDateStart != ''">
+			and last_check_date  &gt;= to_date(#{checkDateStart}, 'yyyy-mm-dd hh24:mi:ss')
+		</if>
+		<if test = "checkDateEnd != null and checkDateEnd != ''">
+			and last_check_date  &lt;= to_date(#{checkDateEnd}, 'yyyy-mm-dd hh24:mi:ss')
+		</if>
+	    group by checked_by
+	</select>
+	<!-- 量具校验表格查询 -->
+	<select id="queryCheckTypeGrid" resultMap="BaseResultMap" parameterType="com.hand.hqm.hqm_measure_tool_his.dto.MeasureToolHis">
+	select * from (
+		select case check_type when '1' then '上海科勒电子科技有限公司' end check_type, t.measure_tool_num,t.descriptions ,t.last_check_date,t.check_result,t.remark  from HQM_MEASURE_TOOL_HIS t left join hcs_suppliers s on s.supplier_id = t.checked_by
+		where t.his_type = 6 and check_type = '1'
+	  	union 
+	  	select s.supplier_name check_type, t.measure_tool_num,t.descriptions ,t.last_check_date,t.check_result,t.remark  from HQM_MEASURE_TOOL_HIS t left join hcs_suppliers s on s.supplier_id = t.checked_by
+		where t.his_type = 6  and t.checked_by is not null
+	) temp 
+	where 1 = 1
+	<if test = "checkType != null">
+		and temp.check_type  = #{checkType}
+	</if>
+	<if test = "checkResult != null">
+		and temp.check_result  = #{checkResult}
+	</if>
+	<if test = "checkDateStart != null and checkDateStart != ''">
+		and temp.last_check_date  &gt;= to_date(#{checkDateStart}, 'yyyy-mm-dd hh24:mi:ss')
+	</if>
+	<if test = "checkDateEnd != null and checkDateEnd != ''">
+		and temp.last_check_date  &lt;= to_date(#{checkDateEnd}, 'yyyy-mm-dd hh24:mi:ss')
+	</if>
+	</select>
+	<!-- 量具使用部门报表查询 -->
+	<select id="queryDepartmentUsage" resultType="com.hand.hqm.hqm_measure_tool_his.dto.MeasureToolHisVO" parameterType="com.hand.hqm.hqm_measure_tool_his.dto.MeasureToolHis">
+	   select temp.name as departmentUsage,count(temp.name) as num
+	   from (
+       select 
+       b.name
+       from HQM_MEASURE_TOOL t
+       left join HR_ORG_UNIT_B b 
+       on b.unit_id = t.use_department
+       where t.use_department is not null
+       ) temp
+       group by temp.name
+	</select>
+	<!-- 量具使用部门表格查询 -->
+	<select id="queryDepartmentUsageGrid" resultMap="BaseResultMap" parameterType="com.hand.hqm.hqm_measure_tool_his.dto.MeasureToolHis">
+	select b.name name ,t.measure_tool_num,t.descriptions,t.outbound_date ,s.user_name remark from HQM_MEASURE_TOOL t 
+	left join sys_user s on s.user_id = t.principal 
+	left join HR_ORG_UNIT_B b on b.unit_id = t.use_department  
+	where t.use_department is not null
+	<if test = "name != null">
+		and b.name = #{name}
+	</if>
+	</select>
+</mapper>

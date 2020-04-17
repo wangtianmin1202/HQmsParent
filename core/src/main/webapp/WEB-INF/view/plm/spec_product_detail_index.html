@@ -1,0 +1,364 @@
+<#include "../include/header.html">
+<style>
+/* 	div[role=tooltip].k-tooltip{
+		padding: 2px;
+		background: #5c9acf;
+	}
+	.k-tooltip-content{
+		padding: 4px;
+		text-align: left;
+		background: #fff;
+		color: #666;
+	}
+	.k-callout {
+		border-bottom-color: #5c9acf;
+	} */
+	.column{
+        display:flex;
+        flex-direction: row; 
+    }
+    
+    .row{
+     	margin-left: 0;
+        margin-right: 0;
+    }
+    
+    div.panel-heading {
+    	background:#a4d8ef !important;
+    	vertical-align:middle;
+    	font-size: 20px;
+    	font-weight: bold;
+    	text-align: center;
+		line-height:40px; 
+    }
+    .panel-body {
+	    padding: 0px 0px;
+    }
+    
+    #gridApproval * {
+    	border: none;
+    }
+    
+    #gridDetail * {
+    	border: none;
+    }
+    
+    #gridChange * {
+    	border: none;
+    }
+</style>
+<script type="text/javascript">
+debugger;
+	var viewModel1 = Hap.createGridViewModel("#gridApproval");
+    var viewModel2 = Hap.createGridViewModel("#gridDetail");
+    var viewModel3 = Hap.createGridViewModel("#gridChange");
+    $(function(){
+		$.ajax({
+	        type: 'POST',
+	        url: '${base.contextPath}/plm/spec/change/order/query',
+	        dataType:"json",
+	        contentType: "application/json",
+	        success: function(datas) {
+	            if (datas.success) {
+	            	$("#gridApproval").data("kendoGrid").dataSource.data(datas.rows); 
+	            } else {
+	                kendo.ui.showErrorDialog({
+	                    message: datas.message
+	                });
+	            }
+	        },
+	        error: function(XMLHttpRequest, textStatus, errorThrown) {
+	            kendo.ui.progress($('#page-content'), false);
+	            kendo.ui.showErrorDialog({
+	                message: $l('hap.request.error')
+	            });
+	        }
+	    });
+		
+		$.ajax({
+	        type: 'POST',
+	        url: '${base.contextPath}/plm/spec/product/detail/queryParentTree',
+	        dataType:"json",
+	        contentType: "application/json",
+	        success: function(datas) {
+	            if (datas.success) {
+	            	$("#gridDetail").data("kendoGrid").dataSource.data(datas.rows); 
+	            } else {
+	                kendo.ui.showErrorDialog({
+	                    message: datas.message
+	                });
+	            }
+	        },
+	        error: function(XMLHttpRequest, textStatus, errorThrown) {
+	            kendo.ui.progress($('#page-content'), false);
+	            kendo.ui.showErrorDialog({
+	                message: $l('hap.request.error')
+	            });
+	        }
+	    });
+		
+		/* $.ajax({
+	        type: 'POST',
+	        url: '${base.contextPath}/plm/spec/change/order/query',
+	        dataType:"json",
+	        contentType: "application/json",
+	        success: function(datas) {
+	            if (datas.success) {
+	            	$("#gridChange").data("kendoGrid").dataSource.data(datas.rows); 
+	            } else {
+	                kendo.ui.showErrorDialog({
+	                    message: datas.message
+	                });
+	            }
+	        },
+	        error: function(XMLHttpRequest, textStatus, errorThrown) {
+	            kendo.ui.progress($('#page-content'), false);
+	            kendo.ui.showErrorDialog({
+	                message: $l('hap.request.error')
+	            });
+	        }
+	    });  */
+    });
+</script>
+
+<body>
+
+<div id="page-content">
+  <div class="box box-info" style="width: 100%;height: 100%;">
+	  <div	class="column" style="width: 100%;height: 40%;padding: 10px 10px;">
+	  	<div class="panel panel-default" style="width: 100%;">
+				<div class="panel-heading">
+					SPEC数据库审批任务
+				</div>
+				<div class="panel-body" style="clear:both">
+					<div id="gridApproval"></div>
+				</div>
+			</div>
+	  </div>
+	<div class="column" style="width: 100%;height: 60%;">
+		<div class="row" style="width: 50%;height: 100%; padding: 0px 5px 10px 10px;">
+			<div class="panel panel-default">
+					<div class="panel-heading">
+						SPEC数据库条款维护
+					</div>
+					<div class="panel-body" style="clear:both">
+						<div id="gridDetail"></div>
+					</div>
+				</div>
+		</div>
+		<div class="row" style="width: 50%;height: 100%; padding: 0px 10px 10px 5px;">
+			<div class="panel panel-default">
+					<div class="panel-heading">
+						变更履历
+					</div>
+					<div class="panel-body" style="clear:both">
+						<div id="gridChange"></div>
+					</div>
+				</div>
+		</div>
+	  </div>
+  <!--   <div style="clear:both">
+        <div id="gridApproval"></div>
+    </div>
+    <div style="clear:both">
+        <div id="gridDetail"></div>
+    </div>
+    <div style="clear:both">
+        <div id="gridChange"></div>
+    </div>  -->
+</div>
+
+<script>
+	//待审批界面表格
+	function openDetailWindow(uid) {
+		window.top.openTab('PLM_SPEC_PRODUCT_DETAIL', '<@spring.message "SPEC审批"/>', '${base.contextPath}/plm/spec_product_detail.html');
+    } 
+	
+    var gridApproval = $("#gridApproval").kendoGrid({
+        dataSource: null,
+        resizable: true,
+        scrollable: true,
+        navigatable: false,
+        sortable:true,
+        /* selectable: 'multiple, rowbox', */
+        dataBound: function () {
+            if (parent.autoResizeIframe) {
+                parent.autoResizeIframe('${RequestParameters.functionCode!}')
+            }
+        },
+        /* pageable: {
+            pageSizes: [5, 10, 20, 50],
+            refresh: true,
+            buttonCount: 5
+        }, */
+        columns: [
+            {
+                field: "changeOrderCode",
+                title: '<@spring.message "变更编码"/>',
+                width: 120,
+                attributes:{style:"white-space:nowrap;text-overflow:ellipsis;"}
+            },
+            {
+                field: "productName",
+                title: '<@spring.message "产品品类"/>',
+                width: 120,
+                attributes:{style:"white-space:nowrap;text-overflow:ellipsis;"}
+            },
+                    {
+                field: "specClause",
+                title: '<@spring.message "SPEC条款"/>',
+                width: 120,
+                attributes:{style:"white-space:nowrap;text-overflow:ellipsis;"}
+            },
+                    {
+                field: "changeMsg",
+                title: '<@spring.message "变更内容"/>',
+                width: 120,
+                attributes:{style:"white-space:nowrap;text-overflow:ellipsis;"}
+            },
+                    {
+                field: "changeType",
+                title: '<@spring.message "变更类型"/>',
+                width: 60,
+                attributes:{style:"white-space:nowrap;text-overflow:ellipsis;"}
+            },
+                    {
+                field: "penddingVersion",
+                title: '<@spring.message "提交版本"/>',
+                width: 40,
+                attributes:{style:"white-space:nowrap;text-overflow:ellipsis;"}
+            }, 
+            	{
+                field: "lastUpdateDate",
+                title: '<@spring.message "修改时间"/>',
+                width: 100,
+                attributes:{style:"white-space:nowrap;text-overflow:ellipsis;"}
+            },
+                    {
+            	field: "comfirmBy",
+                title: '<@spring.message "提交人"/>',
+                width: 60,
+                attributes:{style:"white-space:nowrap;text-overflow:ellipsis;"}
+            },
+                    {
+            	field: "waitBy",
+                title: '<@spring.message "当前审批者"/>',
+                width: 60,
+                attributes:{style:"white-space:nowrap;text-overflow:ellipsis;"}
+            },
+            {
+                title: '<@spring.message "审批"/>',
+                width: 60,
+                attributes:{style:"white-space:nowrap;text-overflow:ellipsis;"}
+            }
+        ],
+        editable: false
+    }).data("kendoGrid");
+	/* Hap.autoResizeGrid("#gridApproval"); */
+	
+	//维护界面表格
+	var gridDetail = $("#gridDetail").kendoGrid({
+        dataSource: null,
+        resizable: true,
+        scrollable: true,
+        navigatable: false,
+        sortable:true,
+        /* selectable: 'multiple, rowbox', */
+        dataBound: function () {
+            if (parent.autoResizeIframe) {
+                parent.autoResizeIframe('${RequestParameters.functionCode!}')
+            }
+        },
+        /* pageable: {
+            pageSizes: [5, 10, 20, 50],
+            refresh: true,
+            buttonCount: 5
+        }, */
+        columns: [
+        	{
+                field: "specDescription",
+                title: '<@spring.message "产品品类"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+            },
+            {
+                title: '<@spring.message "简介"/>',
+                width: 120,
+                attributes:{style:"white-space:nowrap;text-overflow:ellipsis;"}
+            },
+                    {
+                field: "count",
+                title: '<@spring.message "生效条款数目"/>',
+                width: 120,
+                attributes:{style:"white-space:nowrap;text-overflow:ellipsis;"}
+            },
+                 {
+                title: '<@spring.message "维护"/>',
+                width: 60,
+                attributes:{style:"white-space:nowrap;text-overflow:ellipsis;"},
+                template: function (dataItem) {
+                	return '<span class="btn btn-primary k-grid-add" style="margin-right:5px;" onclick="openDetailWindow(\''+dataItem.uid+'\')" >进入</span>';
+                /*     return Hap.createAnchor('<@spring.message "进入"/>',
+                        openDetailWindow); */
+                }
+            }
+        ],
+        editable: false
+    }).data("kendoGrid");
+	/* Hap.autoResizeGrid("#gridDetail"); */
+	
+	//变更表格
+	var gridChange = $("#gridChange").kendoGrid({
+        dataSource: null,
+        resizable: true,
+        scrollable: true,
+        navigatable: false,
+        sortable:true,
+        /* selectable: 'multiple, rowbox', */
+        dataBound: function () {
+            if (parent.autoResizeIframe) {
+                parent.autoResizeIframe('${RequestParameters.functionCode!}')
+            }
+        },
+        /* pageable: {
+            pageSizes: [5, 10, 20, 50],
+            refresh: true,
+            buttonCount: 5
+        }, */
+        columns: [
+            {
+                field: "changeOrderCode",
+                title: '<@spring.message "变更编码"/>',
+                width: 120,
+                attributes:{style:"white-space:nowrap;text-overflow:ellipsis;"}
+            },        
+            {
+                field: "changeType",
+                title: '<@spring.message "变更类型"/>',
+                width: 60,
+                attributes:{style:"white-space:nowrap;text-overflow:ellipsis;"}
+            },
+            {
+                field: "changeMsg",
+                title: '<@spring.message "变更内容"/>',
+                width: 120,
+                attributes:{style:"white-space:nowrap;text-overflow:ellipsis;"}
+            },
+                    {
+                title: '<@spring.message "变更明细"/>',
+                width: 120,
+                attributes:{style:"white-space:nowrap;text-overflow:ellipsis;"}
+            }, 
+            	{
+                field: "lastUpdateDate",
+                title: '<@spring.message "批准时间"/>',
+                width: 80,
+                attributes:{style:"white-space:nowrap;text-overflow:ellipsis;"}
+            }
+        ],
+        editable: false
+    }).data("kendoGrid");
+	/* Hap.autoResizeGrid("#gridChange"); */
+</script>
+</body>
+</html>

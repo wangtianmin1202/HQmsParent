@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.spc.ecr_main.mapper.EcrTaskUserMapper">
+    <resultMap id="BaseResultMap" type="com.hand.spc.ecr_main.dto.EcrTaskUser">
+        <result column="TASK_USER_ID" property="taskUserId" jdbcType="DECIMAL" />
+        <result column="RULE_CODE" property="ruleCode" jdbcType="VARCHAR" />
+        <result column="RULE_TYPE" property="ruleType" jdbcType="VARCHAR" />
+        <result column="EMPLOYEE_ID" property="employeeId" jdbcType="DECIMAL" />
+    </resultMap>
+
+
+</mapper>

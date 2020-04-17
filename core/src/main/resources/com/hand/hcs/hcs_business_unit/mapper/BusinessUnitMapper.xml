@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hcs.hcs_business_unit.mapper.BusinessUnitMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hcs.hcs_business_unit.dto.BusinessUnit">
+        <result column="BUSINESS_UNIT_ID" property="businessUnitId" jdbcType="DECIMAL" />
+        <result column="BUSINESS_UNIT_CODE" property="businessUnitCode" jdbcType="VARCHAR" />
+        <result column="BUSINESS_UNIT_NAME" property="businessUnitName" jdbcType="VARCHAR" />
+        <result column="BUSINESS_GROUP" property="businessGroup" jdbcType="VARCHAR" />
+        <result column="COMPANY_ID" property="companyId" jdbcType="DECIMAL" />
+        <result column="COMPNAY_NAME" property="compnayName" jdbcType="VARCHAR" />
+        <result column="ENABLED_FLAG" property="enabledFlag" jdbcType="VARCHAR" />
+        <result column="COMMENTS" property="comments" jdbcType="VARCHAR" />
+        <result column="DISPLAY_CODE" property="displayCode" jdbcType="VARCHAR" />
+        <result column="COMPANY_MAINTENANCE_FLAG" property="companyMaintenanceFlag" jdbcType="VARCHAR" />
+        <result column="LAST_UPDATE_VERSION" property="lastUpdateVersion" jdbcType="DECIMAL" />
+    </resultMap>
+	<!-- 业务实体LOV -->
+	<select id="buinessUnitLov" resultMap="BaseResultMap" parameterType="com.hand.hcs.hcs_business_unit.dto.BusinessUnit">
+		select distinct hbu.business_unit_id,
+                hbu.business_unit_code,
+                hbu.business_unit_name
+	    from sys_user su
+	    join HCS_BUSINESS_UNIT_SUPPLIER hbus
+	      on decode(su.user_type, 'S', su.supplier_id, hbus.supplier_id) =
+	         hbus.supplier_id
+	    join HCS_BUSINESS_UNIT hbu
+	      on decode(su.user_type,
+	                'S',
+	                hbus.business_unit_id,
+	                hbu.business_unit_id) = hbu.business_unit_id
+	    where 1 = 1
+	      and hbu.enabled_flag = 'Y'
+	      and hbus.enable_flag = decode(su.user_type, 'S', 'Y', hbus.enable_flag)
+	      and su.user_id = #{request.userId}
+		<if test="businessUnitCode != null">
+			and hbu.BUSINESS_UNIT_CODE LIKE concat('%',concat(#{businessUnitCode,jdbcType=VARCHAR},'%'))
+		</if> 
+		<if test="businessUnitName != null">
+			and hbu.BUSINESS_UNIT_NAME LIKE concat('%',concat(#{businessUnitName,jdbcType=VARCHAR},'%'))
+		</if> 
+	</select>
+</mapper>

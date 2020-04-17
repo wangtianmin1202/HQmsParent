@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_qua_ins_time_l.mapper.QuaInsTimeLMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_qua_ins_time_l.dto.QuaInsTimeL">
+        <result column="TIME_ID" property="timeId" jdbcType="DECIMAL" />
+        <result column="LINE_ID" property="lineId" jdbcType="DECIMAL" />
+        <result column="INSPECTION_TIME" property="inspectionTime" jdbcType="VARCHAR" />
+        <result column="STANDARD_OP_ID" property="standardOpId" jdbcType="VARCHAR" />
+        <result column="WORKSTATION_ID" property="workstationId" jdbcType="VARCHAR" />
+        <result column="ORDER_NUMBER" property="orderNumber" jdbcType="DECIMAL" />
+        
+      
+         <result column="STANDARD_OP_CODE" property="standardOpCode" jdbcType="VARCHAR" />
+         <result column="WORKSTATION_CODE" property="workstationCode" jdbcType="VARCHAR" />
+         <result column="UPDATED_BY" property="updateBy" jdbcType="VARCHAR" />
+         <result column="UPDATE_DATE" property="updateDate" jdbcType="VARCHAR" />
+         <result column="PLANT_ID" property="plantId" jdbcType="DECIMAL" />
+         <result column="PROD_LINE_ID" property="prodLineId" jdbcType="DECIMAL" />
+         <result column="SHIFT_CODE" property="shiftCode" jdbcType="VARCHAR" />
+         <result column="ENABLE_FLAG" property="enableFlag" jdbcType="VARCHAR" />
+        
+    </resultMap>
+      <select id="myselect" resultMap="BaseResultMap"  parameterType="com.hand.hqm.hqm_qua_ins_time_l.dto.QuaInsTimeL">   
+       SELECT l.time_id,
+       l.line_id,
+       l.inspection_time,
+       l.standard_op_id,
+       hh.standard_op_code,
+       l.workstation_id,
+       hl.workstation_code,
+       l.order_number,
+       hhh.plant_id,
+       hhh.prod_line_id,
+       hhh.shift_code,
+       l.last_updated_by   AS updated_by,
+       l.last_update_date  AS update_date
+  FROM hqm_qua_ins_time_l    l,
+       hqm_sop_pqc_control_l hl,
+       hqm_sop_pqc_control_h hh,
+       hqm_qua_ins_time_h    hhh
+ WHERE l.standard_op_id = hh.standard_op_id
+   AND l.time_id = hhh.time_id
+   AND l.workstation_id = hl.workstation_id
+	<if test="timeId!= null">
+     AND  l.time_id = #{timeId}
+   </if>
+    <if test="plantId!= null">
+     AND  hhh.plant_id = #{plantId}
+   </if>
+   <if test="prodLineId!= null">
+     AND  hhh.prod_line_id = #{prodLineId}
+   </if>
+   <if test="shiftCode!= null">
+     AND  hhh.shift_code = #{shiftCode}
+   </if>
+   <if test="enableFlag!= null">
+     AND  hhh.enable_flag = #{enableFlag}
+   </if>  
+    <if test="inspectionTime!= null">
+     AND l.inspection_time = #{inspectionTime}
+     
+   </if>
+   </select>
+      <select id="groupbyselect" resultMap="BaseResultMap"  parameterType="com.hand.hqm.hqm_qua_ins_time_l.dto.QuaInsTimeL">   
+       SELECT l.time_id,
+       hhh.plant_id,
+       hhh.prod_line_id,
+       hhh.plant_id,
+       hhh.shift_code
+  FROM hqm_qua_ins_time_l l,hqm_qua_ins_time_h hhh
+ WHERE l.time_id=hhh.time_id
+	  <if test="timeId!= null">
+     AND  l.time_id = #{timeId}
+   </if>
+    <if test="inspectionTime!= null">
+    AND l.inspection_time = #{inspectionTime}
+   </if>
+   GROUP BY l.time_id,
+       hhh.plant_id,
+       hhh.prod_line_id,
+       hhh.plant_id,
+       hhh.shift_code
+   </select>
+   <select id="shiftNowQuery" resultMap="BaseResultMap"  parameterType="com.hand.hqm.hqm_qua_ins_time_l.dto.QuaInsTimeL">   
+       SELECT cal.shift_code
+  FROM hcm_calendar_shift_v cal, hcm_production_line hpl, hcm_calendar hc
+ WHERE 1 = 1
+   AND SYSDATE BETWEEN cal.shift_start_time AND cal.shift_end_time
+   AND cal.calendar_id = hc.calendar_id
+   AND hc.calendar_type = 'P'
+   AND hc.prod_line_id = hpl.prod_line_id
+   AND cal.calendar_enable_flag = 'Y'
+   AND hpl.prod_line_id = #{prodLineId}
+   AND cal.shift_code = #{shiftCode}
+   AND cal.plant_id = #{plantId}
+   </select>
+   
+</mapper>

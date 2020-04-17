@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.npi.npi_technology.mapper.PreventionMeasureMapper">
+    <resultMap id="BaseResultMap" type="com.hand.npi.npi_technology.dto.PreventionMeasure">
+        <result column="PREVENTION_ID" property="preventionId" jdbcType="DECIMAL" />
+        <result column="PREVENTION_MEASURE_NUMBER" property="preventionMeasureNumber" jdbcType="VARCHAR" />
+        <result column="PREVENTIVE" property="preventive" jdbcType="VARCHAR" />
+        <result column="DETECTABILITY" property="detectability" jdbcType="VARCHAR" />
+        <result column="DET" property="det" jdbcType="VARCHAR" />
+        <result column="RPN" property="rpn" jdbcType="VARCHAR" />
+        <result column="CONTROL_CAPACITY" property="controlCapacity" jdbcType="VARCHAR" />
+        <result column="CONTROL_FREQUENCY" property="controlFrequency" jdbcType="VARCHAR" />
+        <result column="CONTROL_METHOD" property="controlMethod" jdbcType="VARCHAR" />
+        <result column="REACTION_PLAN" property="reactionPlan" jdbcType="VARCHAR" />
+        <result column="INVALID_CAUSE_ID" property="invalidCauseId" jdbcType="DECIMAL" />
+    </resultMap>
+    
+    
+    <select id="selectMaxNumber" resultMap="BaseResultMap"
+		parameterType="com.hand.npi.npi_technology.dto.PreventionMeasure">
+		select s.prevention_measure_number from NPI_PREVENTION_MEASURE s where s.prevention_measure_number like  concat(#{preventionMeasureNumber}, '%') 
+    	order by s.prevention_measure_number desc
+	</select>
+
+	<select id="queryPreventionMeasureList" resultMap="BaseResultMap"
+		parameterType="com.hand.npi.npi_technology.dto.PreventionMeasure">
+		select c.occ,t.sev from NPI_PREVENTION_MEASURE p left join 
+	    npi_invalid_cause c on p.invalid_cause_id = c.invalid_cause_id
+	    left join NPI_INVALID_PATTERN t on c.invalid_pattern_id= t.invalid_pattern_id
+		<where>
+            <if test="preventionId!=null">
+                AND p.prevention_id=#{preventionId}
+            </if>
+        </where>
+	</select>
+	<select id="queryByPatId" resultMap="BaseResultMap"
+		parameterType="com.hand.npi.npi_technology.dto.PreventionMeasure">
+		select t.* from NPI_PREVENTION_MEASURE t join NPI_INVALID_CAUSE t1 on  t.invalid_cause_id =
+        t1.invalid_cause_id where t1.invalid_pattern_id = #{invalidPatternId}
+	</select>
+
+</mapper>

@@ -1,0 +1,389 @@
+<#include "../include/header.html">
+
+<style>
+	div[role=tooltip].k-tooltip{
+		padding: 2px;
+		background: #5c9acf;
+	}
+	.k-tooltip-content{
+		padding: 4px;
+		text-align: left;
+		background: #fff;
+		color: #666;
+	}
+	.k-callout {
+		border-bottom-color: #5c9acf;
+	}
+</style>
+ <script src="${base.contextPath}/common/code?HQM_8D_PROBLEM_TYPE=HQM_8D_PROBLEM_TYPE"></script>
+<script type="text/javascript">
+    var viewModel = Hap.createGridViewModel("#grid");
+    var toolTipOpt = {
+        		show: function(e){
+        			if($.trim(this.content.text()) !=""){
+        				$('[role="tooltip"]').css("visibility", "visible");
+        			}
+        		},
+        		hide: function(){
+        			$('[role="tooltip"]').css("visibility", "hidden");
+        		},
+        		filter: "td:nth-child(n+3)",
+        		content: function(e){
+        			var element = e.target[0];
+        			if(element.offsetWidth < element.scrollWidth){
+        				var text = $(e.target).text();
+        				return '<div style="min-width:100px;max-width: 1000px;">' + text + '</div>';
+        			}else{//解决鼠标�?�?始放在上面出现空模块
+        				$('[role="tooltip"]').css("visibility", "hidden");
+        				return "";
+        			}
+        		}
+        };
+
+    
+    viewModel.model.ecrno= "${RequestParameters.ecrno!}";
+    // 查询基本信息
+    if(viewModel.model.ecrno){
+		var url = "${base.contextPath}/hpm/ecr/project/tracking/queryInfo?ecrno=${RequestParameters.ecrno!0}";
+    	$.ajax({
+    		url: url,
+    		success: function(e){
+				if(e.success){
+    				var a0 = e.rows[0] ||{};
+    				for(var k in a0){
+    					viewModel.model.set(k, a0[k]);
+    				}
+    				if(viewModel.model.get("planChangeTime")){
+    					viewModel.model.set("planChangeTime",new Date(viewModel.model.get("planChangeTime")).Format("yyyy-MM-dd"));
+    				}
+    			}
+			}
+    	});
+    }
+</script>
+
+<body>
+<div id="detailWindows"></div>
+<div id="page-content">
+	<div id="projectInfo" class="form-horizontal" style="margin-top:10px">
+		<!-- ECR 编号 -->
+		<div class="row">
+			<div class="col-sm-3">
+				<div class="form-group">
+				<label class="col-sm-4 control-label"><@spring.message "ecrmain.ecrno"/></label>
+				<div class="col-sm-8">
+					<input id="ecrno" style="width:100%" disabled data-bind="value:model.ecrno" class="k-textbox"/>
+				</div>
+				</div>
+			</div>
+			<!--变更类型-->
+			<div class="col-sm-3">
+				<div class="form-group">
+				<label class="col-sm-4 control-label"><@spring.message "ecrsoultion.changetype"/></label>
+				<div class="col-sm-8">
+					<input id="changeType" style="width:100%" disabled data-bind="value:model.issueType" >				
+					<script type="text/javascript">
+						kendo.bind($("#changeType"), viewModel);
+						$("#changeType").kendoDropDownList({
+					        dataTextField: "meaning",
+					        dataValueField: "value",
+					        valuePrimitive: true,
+					        dataSource: HQM_8D_PROBLEM_TYPE
+						});
+					</script>
+				</div>
+				</div>
+			</div>
+			<div class="col-sm-3">
+				<div class="form-group">
+				<label class="col-sm-4 control-label">ECR计划切换时间</label>
+				<div class="col-sm-8">
+					<input id="planChangeTime" style="width:100%" disabled data-bind="value:model.planChangeTime" 
+					class="k-textbox"/>
+				</div>
+				</div>
+			</div>
+			<div class="col-sm-3">
+				<div class="form-group">
+				<label class="col-sm-4 control-label"><@spring.message "ecrplatform.allocation"/></label>
+				<div class="col-sm-8">
+					<input id="allocation" style="width:100%" disabled data-bind="value:model.mainDuty" 
+					class="k-textbox"/>
+				</div>
+				</div>
+			</div>
+		</div>
+	    <!-- 问题描述 -->
+	    <div class="row">
+			<div class="col-sm-12">
+				<div class="form-group">
+				<label class="col-sm-1 control-label"><@spring.message "ecrmain.issue"/></label>
+				<div class="col-sm-11">
+					<textArea id="issue" style="width:100%" disabled data-bind="value:model.issue" 
+					class="k-textbox"></textArea>
+				</div>
+				</div>
+			</div>
+		</div>
+	    <!-- 改善方案内容 -->
+	    <div class="row">
+			<div class="col-sm-12">
+				<div class="form-group">
+				<label class="col-sm-1 control-label"><@spring.message "ecrsolution.solutiontext"/></label>
+				<div class="col-sm-11">
+					<textArea id="solutiontext" style="width:100%" disabled data-bind="value:model.issueMsg"
+					 class="k-textbox"></textArea>
+				</div>
+				</div>
+			</div>
+		</div>
+	</div>
+    <script>kendo.bind($('#projectInfo'), viewModel);</script>
+    <!-- Grid -->
+    <div style="clear:both">
+        <div id="grid"></div>
+    </div>
+</div>
+
+<script>
+    Hap.initEnterQuery('#query-form', viewModel.query);
+    var BaseUrl = _basePath;
+    dataSource = new kendo.data.DataSource({
+        transport: {
+            read: {
+                url: BaseUrl + "/hpm/ecr/project/tracking/query",
+                type: "POST",
+                dataType: "json"
+            },
+            update: {
+                url: BaseUrl + "/hpm/ecr/project/tracking/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            destroy: {
+                url: BaseUrl + "/hpm/ecr/project/tracking/remove",
+                type: "POST",
+                contentType: "application/json"
+            },
+            create: {
+                url: BaseUrl + "/hpm/ecr/project/tracking/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            parameterMap: function (options, type) {
+                if (type !== "read" && options.models) {
+                    var datas = Hap.prepareSubmitParameter(options, type)
+                    return kendo.stringify(datas);
+                } else if (type === "read") {
+                	var qy = {};
+                	qy.ecrno = viewModel.model.ecrno;
+                    return Hap.prepareQueryParameter(qy, options);
+                }
+            }
+        },
+        batch: true,
+        serverPaging: true,
+        pageSize: 20,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+                id: "projectTargetId",
+                fields: {
+			        
+                }
+            }
+        }
+    });
+
+</script>
+
+<script>
+	$("#grid").kendoTooltip(toolTipOpt).data("kendoTooltip");
+    var grid = $("#grid").kendoGrid({
+        dataSource: dataSource,
+        resizable: true,
+        scrollable: true,
+        navigatable: false,
+        sortable:true,
+        dataBound: function () {
+            if (parent.autoResizeIframe) {
+                parent.autoResizeIframe('${RequestParameters.functionCode!}')
+            }
+        },
+        pageable: {
+            pageSizes: [5, 10, 20, 50],
+            refresh: true,
+            buttonCount: 5
+        },
+        columns: [
+                    {
+                field: "taskNumber",
+                title: '<@spring.message "ecrprojecttracking.tasknumber"/>',
+                width: 60,
+                attributes:{style:"white-space:nowrap;text-overflow:ellipsis;"}
+            },
+                    {
+                field: "taskName",
+                title: '<@spring.message "ecrprojecttracking.taskname"/>',
+                width: 120,
+                attributes:{style:"white-space:nowrap;text-overflow:ellipsis;"},
+                template: function(e){
+                	if (!!viewModel.model.ecrno) {
+                		return Hap.createAnchor(e.taskName, openWindow, e.taskNumber, viewModel.model.ecrno);
+                    }
+                }
+            },
+            {
+                field: "status",
+                title: '<@spring.message "ecrprojecttracking.status"/>',
+                width: 120,
+                attributes:{style:"white-space:nowrap;text-overflow:ellipsis;"}
+            },
+                    {
+                field: "taskStandardDays",
+                title: '<@spring.message "ecrprojecttracking.taskstandarddays"/>',
+                width: 120,
+                attributes:{style:"white-space:nowrap;text-overflow:ellipsis;"}
+            },
+                    {
+                field: "dueDate",
+                title: '<@spring.message "ecrprojecttracking.duedate"/>',
+                width: 120,
+                attributes:{style:"white-space:nowrap;text-overflow:ellipsis;"},
+                template: function(e){
+                	var dateTime = e['dueDate'];
+                	if(dateTime){
+                		return new Date(dateTime).Format("yyyy-MM-dd")
+                	} else {
+                		return "";
+                	}
+                }
+            },
+                    {
+                field: "actualStartDate",
+                title: '<@spring.message "ecrprojecttracking.actualstartdate"/>',
+                width: 120,
+                attributes:{style:"white-space:nowrap;text-overflow:ellipsis;"},
+                template: function(e){
+                	var dateTime = e['actualStartDate'];
+                	if(dateTime){
+                		return new Date(dateTime).Format("yyyy-MM-dd")
+                	} else {
+                		return "";
+                	}
+                }
+            },
+                    {
+                field: "actualEndDate",
+                title: '<@spring.message "ecrprojecttracking.actualenddate"/>',
+                width: 120,
+                attributes:{style:"white-space:nowrap;text-overflow:ellipsis;"},
+                template: function(e){
+                	var dateTime = e['actualEndDate'];
+                	if(dateTime){
+                		return new Date(dateTime).Format("yyyy-MM-dd")
+                	} else {
+                		return "";
+                	}
+                }
+            },
+                    {
+                field: "planStartDate",
+                title: '<@spring.message "ecrprojecttracking.planstartdate"/>',
+                width: 120,
+                attributes:{style:"white-space:nowrap;text-overflow:ellipsis;"},
+                template: function(e){
+                	var dateTime = e['planStartDate'];
+                	if(dateTime){
+                		return new Date(dateTime).Format("yyyy-MM-dd")
+                	} else {
+                		return "";
+                	}
+                }
+            },
+                    {
+                field: "planEndDate",
+                title: '<@spring.message "ecrprojecttracking.planenddate"/>',
+                width: 120,
+                attributes:{style:"white-space:nowrap;text-overflow:ellipsis;"},
+                template: function(e){
+                	var dateTime = e['planEndDate'];
+                	if(dateTime){
+                		return new Date(dateTime).Format("yyyy-MM-dd")
+                	} else {
+                		return "";
+                	}
+                }
+            },
+                    {
+                field: "taskLeader",
+                title: '<@spring.message "ecrprojecttracking.taskleader"/>',
+                width: 120,
+                attributes:{style:"white-space:nowrap;text-overflow:ellipsis;"}
+            },
+        ],
+        editable: false
+    }).data("kendoGrid");
+	Hap.autoResizeGrid("#grid");
+	
+	function openWindow(taskNumber, ecrno){	
+		var url = "";
+		switch(taskNumber){
+			case '1': //ECR申请 
+				var url = "/pspc_ecr_platform/pspc_ecr_order_create.html";
+				break;
+			case '2': // 负责人分配
+				var url = "/pspc_ecr_platform/ecr_person.html";
+				break;
+			case '3': // 物料管控	
+				var url = "/pspc_ecr_platform/item_control.html";
+				break;
+			case '4': // 物料处理方案审批
+				var url = "/4";
+				break;
+			case '5': // 制定改善方案
+				var url = "/pspc_ecr_platform/solution.html";
+				break;
+			case '6': // RFQ
+				var url = "/pspc_ecr_platform/ecr_rfq.html";
+				break;
+			case '7': //改善方案评审
+				var url = "/7";
+				break;
+			case '8': // 技术文档修改
+				var url = "/pspc_ooc/ooc.html";
+				break;
+			case '9': // QTP
+				var url = "/pspc_ooc/ooc.html";
+				break;
+			case '10': //VTP
+				var url = "/pspc_ecr_platform/pspc_ecr_vtp.html";
+				break;
+			case '11': // PCI
+				var url = "/pspc_ooc/ooc.html";
+				break;
+			case '12': // ECR生效发放
+				var url = "/pspc_ecr_platform/pspc_ecr_approve.html";
+				break;
+			case '13': // 物料报废
+				var url = "/13";
+				break;
+			default:
+				break;
+		}
+			
+		$("#detailWindows").kendoWindow({
+			title: '详情',
+			content:'${base.contextPath}' + url + '?ecrno='+ecrno,
+			height:'90%',
+			width:'90%',
+			model:true,
+			visiable:false,
+			iframe:true
+		}).data("kendoWindow").center().open();
+			 
+	}
+</script>
+</body>
+</html>

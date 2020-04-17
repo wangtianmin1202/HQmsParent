@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hcs.hcs_station.mapper.SupplierItemStationMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hcs.hcs_station.dto.SupplierItemStation">
+        <result column="ITEM_STATION_ID" property="itemStationId" jdbcType="DECIMAL" />
+        <result column="SUPPLIER_ID" property="supplierId" jdbcType="DECIMAL" />
+        <result column="ITEM_ID" property="itemId" jdbcType="DECIMAL" />
+        <result column="PLANT_ID" property="plantId" jdbcType="DECIMAL" />
+        <result column="ENABLE_FLAG" property="enableFlag" jdbcType="VARCHAR" />
+        <result column="STATION_SEQUENCE" property="stationSequence" jdbcType="DECIMAL" />
+        <result column="STATION_NAME" property="stationName" jdbcType="VARCHAR" />
+        <result column="SUPPLIER_CODE" property="supplierCode" jdbcType="VARCHAR" />
+        <result column="SUPPLIER_NAME" property="supplierName" jdbcType="VARCHAR" />
+        <result column="ITEM_CODE" property="itemCode" jdbcType="VARCHAR" />
+        <result column="DESCRIPTIONS" property="itemDescriptions" jdbcType="VARCHAR" />
+    </resultMap>
+
+    <select id="headQuery" parameterType="com.hand.hcs.hcs_station.dto.SupplierItemStation" resultMap="BaseResultMap">
+        select
+       hsis.item_station_id,
+       hsis.supplier_id,
+       hsis.item_id,
+       hs.supplier_code,
+       hs.supplier_name,
+       hi.ITEM_CODE,
+       hi.descriptions,
+       hsis.station_sequence,
+       hsis.station_name,
+       hsis.enable_flag
+  from hcs_supplier_item_station hsis
+  left join hcs_suppliers hs
+    on hsis.supplier_id = hs.supplier_id
+  left join hcm_item hi
+    on hsis.item_id = hi.ITEM_ID
+    <where>
+        <if test="itemStationId != null">
+            hsis.item_station_id = #{itemStationId}
+        </if>
+    </where>
+    </select>
+
+    <update id="enable">
+        UPDATE hcs_supplier_item_station HSIS set hsis.enable_flag=#{enableFlag} where hsis.item_station_id=#{itemStationId}
+    </update>
+
+    <select id="maxSequence" parameterType="com.hand.hcs.hcs_station.dto.SupplierItemStation" resultType="java.lang.Long" >
+select  nvl(max(hsis.station_sequence),0) station_sequence from hcs_supplier_item_station hsis where hsis.supplier_id =#{supplierId}  and hsis.item_id=#{itemId}
+    </select>
+
+</mapper>

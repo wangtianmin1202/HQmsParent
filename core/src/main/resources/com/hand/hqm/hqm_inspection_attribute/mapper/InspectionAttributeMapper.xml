@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_inspection_attribute.mapper.InspectionAttributeMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_inspection_attribute.dto.InspectionAttribute">
+    	<result column="ATTRIBUTE_ID" property="attributeId" jdbcType="DECIMAL" />
+    	<result column="ATTRIBUTE_TYPE" property="attributeType" jdbcType="VARCHAR" />
+        <result column="SAMPLE_PROCEDURE_TYPE" property="sampleProcedureType" jdbcType="VARCHAR" />
+        <result column="INSPECTION_ATTRIBUTE" property="inspectionAttribute" jdbcType="VARCHAR" />
+        <result column="INSPECTION_LEVELS" property="inspectionLevels" jdbcType="VARCHAR" />
+        <result column="QUALITY_CHARACTER_GRADE" property="qualityCharacterGrade" jdbcType="VARCHAR" />
+        <result column="ACCEPTANCE_QUALITY_LIMIT" property="acceptanceQualityLimit" jdbcType="VARCHAR" />
+        <result column="SOURCE_TYPE" property="sourceType" jdbcType="VARCHAR" />
+        <result column="STANDARD_TYPE" property="standardType" jdbcType="VARCHAR" />
+        <result column="FILL_IN_TYPE" property="fillInType" jdbcType="VARCHAR" />
+        <result column="FREQUENCY_TYPE" property="frequencyType" jdbcType="VARCHAR" />
+        <result column="FREQUENCY" property="frequency" jdbcType="DECIMAL" />
+        <result column="INSPECTION_TOOL" property="inspectionTool" jdbcType="VARCHAR" />
+        <result column="ENABLE_FLAG" property="enableFlag" jdbcType="VARCHAR" />
+        <result column="REMARK" property="remark" jdbcType="VARCHAR" />
+        <result column="ATTRIBUTE_TYPE_MEANING" property="attributeTypeMeaning" jdbcType="VARCHAR" />
+        <result column="INSPECTION_METHOD" property="inspectionMethod" jdbcType="VARCHAR" />
+        <result column="PRECISION" property="precision" jdbcType="DECIMAL" />
+        
+        <result column="ATTRIBUTE1" property="attribute1" jdbcType="VARCHAR" />
+        <result column="ATTRIBUTE2" property="attribute2" jdbcType="VARCHAR" />
+    </resultMap>
+
+<select id="lovSelect" resultMap="BaseResultMap"
+            parameterType="com.hand.hqm.hqm_inspection_attribute.dto.InspectionAttribute">
+	SELECT t.*, v.meaning AS attribute_type_meaning
+  FROM hqm_inspection_attribute t, sys_code_b s, sys_code_value_b v
+ WHERE 1 = 1
+   AND t.attribute_type = v.value
+   AND s.code_id = v.code_id
+   AND s.code = 'HQM_IQC_ATTRIBUTE_CATEGORY'
+   <if test="attributeTypeMeaning!=null">
+   AND v.meaning LIKE concat('%',concat(#{attributeTypeMeaning},'%'))
+   </if>
+   <if test="sourceType != null">
+   AND t.source_type = #{sourceType}
+   </if>
+   <if test="inspectionAttribute != null">
+   AND t.inspection_attribute LIKE concat('%',concat(#{inspectionAttribute},'%')) 
+   </if>
+</select>
+<select id="reSelect" resultMap="BaseResultMap"
+            parameterType="com.hand.hqm.hqm_inspection_attribute.dto.InspectionAttribute">
+	SELECT t.*
+  FROM hqm_inspection_attribute t
+ WHERE 1 = 1
+   <if test="sourceType != null">
+   AND t.source_type = #{sourceType}
+   </if>
+   <if test="inspectionAttribute != null">
+   AND t.inspection_attribute LIKE concat('%',concat(#{inspectionAttribute},'%')) 
+   </if>
+   <if test="sampleProcedureType != null">
+   AND t.sample_procedure_type = #{sampleProcedureType}
+   </if>
+   <if test="acceptanceQualityLimit != null">
+   AND t.acceptance_quality_limit = #{acceptanceQualityLimit}
+   </if>
+   <if test="attributeType != null">
+   AND t.attribute_type = #{attributeType}
+   </if>
+   <if test="qualityCharacterGrade != null">
+   AND t.quality_character_grade = #{qualityCharacterGrade}
+   </if>
+   <!--add by jy 20190925  -->
+   <if test="standardType != null">
+   AND t.standard_type = #{standardType}
+   </if>
+   <if test="fillInType != null">
+   AND t.fill_in_type = #{fillInType}
+   </if>
+   <if test="attribute2 != null">
+   AND t.attribute2 = #{attribute2}
+   </if>
+   ORDER BY t.attribute_id DESC
+</select>
+</mapper>

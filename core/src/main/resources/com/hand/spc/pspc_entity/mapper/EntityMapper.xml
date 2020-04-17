@@ -1,0 +1,397 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.spc.pspc_entity.mapper.EntityMapper">
+    <resultMap id="BaseResultMap" type="com.hand.spc.pspc_entity.dto.Entity">
+        <result column="ENTITY_ID" property="entityId" jdbcType="DECIMAL" />
+        <result column="TENANT_ID" property="tenantId" jdbcType="DECIMAL" />
+        <result column="SITE_ID" property="siteId" jdbcType="DECIMAL" />
+        <result column="ENTITY_CODE" property="entityCode" jdbcType="VARCHAR" />
+        <result column="ENTITY_VERSION" property="entityVersion" jdbcType="VARCHAR" />
+        <result column="CONTROL_DATE" property="controlDate" jdbcType="DATE" />
+        <result column="DESCRIPTION" property="description" jdbcType="VARCHAR" />
+        <result column="ATTACHMENT_GROUP_ID" property="attachmentGroupId" jdbcType="DECIMAL" />
+        <result column="CE_GROUP_ID" property="ceGroupId" jdbcType="DECIMAL" />
+        <result column="CE_PARAMETER_ID" property="ceParameterId" jdbcType="DECIMAL" />
+        <result column="CHART_ID" property="chartId" jdbcType="DECIMAL" />
+        <result column="ENTITY_STATUS" property="entityStatus" jdbcType="VARCHAR" />
+        <result column="ENTITY_NEW" property="entityNew" jdbcType="VARCHAR" />
+
+
+        <result column="max_plot_points" property="maxPlotPoints" jdbcType="DECIMAL" />
+        <result column="ce_parameter" property="ceParameter" jdbcType="VARCHAR" />
+        <result column="ce_parameter_name" property="ceParameterName" jdbcType="VARCHAR" />
+        <result column="ce_group" property="ceGroup" jdbcType="VARCHAR" />
+        <result column="chart_code" property="chartCode" jdbcType="VARCHAR" />
+        <result column="attachment_group_description" property="attachmentGroupDescription" jdbcType="VARCHAR" />
+    </resultMap>
+
+    <resultMap id="ChartVoResultMap" type="com.hand.spc.pspc_entity.dto.ChartShowVO">
+        <result column="ENTITY_ID" property="entityId" jdbcType="DECIMAL" />
+        <result column="ENTITY_CODE" property="entityCode" jdbcType="VARCHAR" />
+        <result column="SAMPLE_SUBGROUP_ID" property="sampleSubgroupId" jdbcType="DECIMAL" />
+        <result column="SUBGROUP_NUM" property="subgroupNum" jdbcType="DECIMAL" />
+        <result column="ENTITY_VERSION" property="entityVersion" jdbcType="VARCHAR" />
+        <result column="sample_subgroup_time" property="sampleSubgroupTime" jdbcType="TIMESTAMP" />
+        <result column="SUBGROUP_BAR" property="subgroupBar" jdbcType="DECIMAL" />
+        <result column="SUBGROUP_R" property="subgroupR" jdbcType="DECIMAL" />
+        <result column="SUBGROUP_MAX" property="subgroupMax" jdbcType="DECIMAL" />
+        <result column="CHART_ID" property="chartId" jdbcType="DECIMAL" />
+        <result column="SUBGROUP_MIN" property="subgroupMin" jdbcType="DECIMAL" />
+        <result column="SUBGROUP_SIGMA" property="subgroupSigma" jdbcType="DECIMAL" />
+        <result column="SUBGROUP_ME" property="subgroupMe" jdbcType="DECIMAL" />
+        <result column="SUBGROUP_RM" property="subgroupRm" jdbcType="DECIMAL" />
+        <result column="CHART_TITLE" property="chartTitle" jdbcType="DECIMAL" />
+        <result column="subgroup_size" property="subgroupSize" jdbcType="DECIMAL" />
+        <result column="chart_type" property="chartType" jdbcType="VARCHAR" />
+        <result column="CHART_TITLE" property="chartTitle" jdbcType="VARCHAR" />
+
+        <result column="count_statistic_id" property="countStatisticId" jdbcType="DECIMAL" />
+        <result column="sample_time" property="sampleTime" jdbcType="TIMESTAMP" />
+        <result column="count_sample_data_id" property="countSampleDataId" jdbcType="DECIMAL" />
+        <result column="sample_value_count" property="sampleValueCount" jdbcType="DECIMAL" />
+        <result column="unqualified_quantity" property="unqualifiedQuantity" jdbcType="DECIMAL" />
+
+        <result column="upper_control_limit" property="upperControlLimit" jdbcType="DECIMAL" />
+        <result column="center_line" property="centerLine" jdbcType="DECIMAL" />
+        <result column="lower_control_limit" property="lowerControlLimit" jdbcType="DECIMAL" />
+        <result column="upper_spec_limit" property="upperSpecLimit" jdbcType="DECIMAL" />
+        <result column="spec_target" property="specTarget" jdbcType="DECIMAL" />
+        <result column="lower_spec_limit" property="lowerSpecLimit" jdbcType="DECIMAL" />
+        <result column="unqualified_percent" property="unqualifiedPercent" jdbcType="DECIMAL" />
+
+    </resultMap>
+
+
+    <select id="selectEntityInfo" parameterType="com.hand.spc.pspc_entity.dto.Entity" resultMap="BaseResultMap">
+        SELECT pe.entity_id
+        ,pe.entity_code
+        ,pe.entity_version
+        ,pe.description
+        ,pe.control_date
+        ,pe.attachment_group_id
+        ,pe.ce_group_id
+        ,pe.ce_parameter_id
+        ,pe.chart_id
+        ,pe.entity_status
+        ,pe.entity_new
+        ,pcp.ce_parameter_name
+        FROM pspc_entity pe,pspc_ce_parameter pcp
+        WHERE 1 = 1
+        and pe.ce_parameter_id = pcp.ce_parameter_id(+)
+        <if test="attachmentGroupId != null">
+            AND pe.attachment_group_id = #{attachmentGroupId}
+        </if>
+        <if test="ceGroupId != null">
+            AND pe.ce_group_id = #{ceGroupId}
+        </if>
+        <if test="ceParameterId != null">
+            AND pe.ce_parameter_id = #{ceParameterId}
+        </if>
+        <if test="chartId != null">
+            AND pe.chart_id = #{chartId}
+        </if>
+        <if test="entityCode != null and entityCode !=''">
+            AND pe.entity_code like '%'||#{entityCode}||'%'
+        </if>
+        <if test="description != null and description !=''">
+            AND pe.description like '%'||#{description}||'%'
+        </if>
+
+    </select>
+
+    <!-- 查询图表展示数据 -->
+    <select id="selectChartShow" parameterType="com.hand.spc.pspc_entity.dto.Entity" resultMap="ChartVoResultMap">
+        select *
+        from (select pe.entity_id,
+            pss.sample_subgroup_id,
+            pss.subgroup_num,
+            pe.entity_code,
+            pc.chart_id,
+            pc.chart_type,
+            pc.CHART_TITLE,
+            pc.subgroup_size,
+            pe.entity_version,
+            pss.sample_subgroup_time,
+            psst.subgroup_statistic_id,
+            psst.subgroup_bar,
+            psst.subgroup_r,
+            psst.subgroup_rm,
+            psst.subgroup_sigma,
+            psst.subgroup_me,
+            psst.subgroup_max,
+            psst.subgroup_min
+        from pspc_entity pe,pspc_sample_subgroup pss,pspc_chart pc,pspc_subgroup_statistic psst
+        where
+        pe.entity_code = pss.entity_code
+        and  pss.entity_version = pe.entity_version
+        and pe.chart_id = pc.chart_id
+        and psst.sample_subgroup_id = pss.sample_subgroup_id
+        and pe.entity_id = #{entityId,jdbcType=DECIMAL}
+        order by pss.subgroup_num) temp
+        where rownum &lt;= (select max_plot_points
+        from pspc_chart
+        where chart_id = temp.chart_id)
+    </select>
+
+    <select id="pspcEntitySampleLov" resultMap="BaseResultMap" parameterType="com.hand.spc.pspc_entity.dto.Entity">
+        SELECT
+        pe.entity_id,
+        pe.entity_code,
+        pe.description,
+        pe.entity_version,
+        pe.entity_status,
+        pcp.ce_parameter,
+        pcp.ce_parameter_name,
+        pcg.ce_group,
+        pag.attachment_group_description
+        FROM
+        pspc_entity pe,
+        pspc_ce_group pcg,
+        pspc_ce_parameter pcp,
+        pspc_chart pc,
+        pspc_attachment_group pag
+        WHERE 1=1
+        AND pe.tenant_id = #{tenantId}
+        AND pe.site_id = #{siteId}
+        AND pc.chart_type in ('XBAR-R','XBAR-S','Me-R','X-Rm')
+        AND pe.ce_group_id = pcg.ce_group_id(+)
+        AND pe.ce_parameter_id = pcp.ce_parameter_id(+)
+        AND pe.chart_id = pc.chart_id(+)
+        AND pe.attachment_group_id = pag.attachment_group_id(+)
+        <if test='ceGroup != null and ceGroup != ""'>
+            <bind name="ceGroupLike" value="'%' + ceGroup + '%'" />
+            AND pcg.ce_group LIKE #{ceGroupLike}
+        </if>
+        <if test="ceParameter != null and ceParameter != ''">
+            <bind name="ceParameterLike" value="'%' + ceParameter + '%'" />
+            AND pcp.ce_parameter LIKE #{ceParameterLike}
+        </if>
+        <if test="chartCode != null and chartCode != ''">
+            AND pc.chart_code = #{chartCode}
+        </if>
+        <if test="attachmentGroupDescription != null and attachmentGroupDescription != ''">
+            <bind name="attachmentGroupDescriptionLike" value="'%' + attachmentGroupDescription + '%'" />
+            and pag.attachment_group_description LIKE #{attachmentGroupDescriptionLike}
+        </if>
+        <if test="entityCode != null and entityCode != ''">
+            <bind name="entityCodeLike" value="'%' + entityCode + '%'" />
+            AND pe.entity_code LIKE #{entityCodeLike}
+        </if>
+        <if test="description != null and description != ''">
+            <bind name="descriptionLike" value="'%' + description + '%'" />
+            AND pe.description LIKE #{descriptionLike}
+        </if>
+        <if test="entityVersion != null and entityVersion != ''">
+            <bind name="entityVersionLike" value="'%' + entityVersion + '%'" />
+            AND pe.entity_version LIKE #{entityVersionLike}
+        </if>
+        <if test="entityStatus != null and entityStatus != ''">
+            <bind name="entityStatusLike" value="'%' + entityStatus + '%'" />
+            AND pe.entity_code LIKE #{entityStatusLike}
+        </if>
+        order by pe.entity_id
+    </select>
+
+    <select id="queryMaxPlotPointsByEntityId" parameterType="java.lang.Long" resultType="java.lang.Long">
+         select nvl(pc.max_plot_points, 0) max_plot_points
+          from pspc_entity pe,pspc_chart pc
+         where pe.chart_id = pc.chart_id
+           and pe.entity_id = #{entityId}
+    </select>
+
+    <select id="querySampleValuesByTime" resultType="java.lang.String" parameterType="java.lang.String">
+        select nvl(pssr.sample_value, 0) sample_value
+          from pspc_sample_subgroup     pss,
+               pspc_sample_subgroup_relation pssr
+        where pss.sample_subgroup_id = pssr.sample_subgroup_id
+          and pss.entity_code = #{entityCode}
+          and pss.entity_version = #{entityVersion}
+        <if test="startDateStr != null and startDateStr != ''">
+            and pss.sample_subgroup_time >= to_date(#{startDateStr}, 'yyyy-MM-dd hh24:mi:ss')
+        </if>
+        <if test="endDateStr != null and endDateStr != ''">
+            and pss.sample_subgroup_time &lt;= to_date(#{endDateStr}, 'yyyy-MM-dd hh24:mi:ss')
+        </if>
+        order by pss.sample_subgroup_id, pssr.sample_subgroup_relation_id
+    </select>
+
+    <select id="querySampleValuesByMaxPoints" resultType="java.lang.String" >
+        select nvl(pssr.sample_value, 0) sample_value
+          from pspc_sample_subgroup_relation pssr, pspc_sample_subgroup ppss
+         where ppss.sample_subgroup_id = pssr.sample_subgroup_id
+           and exists
+                (select null
+                  from (select p.sample_subgroup_id, p.subgroup_num, rownum row_num
+                          from (select pss.sample_subgroup_id, pss.subgroup_num
+                                  from pspc_sample_subgroup pss
+                                 where pss.entity_code = #{entityCode,jdbcType=VARCHAR}
+                                   and pss.entity_version = #{entityVersion,jdbcType=VARCHAR}
+                                 order by pss.subgroup_num) p) mm
+                 where mm.row_num &lt;= #{maxPlotPoints,jdbcType=DECIMAL}
+                   and mm.sample_subgroup_id = pssr.sample_subgroup_id)
+        order by ppss.subgroup_num, pssr.sample_subgroup_relation_id
+    </select>
+
+    <select id="selectData" parameterType="com.hand.spc.pspc_entity.dto.Entity" resultMap="BaseResultMap">
+        SELECT pe.entity_id
+        ,pe.tenant_id
+        ,pe.site_id
+        ,pe.entity_code
+        ,pe.description
+        ,pe.entity_version
+        ,pe.ce_group_id
+        ,pcg.ce_group
+        ,pe.program_id
+        ,pcp.ce_parameter_id
+        ,pcp.ce_parameter
+        ,pe.attachment_group_id
+        ,pag.attachment_group_description
+        ,pe.chart_id
+        ,pc.chart_code
+        ,pe.control_date
+        ,pe.entity_status
+        FROM   pspc_entity           pe
+        ,pspc_ce_parameter     pcp
+        ,pspc_ce_group         pcg
+        ,pspc_attachment_group pag
+        ,pspc_chart            pc
+        ,pspc_ce_relationship  pcr
+        WHERE  pe.ce_group_id = pcg.ce_group_id
+        AND    pe.ce_parameter_id = pcp.ce_parameter_id
+        AND    pe.attachment_group_id = pag.attachment_group_id
+        AND    pag.ce_group_id = pe.ce_group_id
+        AND    pcp.ce_parameter_id = pcr.ce_parameter_id
+        AND    pcr.ce_group_id = pcg.ce_group_id
+        AND    pe.chart_id = pc.chart_id
+        <if test="attachmentGroupId != null">
+            AND pe.attachment_group_id = #{attachmentGroupId}
+        </if>
+        <if test="ceGroupId != null">
+            AND pe.ce_group_id = #{ceGroupId}
+        </if>
+        <if test="ceParameterId != null">
+            AND pe.ce_parameter_id = #{ceParameterId}
+        </if>
+        <if test="chartId != null">
+        AND pe.chart_id = #{chartId}
+        </if>
+        <if test="entityId != null">
+            AND pe.entity_id = #{entityId}
+        </if>
+    </select>
+
+    <select id="selectChartShowByTime" resultMap="ChartVoResultMap" parameterType="com.hand.spc.pspc_entity.dto.ChartShowVO">
+        select pe.entity_id,
+                pss.sample_subgroup_id,
+                pss.subgroup_num,
+                pe.entity_code,
+                pc.chart_id,
+                pc.chart_type,
+                pc.CHART_TITLE,
+                pc.subgroup_size,
+                pe.entity_version,
+                pss.sample_subgroup_time,
+                psst.subgroup_statistic_id,
+                psst.subgroup_bar,
+                psst.subgroup_r,
+                psst.subgroup_rm,
+                psst.subgroup_sigma,
+                psst.subgroup_me,
+                psst.subgroup_max,
+                psst.subgroup_min
+        from pspc_entity pe,pspc_sample_subgroup pss,pspc_chart pc,pspc_subgroup_statistic psst
+        where
+          pe.entity_code = pss.entity_code
+        and  pss.entity_version = pe.entity_version
+        and pe.chart_id = pc.chart_id
+        and psst.sample_subgroup_id = pss.sample_subgroup_id
+        and pe.entity_id = #{entityId,jdbcType=DECIMAL}
+        <if test="sampleStartTime != null">
+            and pss.sample_subgroup_time >=
+            #{sampleStartTime}
+        </if>
+        <if test="sampleEndTime != null">
+            and pss.sample_subgroup_time &lt;=
+             #{sampleEndTime}
+        </if>
+
+        order by pss.subgroup_num
+
+    </select>
+
+    <select id="selectCountChartShowData" parameterType="com.hand.spc.pspc_entity.dto.ChartShowVO" resultMap="ChartVoResultMap">
+        select *
+        from (select pe.entity_id,
+                pcs.count_statistic_id,
+                pcs.subgroup_num,
+                pe.entity_code,
+                pc.chart_id,
+                pc.chart_type,
+                pc.CHART_TITLE,
+                pc.subgroup_size,
+                pe.entity_version,
+                pcs.sample_time,
+                pcs.count_sample_data_id,
+                pcs.sample_value_count,
+                pcs.unqualified_quantity,
+                pcs.unqualified_percent,
+                pcs.upper_control_limit,
+                pcs.center_line,
+                pcs.lower_control_limit,
+                pcs.upper_spec_limit,
+                pcs.spec_target,
+                pcs.lower_spec_limit
+            from pspc_entity pe,pspc_count_statistic pcs,pspc_chart pc
+            where
+             pe.entity_code = pcs.entity_code
+            and pcs.entity_version = pe.entity_version
+            and pe.chart_id = pc.chart_id
+            and pe.entity_id = #{entityId}
+            order by pcs.subgroup_num) temp
+        where rownum &lt;= (select max_plot_points
+        from pspc_chart
+        where chart_id = temp.chart_id)
+
+    </select>
+
+    <select id="selectCountChartShowDataByTime" parameterType="com.hand.spc.pspc_entity.dto.ChartShowVO" resultMap="ChartVoResultMap">
+        select pe.entity_id,
+                pcs.count_statistic_id,
+                pcs.subgroup_num,
+                pe.entity_code,
+                pc.chart_id,
+                pc.chart_type,
+                pc.CHART_TITLE,
+                pc.subgroup_size,
+                pe.entity_version,
+                pcs.sample_time,
+                pcs.count_sample_data_id,
+                pcs.sample_value_count,
+                pcs.unqualified_quantity,
+                pcs.unqualified_percent,
+                pcs.upper_control_limit,
+                pcs.center_line,
+                pcs.lower_control_limit,
+                pcs.upper_spec_limit,
+                pcs.spec_target,
+                pcs.lower_spec_limit
+            from pspc_entity pe,pspc_count_statistic pcs,pspc_chart pc
+            where
+             pe.entity_code = pcs.entity_code
+            and pcs.entity_version = pe.entity_version
+            and pe.chart_id = pc.chart_id
+            and pe.entity_id = #{entityId}
+            <if test="sampleStartTime != null">
+                and pcs.SAMPLE_TIME >=
+                #{sampleStartTime}
+            </if>
+            <if test="sampleEndTime != null">
+                and pcs.SAMPLE_TIME &lt;=
+                #{sampleEndTime}
+            </if>
+            order by pcs.subgroup_num
+
+    </select>
+
+</mapper>

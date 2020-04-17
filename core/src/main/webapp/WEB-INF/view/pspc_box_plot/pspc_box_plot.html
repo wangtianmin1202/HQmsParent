@@ -1,0 +1,962 @@
+<#include "../include/header.html">
+<script src="${base.contextPath}/common/code?PSPC_TICK_LABEL=PSPC.TICK.LABEL" type="text/javascript"></script>
+<script src="${base.contextPath}/resources/lib/echarts/echarts.js"></script>
+<script src="${base.contextPath}/resources/lib/utils/sys_util.js"></script>
+<script type="text/javascript">
+
+
+    var exportThead ;
+    var exportTbody ;
+
+    var myChart;
+    //将ajax简单封装下
+    function myAjax(url,data){
+        var resultData;
+        $.ajax({
+            type:"POST",
+            contentType:"application/json;charset=UTF-8",
+            //contentType用于整个对象的传参，控制层以@RequestBody Dto dto获取
+            url:_basePath+url,
+            data:data,
+            dataType:'json',
+            async:false,
+            success:function (result) {
+                if(result.success){
+                    resultData = result;
+                    return resultData;
+                }else{
+                    return kendo.ui.showErrorDialog({message:'ERROR:'+result.message});
+                }
+            }
+        })
+        return resultData;
+    }
+
+    var viewModel = Hap.createGridViewModel("#grid");
+
+    viewModel.create = function () {
+        $("#grid").data('kendoGrid').addRow();
+
+        $('entityId').focus;
+    }
+
+
+    //导出exportExcel
+    function exportExcel() {
+        if(exportThead == null || exportThead === '' || exportTbody == null || exportTbody === '') {
+            Hap.showToast({
+                type:'error',  //1.success 2.error
+                message: '请先查询再导出',
+                hideDuration:2000
+            });
+            return;
+        }
+
+        var url = '/pspc/entity/export/excel/single/graph';
+
+        //拼接其他参数
+        var otherParams = [];
+        otherParams.push({paramName:'thead', paramValue:exportThead});
+        otherParams.push({paramName:'tbody', paramValue:exportTbody});
+        otherParams.push({paramName:'title', paramValue:'箱线图'});
+        otherParams.push({paramName:'exportFileName', paramValue:'pspcBoxPlot'});
+        otherParams.push({paramName:'rowEnd', paramValue:23});
+        otherParams.push({paramName:'colEnd', paramValue:9});
+        otherParams.push({paramName:'${_csrf.parameterName}', paramValue:'${_csrf.token}'});
+        otherParams.push({paramName:'${_csrf.parameterName}', paramValue:'${_csrf.token}'});
+
+        exportExcelWithEcharts(myChart, url, otherParams);
+    }
+
+</script>
+<style type="text/css">
+    .k-dirty {
+        border-width: 0px;
+    }
+
+    td .k-checkbox {
+        margin: 8px 0px;
+    }
+
+    .data-table {
+        width: 100%;
+        text-align: center;
+        border-color: #DDDDDD;
+    }
+
+    .data-thead {
+        color: #758697;
+        background-color: #F5F5F5;
+    }
+
+    .data-table .data-thead tr {
+        height: 40px;
+    }
+
+    .data-table .data-thead th {
+        padding: 0px;
+        text-align: center;
+        font-weight: bold;
+        font-family: "Helvetica Neue", "Luxi Sans", "DejaVu Sans", Tahoma, "Microsoft Yahei", "Hiragino Sans GB", sans-serif;
+        font-size: 12px;
+    }
+
+    .data-table .data-thead th div {
+        width: 100%;
+        height: 100%;
+        padding: 10px;
+        position: relative;
+        background-color: #F5F5F5;
+    }
+
+    .data-tbody {
+        font-weight: 100;
+        color: #758697;
+        font-family: "Helvetica Neue", "Luxi Sans", "DejaVu Sans", Tahoma, "Microsoft Yahei", "Hiragino Sans GB", sans-serif;
+        font-size: 12px;
+    }
+
+    .data-tbody tr{
+        height: 35px;
+    }
+
+    .data-tbody td{
+        padding: 5px 10px;
+    }
+</style>
+
+<body>
+<div id="picker"></div>
+<div id="page-content">
+    <div class="pull-left" id="toolbar-btn" style="padding-bottom:10px;">
+        <span class="btn btn-primary k-grid-add" style="float:left;margin-right:5px;" data-bind="click:create"><@spring.message "entitychart.add"/></span>
+        <span onclick="entityRemove()"class="btn btn-danger" style="float:left;"><@spring.message "hap.delete"/></span>
+    </div>
+    <script>kendo.bind($('#toolbar-btn'), viewModel);</script>
+    <div class="pull-right" id="query-form" style="padding-bottom:10px;">
+
+        <span class="btn btn-primary k-grid-excel" style="float:left; margin-right:5px;" onclick="exportExcel()">
+            <i class="fa fa-file-excel-o" style="margin-right:3px;"></i><@spring.message "hap.exportexcel"/>
+        </span>
+
+        <span class="btn btn-default" style="float:left;margin-right:5px;width:70px;" onclick="window.location.reload();"><@spring.message "hap.reset"/></span>
+        <span class="btn btn-primary" style="float:left;width:70px" onclick="queryScatterPlot()" type="submit"><@spring.message "hap.query"/></span>
+        <div style="clear:both"></div>
+    </div>
+    <div style="clear:both">
+        <div id="grid"></div>
+    </div>
+
+</div>
+
+
+<div id="pricePrint" style="width: 1500px;height: 600px;margin-left: 8%">
+
+</div>
+
+
+<!--<div id="dataTableDiv" class="myTableDiv crow pre-scrollable" >
+    <table id="myTable" class="table table-bordered " style="width: 100%;" >
+
+    </table>
+</div>-->
+
+
+<div style="margin-top: 20px; width: 100%">
+    <div id="dataTableDiv" style="height: 500px; margin-left: 5%; overflow-y: scroll;">
+        <table id="dataTable" border="1" cellpadding="0px" cellspacing="0px" class="data-table">
+            <thead id="dataThead" class="data-thead"></thead>
+            <tbody id="dataTbody" class="data-tbody"></tbody>
+        </table>
+    </div>
+</div>
+
+<script type="text/javascript">
+    Hap.initEnterQuery('#query-form', viewModel.query);
+    var BaseUrl = _basePath;
+    dataSource = new kendo.data.DataSource({
+        transport: {
+            read: {
+                url: BaseUrl + "/pspc/entity/query",
+                type: "POST",
+                dataType: "json"
+            },
+            parameterMap: function (options, type) {
+                if (type !== "read" && options.models) {
+                    var datas = Hap.prepareSubmitParameter(options, type)
+                    return kendo.stringify(datas);
+                } else if (type === "read") {
+                    return Hap.prepareQueryParameter(viewModel.model.toJSON(), options)
+                }
+            }
+        },
+        batch: true,
+        serverPaging: false,
+        pageSize: 10,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+                id: "entityId",
+                fields: {
+                    enableSelect: {defaultValue: 'N', type: 'boolean', checkedValue: 'Y', uncheckedValue: 'N'},
+                    singleAnalysis: {defaultValue: 'N', type: 'boolean', checkedValue: 'Y', uncheckedValue: 'N'}
+                }
+            }
+        }
+    });
+
+    $("#grid").kendoGrid({
+        autoBind: false,
+        dataSource: dataSource,
+        resizable: true,
+        scrollable: true,
+        navigatable: false,
+        rownumber: true,
+        // selectable: 'multiple, rowbox',
+        dataBound: function () {
+            if (parent.autoResizeIframe) {
+                parent.autoResizeIframe('${RequestParameters.functionCode!}')
+            }
+        },
+        columns: [
+            {
+                field: "enableSelect",
+                title: '<@spring.message "pspcboxplot.select"/>',
+                attributes: {style: "text-align:center"},
+                headerAttributes: { style: "text-align: center" },
+                width: 50
+            },
+            {
+                field: "singleAnalysis",
+                title: '<@spring.message "pspcboxplot.individualanalysis"/>',
+                attributes: {style: "text-align:center"},
+                headerAttributes: { style: "text-align: center" },
+                width: 50
+            },
+
+            {
+                field: "entityId",
+                title: '<@spring.message "pspcboxplot.entitycode"/>',
+                // title: '<@spring.message "实体控制图"/>',
+                headerAttributes: { style: "text-align: center" },
+                width: 120,
+                template: function(item){
+                    return item['entityCode']||''
+                },
+                editor: function (container, options) {
+                    $('<input name="' + options.field + '" required="required" />')
+                        .appendTo(container)
+                        .kendoLov($.extend(<@lov "PSPC_PSPC_ENTITY_SAMPLE"/>, {
+                        textField: 'entityCode',
+                        model: options.model
+                    },{
+                        query: function (e) {
+                            e.param['tenantId'] = '-1';
+                            e.param['siteId'] = '-1';
+                        },
+                        select: function (e) {
+                            options.model.set('description', e.item.description);
+                            options.model.set('entityVersion', e.item.entityVersion);
+                            options.model.set('ceGroup', e.item.ceGroup);
+                            options.model.set('ceParameter', e.item.ceParameter);
+                            options.model.set('attachmentGroupDescription', e.item.attachmentGroupDescription);
+                            options.model.set('ceParameterName', e.item.ceParameterName);
+                        }
+                    }));
+                }
+            },
+            {
+                field: "description",
+                title: '<@spring.message "pspcboxplot.entitydescription"/>',
+                // title: '<@spring.message "描述"/>',
+                headerAttributes: { style: "text-align: center" },
+                width: 120,
+                editor: function (container, options) {
+                    var val = options.model.description == null ? '' : options.model.description;
+                    $('<span>' + val + '</span>').appendTo(container);
+                }
+            },
+            {
+                field: "entityVersion",
+                title: '<@spring.message "pspcboxplot.entityversion"/>',
+                // title: '<@spring.message "版本"/>',
+                headerAttributes: { style: "text-align: center" },
+                width: 120,
+                editor: function (container, options) {
+                    var val = options.model.entityVersion == null ? '' : options.model.entityVersion;
+                    $('<span>' + val + '</span>').appendTo(container);
+                }
+            },
+            {
+                field: "ceGroup",
+                title: '<@spring.message "pspcboxplot.cegroup"/>',
+                // title: '<@spring.message "控制要素组"/>',
+                headerAttributes: { style: "text-align: center" },
+                width: 120,
+                editor: function (container, options) {
+                    var val = options.model.ceGroup == null ? '' : options.model.ceGroup;
+                    $('<span>' + val + '</span>').appendTo(container);
+                }
+            },
+            {
+                field: "ceParameter",
+                title: '<@spring.message "pspcboxplot.ceparameter"/>',
+                // title: '<@spring.message "控制要素"/>',
+                headerAttributes: { style: "text-align: center" },
+                width: 120,
+                editor: function (container, options) {
+                    var val = options.model.ceParameter == null ? '' : options.model.ceParameter;
+                    $('<span>' + val + '</span>').appendTo(container);
+                }
+            },
+            {
+                field: "attachmentGroupDescription",
+                // title: '<@spring.message "entity.attachmentgroupdescription"/>',
+                title: '<@spring.message "pspcboxplot.attachmentgroupdescription"/>',
+                headerAttributes: { style: "text-align: center" },
+                width: 120,
+                editor: function (container, options) {
+                    var val = options.model.attachmentGroupDescription == null ? '' : options.model.attachmentGroupDescription;
+                    $('<span>' + val + '</span>').appendTo(container);
+                }
+            },
+            {
+                field: "startDate",
+                title: '<@spring.message "pspcboxplot.startdate"/>',
+                // title: '<@spring.message "样本开始时间"/>',
+                width: 150,
+                attributes: {style: "text-align:center"},
+                headerAttributes: {style: "text-align:center"},
+                format:"{0:yyyy-MM-dd HH:mm:ss}",
+                editor: function (container, options) {
+                    //获得到期时间
+                    var end = options.model.endDate;
+                    var opts = {
+                        format: "yyyy-MM-dd HH:mm:ss"
+                    }
+                    if (end) {
+                        opts.max = end;
+                    }
+                    $('<input name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDateTimePicker(opts);
+                }
+            },
+            {
+                field: "endDate",
+                title: '<@spring.message "pspcboxplot.enddate"/>',
+                // title: '<@spring.message "样本结束时间"/>',
+                width: 150,
+                attributes: {style: "text-align:center"},
+                headerAttributes: {style: "text-align:center"},
+                format:"{0:yyyy-MM-dd HH:mm:ss}",
+                editor: function (container, options) {
+                    //获得开始时间
+                    var start = options.model.startDate;
+                    var opts = {
+                        format: "yyyy-MM-dd HH:mm:ss"
+                    }
+                    if (start) {
+                        opts.min = start;
+                    }
+                    $('<input name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDateTimePicker(opts);
+                }
+            }
+        ],
+        editable: {
+            createAt: "bottom"
+        }
+    });
+
+    //删除按钮事件
+    function entityRemove() {
+        var grid = $('#grid').data("kendoGrid") || {};
+        var checked = [];
+        for (var i = 0; i < grid._data.length; i++) {
+            var obj = grid._data[i];
+            if (obj.enableSelect == 'Y'){
+                checked.push(obj);
+            }
+        }
+        if (checked.length > 0){
+            kendo.ui.showConfirmDialog({
+                title: $l('hap.tip.info'),
+                message: $l('hap.tip.delete_confirm')
+            }).done(function (event) {
+                if (event.button == 'OK') {
+                    $.each(checked, function (i, v) {
+                        grid.dataSource.remove(v)
+                    });
+                }
+            })
+        }
+    }
+
+    //查询按钮事件
+    function queryScatterPlot() {
+
+        exportThead  = '';
+        exportTbody  = '';
+        var grid = $('#grid').data("kendoGrid") || {};
+
+        var dto = [];
+
+        // console.info('查询内容');
+        // console.info(grid._data);
+
+        if (grid._data.length > 0){
+            var entityIds = [];
+            //region  校验 单个分析只能选择一个  &&   检查是否有重复数据
+            var singleAnalysisCount = 0;
+            for (var i = 0; i < grid._data.length; i++) {
+                var obj = grid._data[i];
+                if (obj.singleAnalysis == 'Y'){
+                    singleAnalysisCount++
+                }
+
+
+                //  校验数据重复
+                if(contains(entityIds, obj.entityId)) {
+                    Hap.showToast({
+                        type:'error',  //1.success 2.error
+                        message: '选择的实体控制图[' + obj.entityCode + ']重复',
+                        hideDuration:2000
+                    });
+                    return;
+                }else {
+                    entityIds.push(obj.entityId)
+                }
+            }
+            if (singleAnalysisCount > 1){
+                Hap.showToast({
+                    type:'error',  //1.success 2.error
+                    message: '单个分析只能选择一个',
+                    hideDuration:2000
+                });
+                return;
+            }
+            //endregion
+
+            //region 判断是单个分析 OR 选择多个分析
+            for (var i = 0; i < grid._data.length; i++) {
+                var obj = grid._data[i];
+
+                /*var t ={
+                    entityCode:obj.entityCode,
+                    startDate:obj.startDate,
+                    entityCode:obj.entityCode,
+
+                };*/
+
+
+                // 多个分析
+                if (singleAnalysisCount == 0){
+                    if (obj.enableSelect == 'Y'){
+
+                        dto.push(obj);
+                    }
+                }
+                //单个分析
+                if (singleAnalysisCount == 1){
+                    if (obj.singleAnalysis == 'Y'){
+                        dto.push(obj);
+                    }
+                }
+            }
+            //endregion
+
+
+            if(dto.length  == 0){
+
+                Hap.showToast({
+                    type:'error',  //1.success 2.error
+                    message: '请选择实体控制图进行查询',
+                    hideDuration:2000
+                });
+                return;
+            }
+
+            var responseData = myAjax('/pspc/box/plot/query/ui',JSON.stringify(dto))
+            // 如果查询成功
+            if (responseData.success){
+
+                var result = responseData.rows;
+
+                // console.info('查询结果')
+                // console.info(result)
+
+                initTable(result);
+                initEchars(result,dto);
+
+
+
+            }
+        }
+
+    }
+
+    //非空校验
+    function ifNotNull(data) {
+        if(data != null && data != "" && data != undefined){
+            return true;
+        }
+        return false;
+    };
+
+
+    //加载箱线图
+    function initEchars(result,dto) {
+
+        // 箱线图  -- 柱状图 -- 数据[655 , 850 , 940 , 980 , 1070],[700 , 950 , 980 , 1070 , 1300]
+        //[0] =下边缘(最小值),[1] = Q1,[2] = Q2,[3] = Q3,[4] = 上边缘(最大值)
+        //[5] = 内上限,[6] = 内下限,[7] = 外上限, [8] = 外下限
+        var boxData = [];
+        // 箱线图 温和异常值 -- 点 -- 数据，eg：【0.1】，0 代表下标，1代表对应的数值 eg:[0,50],[1,150],
+        var outliers = [];
+        //箱线图  极端异常值 --点，代表严重类型的
+        var outliers2 = [];
+        // x轴数据
+        var axisData = []
+
+        if (dto.length == 1) {
+
+            //region  只显示一条的
+            var boxPlotVOSList = result[0].boxPlotVOSList
+            for (var i = 0; i < boxPlotVOSList.length; i++) {
+                var obj = boxPlotVOSList[i];
+                //x轴数据  axisData
+                axisData.push(obj.timeStr);
+
+
+
+                //region箱线图  -- 柱状图 -- 数据
+                // 箱线图  -- 柱状图 -- 数据
+                var boxDataCurrent = [];
+                //下边缘
+                boxDataCurrent.push((ifNotNull(obj))?obj.lmMin:0);
+                //q1
+                boxDataCurrent.push((ifNotNull(obj))?obj.q1:0);
+                //中位数 q2
+                boxDataCurrent.push((ifNotNull(obj))?obj.q2:0);
+                //q3
+                boxDataCurrent.push((ifNotNull(obj))?obj.q3:0);
+                //上边缘
+                boxDataCurrent.push((ifNotNull(obj))?obj.umMax:0);
+
+                //'内上限: '
+                boxDataCurrent.push((ifNotNull(obj))?obj.iul:0);
+                // '内下限: '
+                boxDataCurrent.push((ifNotNull(obj))?obj.ill:0);
+                // '外上限: '
+                boxDataCurrent.push((ifNotNull(obj))?obj.eul:0);
+                // '外下限: '
+                boxDataCurrent.push((ifNotNull(obj))?obj.ell:0);
+                //将数组存入 boxData 中
+                boxData.push(boxDataCurrent);
+                //endregion
+
+                //region  箱线图  温和异常值-- 点 -- 数据
+                var outliersCurrent = [];
+                var range1 = (ifNotNull(obj)) ? obj.range1 : [];
+                //将range1
+                for (var j = 0; j < range1.length; j++) {
+                    var obj1 = range1[j];
+                    outliersCurrent.push(0);//下标
+                    outliersCurrent.push(obj1);//对应的值
+                    outliers.push(outliersCurrent);
+                    //清空  outliersCurrent；
+                    outliersCurrent = [];
+                }
+                //endregion
+
+                //region  箱线图  极端异常值 --点，代表严重类型的
+                var range2 = (ifNotNull(obj)) ?obj.range2 : [];
+                //将range1
+                for (var j = 0; j < range2.length; j++) {
+                    var obj1 = range2[j];
+                    outliersCurrent.push(0);//下标
+                    outliersCurrent.push(obj1);//对应的值
+                    outliers2.push(outliersCurrent);
+                    //清空  outliersCurrent；
+                    outliersCurrent = [];
+                }
+                //endregion
+
+            }
+            //endregion
+
+        } else {
+
+            //region  显示多条的
+
+            for (var i = 0; i < result.length; i++) {
+                var obj = result[i];
+
+                //region x轴数据  axisData
+                axisData.push(obj.entityCode + '\n\n' + obj.description);
+                //endregion
+
+                var boxPlotVOSList = obj.boxPlotVOSList[0];
+
+                //region 开始填充数据
+
+                //region 箱线图  -- 柱状图 -- 数据
+                var boxDataCurrent = [];
+                //下边缘
+                boxDataCurrent.push((ifNotNull(boxPlotVOSList))?boxPlotVOSList.lmMin:0);
+                //q1
+                boxDataCurrent.push((ifNotNull(boxPlotVOSList))?boxPlotVOSList.q1:0);
+                //中位数 q2
+                boxDataCurrent.push((ifNotNull(boxPlotVOSList))?boxPlotVOSList.q2:0);
+                //q3
+                boxDataCurrent.push((ifNotNull(boxPlotVOSList))?boxPlotVOSList.q3:0);
+                //上边缘
+                boxDataCurrent.push((ifNotNull(boxPlotVOSList))?boxPlotVOSList.umMax:0);
+
+                //'内上限: '
+                boxDataCurrent.push((ifNotNull(boxPlotVOSList))?boxPlotVOSList.iul:0);
+                // '内下限: '
+                boxDataCurrent.push((ifNotNull(boxPlotVOSList))?boxPlotVOSList.ill:0);
+                // '外上限: '
+                boxDataCurrent.push((ifNotNull(boxPlotVOSList))?boxPlotVOSList.eul:0);
+                // '外下限: '
+                boxDataCurrent.push((ifNotNull(boxPlotVOSList))?boxPlotVOSList.ell:0);
+                //将数组存入 boxData 中
+                boxData.push(boxDataCurrent);
+                //endregion
+
+                //region  箱线图  温和异常值-- 点 -- 数据
+                var outliersCurrent = [];
+                var range1 = (ifNotNull(boxPlotVOSList))?boxPlotVOSList.range1:[];
+                //将range1循环填充
+                for (var j = 0; j < range1.length; j++) {
+                    var obj1 = range1[j];
+                    outliersCurrent.push(i);//下标
+                    outliersCurrent.push(obj1);//对应的值
+                    outliers.push(outliersCurrent);
+                    //清空  outliersCurrent；
+                    outliersCurrent = [];
+                }
+                //endregion
+
+                //region  箱线图  极端异常值 --点，代表严重类型的
+                var range2 = (ifNotNull(boxPlotVOSList))?boxPlotVOSList.range2:[];
+                //将range1
+                for (var j = 0; j < range2.length; j++) {
+                    var obj1 = range2[j];
+                    outliersCurrent.push(i);//下标
+                    outliersCurrent.push(obj1);//对应的值
+                    outliers2.push(outliersCurrent);
+                    //清空  outliersCurrent；
+                    outliersCurrent = [];
+                }
+                //endregion
+
+                //endregion
+
+            }
+
+
+            //endregion
+
+        }
+
+
+        myChart = echarts.init(document.getElementById("pricePrint")); //确定div
+
+
+        //region找出最小值  outliers2  outliers  boxData
+        // 最小值应该出现在极端异常点中
+        var min = 0;
+        for (var i = 0; i < outliers2.length; i++) {
+            var obj = outliers2[i][1];
+            if (i == 0){
+                min = obj;
+            }else {
+                if (Number(min) > Number(obj)){
+                    min = obj;
+                }
+            }
+        }
+        //此处进行一个判断，如果 min <
+        for (var i = 0; i < outliers.length; i++) {
+            var obj = outliers[i][1];
+            if (i == 0){
+                if(outliers2.length>0)
+                {
+                    if (Number(min) > Number(obj)){
+                        min = obj;
+                    }
+                }else {
+                    min = obj;
+                }
+            }else {
+                if (Number(min) > Number(obj)){
+                    min = obj;
+                }
+            }
+        }
+
+        for (var i = 0; i < boxData.length; i++) {
+            for(var j=0;j<boxData[i].length;j++) {
+                if (j != 2) {
+                    var obj = boxData[i][j];
+                    if (j == 0) {
+                        if (i == 0) {
+                            if (outliers2.length > 0 || outliers.length > 0) {
+                                if (Number(min) > Number(obj)) {
+                                    min = obj;
+                                }
+                            } else {
+                                min = obj;
+                            }
+                        } else {
+                            if (Number(min) > Number(obj)) {
+                                min = obj;
+                            }
+                        }
+                    } else {
+                        if (Number(min) > Number(obj)) {
+                            min = obj;
+                        }
+                    }
+                }
+            }
+        }
+
+
+        if (Number(min) - Number(1) != 0){
+            min = Number(min) - Number(1);
+        }
+
+
+
+        // min = 0;
+
+        console.info(min);
+        console.info(outliers2);
+        console.info(outliers);
+        console.info(boxData);
+
+
+        //endregion
+
+        option = {
+            title: [
+                {
+                    text: '箱线图',
+                    left: 'center',
+                    textStyle:{
+                        fontSize:30
+                    }
+                },
+                /*{
+                    text: 'upper: Q3 + 1.5 * IQR \nlower: Q1 - 1.5 * IQR',
+                    borderColor: '#999',
+                    borderWidth: 1,
+                    textStyle: {
+                        fontSize: 14
+                    },
+                    left: '10%',
+                    top: '90%'
+                }*/
+            ],
+
+
+            legend: {
+                orient: 'vertical',//换行
+                y: '10%',
+                data: ['温和异常值', '极端异常值'],
+                left:1,
+                top:300,
+                backgroundColor:'#fffdfe',
+                padding:18
+            },
+            tooltip: {
+                trigger: 'item',
+                axisPointer: {
+                    type: 'shadow'
+                }
+            },
+            grid: {
+                left: '15%',
+                right: '10%',
+                bottom: '15%'
+            },
+            xAxis: {
+                type: 'category',
+                data: axisData,
+                boundaryGap: true,
+                nameGap: 30,
+                splitArea: {
+                    show: false
+                },
+                axisLabel: {
+                    formatter: '{value}'
+                },
+                splitLine: {
+                    show: false
+                }
+            },
+            yAxis: {
+                min:min,   //为了让图显示的更好看，设定最小值
+                type: 'value',
+                // name: 'km/s minus 299,000',
+                splitArea: {
+                    show: true
+                }
+            },
+            series: [
+                {
+                    name: 'boxplot',
+                    type: 'boxplot',
+                    data: boxData,
+                    tooltip: {
+                        formatter: function (param) {
+                            return [
+                                // 'Q3: ' + param.data[3] ,
+                                // 'Q1: ' + param.data[1],
+                                // '内上限: ' + param.data[5],
+                                // '内下限: ' + param.data[6],
+                                // '外上限: ' + param.data[7],
+                                // '外下限: ' + param.data[8],
+                                // '最大值: ' + param.data[4],
+                                // '最小值: ' + param.data[0],
+                                'Q3: ' + param.data[4] ,
+                                'Q1: ' + param.data[2],
+                                '内上限: ' + param.data[6],
+                                '内下限: ' + param.data[7],
+                                '外上限: ' + param.data[8],
+                                '外下限: ' + param.data[9],
+                                '最大值: ' + param.data[5],
+                                '最小值: ' + param.data[1],
+                            ].join('<br/>');
+                        }
+                    }
+                },
+                {
+                    name: '温和异常值',
+                    type: 'scatter',
+                    data: outliers,
+                    color: '#00ffff'
+                },
+                {
+                    name: '极端异常值',
+                    type: 'scatter',
+                    data: outliers2
+                }
+            ]
+        };
+
+
+
+
+        myChart.setOption(option);//这一步是绑定
+
+    }
+
+    //加载表格
+    function initTable(result) {
+
+        var htmlHead = '<tr>';
+        //region 生成标题头
+        htmlHead += '<th style="text-align: center"><div>序号</div></th>'
+        for (var i = 0; i < result.length; i++) {
+            var obj = result[i];
+            htmlHead += '<th style="text-align: center"><div>'+ obj.entityCode +'</div></th>';
+
+
+            exportThead += obj.entityCode + ","
+        }
+        htmlHead += '</tr>';
+        //endregion
+
+        exportThead = exportThead.substr(0, exportThead.length-1);
+
+
+
+
+
+        //region判断表格是否超过界面宽度，如果没超过重新设置宽度
+        if($('#dataThead').width() < $('#dataThead').parent().parent().parent().width()) {
+            $('#dataTable').parent().css({'width': '90%'});
+
+            htmlHead = '<tr><th style="width: 5%;text-align: center"><div>序号</div></th>';
+            $.each(result, function (i, v) {
+                htmlHead += '<th style="text-align: center"><div>' + v.entityCode + '</div></th>';
+            });
+            htmlHead += '</tr>';
+        }
+        //endregion
+
+
+        //region 生成 Tbody
+        var html = '';
+
+        //找出最大的list的长度用于循环
+        var maxLength = 0;
+        for (var i = 0; i < result.length; i++) {
+            var currentLength = result[i].list.length;
+            if (Number(maxLength) < Number(currentLength)){
+                maxLength = currentLength;
+            }
+        }
+
+        //进行遍历循环最大长度，在最大长度范围内，如果当前list的长度小于最大范围，用''代替
+        for (var j = 0; j < maxLength; j++) {
+            html += '<tr>';
+            html += '<th style="text-align: center">'+ (j + 1) +'</th>';
+            exportTbody += (j + 1) + ',';
+            for (var i = 0; i < result.length; i++) {
+                var obj = result[i];
+                html += '<th style="text-align: center">'+ ((obj.list.length>j) ? obj.list[j].sampleValue:'') +'</th>';
+                exportTbody += ((obj.list.length>j) ? obj.list[j].sampleValue:'') + ','
+            }
+            exportTbody = exportTbody.substr(0, exportTbody.length-1) + '#';
+            html += '</tr>';
+        }
+        exportTbody = exportTbody.substr(0, exportTbody.length-1);
+        //endregion
+
+        // $('#myTable').html(html);
+        $('#dataThead').html(htmlHead);
+        $('#dataTbody').html(html);
+        // console.info(htmlHead);
+    }
+
+
+    //绑定table外层div滚动事件
+    $('#dataTableDiv').on('scroll', tableScrollHandle);
+
+    //表格滚动时固定表头
+    function tableScrollHandle() {
+        //获取table外层DIV的滚动值
+        var scrollTop = $('#dataTableDiv').scrollTop();
+
+        //当滚动距离大于0时设置top及相应的样式
+        if (scrollTop > 0) {
+            $('#dataThead').children('tr').children('th').children('div').css({
+                "top": (scrollTop-1) + 'px',
+                "border-bottom": "1px solid #DDDDDD",
+                "border-top": "1px solid #898989",
+                "height": "41px"
+            });
+        } else {
+            // 当滚动距离小于0时设置top及相应的样式
+            $('#dataThead').children('tr').children('th').children('div').css({
+                "top": scrollTop + 'px',
+                "border-bottom": "0px solid #DDDDDD",
+                "border-top": "0px solid #898989",
+                "height": "39px"
+            });
+        }
+    }
+
+
+
+</script>
+</body>
+</html>

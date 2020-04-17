@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper
+	namespace="com.hand.plm.product_func_attr_basic.mapper.ProductFuncAttrBasicMapper">
+	<resultMap id="BaseResultMap"
+		type="com.hand.plm.product_func_attr_basic.dto.ProductFuncAttrBasic">
+		<result column="KID" property="kid" jdbcType="VARCHAR" />
+		<result column="LEVEL_NUM" property="levelNum"
+			jdbcType="VARCHAR" />
+		<result column="PARENT_ID" property="parentId"
+			jdbcType="VARCHAR" />
+		<result column="NAME" property="name"
+			jdbcType="VARCHAR" />
+		<result column="DESCRIPTION" property="description"
+			jdbcType="VARCHAR" />
+	</resultMap>
+
+
+	<resultMap id="TreeResultMap"
+		type="com.hand.plm.product_func_attr_basic.view.TreeVO">
+		<result column="KID" property="id" jdbcType="VARCHAR" />
+		<result column="level_num" property="nodeType"
+			jdbcType="VARCHAR" />
+		<result column="PARENT_ID" property="pId"
+			jdbcType="VARCHAR" />
+		<result column="DESCRIPTION" property="name"
+			jdbcType="VARCHAR" />
+	</resultMap>
+
+
+
+
+	<select id="selectTreeDatas" resultMap="TreeResultMap">
+	SELECT t.parent_id, t.level_num, t.kid, t.description, t.name
+	  FROM plm_product_func_attr_basic t
+	 WHERE t.level_num <![CDATA[<= 3]]>
+
+	</select>
+
+
+	<select id="selectTreeDatasByParms" resultMap="TreeResultMap">
+		WITH t1 AS
+ (SELECT t.parent_id, t.level_num, t.kid, t.description
+    FROM plm_product_func_attr_basic t
+   WHERE t.description LIKE CONCAT('%',CONCAT(#{param}, '%')))
+   )
+SELECT *
+  FROM t1
+UNION
+SELECT b.parent_id, b.level_num, b.kid, b.description
+  FROM plm_product_func_attr_basic b
+ WHERE 1 = 1 AND EXISTS (SELECT 1 FROM t1 WHERE b.kid = t1.parent_id)
+		
+		
+	</select>
+
+</mapper>

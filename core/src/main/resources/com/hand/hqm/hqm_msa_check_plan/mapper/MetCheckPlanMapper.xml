@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_msa_check_plan.mapper.MetCheckPlanMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_msa_check_plan.dto.MetCheckPlan">
+        <result column="CHECK_PLAN_ID" property="checkPlanId" jdbcType="DECIMAL" />
+        <result column="CHECK_PLAN_CODE" property="checkPlanCode" jdbcType="VARCHAR" />
+        <result column="PLANT_ID" property="plantId" jdbcType="DECIMAL" />
+        <result column="PLANT_NAME" property="plantName" jdbcType="VARCHAR" />
+        <result column="CREATION_DATE" property="creationDate" jdbcType="DATE" />
+        
+    </resultMap>
+	<!-- 校验历史查询 -->
+    <select id="selectCheckPlan" resultMap="BaseResultMap" parameterType="com.hand.hqm.hqm_msa_check_plan.dto.MetCheckPlan">
+            select        
+                hmcp.check_plan_id,
+		        hmcp.check_plan_code,
+		        hmcp.plant_id,
+		        (select hp.descriptions from hcm_plant hp where hp.plant_id=hmcp.plant_id) as plant_name,
+		        hmcp.created_by,
+		        hmcp.creation_date,
+		        hmcp.last_updated_by,
+		        hmcp.last_update_date
+           from HQM_MET_CHECK_PLAN hmcp
+           where 1=1
+           <if test="checkPlanCode != null and checkPlanCode != ''">
+                and hmcp.check_plan_code =#{checkPlanCode}
+            </if>
+            <if test="plantId != null and plantId != ''">
+                and hmcp.plant_id =#{plantId}
+            </if>
+           	<if test = "creationStartTime != null">
+			 	and hmcp.creation_date &gt;= to_date(#{creationStartTime}, 'yyyy-mm-dd hh24:mi:ss')
+			 </if>
+			 <if test = "creationEndTime != null">
+			 	and hmcp.creation_date &lt;= to_date(#{creationEndTime}, 'yyyy-mm-dd hh24:mi:ss')
+			 </if>
+            order by hmcp.check_plan_id 
+           
+    </select>
+	<!-- 获取当天最大流水号 -->
+	<select id="queryMaxNum" resultType="java.lang.Integer" parameterType="com.hand.hqm.hqm_msa_check_plan.dto.MetCheckPlan">
+		select nvl(max(substr(hmcp.check_plan_code, -3)), 0)
+		from hqm_met_check_plan hmcp
+		where 1 = 1
+		and trunc(hmcp.creation_date) = trunc(sysdate)
+	</select>
+</mapper>

@@ -1,0 +1,377 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.spc.ecr_main.mapper.EcrRfqMapper">
+    <resultMap id="BaseResultMap" type="com.hand.spc.ecr_main.dto.EcrRfq">
+        <result column="RFQ_ID" property="rfqId" jdbcType="DECIMAL" />
+        <result column="ECRNO" property="ecrno" jdbcType="VARCHAR" />
+        <result column="LAB_REQNO" property="labReqno" jdbcType="VARCHAR" />
+        <result column="PCI_TITLE" property="pciTitle" jdbcType="VARCHAR" />
+        <result column="PCI_TEST_REPORT" property="pciTestReport" jdbcType="VARCHAR" />
+        <result column="CONCLUSION" property="conclusion" jdbcType="VARCHAR" />
+        <result column="RFQ_SEQ" property="rfqSeq" jdbcType="DECIMAL" />
+        <result column="STATUS" property="status" jdbcType="VARCHAR" />
+        <result column="DUTYBY" property="dutyby" jdbcType="VARCHAR" />
+        <result column="ASK_FINISHED_DATE" property="askFinishedDate" jdbcType="DATE" />
+        <result column="PLAN_FINISHED_DATE" property="planFinishedDate" jdbcType="DATE" />
+        <result column="ACT_FINISHED_DATE" property="actFinishedDate" jdbcType="DATE" />
+        <result column="ITEM_ID" property="itemId" jdbcType="DECIMAL" />
+        <result column="PRICE_UNIT" property="priceUnit" jdbcType="DECIMAL" />
+        <result column="UNIT_PRICE" property="unitPrice" jdbcType="DECIMAL" />
+        <result column="UOM" property="uom" jdbcType="VARCHAR" />
+        
+        <result column="SKU_CODE" property="skuCode" jdbcType="VARCHAR" />
+        <result column="DESCRIPTIONS" property="descriptions" jdbcType="VARCHAR" />
+        <result column="TASK_TYPE" property="taskType" jdbcType="VARCHAR" />
+        <result column="TASK_SEQ" property="taskSeq" jdbcType="DECIMAL" />
+        <result column="IS_NEED" property="isNeed" jdbcType="VARCHAR" />
+        <result column="CURRENT_VERSION" property="currentVersion" jdbcType="VARCHAR" />
+        <result column="EDIT_FLAG" property="editFlag" jdbcType="VARCHAR" />
+        <result column="NEW_VERSION" property="newVersion" jdbcType="VARCHAR" />
+        <result column="TASK_STATUS" property="taskStatus" jdbcType="VARCHAR" />
+        <result column="ID" property="id" jdbcType="DECIMAL" />
+    </resultMap>
+
+    
+    <!-- 查询改善方案信息 -->
+	<select id="selectSolution"  resultMap="BaseResultMap">
+		select MATERIAL_ID as item_id,ECRNO from hpm_ecr_solution
+		where ecrno = #{ecrno}
+		and MATERIAL_ID in (
+			<foreach collection="list" item="item" index="index" separator=",">
+			    #{item}
+			</foreach>
+			)
+	</select>
+    
+    <!-- 查询 RFQ 信息 -->
+	<select id="selectData"  resultMap="BaseResultMap">
+		select * from HPM_ECR_RFQ 
+		where STATUS not in ('delete')
+		<if test="rfqId != null">
+			and RFQ_ID = #{rfqId}
+		</if>
+		<if test="ecrno != null">
+			and ecrno = #{ecrno}
+		</if>
+		<if test="itemId != null">
+			and ITEM_ID = #{itemId}
+		</if>
+	</select>
+    
+    <!-- 失效 RFQ 信息 -->
+	<update id="updateRfqInvalide" >
+		update HPM_ECR_RFQ set 
+			STATUS='delete'
+			,OBJECT_VERSION_NUMBER = OBJECT_VERSION_NUMBER +1
+			,LAST_UPDATED_BY = #{request.userId}
+			,LAST_UPDATE_DATE = sysdate
+		where ecrno = #{ecrno}
+			and item_id = #{itemId}
+	</update>
+
+
+    <!-- 流程：技术文件 查询 -->
+	<select id="selectTaskFile"  resultMap="BaseResultMap">
+		select h.ecrno,
+		   i.item_id,
+	       l.kid as id,
+	       l.ITEM_CODE as SKU_CODE,
+	       i.descriptions,
+	       h.FILE_TYPE as TASK_TYPE,
+	       l.CURRENT_VERSION,
+	       l.EDIT_FLAG,
+	       l.DUTYBY,
+	       l.PLAN_FINISHED_DATE,
+	       l.ACT_FINISHED_DATE,
+	       l.ASK_FINISHED_DATE,
+	       l.NEW_VERSION,
+	       l.STATUS as TASK_STATUS
+	  from HPM_ECR_TECHNICAL_FILE_HEADER h,
+	       HPM_ECR_TECHNICAL_FILE_LINE   l,
+	       hcm_item                      i
+	  where h.technical_id = l.technical_id
+	   and i.ITEM_ID(+) = l.item_id
+	   and h.ecrno = #{ecrno}
+	   <if test="id !=null ">
+	   		and h.TECHNICAL_ID = #{id}
+	   </if>
+	   <if test="itemId !=null ">
+	   		and l.item_id = #{itemId}
+	   </if>
+	</select>
+
+    <!-- 流程：技术文件 保存 -->
+	<update id="updateTaskFile" >
+	  update HPM_ECR_TECHNICAL_FILE_LINE l
+	  set l.OBJECT_VERSION_NUMBER = OBJECT_VERSION_NUMBER +1
+	    ,l.LAST_UPDATED_BY = #{request.userId}
+	    ,l.LAST_UPDATE_DATE = sysdate
+	    <if test="editFlag!=null">
+	        ,l.EDIT_FLAG = #{editFlag}
+	    </if>
+	    <if test="dutyby!=null">
+	        ,l.DUTYBY = #{dutyby}
+	    </if>
+	    <if test="planFinishedDate!=null">
+	        ,l.PLAN_FINISHED_DATE = #{planFinishedDate}
+	    </if>
+	    <if test="actFinishedDate!=null">
+	        ,l.ACT_FINISHED_DATE = #{actFinishedDate}
+	    </if>
+	    <if test="taskStatus!=null">
+	        ,l.STATUS = #{taskStatus}
+	    </if>
+	    <if test="newVersion!=null">
+	        ,l.NEW_VERSION = #{newVersion}
+	    </if>
+	  where l.kid = #{id}
+	</update>
+
+    <!-- 流程：技术文件 保存 head-->
+	<update id="updateTaskFileHead" >
+	      update HPM_ECR_TECHNICAL_FILE_HEADER
+		  set OBJECT_VERSION_NUMBER = OBJECT_VERSION_NUMBER +1
+		    ,LAST_UPDATED_BY = #{request.userId}
+		    ,LAST_UPDATE_DATE = sysdate
+		    <if test="actFinishedDate!=null">
+		        ,ACT_FINISHED_DATE = #{actFinishedDate}
+		    </if>
+		    <if test="taskStatus!=null">
+		        ,STATUS = #{taskStatus}
+		    </if>
+		  where TECHNICAL_ID = #{id}
+	</update>
+
+    <!-- 流程：技术文件查询当前版本 -->
+	<select id="selectFileVersion"  resultType="java.lang.String">
+	   select item_edition from (
+	     select item_id,item_edition,last_update_date from hcm_item_b
+	     where item_id = #{itemId}
+	     order by last_update_date desc
+	   )where rownum = 1
+	</select>
+
+    <!-- 查询产品品类 -->
+	<select id="selectCatogry" resultType="java.lang.String">
+      select hp.CATEGORY
+      from hpm_project hp,
+      		hpm_project_line hpl
+      where hp.PROJECT_ID = hpl.PROJECT_ID
+      		and hpl.SKU_CODE = #{skuCode}
+	</select>
+
+    <!-- 查询新品老品 -->
+	<select id="selectMainType" resultType="java.lang.String">
+	    select ECR_TYPE from hpm_ecr_main
+	    where ecrno = #{ecrno}
+	</select>
+
+    <!-- 根据物料 id 查询物料  code -->
+	<select id="selectItemCode" resultType="java.lang.String">
+		select ITEM_CODE as SKU_CODE from  hcm_item_b
+		where item_id = #{itemId}
+	</select>
+
+
+    <!-- 流程：QTP 查询 -->
+	<select id="selectTaskQtp"  resultMap="BaseResultMap">
+		 select q.qtp_id as id,
+		 	   i.item_id,
+	 		   q.ecrno,
+	           i.ITEM_CODE,
+		       i.descriptions,
+		       'QTP' as task_type,
+		       q.QTP_SEQ as TASK_SEQ,
+		       q.is_need,
+		       q.DUTYBY,
+		       q.PLAN_FINISHED_DATE,
+		       q.ACT_FINISHED_DATE,
+		       q.ASK_FINISHED_DATE,
+		       q.STATUS as task_status
+		 from HPM_ECR_QTP q, hcm_item i
+		 where i.ITEM_ID(+) = q.item_id
+		   and q.ecrno = #{ecrno}
+		  <if test="id !=null ">
+		  		and q.qtp_id = #{id}
+		  </if>
+	      <if test="itemId !=null ">
+		    and q.item_id = #{itemId}
+		  </if>
+	</select>
+
+    <!-- 流程：QTP 保存 -->
+	<update id="updateTaskQtp" >
+		  update HPM_ECR_QTP
+		  set OBJECT_VERSION_NUMBER = OBJECT_VERSION_NUMBER +1
+		    ,LAST_UPDATED_BY = #{request.userId}
+		    ,LAST_UPDATE_DATE = sysdate
+		    <if test="isNeed!=null">
+		        ,is_need = #{isNeed}
+		    </if>
+		    <if test="dutyby!=null">
+		        ,DUTYBY = #{dutyby}
+		    </if>
+		    <if test="planFinishedDate!=null">
+		        ,PLAN_FINISHED_DATE = #{planFinishedDate}
+		    </if>
+		    <if test="actFinishedDate!=null">
+		        ,ACT_FINISHED_DATE = #{actFinishedDate}
+		    </if>
+		    <if test="taskStatus!=null">
+		        ,STATUS = #{taskStatus}
+		    </if>
+		  where qtp_id = #{id}
+	</update>
+
+    <!-- 流程：VTP 查询 -->
+	<select id="selectTaskVtp"  resultMap="BaseResultMap">
+		  select v.kid as id,
+		       i.item_id,
+		       v.ecrno,
+		       v.SKU_CODE,
+		       i.descriptions,
+		       'VTP' as task_type,
+		       v.VTP_SEQ as TASK_SEQ,
+		       v.is_need,
+		       v.DUTYBY,
+		       v.PLAN_FINISHED_DATE,
+		       v.ACTUALLY_FINISHED_DATE as ACT_FINISHED_DATE,
+		       v.FINISHED_DATE as ASK_FINISHED_DATE,
+		       v.STATUS as task_status
+		  from HPM_ECR_VTP v, hcm_item i
+		  where i.item_code(+) = v.sku_code
+			   and v.ecrno = #{ecrno}
+			   <if test="id!=null">
+			   	    and v.kid = #{id}
+			   </if>
+			   <if test="itemId !=null ">
+					and i.item_id = #{itemId}
+			   </if>
+	</select>
+
+    <!-- 流程：VTP 保存 -->
+	<update id="updateTaskVtp" >
+	    update HPM_ECR_VTP
+	    set OBJECT_VERSION_NUMBER = OBJECT_VERSION_NUMBER +1
+		    ,LAST_UPDATED_BY = #{request.userId}
+		    ,LAST_UPDATE_DATE = sysdate
+		    <if test="isNeed!=null">
+		        ,is_need = #{isNeed}
+		    </if>
+		    <if test="dutyby!=null">
+		        ,DUTYBY = #{dutyby}
+		    </if>
+		    <if test="planFinishedDate!=null">
+		        ,PLAN_FINISHED_DATE = #{planFinishedDate}
+		    </if>
+		    <if test="actFinishedDate!=null">
+		        ,ACTUALLY_FINISHED_DATE = #{actFinishedDate}
+		    </if>
+		    <if test="taskStatus!=null">
+		        ,STATUS = #{taskStatus}
+		    </if>
+		where kid = #{id}
+	</update>
+
+    <!-- 流程：PCI 查询 ：与物料表无关联-->
+	<select id="selectTaskPci"  resultMap="BaseResultMap">
+		select pci_id  as id,
+		       ecrno,
+		       PCI_CODE,
+		       pci_attachment ,
+		       pci_text ,
+		       'PCI' as task_type,
+		       PCI_SEQ as TASK_SEQ,
+		       is_need,
+		       DUTYBY,
+		       PLAN_FINISHED_DATE,
+		       ACT_FINISHED_DATE,
+		       ASK_FINISHED_DATE,
+		       STATUS as task_status
+		  from HPM_ECR_PCI
+		  where ecrno = #{ecrno}
+		  <if test="id!=null">
+		   		and pci_id = #{id}
+		   </if>
+	</select>
+
+    <!-- 流程：PCI 保存 -->
+	<update id="updateTaskPci" >
+		  update HPM_ECR_PCI
+		  set OBJECT_VERSION_NUMBER = OBJECT_VERSION_NUMBER +1
+		    ,LAST_UPDATED_BY = #{request.userId}
+		    ,LAST_UPDATE_DATE = sysdate
+		    <if test="isNeed!=null">
+		        ,is_need = #{isNeed}
+		    </if>
+		    <if test="dutyby!=null">
+		        ,DUTYBY = #{dutyby}
+		    </if>
+		    <if test="planFinishedDate!=null">
+		        ,plan_finished_date = #{planFinishedDate}
+		    </if>
+		    <if test="actFinishedDate!=null">
+		        ,act_finished_date = #{actFinishedDate}
+		    </if>
+		    <if test="taskStatus!=null">
+		        ,STATUS = #{taskStatus}
+		    </if>
+		  where pci_id = #{id}
+	</update>
+	
+    <!-- 流程：RFQ 查询-->
+	<select id="selectTaskRfq"  resultMap="BaseResultMap">
+		  select v.rfq_id as id,
+		       i.item_id,
+		       v.ecrno,
+		       i.item_code,
+		       i.descriptions,
+		       'RFQ' as task_type,
+		       v.rfq_seq as TASK_SEQ,
+		       v.is_need,
+		       v.DUTYBY,
+		       v.PLAN_FINISHED_DATE,
+		       v.ACT_FINISHED_DATE,
+		       v.ASK_FINISHED_DATE,
+		       v.STATUS as task_status
+		  from HPM_ECR_RFQ v, hcm_item i
+		  where i.item_id(+) = v.item_id
+		   and v.status not in ('delete')
+		   and v.ecrno = #{ecrno}
+		   <if test="id!=null">
+		       and v.rfq_id = #{id}
+		   </if>
+		   <if test="itemId !=null ">
+				and i.item_id = #{itemId}
+		   </if>
+		   <if test="dutyby !=null ">
+		  		and v.dutyby = #{dutyby}
+			</if>
+	</select>
+
+    <!-- 流程：RFQ 保存 -->
+	<update id="updateTaskRfq" >
+		  update HPM_ECR_RFQ
+		  set OBJECT_VERSION_NUMBER = OBJECT_VERSION_NUMBER +1
+		    ,LAST_UPDATED_BY = #{request.userId}
+		    ,LAST_UPDATE_DATE = sysdate
+		    <if test="isNeed!=null">
+		        ,is_need = #{isNeed}
+		    </if>
+		    <if test="dutyby!=null">
+		        ,DUTYBY = #{dutyby}
+		    </if>
+		    <if test="planFinishedDate!=null">
+		        ,PLAN_FINISHED_DATE = #{planFinishedDate}
+		    </if>
+		    <if test="actFinishedDate!=null">
+		        ,ACT_FINISHED_DATE = #{actFinishedDate}
+		    </if>
+		    <if test="taskStatus!=null">
+		        ,STATUS = #{taskStatus}
+		    </if>
+		  where rfq_id = #{id}
+	</update>
+	
+</mapper>

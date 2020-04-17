@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.spc.pspc_judgement_group.mapper.JudgementGroupMapper">
+    <resultMap id="BaseResultMap" type="com.hand.spc.pspc_judgement_group.dto.JudgementGroup">
+        <result column="JUDGEMENT_GROUP_ID" property="judgementGroupId" jdbcType="DECIMAL"/>
+        <result column="TENANT_ID" property="tenantId" jdbcType="DECIMAL"/>
+        <result column="SITE_ID" property="siteId" jdbcType="DECIMAL"/>
+        <result column="JUDGEMENT_GROUP_CODE" property="judgementGroupCode" jdbcType="VARCHAR"/>
+        <result column="JUDGEMENT_STATUS" property="judgementStatus" jdbcType="VARCHAR"/>
+        <result column="DESCRIPTION" property="description" jdbcType="VARCHAR"/>
+        <result column="STANDARD" property="standard" jdbcType="VARCHAR"/>
+
+        <result column="JUDGEMENT_GROUP_COPY" property="judgementGroupCopy" jdbcType="VARCHAR"/>
+
+    </resultMap>
+    <select id="selectEntityCount" resultType="java.lang.Integer">
+        SELECT
+            COUNT (1)
+        FROM
+            PSPC_JUDGEMENT_GROUP pjg,
+            PSPC_CHART pc,
+            PSPC_ENTITY pe,
+            PSPC_CHART_DETAIL pcd
+        WHERE
+            1 = 1
+        AND pc.CHART_ID = pe.CHART_ID
+        AND pcd.CHART_ID = pc.CHART_ID
+        AND pjg.JUDGEMENT_GROUP_ID = pcd.JUDGEMENT_GROUP_ID
+        AND pjg.JUDGEMENT_GROUP_ID = #{judgementGroupId}
+    </select>
+
+    <select id="selectChartDetailCount" resultType="java.lang.Integer">
+        SELECT
+            COUNT (1)
+        FROM
+            PSPC_JUDGEMENT_GROUP pjg,
+            PSPC_CHART_DETAIL scd
+        WHERE
+            1 = 1
+        AND pjg.JUDGEMENT_GROUP_ID = scd.JUDGEMENT_GROUP_ID
+        AND pjg.JUDGEMENT_GROUP_ID = #{judgementGroupId}
+    </select>
+
+    <select id="selectOocRecordCount" resultType="java.lang.Integer">
+        SELECT
+        COUNT (1)
+        FROM
+            PSPC_JUDGEMENT_GROUP pjg,
+            pspc_count_ooc pco,
+			PSPC_JUDGEMENT pj
+        WHERE
+            1 = 1
+        AND pjg.JUDGEMENT_GROUP_ID = pj.JUDGEMENT_GROUP_ID
+		AND pj.JUDGEMENT_ID = pco.JUDGEMENT_ID
+		AND pjg.JUDGEMENT_GROUP_ID = #{judgementGroupId}
+    </select>
+
+    <select id="selectOocCount" resultType="java.lang.Integer">
+        SELECT
+        COUNT (1)
+        FROM
+            PSPC_JUDGEMENT_GROUP pjg,
+            pspc_ooc po,
+			PSPC_JUDGEMENT pj
+        WHERE
+            1 = 1
+        AND pjg.JUDGEMENT_GROUP_ID = pj.JUDGEMENT_GROUP_ID
+		AND pj.JUDGEMENT_ID = po.JUDGEMENT_ID
+		AND pjg.JUDGEMENT_GROUP_ID = #{judgementGroupId}
+    </select>
+
+    <select id="selectDate" resultMap="BaseResultMap">
+        SELECT
+        t.*
+        FROM
+        PSPC_JUDGEMENT_GROUP t
+        WHERE
+        1 = 1
+        <if test="judgementGroupId!=null">
+            and t.JUDGEMENT_GROUP_ID=#{judgementGroupId}
+        </if>
+        <if test="judgementGroupCode!=null">
+            and t.JUDGEMENT_GROUP_CODE like concat(concat('%',#{judgementGroupCode}),'%')
+        </if>
+        <if test="description!=null">
+            and t.DESCRIPTION like concat(concat('%',#{description}),'%')
+        </if>
+    </select>
+
+    <select id="validateUnique" parameterType="com.hand.spc.pspc_judgement_group.dto.JudgementGroup"
+            resultType="java.lang.Long">
+    SELECT COUNT(*)
+    FROM PSPC_JUDGEMENT_GROUP t
+    WHERE t.JUDGEMENT_GROUP_CODE = #{judgementGroupCode} AND
+          t.JUDGEMENT_GROUP_ID != #{judgementGroupId}
+    </select>
+
+
+</mapper>

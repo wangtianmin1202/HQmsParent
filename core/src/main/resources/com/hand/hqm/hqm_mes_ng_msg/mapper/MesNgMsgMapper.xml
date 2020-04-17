@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_mes_ng_msg.mapper.MesNgMsgMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_mes_ng_msg.dto.MesNgMsg">
+        <result column="KID" property="kid" jdbcType="DECIMAL" />
+        <result column="ORDER_NUM" property="orderNum" jdbcType="VARCHAR" />
+        <result column="PROD_LINE_ID" property="prodLineId" jdbcType="DECIMAL" />
+        <result column="WORKSTATION_ID" property="workstationId" jdbcType="DECIMAL" />
+        <result column="ITEM_ID" property="itemId" jdbcType="DECIMAL" />
+        <result column="SERIAL_NUMER" property="serialNumer" jdbcType="VARCHAR" />
+        <result column="NG_CODE" property="ngCode" jdbcType="VARCHAR" />
+        <result column="QTY" property="qty" jdbcType="DECIMAL" />
+    </resultMap>
+
+
+</mapper>

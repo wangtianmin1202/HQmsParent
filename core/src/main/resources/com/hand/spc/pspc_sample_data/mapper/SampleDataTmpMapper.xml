@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.spc.pspc_sample_data.mapper.SampleDataTmpMapper">
+    <resultMap id="BaseResultMap" type="com.hand.spc.pspc_sample_data.dto.SampleDataTmp">
+        <result column="SAMPLE_DATA_WAIT_ID" property="sampleDataWaitId" jdbcType="DECIMAL" />
+        <result column="TENANT_ID" property="tenantId" jdbcType="DECIMAL" />
+        <result column="SITE_ID" property="siteId" jdbcType="DECIMAL" />
+        <result column="ATTACHMENT_GROUP_ID" property="attachmentGroupId" jdbcType="DECIMAL" />
+        <result column="SAMPLE_VALUE" property="sampleValue" jdbcType="DECIMAL" />
+        <result column="SAMPLE_TIME" property="sampleTime" jdbcType="DATE" />
+        <result column="CE_GROUP_ID" property="ceGroupId" jdbcType="DECIMAL" />
+        <result column="CE_PARAMETER_ID" property="ceParameterId" jdbcType="DECIMAL" />
+        <result column="EDITED" property="edited" jdbcType="VARCHAR" />
+    </resultMap>
+
+
+</mapper>

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.spc.repository.mapper.MessageDetailRMapper">
+
+    <!-- <insert id="batchInsertRows" parameterType="java.util.List">
+        INSERT INTO pspc_message_detail (
+        message_id,
+        tenant_id,
+        site_id,
+        entity_code,
+        entity_version,
+        element_category,
+        element_code,
+        element_description,
+        element_status,
+        element_value_code,
+        element_value_description
+        )
+        VALUES
+        <foreach collection="list" item="item" index="index" separator=",">
+              (
+            #{item.messageId},
+            #{item.tenantId},
+            #{item.siteId},
+            #{item.entityCode},
+            #{item.entityVersion},
+            #{item.elementCategory},
+            #{item.elementCode},
+            #{item.elementDescription},
+            #{item.elementStatus},
+            #{item.elementValueCode},
+            #{item.elementValueDescription}
+              )
+        </foreach>
+    </insert> -->
+    
+    <insert id="batchInsertRows" parameterType="java.util.List">
+    <foreach collection="list" item="item" index="index" open="begin" close=";end;" separator=";">
+        INSERT INTO pspc_message_detail (
+        message_id,
+        tenant_id,
+        site_id,
+        entity_code,
+        entity_version,
+        element_category,
+        element_code,
+        element_description,
+        element_status,
+        element_value_code,
+        element_value_description)VALUES(
+            #{item.messageId},
+            #{item.tenantId},
+            #{item.siteId},
+            #{item.entityCode},
+            #{item.entityVersion},
+            #{item.elementCategory},
+            #{item.elementCode},
+            #{item.elementDescription},
+            #{item.elementStatus},
+            #{item.elementValueCode},
+            #{item.elementValueDescription})
+        </foreach>
+    </insert>
+
+</mapper>

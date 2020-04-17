@@ -1,0 +1,681 @@
+<#include "../include/header.html">
+<!--
+ * @description: 
+ * @author: tianmin.wang
+ * @date: 20191021
+ -->
+ 
+<script src="${base.contextPath}/common/code?yesNo=SYS.YES_NO"></script>
+<script src="${base.contextPath}/common/code?HQM_H_SAMPLE_REVENIR_STATUS=HQM_H_SAMPLE_REVENIR_STATUS"></script>
+<script src="${base.contextPath}/common/code?HQM_H_SAMPLE_POSITION_STATUS=HQM_H_SAMPLE_POSITION_STATUS"></script>
+<script src="${base.contextPath}/common/code?HQM_H_SAMPLE_REVENIR_STATUS=HQM_H_SAMPLE_REVENIR_STATUS"></script>
+<script src="${base.contextPath}/common/code?HQM_H_SAMPLE_STATUS=HQM_H_SAMPLE_STATUS"></script>
+<script src="${base.contextPath}/common/code?HQM_MACHINE_COMPONENT_TYPE=HQM_MACHINE_COMPONENT_TYPE"></script><!--是否有效 -->
+<script src="${base.contextPath}/common/code?HQM_RETURN_PRODUCT_TYPE=HQM_RETURN_PRODUCT_TYPE"></script><!--是否有效 -->
+<script src="${base.contextPath}/common/code?HQM_RETURN_PRODUCT_ISSUE=HQM_RETURN_PRODUCT_ISSUE"></script><!--是否有效 -->
+<script src="${base.contextPath}/common/code?HQM_ANALYSIS_STATUS=HQM_ANALYSIS_STASTUS"></script>
+<script src="${base.contextPath}/common/code?HQM_AFTERSALE_SAMPLE_SOLVE_WAY=HQM_AFTERSALE_SAMPLE_SOLVE_WAY"></script>
+<script src="${base.contextPath}/common/code?HQM_AFTERSALE_COMPONENT_SOLVE=HQM_AFTERSALE_COMPONENT_SOLVE"></script>
+<script src="${base.contextPath}/common/code?HQM_AFTERSALE_SAMPLE_SCRAP=HQM_AFTERSALE_SAMPLE_SCRAP"></script>
+
+
+<script type="text/javascript">
+    var viewModel = Hap.createGridViewModel("#grid");
+</script>
+<body>
+<script type="text/javascript">
+var parentData;
+viewModel.create = function(){
+	var dialog = $("#createWindow").kendoWindow({
+		width: 1500,
+		height: 800,
+        title: '零件封样台账创建',
+        visible: false,
+        iframe: true,
+        modal: true,
+		close:function(){
+        	$("#grid").data("kendoGrid").dataSource.fetch();
+        },
+        content: './sample_account_after_add.html'
+    }).data("kendoWindow");
+    dialog.center().open();
+}
+</script>
+<script type="text/javascript">
+viewModel.scrap = function(){//报废
+	var dialog = $("#scrapWindow").kendoWindow({
+		width: 1500,
+		height: 700,
+        title: '报废单创建',
+        visible: false,
+        iframe: true,
+        modal: true,
+		close:function(){
+        	$("#grid").data("kendoGrid").dataSource.fetch();
+        },
+        content: './sample_scrapped_after.html'
+    }).data("kendoWindow");
+    dialog.center().open();
+}
+function scrap(scrappedIds){
+	var dialog = $("#scrapWindow").kendoWindow({
+		width: 1500,
+		height: 700,
+        title: '报废单',
+        visible: false,
+        iframe: true,
+        modal: true,
+		close:function(){
+        	$("#grid").data("kendoGrid").dataSource.fetch();
+        },
+        content: './sample_scrapped_after.html?scrappedIds='+scrappedIds
+    }).data("kendoWindow");
+    dialog.center().open();
+}
+viewModel.use = function(){//领用
+	var dialog = $("#useWindow").kendoWindow({
+		width: 1500,
+		height: 700,
+        title: '领用单创建',
+        visible: false,
+        iframe: true,
+        modal: true,
+		close:function(){
+        	$("#grid").data("kendoGrid").dataSource.fetch();
+        },
+        content: './sample_use_after.html'
+    }).data("kendoWindow");
+    dialog.center().open();
+}
+function use(useIds){
+	var dialog = $("#useWindow").kendoWindow({
+		width: 1500,
+		height: 700,
+        title: '领用单',
+        visible: false,
+        iframe: true,
+        modal: true,
+		close:function(){
+        	$("#grid").data("kendoGrid").dataSource.fetch();
+        },
+        content: './sample_use_after.html?useIds='+useIds
+    }).data("kendoWindow");
+    dialog.center().open();
+}
+
+//编辑
+viewModel.edit = function(){
+	var userId = {
+			'userId' : ${Session.userId}
+		}
+	$.ajax({
+        url: '${base.contextPath}/hqm/sample/account/after/checkUserId',
+        type: 'POST',
+        data: userId,
+        async: false,
+        dataType: "json",
+        success: function (response) {
+            if (response.success) {
+            	var grid = $("#grid").data("kendoGrid");
+            	var checked = grid.selectedDataItems();
+            	var len = checked.length;
+            	if(len == 0){
+            		kendo.ui.showInfoDialog({
+            			title: "提示",
+            			message: "请先选择数据"
+            		})
+            		return;
+            	}else if(len > 1){
+            		kendo.ui.showInfoDialog({
+            			title: "提示",
+            			message: "一次只能编辑一个量具"
+            		})
+            		return;
+            	}
+            		parentData = checked;
+            	var dialog = $("#editWindow").kendoWindow({
+            			actions: ["Close"],
+            			width: 1200,
+            			height: 750,
+            			title: '<@spring.message "iso.manager.edit"/>',
+            			visible: false,
+            			iframe: true,
+            			modal: true,
+            			content: './sample_account_after_edit.html'
+            		}).data("kendoWindow");
+            		dialog.center().open();
+            } else {
+            	kendo.ui.showErrorDialog({
+                    message: response.message
+                });
+            }
+        }
+    });
+}
+
+viewModel.use = function(){
+	selections = grid.selectedDataItems();
+		var operationFlag = true;
+		if(selections.length>1||selections.length<1){
+			operationFlag = false;
+			kendo.ui.showWarningDialog({
+	            message: "请选择一条数据！"
+	        });
+			return;
+		}
+		var analysisStatus = selections[0].analysisStatus;
+		if(analysisStatus != 1 && analysisStatus != 2) {
+			kendo.ui.showWarningDialog({
+	            message: "只有待分析和分析中的样品才可以分析！"
+	        });
+			return;
+		}
+		var sampleId = selections[0].sampleId;
+
+		var machineComponent = selections[0].machineComponent;
+	var dialog = $("#childWindowitem").kendoWindow({
+       width: window.innerWidth * 0.6,
+       height: window.innerHeight *0.7,
+       title: '<@spring.message "分析"/>',
+       visible: false,
+       iframe: true,
+       modal: true,
+       close: function(){	
+           $("#grid").data("kendoGrid").dataSource.page(1);     
+          },
+       content: '../hqm_sample_account_after/sample_account_after_update.html?sampleId='+sampleId + '&machineComponent=' +machineComponent
+   }).data("kendoWindow");   
+   dialog.center().open(); 
+}
+</script>
+<div id="useWindow"></div>
+<div id="editWindow"></div>
+<div id="scrapWindow"></div>
+<div id="createWindow"></div>
+<div id="childWindowitem"></div>
+<div id="page-content">
+    <div class="pull-left" id="toolbar-btn" style="padding-bottom:10px;">
+        <span class="btn btn-primary k-grid-add" style="float:left;margin-right:5px;" data-bind="click:create"><@spring.message "hap.new"/></span>
+<!--       <span class="btn btn-warning" style="float:left;margin-right:5px;" data-bind="click:scrap"><@spring.message "sampleaccount.bt.scrape"/></span>
+        <span class="btn btn-success" style="float:left;margin-right:5px;" data-bind="click:use"><@spring.message "sampleaccount.bt.use"/></span> -->
+        <span class="btn btn-info" style="float:left;margin-right:5px;" data-bind="click:edit"><@spring.message "measuretool.edit"/></span>
+        <span class="btn btn-success" style="float:left;margin-right:5px;" data-bind="click:use"><@spring.message "分析"/></span>
+        <span  data-bind="click:remove" class="btn btn-danger" style="float:left;"><@spring.message "hap.delete"/></span>
+        <span class="btn btn-primary k-grid-excel" style="float:left;  margin-left:5px" data-bind="click:exportExcel"><i class="fa fa-file-excel-o" style="margin-left:5px"></i><@spring.message "srm.exportexcel"/></span>
+        
+    </div>
+    <script>kendo.bind($('#toolbar-btn'), viewModel);</script>
+    <div id="queryPanel" class="pull-right" id="query-form" style="padding-bottom:10px;">
+    	<div class="k-query-simple" id="query-form">
+            <input type="text" data-role="maskedtextbox" style="width:150px;margin-right:5px;" 
+            		placeholder='<@spring.message "sampleaccount.samplemodel"/>' data-bind="value:model.sampleModel" class="k-textbox">
+             <input type="text" data-role="maskedtextbox" style="width:150px;margin-right:5px;" 
+            		placeholder='<@spring.message "sampleaccount.samplecode"/>' data-bind="value:model.sampleCode" class="k-textbox">
+             
+             
+            <input id="sealingSamplePositionStatus" style="width:150px;margin-right:5px;" 
+            		placeholder='<@spring.message "sampleaccount.sealingsamplepositionstatus"/>' data-bind="value:model.sealingSamplePositionStatus">
+            <input id="sealingSampleStatus" style="width:150px;margin-right:5px;" 
+            		placeholder='<@spring.message "sampleaccount.sealingsamplestatus"/>' data-bind="value:model.sealingSampleStatus">
+            <script>
+            $("#sealingSamplePositionStatus").kendoComboBox({
+				dataTextField : "meaning",
+				dataValueField : "value",
+				valuePrimitive : true,
+				dataSource : HQM_H_SAMPLE_POSITION_STATUS
+			});
+		　　 $("#sealingSampleStatus").kendoComboBox({
+				dataTextField : "meaning",
+				dataValueField : "value",
+				valuePrimitive : true,
+				dataSource : HQM_H_SAMPLE_STATUS
+			});
+            </script>
+        </div>
+        <script>kendo.bind($('#query-form'), viewModel);</script>
+        <div class="k-query-detail" id="query-form2">
+            <div class="rows" style="padding-bottom:10px;">
+            <input id="supplierId" style="margin-right: 5px;width:150px;" 
+            		placeholder="<@spring.message 'sampleaccount.supplierId'/>" data-bind="value:model.supplierId">
+            <input id="scrappedFlag" style="width:150px;margin-right:5px;" 
+            		placeholder='<@spring.message "sampleaccount.scrappedflag"/>' data-bind="value:model.scrappedFlag">
+            <input id="sampleGiver" style="width:150px;margin-right: 5px;" 
+            		placeholder="<@spring.message 'sampleaccount.samplegiver'/>" data-bind="value:model.sampleGiver">
+            </div>
+            <script>
+            $("#sampleGiver").kendoLov($.extend(<@lov"user_lov"/>, {
+				textField : 'userName',
+				valueField : 'userId',
+			}));
+            $("#scrappedFlag").kendoComboBox({
+				dataTextField : "meaning",
+				dataValueField : "value",
+				valuePrimitive : true,
+				dataSource : yesNo
+			});
+			$("#supplierId").kendoLov($.extend(<@lov"LOV_SUPPLIER"/>, {
+				textField : 'supplierName',
+				valueField : 'supplierId',
+			}));
+            </script>
+            <div class="rows" style="padding-bottom:10px;">
+            <input id="sampleGiveDateFrom" data-role="datetimepicker"data-bind="value:model.sampleGiveDateFrom"
+						placeholder="<@spring.message 'hqm.qc.dateofinspection'/>" style="width: 150px;margin-right:5px;" />
+			<input id="sampleGiveDateTo" data-role="datetimepicker"data-bind="value:model.sampleGiveDateTo"
+						placeholder="<@spring.message 'hqm.qc.datetobeinspected'/>" style="width: 150px;margin-right:5px;" />
+			
+            		 <input type="text" data-role="maskedtextbox" style="width:150px;margin-right:5px;" 
+            		placeholder='<@spring.message "sampleaccount.dealer"/>' data-bind="value:model.dealer" class="k-textbox">
+            </div>
+            <script>
+            $("#sampleGiveDateFrom").kendoDateTimePicker(
+					{
+						format : "yyyy-MM-dd HH:mm:ss",
+						change : function() {
+							viewModel.model.sampleGiveDateFrom = this.value().format("yyyy-MM-dd HH:mm:ss");
+						}
+					});
+			$("#sampleGiveDateTo").kendoDateTimePicker(
+					{
+						format : "yyyy-MM-dd HH:mm:ss",
+						change : function() {
+							viewModel.model.sampleGiveDateTo = this.value().format("yyyy-MM-dd HH:mm:ss");
+						}
+					});
+            </script>
+        </div>
+        <script>kendo.bind($('#query-form2'), viewModel);</script>
+    </div>
+    <script>
+    kendo.bind($('#query-form'), viewModel);
+    $('#queryPanel').kendoQueryPanel({
+        queryFunction: function () {
+            viewModel.query();
+        },
+        resetFunction: function () {
+            viewModel.reset();
+        }
+    });
+    </script>
+    <div style="clear:both">
+        <div id="grid"></div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    Hap.initEnterQuery('#query-form', viewModel.query);
+    var BaseUrl = _basePath;
+    dataSource = new kendo.data.DataSource({
+        transport: {
+            read: {
+                url: BaseUrl + "/hqm/sample/account/after/select",
+                type: "POST",
+                dataType: "json"
+            },
+            update: {
+                url: BaseUrl + "/hqm/sample/account/after/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            destroy: {
+                url: BaseUrl + "/hqm/sample/account/after/remove",
+                type: "POST",
+                contentType: "application/json"
+            },
+            create: {
+                url: BaseUrl + "/hqm/sample/account/after/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            parameterMap: function (options, type) {
+                if (type !== "read" && options.models) {
+                    var datas = Hap.prepareSubmitParameter(options, type)
+                    return kendo.stringify(datas);
+                } else if (type === "read") {
+                	viewModel.model.sampleType = '2';
+                    return Hap.prepareQueryParameter(viewModel.model.toJSON(), options)
+                }
+            }
+        },
+        batch: true,
+        serverPaging: true,
+        pageSize: 20,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+                id: "sampleId",
+                fields: {},
+            }
+        }
+    });
+
+  	var grid =  $("#grid").kendoGrid({
+        dataSource: dataSource,
+        resizable: true,
+        scrollable: true,
+        navigatable: false,
+        selectable: 'multiple, rowbox',
+        dataBound: function () {
+            if (parent.autoResizeIframe) {
+                parent.autoResizeIframe('${RequestParameters.functionCode!}')
+            }
+        },
+        pageable: {
+            pageSizes: [5, 10, 20, 50],
+            refresh: true,
+            buttonCount: 5
+        },
+        columns: [
+                    {
+                field: "plantDescriptions",
+                title: '<@spring.message "sampleaccount.plantid"/>',
+                width: 120
+            },  
+            {
+                field: "machineComponent",
+                title: '<@spring.message "sampleaccount.machineComponent"/>',
+                width: 120,
+                template : function(dataItem) {
+					var v = dataItem.machineComponent ? dataItem.machineComponent : "";
+					$.each(HQM_MACHINE_COMPONENT_TYPE,function(i, n) {
+						if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+							v = n.meaning;
+							return v;
+						}
+					});
+					return v;
+				},
+            },
+                    {
+                field: "sampleModel",
+                title: '<@spring.message "sampleaccount.samplemodel"/>',//样品型号
+                width: 120,
+                
+            },
+            {
+                field: "appealNunber",
+                title: '<@spring.message "sampleaccount.appealNunber"/>',//申诉单号
+                width: 120,
+                
+            },
+            
+             {
+                field: "itemCode",
+                title: '<@spring.message "sampleaccount.itemid"/>',//物料号
+                width: 120
+            },
+            {
+                field: "itemDescriptions",
+                title: '<@spring.message "sampleaccount.itemName"/>',//物料号
+                width: 120
+            },
+            /*{
+                field: "itemType",
+                title: '<@spring.message "sampleaccount.itemtype"/>',//物料类别
+                width: 120
+            }, */
+            {
+                field: "sampleCode",
+                title: '<@spring.message "sampleaccount.samplecode"/>',
+                width: 120,
+                attributes: {style: "text-align:center"},
+                headerAttributes: {style: "text-align:center"},
+            },
+            {
+                field: "productType",
+                title: '<@spring.message "sampleaccount.productType"/>',//样品型号
+                width: 120,
+                template : function(dataItem) {
+					var v = dataItem.productType ? dataItem.productType : "";
+					$.each(HQM_RETURN_PRODUCT_TYPE,function(i, n) {
+						if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+							v = n.meaning;
+							return v;
+						}
+					});
+					return v;
+				},
+                
+            },
+            {
+                field: "productIssue",
+                title: '<@spring.message "产品系列"/>',//样品型号
+                width: 120,
+                template : function(dataItem) {
+					var v = dataItem.productIssue ? dataItem.productIssue : "";
+					$.each(HQM_RETURN_PRODUCT_ISSUE,function(i, n) {
+						if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+							v = n.meaning;
+							return v;
+						}
+					});
+					return v;
+				},
+                
+            },
+            {
+                field: "returnReason",
+                title: '<@spring.message "sampleaccount.returnReason"/>',//样品型号
+                width: 120,
+         
+                
+            },
+            {
+                field: "returnStatus",
+                title: '<@spring.message "sampleaccount.returnstatus"/>',//退回状态
+                width: 120,
+                template : function(dataItem) {
+					var v = dataItem.returnStatus ? dataItem.returnStatus : "";
+					$.each(HQM_H_SAMPLE_REVENIR_STATUS,function(i, n) {
+						if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+							v = n.meaning;
+							return v;
+						}
+					});
+					return v;
+				},
+            },
+            {
+                field: "sealingSamplePositionStatus",
+                title: '<@spring.message "sampleaccount.sealingsamplepositionstatus"/>',//在库状态
+                width: 120,
+                template : function(dataItem) {
+					var v = dataItem.sealingSamplePositionStatus ? dataItem.sealingSamplePositionStatus : "";
+					$.each(HQM_H_SAMPLE_POSITION_STATUS,function(i, n) {
+						if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+							v = n.meaning;
+							return v;
+						}
+					});
+					return v;
+				},
+            },
+            {
+                field: "analysisStatus",
+                title: '<@spring.message "分析状态"/>',//分析状态
+                width: 120,
+                template : function(dataItem) {
+					var v = dataItem.analysisStatus ? dataItem.analysisStatus : "";
+					$.each(	HQM_ANALYSIS_STATUS,function(i, n) {
+						if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+							v = n.meaning;
+							return v;
+						}
+					});
+					return v;
+				},
+            },
+            {
+                field: "processingMethod",
+                title: '<@spring.message "处理方式"/>',//处理方式
+                width: 120,
+                template : function(dataItem) {
+					var v = dataItem.processingMethod ? dataItem.processingMethod : "";
+					if(dataItem.machineComponent == "1"){
+						$.each(HQM_AFTERSALE_SAMPLE_SOLVE_WAY,function(i, n) {
+							if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+								v = n.meaning;
+								return v;
+							}
+						});
+					} else {
+						$.each(HQM_AFTERSALE_COMPONENT_SOLVE,function(i, n) {
+							if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+								v = n.meaning;
+								return v;
+							}
+						});
+					}
+					return v;
+				},
+            },
+            {
+                field: "reworkStatus",
+                title: '<@spring.message "返修状态"/>',//返修状态
+                width: 120,
+            },
+            {
+                field: "returnSupplierStatus",
+                title: '<@spring.message "退供应商状态"/>',//退供应商状态
+                width: 120,
+            },
+            {
+                field: "scrapStatus",
+                title: '<@spring.message "报废状态"/>',//报废状态
+                width: 120,
+                template : function(dataItem) {
+					var v = dataItem.scrapStatus ? dataItem.scrapStatus : "";
+					$.each(HQM_AFTERSALE_SAMPLE_SCRAP,function(i, n) {
+						if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+							v = n.meaning;
+							return v;
+						}
+					});
+					return v;
+				},
+            },
+            {
+                field: "createdName",
+                title: '<@spring.message "sampleaccount.createdname"/>',//登记人
+                width: 120
+            },
+            {
+                field: "dealer",
+                title: '<@spring.message "sampleaccount.dealer"/>',//经销商
+                width: 120
+            },
+            {
+                field: "supplierName",
+                title: '<@spring.message "sampleaccount.suppliername"/>',//供应商
+                width: 240
+            },
+            {
+                field: "sampleGiverName",
+                title: '<@spring.message "sampleaccount.samplegivername"/>',//接收人
+                width: 120
+            },
+            {
+                field: "sampleGiveDate",
+                title: '<@spring.message "sampleaccount.samplereturndate"/>',//接收时间/送样时间/退回时间
+                width: 180
+            },
+            
+            {
+                field: "productionDate",
+                title: '<@spring.message "sampleaccount.productiondate"/>',//生产时间
+                width: 180
+            },
+            {
+                field: "storageLocation",
+                title: '<@spring.message "sampleaccount.storagelocation"/>',//存储位置
+                width: 120
+            },
+            {
+                field: "analysisResult",
+                title: '<@spring.message "sampleaccount.analysisResult"/>',//存储位置
+                width: 120
+            },
+            {
+                field: "badComponent",
+                title: '<@spring.message "sampleaccount.badComponent"/>',//存储位置
+                width: 120
+            },
+            {
+                field: "badElement",
+                title: '<@spring.message "sampleaccount.badElement"/>',//存储位置
+                width: 120
+            },
+            {
+                field: "analystName",
+                title: '<@spring.message "sampleaccount.analystName"/>',//存储位置
+                width: 120
+            },
+            {
+                field: "dealResult",
+                title: '<@spring.message "sampleaccount.dealResult"/>',//存储位置
+                width: 120
+            },
+            {
+                field: "analysisDate",
+                title: '<@spring.message "sampleaccount.analysisDate"/>',//存储位置
+                width: 120
+            },
+            {
+                field: "scrappedFlag",
+                title: '<@spring.message "sampleaccount.scrappedflag"/>',//是否报废
+                width: 120,
+                template : function(dataItem) {
+					var v = dataItem.scrappedFlag ? dataItem.scrappedFlag : "";
+					$.each(yesNo,function(i, n) {
+						if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+							v = n.meaning;
+							return v;
+						}
+					});
+					return v;
+				},
+            },
+            {
+                field: "scrappedDate",
+                title: '<@spring.message "sampleaccount.scrappeddate"/>',//报废日期
+                width: 120
+            },
+            {
+                field: "applicantDocumentCode",
+                title: '<@spring.message "sampleaccount.applicantdocumentcode"/>',//报废单据
+                width: 120,
+                template : function(item){
+                	return '<a href="#" style="color:blue;text-decoration:underline;" onclick="scrap(\''+(item.scrappedIds?item.scrappedIds:'')+'\')">'+ (item.applicantDocumentCode?item.applicantDocumentCode:'') +'</a>';
+                }
+            },
+            {
+                field: "sampleUserName",
+                title: '<@spring.message "sampleaccount.sampleusername"/>',//领用人
+                width: 120
+            },
+            {
+                field: "sampleUseDate",
+                title: '<@spring.message "sampleaccount.sampleusedate"/>',//领用日期
+                width: 120
+            },
+                    {
+                field: "sampleUseDepartment",
+                title: '<@spring.message "sampleaccount.sampleusedepartment"/>',//领用部门
+                width: 120
+            },
+            {
+                field: "useDocumentCode",
+                title: '<@spring.message "sampleaccount.usedocumentcode"/>',//领用单据
+                width: 120,
+                template : function(item){
+                	return '<a href="#" style="color:blue;text-decoration:underline;" onclick="use(\''+(item.useIds?item.useIds:'')+'\')">'+ (item.useDocumentCode?item.useDocumentCode:'') +'</a>';
+                }
+            },
+                 
+        ],
+        editable: false
+    }).data('kendoGrid');
+</script>
+</body>
+</html>

@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<!--
+  description  物料发起界面
+  @author KOCDZX0 2020/03/23 1:48 PM 
+-->
+<#include "../include/header.html">
+<script type="text/javascript">
+    var BaseUrl = _basePath;
+    var existCer;
+
+    var viewModel = Hap.createGridViewModel(null,{
+        model:{},
+        closeWin:function(e) {
+            window.parent.$("#itemDiv").data("kendoWindow").close();
+        },
+        save:function(){
+            var validator = $("#mainForm").data("kendoValidator");
+            var data = viewModel.model.toJSON();
+            data.__status='add';
+            if(validator.validate()) {
+                Hap.request({
+                    url: '${base.contextPath}/hcs/certificate/itemStart',
+                    data: kendo.stringify(data),
+                    success: function (data) {
+                        kendo.ui.showInfoDialog({
+                            title:$l('hap.tip.info'),
+                            message:'<@spring.message "hap.tip.success"/>'
+                        })
+                        viewModel.closeWin();
+                    },
+                    error: function (data) {
+                        kendo.ui.showInfoDialog({
+                            title: $l('hap.error'),
+                            message: kendo.stringify(data.message)
+                        });
+                    },
+                    complete:function () {
+                        Hap.unblockUI();
+                    }
+                });
+            }
+
+        }
+    });
+
+    //判断元素是否存在于数组中，存在返回true，否则返回false
+    function IsInArray(arr,val){
+        var testStr=','+arr.join(",")+",";
+        return testStr.indexOf(","+val+",")!=-1;
+    }
+</script>
+
+<body>
+
+<div id="page-content">
+    <form id = "mainForm" style="paddiing-bottom:50px;padding-top:15px" class="form-horizontal" method="post" enctype="application/json;charset=UTF-8">
+        <div class="row">
+            <div class="col-sm-12">
+                <!-- 物料+ 供应商 -->
+                <div class="row" style="margin-top:15px">
+                    <div class="col-sm-6">
+                        <label class="col-sm-3 control-label"><@spring.message "asliqccontrol.item"/>:</label>
+                        <div class="col-sm-9">
+                            <input  required style="width:100%" name="itemId"
+                                   id="itemId"
+                                   data-bind="value:model.itemId" data-role="maskedtextbox" >
+                            <span data-for="itemId" class=".k-invalid-msg"></span>
+                            <input  name="itemCode" id="itemCode" data-bind="value:model.itemCode" data-role="maskedtextbox" style="display: none">
+                            <input  name="plantId" id="plantId" data-bind="value:model.plantId" data-role="maskedtextbox" style="display: none">
+                        </div>
+                        <script>
+                            $("#itemId").kendoLov($.extend(<@lov"HCS_CERTIFICATE_ITEM"/>, {
+                                select:function(e){
+                                    var item = e.item;
+                                    viewModel.model.set("itemCode",item.itemCode);
+                                    viewModel.model.set("plantId",item.plantId);
+                                }
+                            }));
+                        </script>
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="col-sm-3 control-label"><@spring.message "dimensionproblemdescription.supplier"/>:</label>
+                        <div class="col-sm-9">
+                            <input required id="supplierId" style="width:100%" name="supplierId"
+                                   data-bind="value:model.supplierId">
+                            <span data-for="supplierId" class=".k-invalid-msg"></span>
+                        </div>
+                        <script>
+                            $("#supplierId").kendoLov($.extend(<@lov"HCS_CERTIFICATE_SUPPLIER"/>, {
+                                select:function(e){
+                                    //校验，若已存在当前类型的证书，则不可选
+                                    var item = e.item;
+                                    var supplierId = "";
+                                    var itemId = "";
+                                    if(item.supplierId != null && viewModel.model.itemId != null){
+                                        supplierId = item.supplierId;
+                                        itemId = viewModel.model.itemId;
+                                        $.ajax({
+                                            url:BaseUrl+"/hcs/certificate/validateData?supplierId="+supplierId+'&itemId='+itemId,
+                                            type: 'POST',
+                                            dataType: 'json',
+                                            contentType: "application/json;charset=UTF-8",
+                                            success:function(data){
+                                                 existCer = data;//已存在的证书数组
+                                                if(existCer != null){
+                                                    if(IsInArray(existCer,"SFIEC")){
+                                                        $("#secondCategory").attr("disabled",'disabled').data('kendoCheckbox').enable(false);
+                                                    }else {
+                                                        $("#secondCategory").attr("disabled",false).data('kendoCheckbox').enable(true);
+                                                    }
+                                                    if(IsInArray(existCer,"SFUL")){
+                                                        $("#secondCategory1").attr("disabled",'disabled').data('kendoCheckbox').enable(false);
+                                                    }else{
+                                                        $("#secondCategory1").attr("disabled",false).data('kendoCheckbox').enable(true);
+                                                    }
+                                                    if(IsInArray(existCer,"ROHS")){
+                                                        $("#secondCategory2").attr("disabled",'disabled').data('kendoCheckbox').enable(false);
+                                                    }else {
+                                                        $("#secondCategory2").attr("disabled",false).data('kendoCheckbox').enable(true);
+                                                    }
+                                                    if(IsInArray(existCer,"REACH")){
+                                                        $("#secondCategory3").attr("disabled",'disabled').data('kendoCheckbox').enable(false);
+                                                    }else{
+                                                        $("#secondCategory3").attr("disabled",false).data('kendoCheckbox').enable(true);
+                                                    }
+                                                    if(IsInArray(existCer,"OTH")){
+                                                        $("#secondCategory4").attr("disabled",'disabled').data('kendoCheckbox').enable(false);
+                                                    }else{
+                                                        $("#secondCategory4").attr("disabled",false).data('kendoCheckbox').enable(true);
+                                                    }
+                                                    if(IsInArray(existCer,"WIN")){
+                                                        $("#secondCategory5").attr("disabled",'disabled').data('kendoCheckbox').enable(false);
+                                                    }else{
+                                                        $("#secondCategory5").attr("disabled",false).data('kendoCheckbox').enable(true);
+                                                    }
+                                                    if(IsInArray(existCer,"KEY")){
+                                                        $("#secondCategory6").attr("disabled",'disabled').data('kendoCheckbox').enable(false);
+                                                    }else{
+                                                        $("#secondCategory6").attr("disabled",false).data('kendoCheckbox').enable(true);
+                                                    }
+                                                }
+                                            }
+                                        })
+                                    }
+
+                                }
+                            }));
+                        </script>
+                    </div>
+                </div>
+
+                <!-- 产品证书 -->
+                <div class="row" style="margin-top:15px">
+                    <div class="col-sm-6">
+                        <label class="col-sm-3 control-label"><@spring.message "hcs.certificate.product"/>:</label>
+                        <div class="col-sm-9">
+                            <input id="secondCategory" style="margin-top:5px;"  name="checkbox" type="checkbox" data-bind="enabled: model.isEnabled,value:model.secondCategory"/>
+                            <input id="secondCategory1" style="margin-top:5px;margin-left: 20px"  name="checkbox" type="checkbox" data-bind="enabled: model.isEnabled,value:model.secondCategory1"/>
+                            <input id="secondCategory2" style="margin-top:5px;margin-left: 20px"  name="checkbox" type="checkbox" data-bind="enabled: model.isEnabled,value:model.secondCategory2"/>
+
+                        </div>
+
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="col-sm-9">
+                            <input id="secondCategory3" style="margin-top:5px;margin-left: -20px"  name="checkbox" type="checkbox" data-bind="enabled: model.isEnabled,value:model.secondCategory3"/>
+                            <input id="secondCategory4" style="margin-top:5px;margin-left: 20px" name="checkbox" type="checkbox" data-bind="enabled: model.isEnabled,value:model.secondCategory4"/>
+                        </div>
+                    </div>
+                    <script>
+                            $("#secondCategory").kendoCheckbox({
+                                type: 'boolean',
+                                label:"安规-IEC",
+                                checkedValue:'SFIEC',
+                                uncheckedValue:''
+                            });
+                            $("#secondCategory1").kendoCheckbox({
+                                type: 'boolean',
+                                label:"安规-UL",
+                                checkedValue:'SFUL',
+                                uncheckedValue:''
+                            });
+                            $("#secondCategory2").kendoCheckbox({
+                                type: 'boolean',
+                                label:"ROHS",
+                                checkedValue:'ROHS',
+                                uncheckedValue:''
+                            });
+                            $("#secondCategory3").kendoCheckbox({
+                                type: 'boolean',
+                                label:"REACH",
+                                checkedValue:'REACH',
+                                uncheckedValue:''
+                            });
+                            $("#secondCategory4").kendoCheckbox({
+                                type: 'boolean',
+                                label:"其他证书",
+                                checkedValue:'OTH',
+                                uncheckedValue:''
+                            });
+                        </script>
+                </div>
+                <!-- PPAP -->
+                <div class="row" style="margin-top:15px">
+                    <div class="col-sm-6">
+                        <label class="col-sm-3 control-label"><@spring.message "hcs.certificate.ppap"/>:</label>
+                        <div class="col-sm-9">
+                            <div style="width:100%;margin-top: 10px" id="levels"
+                                 data-bind="enabled: isEnabled,value:model.levels">
+                            </div>
+                        </div>
+                        <script>
+                            $("#levels").kendoRadio({
+                                layout: '',//vertical
+                                readonly: false,
+                                items: [{
+                                    label: '0级',
+                                    value: "0"
+                                }, {
+                                    label: '1级',
+                                    value: "1"
+                                },{
+                                    label: '2级',
+                                    value: "2"
+                                },{
+                                    label: '3级',
+                                    value: "3"
+                                }],
+                                change:function (e) {
+                                    //勾选版本必填
+                                    if(isNotEmpty(e.values)){
+                                        $("#typeValue").attr("required",true)
+                                    }
+                                }
+                            });
+                        </script>
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="col-sm-3 control-label"><@spring.message "entity.entityversion"/>:</label>
+                        <div class="col-sm-9">
+                            <input  style="width:100%" name="typeValue"
+                                    id="typeValue"
+                                    data-bind="value:model.typeValue" data-role="maskedtextbox" class="k-textbox" >
+                            <span data-for="typeValue" class=".k-invalid-msg"></span>
+                        </div>
+                    </div>
+                </div>
+                <!-- 人员 -->
+                <div class="row" style="margin-top:15px">
+                    <div class="col-sm-6">
+                        <label class="col-sm-3 control-label"><@spring.message "hcs.certificate.percertificate"/>:</label>
+                        <div class="col-sm-9">
+                            <input id="secondCategory5" style="margin-top:5px;"  name="checkbox" type="checkbox" data-bind="enabled: model.isEnabled,value:model.secondCategory5"/>
+                            <input id="secondCategory6" style="margin-top:5px;margin-left: 20px"  name="checkbox" type="checkbox" data-bind="enabled: model.isEnabled,value:model.secondCategory6"/>
+                        </div>
+                        <script>
+                            $("#secondCategory5").kendoCheckbox({
+                                type: 'boolean',
+                                label:"窗口认证",
+                                checkedValue:'WIN',
+                                uncheckedValue:''
+                            });
+                            $("#secondCategory6").kendoCheckbox({
+                                type: 'boolean',
+                                label:"关键岗位培训",
+                                checkedValue:'KEY',
+                                uncheckedValue:''
+                            });
+                        </script>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+    <div id="mainBottom" class="text-right" style="bottom:15px;position:fixed;float:left;padding-top:15px;border-top:1px solid #e8e1eb;
+		width:100%;background:#fff;margin-right:30px">
+        <span class="btn btn-primary" data-bind="click:save" type="submit" style="margin-right:5px">保存</span>
+        <span class="btn btn-default" data-bind="click:closeWin" type="button" style="margin-right:25px">取消</span>
+    </div>
+    <script>
+        kendo.bind($('#mainForm'), viewModel);
+        kendo.bind($('#mainBottom'), viewModel);
+    </script>
+    <script>
+        $('#mainForm').kendoValidator({
+            messages:{
+                required:'<@spring.message "hap.validation.notempty"/>'
+            },
+            invalidMessageType:"tooltip"
+        });
+    </script>
+</div>
+</body>
+</html>

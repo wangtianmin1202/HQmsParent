@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hcm.hcm_item_category.mapper.ItemCategoryMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hcm.hcm_item_category.dto.ItemCategory">
+        <result column="CATEGORY_ID" property="categoryId" jdbcType="DECIMAL" />
+        <result column="CATEGORY_CODE" property="categoryCode" jdbcType="VARCHAR" />
+        <result column="DESCRIPTION" property="description" jdbcType="VARCHAR" />
+        <result column="CATEGORY_SET_ID" property="categorySetId" jdbcType="DECIMAL" />
+        <result column="CATEGORY_SEGMENT1" property="categorySegment1" jdbcType="VARCHAR" />
+        <result column="CATEGORY_SEGMENT2" property="categorySegment2" jdbcType="VARCHAR" />
+        <result column="CATEGORY_SEGMENT3" property="categorySegment3" jdbcType="VARCHAR" />
+        <result column="CATEGORY_SEGMENT4" property="categorySegment4" jdbcType="VARCHAR" />
+        <result column="CATEGORY_SEGMENT5" property="categorySegment5" jdbcType="VARCHAR" />
+        <result column="CATEGORY_SEGMENT6" property="categorySegment6" jdbcType="VARCHAR" />
+        <result column="CATEGORY_SEGMENT7" property="categorySegment7" jdbcType="VARCHAR" />
+        <result column="CATEGORY_SEGMENT8" property="categorySegment8" jdbcType="VARCHAR" />
+        <result column="CATEGORY_SEGMENT9" property="categorySegment9" jdbcType="VARCHAR" />
+        <result column="CATEGORY_SEGMENT10" property="categorySegment10" jdbcType="VARCHAR" />
+        <result column="ENABLE_FLAG" property="enableFlag" jdbcType="VARCHAR" />
+        <result column="CID" property="cid" jdbcType="DECIMAL" />
+        <result column="INVENTORY_ITEM_ID" property="inventoryItemId" jdbcType="DECIMAL" />
+        <result column="ORGANIZATION_ID" property="organizationId" jdbcType="DECIMAL" />
+        <result column="PROGRAM_APPLICATION_ID" property="programApplicationId" jdbcType="DECIMAL" />
+        <result column="PROGRAM_UPDATE_DATE" property="programUpdateDate" jdbcType="DATE" />
+        <result column="WH_UPDATE_DATE" property="whUpdateDate" jdbcType="DATE" />
+        
+        <result column="PLANT_ID" property="plantId" jdbcType="DECIMAL" />
+        <result column="ITEM_ID" property="itemId" jdbcType="DECIMAL" />
+        <result column="PLANT_DESCRIPTIONS" property="plantDescriptions" jdbcType="VARCHAR" />
+        <result column="PLANT_CODE" property="plantCode" jdbcType="VARCHAR" />
+        <result column="ITEM_CODE" property="itemCode" jdbcType="VARCHAR" />
+        <result column="ITEM_DESCRIPTIONS" property="itemDescriptions" jdbcType="VARCHAR" />
+        
+    </resultMap>
+<select id="itemCategoryLov" resultMap="BaseResultMap" parameterType="com.hand.hcm.hcm_item_category.dto.ItemCategory">
+	SELECT t.category_id,
+       t.category_code,
+       t.description,
+       t.category_set_id,
+       t.category_segment1,
+       t.category_segment2,
+       t.category_segment3
+  FROM hcm_item_category t
+ WHERE 1 = 1
+  <if test="categoryCode!=null">
+  	AND	t.category_code = #{categoryCode}
+  </if>
+  <if test="description!=null">
+  	AND	t.description = #{description}
+  </if>
+  
+</select>
+
+<select id="getIdByCode" resultType="java.lang.Float">
+SELECT t.category_id
+  FROM hcm_item_category t
+ WHERE 1 = 1
+   AND rownum = 1
+   AND t.category_code = #{categoryCode}
+</select>
+
+</mapper>

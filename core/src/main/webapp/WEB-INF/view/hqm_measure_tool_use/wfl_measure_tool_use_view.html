@@ -1,0 +1,244 @@
+<#include "../activiti/approve_header.html">
+
+
+<script type="text/javascript">
+	var BaseUrl = _basePath;
+	var measureToolUseId = '${RequestParameters.measureToolUseId!0}';
+	var processInstId = '${RequestParameters.processInstanceId!0}';
+    var viewModel = Hap.createGridViewModel(null,{
+    	model:{
+    		isCanEditor:true
+    	},
+    	closeWin:function(e) {
+    		window.parent.$("#viewWindow").data("kendoWindow").close();
+    	},
+    	queryInfo:function(){
+    		if(measureToolUseId != 0){
+    			$.ajax({
+    				url:BaseUrl+"/hqm/measure/tool/use/queryByCondition?measureToolUseId="+measureToolUseId,
+    				success:function(data){
+    					var a0 = data.rows[0] || {};
+    					for(var k in a0){
+    						viewModel.model.set(k,a0[k]);
+    					}
+    				}
+    			})
+    		}
+    	},
+    	createProcessInstance:function(){
+    		var data = viewModel.model.toJSON();
+    		data.__status = "update";
+    		
+    		var validator = $("#mainForm").data("kendoValidator");
+    		if(validator.validate()) {
+    			Hap.blockUI();
+    			Hap.request({
+    				url: BaseUrl + "/hqm/measure/tool/use/createProcessInstance",
+    				data: kendo.stringify(data),
+    				success:function(data){
+    					if(data.success){
+    						Hap.unblockUI();
+    						viewModel.closeWin();
+    					}
+    				}
+    			})
+    		}
+    	},
+    	save:function(){
+    		var data = viewModel.model.toJSON();
+    		data.__status = "update";
+    		
+    		var validator = $("#mainForm").data("kendoValidator");
+    		if(validator.validate()) {
+    			Hap.blockUI();
+    			Hap.request({
+    				url: BaseUrl + "/hqm/measure/tool/use/add",
+    				data: kendo.stringify(data),
+    				success:function(data){
+    					if(data.success){
+    						Hap.unblockUI();
+    						viewModel.closeWin();
+    					}
+    				}
+    			})
+    		}
+    	},
+    	/* getCodeRule:function(code){
+    		var result = null;
+    		$.ajax({
+    			url:_basePath + "/hqm/measure/tool/repair/getCode?code="+code,
+    			async:false,
+    			success:function(data){
+    				result = data;
+    			}
+    		});
+    		return result;
+    	}, */
+    	
+    });
+    //设置领用单号
+    //viewModel.model.set("useNumber", viewModel.getCodeRule('MEASURE_TOOL_USE_NUMBER'));
+    viewModel.queryInfo();
+</script>
+
+<!-- <body> -->
+
+<div id="page-content">
+	<form id = "mainForm" style="paddiing-bottom:50px;padding-top:15px" class="form-horizontal" method="post" enctype="application/json;charset=UTF-8">
+		<div class="row">
+			<div class="col-sm-12">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-2 control-label">维修单号</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="useNumber"  data-role="maskedtextbox" class="k-textbox"
+								data-bind="value:model.useNumber" disabled>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-sm-12">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-2 control-label">量具编号</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="measureToolId"  data-label="量具编号" required
+								data-bind="enabled:model.isCanEditor,value:model.measureToolId,text:model.measureToolNum">
+						</div>
+						<script>
+							//选择量具
+							$("#measureToolId").kendoLov($.extend(<@lov "LOV_HQM_MEASURE_TOOL_USE"/>,{
+								change:function(e){
+									//viewModel.model.set("measureToolId",e.sender._dataItem.measureToolId);
+									viewModel.model.set("descriptions",e.sender._dataItem.descriptions);
+									viewModel.model.set("measuringRange",e.sender._dataItem.measuringRange);
+									viewModel.model.set("measureToolType",e.sender._dataItem.measureToolType);
+								},
+							}));
+						</script>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-sm-12">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-2 control-label">量具名称</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="descriptions"  data-role="maskedtextbox" class="k-textbox"
+								data-bind="value:model.descriptions" disabled>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-sm-12">
+					<div class="form-group">
+						<div class="col-sm-12">
+							<label class="col-sm-2 control-label">规格</label>
+							<div class="col-sm-8">
+								<input style="width:100%" id="measuringRange"  data-role="maskedtextbox" class="k-textbox"
+									data-bind="value:model.measuringRange" disabled>
+							</div>
+						</div>
+					</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-sm-12">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-2 control-label">型号</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="measureToolType"  data-role="maskedtextbox" class="k-textbox"
+								data-bind="value:model.measureToolType" disabled>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-sm-12">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-2 control-label">外借供应商</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="borrowedSupplier"  data-label="外借供应商" 
+								data-bind="enabled:model.isCanEditor,value:model.borrowedSupplier,text:model.borrowedSupplierName" >
+						</div>
+						<script>
+	    	    	 		kendo.bind($("#borrowedSupplier"),viewModel);
+		                	$("#borrowedSupplier").kendoLov($.extend
+		                	    (<@lov"LOV_SUPPLIER_SRM"/>, {
+		                	        /* textField: 'supplierName',
+		                	        valueField:'supplierId',
+		                	        query: function(e){
+		                	        	//e.param['supplierId'] = supplierId;
+		                	        } */
+		                	}));
+				        </script> 
+					</div>
+				</div>
+			</div> 
+		</div>
+		<div class="row">
+			<div class="col-sm-12">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-2 control-label">申请日期</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="applicationDate"  data-role="datepicker" class="k-datepicker"
+								data-bind="value:model.applicationDate" disabled>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-sm-12">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-2 control-label">归还日期</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="returnDate"  data-role="datepicker" class="k-datepicker"
+								data-bind="value:model.returnDate" disabled>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</form>
+	<div style="clear:both">
+		<div id="grid"></div>
+	</div>
+	<div id="mainBottom" class="text-right" style="bottom:15px;position:fixed;float:left;padding-top:15px;border-top:1px solid #e8e1eb;
+		width:100%;background:#fff;margin-right:30px">
+		<span id="btn-save" class="btn btn-primary" data-bind="click:save" type="submit" style="margin-right:5px">保存</span>
+		<span id="btn-submit" class="btn btn-primary" data-bind="click:createProcessInstance" type="submit" style="margin-right:5px">提交审批</span>
+		<span class="btn btn-default" data-bind="click:closeWin" type="button" style="margin-right:25px">取消</span>
+	</div>
+	<script>
+		kendo.bind($('#mainForm'), viewModel);
+		kendo.bind($('#mainBottom'), viewModel);
+		if(processInstId != "null"){
+			$('#btn-save').hide();
+			$('#btn-submit').hide();
+			viewModel.model.set("isCanEditor",false);
+		}
+	</script>
+	<script>
+		$('#mainForm').kendoValidator({
+			messages:{
+				required:'<@spring.message "hap.validation.notempty"/>'
+			},
+			invalidMessageType:"tooltip"
+		});
+	</script>
+</div>
+<#include "../activiti/approve_footer.html">
+<!-- </body> -->
+</html>

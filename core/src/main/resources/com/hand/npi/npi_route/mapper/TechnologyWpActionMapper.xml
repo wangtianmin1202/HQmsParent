@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.npi.npi_route.mapper.TechnologyWpActionMapper">
+    <resultMap id="BaseResultMap" type="com.hand.npi.npi_route.dto.TechnologyWpAction">
+        <result column="WP_AUX_ID" property="wpAuxId" jdbcType="DECIMAL" />
+        <result column="AUX_ACTION_ID" property="auxActionId" jdbcType="DECIMAL" />
+        <result column="ACTION_NAME" property="actionName" jdbcType="VARCHAR" />
+        <result column="MATERIEL_NUMBER_NAME" property="materielNumberName" jdbcType="VARCHAR" />
+        <result column="MATERIEL_NUMBER" property="materielNumber" jdbcType="VARCHAR" />
+        <result column="MAT_ATTRIBUTE" property="matAttribute" jdbcType="VARCHAR" />
+        <result column="MAT_TYPE" property="matType" jdbcType="VARCHAR" />
+        <result column="QTY" property="qty" jdbcType="DECIMAL" />
+        <result column="ASSEMBLING_DETAIL" property="assemblingDetail" jdbcType="VARCHAR" />
+        <result column="MATTER_WORK_HOURS" property="matterWorkHours" jdbcType="DECIMAL" />
+        <result column="STANDARD_WORKING_HOURS" property="standardWorkingHours" jdbcType="DECIMAL" />
+        <result column="MEASUREMENT_METHOD" property="measurementMethod" jdbcType="VARCHAR" />
+        <result column="RED" property="red" jdbcType="VARCHAR" />
+        <result column="ROUTE_WP_REF_ID" property="routeWpRefId" jdbcType="DECIMAL" />
+        <result column="ITEM_ID" property="itemId" jdbcType="DECIMAL" />
+        <result column="ITEM_DETAIL_VERSION" property="itemDetailVersion" jdbcType="VARCHAR" />
+    </resultMap>
+
+
+	<resultMap id="ItemResultMap" type="com.hand.npi.npi_technology.dto.EbomDetail">
+        <result column="ITEM_CODE" property="itemCode" jdbcType="VARCHAR" />
+        <result column="DESCRIPTIONS" property="itemDescriptions" jdbcType="VARCHAR" />
+    </resultMap>
+    
+    
+    <resultMap id="AttrResultMap" type="com.hand.npi.npi_technology.dto.TechnologySparePartDetails">
+        <result column="SPARE_PART_DETAILS_ID" property="sparePartDetailsId" jdbcType="DECIMAL" />
+        <result column="DETAILS_CODE" property="detailsCode" jdbcType="VARCHAR" />
+        <result column="DETAILS_NAME" property="detailsName" jdbcType="VARCHAR" />
+    </resultMap>
+    
+    <resultMap id="SpecResultMap" type="com.hand.npi.npi_technology.dto.TechnologySpec">
+        <result column="SPEC_ID" property="specId" jdbcType="DECIMAL" />
+        <result column="stand_action_id" property="standActionId" jdbcType="VARCHAR" />
+    </resultMap>
+
+  <select id="queryWpactionList" resultMap="BaseResultMap"
+      parameterType="com.hand.npi.npi_route.dto.TechnologyWpAction">
+	  select nvl(au.action_name,st.action_name) action_name,wp.* from NPI_TECHNOLOGY_WP_ACTION wp left join
+	  npi_technology_auxiliary_action au on wp.aux_action_id = au.AUXILIARY_ACTION_ID
+	  left join npi_technology_standard_action st on wp.aux_action_id = st.standard_action_id
+      <where>
+              <if test="workingProcedureId!=null">
+                  AND wp.route_wp_ref_id=#{workingProcedureId}
+              </if>
+          </where>
+    </select>
+    
+  <select id="queryItemLov" resultMap="ItemResultMap" parameterType="com.hand.hcm.hcm_item_b.dto.ItemB">
+	  select t.item_id,t.part_number,t.part_description,t.item_version from npi_ebom_detail t
+      	<where>
+              <if test=" itemCode !=null">
+                  AND t.part_number=#{itemCode}
+              </if>
+              <if test=" itemDescriptions !=null">
+                  AND t.part_description LIKE concat('%',concat(#{itemDescriptions},'%'))
+              </if>
+		</where>
+    </select>
+    
+   <select id="getMatAttrByMat" parameterType="com.hand.npi.npi_route.dto.TechnologyWpAction"
+		resultMap="AttrResultMap" >
+			select t2.spare_part_details_id,t2.details_code,t2.details_name from hcm_item_category_settings t1
+			  join NPI_TECHNOLOGY_SPARE_PART_DETAILS t2
+				on t1.category_third_id = t2.spare_part_details_id
+			where t1.item_id = #{itemId}
+   </select>
+   
+   <select id="getMatAttrByComp" parameterType="com.hand.npi.npi_route.dto.TechnologyWpAction"
+		resultMap="AttrResultMap">
+	   select t2.spare_part_details_id,t2.details_code,t2.details_name from npi_compose_product_materiel t 
+        join npi_compose_product_materiel_attr t1
+        on t.ass_mat_ref_id=t1.ass_mat_ref_id
+      join NPI_TECHNOLOGY_SPARE_PART_DETAILS t2
+        on t1.mat_attr_id = t2.spare_part_details_id
+      join  npi_compose_product t3 on t.ass_item_id = t3.ass_item_id
+      where t3.ass_item_id = #{itemId}
+   </select>
+   
+   <select id="getStrActionNumberByMat" resultMap="SpecResultMap">
+   	select t1.stand_action_id,b.spec_id from (select t.spec_id,listagg (t.materiel_attribute_number, ',')
+	  WITHIN GROUP (ORDER BY t.materiel_attribute_number asc) names 
+	  from NPI_TECHNOLOGY_SPEC_MAT_detail T 
+	  group by t.spec_id ) b join NPI_TECHNOLOGY_SPEC t1 on
+	  b.spec_id=t1.spec_id
+	  where b.names = #{value}
+   </select>
+   
+    <select id="queryData" resultMap="BaseResultMap">
+		select t3.WP_AUX_ID,t3.AUX_ACTION_ID,t3.ITEM_ID,t3.MAT_ATTRIBUTE,t3.mat_type,t3.QTY,t3.ASSEMBLING_DETAIL,
+		  t3.MATTER_WORK_HOURS,t3.STANDARD_WORKING_HOURS,t3.MEASUREMENT_METHOD, c.red,t4.ACTION_NAME,c.PART_DESCRIPTION as MATERIEL_NUMBER_NAME
+		from Npi_Technology_Wp_Action t3
+		  left join
+		  (select t2.ITEM_ID,t2.ITEM_VERSION,t2.PART_DESCRIPTION, 'N' as red
+		   from NPI_EBOM_MAIN t1
+			 join (select t.SKU_ID, t.e_bom_version
+				   from NPI_TECHNOLOGY_ROUTE t
+				   where t.route_id = #{routeId}) b
+			   on t1.ITEM_ID = b.SKU_ID
+				  and t1.ITEM_VERSION = b.e_bom_version
+			 join Npi_Ebom_Detail t2
+			   on t1.sku_id = t2.sku_id) c
+			on t3.ITEM_ID = c.ITEM_ID
+			and t3.ITEM_DETAIL_VERSION = c.ITEM_VERSION
+		  join NPI_TECHNOLOGY_AUXILIARY_ACTION t4
+			on t3.AUX_ACTION_ID = t4.AUXILIARY_ACTION_ID
+		where t3.mat_type = 'mat'
+			  and t3.ROUTE_WP_REF_ID = #{routeWpRefId}
+		union all
+		select t3.WP_AUX_ID,t3.AUX_ACTION_ID,t3.ITEM_ID,t3.MAT_ATTRIBUTE,t3.mat_type,t3.QTY,t3.ASSEMBLING_DETAIL,
+		  t3.MATTER_WORK_HOURS,t3.STANDARD_WORKING_HOURS,t3.MEASUREMENT_METHOD, 'N' as red,t4.ACTION_NAME,t5.ASS_ITEM_NAME as MATERIEL_NUMBER_NAME
+		from Npi_Technology_Wp_Action t3
+		  join NPI_TECHNOLOGY_AUXILIARY_ACTION t4
+			on t3.AUX_ACTION_ID = t4.auxiliary_action_id
+		  join NPI_COMPOSE_PRODUCT t5
+		    on t3.ITEM_ID = t5.ASS_ITEM_ID
+		where t3.mat_type = 'com'
+			  and t3.ROUTE_WP_REF_ID = #{routeWpRefId}
+		union all
+		select t3.WP_STD_ACT_DETAIL_ID as WP_AUX_ID,t3.STANDARD_ACTION_ID as AUXILIARY_ACTION_ID,
+					 0 as ITEM_ID, '' as MAT_ATTRIBUTE,'' as mat_type,0 as QTY,'' as ASSEMBLING_DETAIL,
+		  t3.MATTER_WORK_HOURS,t3.STANDARD_WORKING_HOURS,
+					 '' as MEASUREMENT_METHOD, 'N' as red,t4.ACTION_NAME , '' as MATERIEL_NUMBER_NAME
+		from NPI_WP_STD_ACT_DETAIL t3
+		  join NPI_TECHNOLOGY_STANDARD_ACTION t4
+			on t3.STANDARD_ACTION_ID = t4.STANDARD_ACTION_ID
+		where  t3.ROUTE_WP_REF_ID = #{routeWpRefId}
+   </select>
+   
+   
+   <select id="queryMaterielInfo" resultType="java.util.HashMap">
+ 		select listagg(t1.details_name, ',') WITHIN GROUP(ORDER BY t.WP_AUX_ID asc) materielName,
+            listagg(t.MAT_ATTR_CODE, ',') WITHIN GROUP(ORDER BY t.WP_AUX_ID asc) materielIds
+  		from NPI_TECHNOLOGY_WP_MATERIEL_REF T
+  			join NPI_TECHNOLOGY_SPARE_PART_DETAILS t1
+    	on t.MAT_ATTR_CODE = t1.spare_part_details_id
+   		where t.WP_AUX_ID = #{wpAuxId}
+ 		group by t.WP_AUX_ID
+   </select>
+   
+   <select id="selectInfo" resultMap="BaseResultMap">
+    select t.*,t2.action_name, t1.part_description as MATERIEL_NUMBER_NAME,PART_NUMBER as MATERIEL_NUMBER
+      from NPI_TECHNOLOGY_WP_ACTION t
+    join npi_ebom_detail t1
+      on t.ITEM_ID = t1.item_id
+      and t.item_detail_version = t1.item_version
+    join NPI_TECHNOLOGY_AUXILIARY_ACTION t2
+      on t.AUX_ACTION_ID = t2.AUXILIARY_ACTION_ID
+	    where t.route_wp_ref_id = #{routeWpRefId}
+	           and t.mat_type = 'mat'
+	union all
+	select t.*,t2.action_name, t1.ass_item_name as MATERIEL_NUMBER_NAME,t1.ASS_ITEM_NAME as MATERIEL_NUMBER
+      from NPI_TECHNOLOGY_WP_ACTION t
+    join NPI_COMPOSE_PRODUCT t1
+      on t.item_id = t1.ASS_ITEM_ID
+    join NPI_TECHNOLOGY_AUXILIARY_ACTION t2
+      on t.aux_action_id = t2.auxiliary_action_id
+	    where t.route_wp_ref_id = #{routeWpRefId}
+	           and t.mat_type = 'com'
+   </select>
+
+</mapper>

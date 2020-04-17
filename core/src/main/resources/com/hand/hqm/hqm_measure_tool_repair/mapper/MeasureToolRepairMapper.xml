@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_measure_tool_repair.mapper.MeasureToolRepairMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_measure_tool_repair.dto.MeasureToolRepair">
+        <result column="MEASURE_TOOL_REPAIR_ID" property="measureToolRepairId" jdbcType="DECIMAL" />
+        <result column="MEASURE_TOOL_ID" property="measureToolId" jdbcType="DECIMAL" />
+        <result column="REPAIR_NUMBER" property="repairNumber" jdbcType="VARCHAR" />
+        <result column="REPAIR_START_TIME" property="repairStartTime" jdbcType="DATE" />
+        <result column="REPAIR_END_TIME" property="repairEndTime" jdbcType="DATE" />
+        <result column="BUSINESS_KEY" property="businessKey" jdbcType="VARCHAR" />
+        <result column="PROCESS_START_TIME" property="processStartTime" jdbcType="DATE" />
+        <result column="PROCESS_END_TIME" property="processEndTime" jdbcType="DATE" />
+        <result column="PROCESS_INST_ID" property="processInstId" jdbcType="VARCHAR" />
+        <result column="PROCESS_STATUS" property="processStatus" jdbcType="VARCHAR" />
+        <result column="measure_tool_num" property="measureToolNum" jdbcType="VARCHAR" />
+        <result column="descriptions" property="descriptions" jdbcType="VARCHAR" />
+        <result column="measure_tool_type" property="measureToolType" jdbcType="VARCHAR" />
+        <result column="measuring_range" property="measuringRange" jdbcType="VARCHAR" />
+    </resultMap>
+
+	<select id="queryByCondition" resultMap="BaseResultMap" parameterType="com.hand.hqm.hqm_measure_tool_repair.dto.MeasureToolRepair">
+		select 
+			hmtr.MEASURE_TOOL_REPAIR_ID,
+			hmtr.REPAIR_NUMBER,
+			hmtr.MEASURE_TOOL_ID,
+			hmtr.REPAIR_START_TIME,
+			hmtr.REPAIR_END_TIME,
+			hmt.measure_tool_num as measure_tool_num,
+			hmt.descriptions as descriptions,
+			hmt.measuring_range as measuring_range,
+			hmt.measure_tool_type as measure_tool_type
+		from hqm_measure_tool_repair hmtr
+		left join hqm_measure_tool hmt on hmt.MEASURE_TOOL_ID = hmtr.MEASURE_TOOL_ID
+		where 1=1
+		<if test="measureToolRepairId != null and measureToolRepairId != ''">
+			and hmtr.MEASURE_TOOL_REPAIR_ID = #{measureToolRepairId}
+		</if>
+		<if test="repairNumber != null and repairNumber != ''">
+			and hmtr.REPAIR_NUMBER like concat('%',concat(#{repairNumber},'%'))
+		</if>
+		<if test="measureToolNum != null and measureToolNum != ''">
+			and hmt.measure_tool_num like concat('%',concat(#{measureToolNum},'%'))
+		</if>
+		<if test="measureToolType != null and measureToolType != ''">
+			and hmt.measure_tool_type like concat('%',concat(#{measureToolType},'%'))
+		</if>
+		order by hmtr.MEASURE_TOOL_REPAIR_ID desc
+	</select>
+
+</mapper>

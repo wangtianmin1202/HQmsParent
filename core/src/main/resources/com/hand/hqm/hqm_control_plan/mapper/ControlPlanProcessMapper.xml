@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_control_plan.mapper.ControlPlanProcessMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_control_plan.dto.ControlPlanProcess">
+        <result column="PROCESS_ID" property="processId" jdbcType="DECIMAL" />
+        <result column="PROCESS_NAME" property="processName" jdbcType="VARCHAR" />
+    </resultMap>
+
+	<select id="processNamecount" parameterType="string" resultMap="BaseResultMap">
+		select * from HQM_CONTROL_PLAN_PROCESS where rownum = 1 and process_name=#{processName}
+	</select>
+</mapper>

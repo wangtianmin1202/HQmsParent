@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<!--
+  description  制程数据录入界面
+  @author KOCDZX0 2020/03/19 2:28 PM 
+-->
+<#include "../include/header.html">
+<script type="text/javascript">
+    var BaseUrl = _basePath;
+    var viewModelNG =Hap.createGridViewModel("#grid");
+
+
+    var viewModel = Hap.createGridViewModel(null,{
+        model:{},
+        closeWin:function(e) {
+            window.parent.$("#div1").data("kendoWindow").close();
+        },
+        save:function(){
+            var validator = $("#mainForm").data("kendoValidator");
+            if(validator.validate()) {
+                viewModel.model.__status = 'add';
+                Hap.submitForm({
+                    url: '${base.contextPath}/hcs/item/station/produce/insert',
+                    formModel: viewModel.model,
+                    grid: {"lineList": $("#grid")},
+                    success: function (data) {
+                        kendo.ui.showInfoDialog({
+                            title:$l('hap.tip.info'),
+                            message:'<@spring.message "hap.tip.success"/>'
+                        })
+                        viewModel.closeWin();
+                    },
+                    error: function (data) {
+                        kendo.ui.showInfoDialog({
+                            title: $l('hap.error'),
+                            message: kendo.stringify(data.message)
+                        });
+                    },
+                    complete:function () {
+                        Hap.unblockUI();
+                    }
+                });
+            }
+
+        }
+    });
+</script>
+
+<body>
+
+<div id="page-content">
+    <form id = "mainForm" style="paddiing-bottom:50px;padding-top:15px" class="form-horizontal" method="post" enctype="application/json;charset=UTF-8">
+        <div class="row">
+            <div class="col-sm-12">
+                <!-- 供应商编码+ 供应商名称 -->
+                <div class="row" style="margin-top:15px">
+                    <div class="col-sm-6">
+                        <label class="col-sm-3 control-label"><@spring.message "asl.suppliercode"/>:</label>
+                        <div class="col-sm-9">
+                            <input required id="itemStationId" style="width:100%" name="itemStationId"
+                                   data-bind="value:model.itemStationId,text:model.supplierCode">
+                            <span data-for="itemStationId" class=".k-invalid-msg"></span>
+                        </div>
+                        <script>
+                            $("#itemStationId").kendoLov($.extend(<@lov"PRODUCE_STATION_ITEM_SUPPLIER"/>, {
+                                select:function(e){
+                                    viewModel.model.set("supplierName",e.item.supplierName);
+                                    viewModel.model.set("itemDescription",e.item.descriptions);
+                                    viewModel.model.set("itemCode",e.item.itemCode);
+                                    viewModel.model.set("stationName",e.item.stationName);
+                                }
+                            }));
+                        </script>
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="col-sm-3 control-label"><@spring.message "asl.suppliername"/>:</label>
+                        <div class="col-sm-9">
+                            <input disabled style="width:100%" name="supplierName"
+                                   id="supplierName"
+                                   data-bind="value:model.supplierName" data-role="maskedtextbox" >
+                            <span data-for="supplierName" class="k-state-disabled"></span>
+                        </div>
+                    </div>
+                </div>
+                <!-- 物料编码+ 物料名称 -->
+                <div class="row" style="margin-top:15px">
+                    <div class="col-sm-6">
+                        <label class="col-sm-3 control-label"><@spring.message "settlement.itemcode"/>:</label>
+                        <div class="col-sm-9">
+                            <input disabled style="width:100%" name="itemCode"
+                                   id="itemCode"
+                                   data-bind="value:model.itemCode" data-role="maskedtextbox" >
+                            <span data-for="itemCode" class="k-state-disabled"></span>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="col-sm-3 control-label"><@spring.message "settlement.itemname"/>:</label>
+                        <div class="col-sm-9">
+                            <input disabled style="width:100%" name="itemDescriptions"
+                                   id="itemDescription"
+                                   data-bind="value:model.itemDescription" data-role="maskedtextbox" >
+                            <span data-for="itemDescription" class="k-state-disabled"></span>
+                        </div>
+                    </div>
+                </div>
+                <!--重点工位-->
+                <div class="row" style="margin-top:15px">
+                    <div class="col-sm-6">
+                        <label class="col-sm-3 control-label"><@spring.message "hcs.station.name"/>:</label>
+                        <div class="col-sm-9">
+                            <input  disabled style="width:261%" name="stationName"
+                                    id="stationName"
+                                    data-bind="value:model.stationName" data-role="maskedtextbox" >
+                            <span data-for="stationName" class="k-state-disabled" ></span>
+                        </div>
+                    </div>
+                </div>
+                <!-- 制程编号+ 生产日期 -->
+                <div class="row" style="margin-top:15px">
+                    <div class="col-sm-6">
+                        <label class="col-sm-3 control-label"><@spring.message "hcs.produce.producenumber"/>:</label>
+                        <div class="col-sm-9">
+                            <input  style="width:100%" name="produceNumber"
+                                    id="produceNumber"
+                                    data-bind="value:model.produceNumber" data-role="maskedtextbox" >
+                            <span data-for="produceNumber" ></span>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="col-sm-3 control-label"><@spring.message "hcs.produce.productdate"/>:</label>
+                        <div class="col-sm-9">
+                            <input  required style="width:100%" name="productDate"
+                                    id="productDate"
+                                    data-bind="value:model.productDate" data-role="maskedtextbox" >
+                            <span data-for="productDate" class=".k-invalid-msg"></span>
+                        </div>
+                        <script type="text/javascript">
+                            $("#productDate").kendoDatePicker({
+                                format: "yyyy-MM-dd",
+                                change: function() {
+                                    viewModel.model.productDate = this.value().format("yyyy-MM-dd");
+                                }
+                            });
+                        </script>
+                    </div>
+                </div>
+                <!-- 生产批次+ 生产版本 -->
+                <div class="row" style="margin-top:15px">
+                    <div class="col-sm-6">
+                        <label class="col-sm-3 control-label"><@spring.message "hcs.produce.productlots"/>:</label>
+                        <div class="col-sm-9">
+                            <input  style="width:100%" name="productLots"
+                                    id="productLots"
+                                    data-bind="value:model.productLots" data-role="maskedtextbox" >
+                            <span data-for="productLots" ></span>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="col-sm-3 control-label"><@spring.message "hcs.produce.productversion"/>:</label>
+                        <div class="col-sm-9">
+                            <input  style="width:100%" name="productVersion"
+                                    id="productVersion"
+                                    data-bind="value:model.productVersion" data-role="maskedtextbox" >
+                            <span data-for="productVersion"></span>
+                        </div>
+                    </div>
+                </div>
+                <!-- 生产数量+ 不合格数量 -->
+                <div class="row" style="margin-top:15px">
+                    <div class="col-sm-6">
+                        <label class="col-sm-3 control-label"><@spring.message "hcs.produce.productqty"/>:</label>
+                        <div class="col-sm-9">
+                            <input required style="width:100%" name="productQty"
+                                    id="productQty"
+                                    data-bind="value:model.productQty" data-role="maskedtextbox" >
+                            <span data-for="productQty" class=".k-invalid-msg"></span>
+                        </div>
+                        <script type="text/javascript">
+                            $("#productQty").kendoNumericTextBox({
+                                min:0,
+                                format:"0"
+                            });
+                        </script>
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="col-sm-3 control-label"><@spring.message "hcs.produce.ngqty"/>:</label>
+                        <div class="col-sm-9">
+                            <input required style="width:100%" name="ngQty"
+                                    id="ngQty"
+                                    data-bind="value:model.ngQty" data-role="maskedtextbox" >
+                            <span data-for="ngQty" class=".k-invalid-msg"></span>
+                            <script type="text/javascript">
+                                $("#ngQty").kendoNumericTextBox({
+                                    min:0,
+                                    format:"0"
+                                });
+                            </script>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </form>
+    <div class="pull-left" id="toolbar-btn" style="padding-bottom:10px;">
+        <span id="add" type="button" class="btn btn-primary" style="float:left;margin-right:5px" data-bind="click:create"><i class="fa fa-plus-square" style="margin-right:3px;"></i>新增NG项</span>
+        <span id="remove" class="btn btn-danger" style="float:left;margin-right:5px;" data-bind="click:remove"><i class="" style="margin-right:5px;"></i><@spring.message "hap.delete"/></span>
+    </div>
+    <script>kendo.bind($('#toolbar-btn'), viewModelNG);</script>
+    <div style="clear:both">
+        <div id="grid"></div>
+    </div>
+    <div id="mainBottom" class="text-right" style="bottom:15px;position:fixed;float:left;padding-top:15px;border-top:1px solid #e8e1eb;
+		width:100%;background:#fff;margin-right:30px">
+        <span class="btn btn-primary" data-bind="click:save" type="submit" style="margin-right:5px">保存</span>
+        <span class="btn btn-default" data-bind="click:closeWin" type="button" style="margin-right:25px">取消</span>
+    </div>
+    <script>
+        kendo.bind($('#mainForm'), viewModel);
+        kendo.bind($('#mainBottom'), viewModel);
+    </script>
+    <script>
+        $('#mainForm').kendoValidator({
+            messages:{
+                required:'<@spring.message "hap.validation.notempty"/>'
+            },
+            invalidMessageType:"tooltip"
+        });
+    </script>
+</div>
+<script>
+
+    var dataSource = new kendo.data.DataSource({
+        transport: {
+            read: {
+                url: BaseUrl + "/hcs/item/station/produce/line/listQuery?produceId="+0,
+                type: "POST",
+                dataType: "json"
+            },
+            update: {
+                url: BaseUrl + "/hcs/item/station/produce/line/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            destroy: {
+                url: BaseUrl + "/hcs/item/station/produce/line/remove",
+                type: "POST",
+                contentType: "application/json"
+            },
+            create: {
+                url: BaseUrl + "/hcs/item/station/produce/line/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            parameterMap: function (options, type) {
+                if (type !== "read" && options.models) {
+                    var datas = Hap.prepareSubmitParameter(options, type)
+                    return kendo.stringify(datas);
+                } else if (type === "read") {
+                    return Hap.prepareQueryParameter(viewModelNG.model.toJSON(), options)
+                }
+            }
+        },
+        batch: true,
+        serverPaging: true,
+        pageSize: 10,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+                id: "produceLineId",
+                fields: {
+                    ngQty:{type:"number"},
+                    lineNumber:{type:"number",validation:{min:10}}
+                }
+            }
+        }
+    });
+
+    //制程监控主数据展示
+    var grid = $("#grid").kendoGrid({
+        dataSource: dataSource,
+        resizable: true,
+        scrollable: true,
+        navigatable: false,
+        selectable: 'multiple, rowbox',
+        dataBound: function () {
+            if (parent.autoResizeIframe) {
+                parent.autoResizeIframe('${RequestParameters.functionCode!}')
+            }
+        },
+        columns: [
+            {
+                field: "lineNumber",
+                title: '<@spring.message "hcs.produce.linenumber"/>',
+                width: 120
+            },
+            {
+                field: "ngProject",
+                title: '<@spring.message "hcs.produce.ngproject"/>',
+                width: 120
+            },
+            {
+                field: "ngQty",
+                title: '<@spring.message "hcs.produce.ngqty"/>',
+                width: 120
+            }
+        ],
+        editable: true
+    }).data("kendoGrid");
+
+</script>
+</body>
+</html>

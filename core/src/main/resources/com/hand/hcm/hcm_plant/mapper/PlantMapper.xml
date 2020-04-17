@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hcm.hcm_plant.mapper.PlantMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hcm.hcm_plant.dto.Plant">
+        <result column="SCHEDULE_REGION_ID" property="scheduleRegionId" jdbcType="DECIMAL" />
+        <result column="PLANT_ID" property="plantId" jdbcType="DECIMAL" />
+        <result column="PLANT_CODE" property="plantCode" jdbcType="VARCHAR" />
+        <result column="DESCRIPTIONS" property="descriptions" jdbcType="VARCHAR" />
+        <result column="ENABLE_FLAG" property="enableFlag" jdbcType="VARCHAR" />
+        <result column="MAIN_PLANT_FLAG" property="mainPlantFlag" jdbcType="VARCHAR" />
+        <result column="IS_DELIVERY_REGION" property="isDeliveryRegion" jdbcType="VARCHAR" />
+        
+        <!-- 业务字段 -->
+        <result column="PLANT_NAME" property="plantName" jdbcType="VARCHAR" />
+        <result column="SUPPLIER_ID" property="supplierId" jdbcType="DECIMAL" />
+    </resultMap>
+
+    <select id="lovselect" resultMap="BaseResultMap" parameterType="com.hand.hcm.hcm_plant.dto.Plant">
+        SELECT  t.plant_id, t.plant_code, t.descriptions FROM hcm_plant t
+        WHERE  1=1
+        <if test="plantCode!=null">
+            AND t.plant_code LIKE concat('%',concat(#{plantCode,jdbcType=VARCHAR},'%'))
+        </if>
+        <if test="descriptions!=null">
+            AND t.descriptions LIKE concat('%',concat(#{descriptions,jdbcType=VARCHAR},'%'))
+        </if>
+
+
+    </select>
+    
+    <select id="plantLov" resultMap="BaseResultMap" parameterType="com.hand.hcm.hcm_plant.dto.Plant">
+        SELECT  t.plant_id, 
+		        t.plant_code, 
+		        t.descriptions PLANT_NAME
+        FROM hcm_plant t
+        WHERE  1=1
+        <if test="plantCode!=null">
+            AND t.plant_code LIKE concat('%',concat(#{plantCode,jdbcType=VARCHAR},'%'))
+        </if>
+        <if test="plantName!=null">
+            AND t.descriptions LIKE concat('%',concat(#{plantName,jdbcType=VARCHAR},'%'))
+        </if>
+        <if test="enableFlag!=null">
+            AND t.ENABLE_FLAG = #{enableFlag}
+        </if> 
+    </select>
+    <!-- 根据用户查收货组织 -->
+   <select id="plantLovByUser" resultMap="BaseResultMap" parameterType="com.hand.hcm.hcm_plant.dto.Plant">
+   		<choose>
+   			<when test="supplierId != null">
+   				select hp.plant_id,
+				       hp.plant_code,
+				       hp.descriptions PLANT_NAME,
+				       hsp.supplier_id 
+				from HCS_SUPPLIER_PLANT hsp 
+				join hcm_plant hp on hsp.plant_id = hp.plant_id
+				where hsp.enable_flag = 'Y'
+				and hsp.supplier_id = #{supplierId}
+   			</when>
+   			<otherwise>
+	   			select hp.plant_id,
+				       hp.plant_code,
+				       hp.descriptions PLANT_NAME,
+				       null supplier_id 
+				from  hcm_plant hp 
+				where 1=1
+   			</otherwise>
+   		</choose>
+		<if test="plantCode!=null">
+            AND hp.plant_code LIKE concat('%',concat(#{plantCode,jdbcType=VARCHAR},'%'))
+        </if>
+        <if test="plantName!=null">
+            AND hp.descriptions LIKE concat('%',concat(#{plantName,jdbcType=VARCHAR},'%'))
+        </if>  
+        <if test="enableFlag!=null">
+            AND hp.ENABLE_FLAG = #{enableFlag}
+        </if>  
+    </select>
+</mapper>

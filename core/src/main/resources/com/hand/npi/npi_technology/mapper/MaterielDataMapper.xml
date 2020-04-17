@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.npi.npi_technology.mapper.MaterielDataMapper">
+    <resultMap id="BaseResultMap" type="com.hand.npi.npi_technology.dto.MaterielData">
+        <result column="MATERIEL_ID" property="materielId" jdbcType="DECIMAL" />
+        <result column="MATERIEL_NUMBER" property="materielNumber" jdbcType="VARCHAR" />
+        <result column="MATERIEL_NAME" property="materielName" jdbcType="VARCHAR" />
+        <result column="MATERIEL_ATTRIBUTE_NUMBER" property="materielAttributeNumber" jdbcType="DECIMAL" />
+        <result column="MATERIEL_ATTRIBUTE_NAME" property="materielAttributeName" jdbcType="VARCHAR" />
+    </resultMap>
+
+
+</mapper>

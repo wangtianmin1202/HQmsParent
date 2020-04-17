@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.plm.plm_product_func_attr_approve.mapper.ProductFuncAttrApproveMapper">
+    <resultMap id="BaseResultMap" type="com.hand.plm.plm_product_func_attr_approve.view.ProductFuncAttrApproveVO">
+        <result column="KID" property="kid" jdbcType="VARCHAR" />
+        <result column="CHANGE_NUM" property="changeNum" jdbcType="VARCHAR" />
+        <result column="PRODUCT_ID" property="productId" jdbcType="VARCHAR" />
+        <result column="PRODUCT" property="product" jdbcType="VARCHAR" />
+        <result column="PRODUCT_FUNC_ID" property="productFuncId" jdbcType="VARCHAR" />
+        <result column="PRODUCT_FUNC" property="productFunc" jdbcType="VARCHAR" />
+        <result column="SPEC_LINE_ID" property="specLineId" jdbcType="VARCHAR" />
+        <result column="PRODUCT_FUNC_ATTR" property="productFuncAttr" jdbcType="VARCHAR" />
+        <result column="STATUS" property="status" jdbcType="VARCHAR" />
+        <result column="REMARK" property="remark" jdbcType="VARCHAR" />
+        <result column="OPERATION_FLAG" property="operationFlag" jdbcType="VARCHAR" />
+        <result column="CURRENT_APPROVE_BY" property="currentApproveBy" jdbcType="VARCHAR" />
+        <result column="LAST_APPROVED_BY" property="lastApprovedBy" jdbcType="VARCHAR" />
+        <result column="VERSION" property="version" jdbcType="VARCHAR" />
+        <result column="create_by" property="createBy" jdbcType="VARCHAR" />
+        <result column="last_update_by" property="lastUpdateby" jdbcType="VARCHAR" />
+
+    </resultMap>
+
+
+
+  <select id="queryNew" resultMap="BaseResultMap" parameterType="com.hand.plm.plm_product_func_attr_approve.view.ProductFuncAttrApproveVO">
+	  SELECT t.*,
+	       (SELECT he.name
+	          FROM sys_user su, hr_employee he
+	         WHERE su.employee_id = he.employee_id
+	           AND su.user_id = t.last_updated_by) last_update_by,
+	       (SELECT he.name
+	          FROM sys_user su, hr_employee he
+	         WHERE su.employee_id = he.employee_id
+	           AND su.user_id = t.created_by) create_by
+	  FROM plm_product_func_attr_approve t
+	 WHERE 1 = 1
+ 
+ 
+  </select>
+</mapper>

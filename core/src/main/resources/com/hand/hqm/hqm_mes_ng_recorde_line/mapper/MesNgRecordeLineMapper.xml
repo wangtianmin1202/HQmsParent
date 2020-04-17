@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_mes_ng_recorde_line.mapper.MesNgRecordeLineMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_mes_ng_recorde_line.dto.MesNgRecordeLine">
+        <result column="TASK_ID" property="taskId" jdbcType="DECIMAL" />
+        <result column="LINE_ID" property="lineId" jdbcType="DECIMAL" />
+        <result column="ORDER_NUM" property="orderNum" jdbcType="VARCHAR" />
+        <result column="SERIAL_NUMBER" property="serialNumber" jdbcType="VARCHAR" />
+        <result column="NG_CODE" property="ngCode" jdbcType="VARCHAR" />
+        <result column="QTY" property="qty" jdbcType="DECIMAL" />
+        <result column="ITEM_ID" property="itemId" jdbcType="DECIMAL" />
+    </resultMap>
+</mapper>

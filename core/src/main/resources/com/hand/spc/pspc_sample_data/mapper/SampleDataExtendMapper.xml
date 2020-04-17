@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.spc.pspc_sample_data.mapper.SampleDataExtendMapper">
+    <resultMap id="BaseResultMap" type="com.hand.spc.pspc_sample_data.dto.SampleDataExtend">
+        <result column="SAMPLE_DATA_EXTEND_ID" property="sampleDataExtendId" jdbcType="DECIMAL" />
+        <result column="TENANT_ID" property="tenantId" jdbcType="DECIMAL" />
+        <result column="SITE_ID" property="siteId" jdbcType="DECIMAL" />
+        <result column="SAMPLE_DATA_ID" property="sampleDataId" jdbcType="DECIMAL" />
+        <result column="EXTEND_ATTRIBUTE" property="extendAttribute" jdbcType="VARCHAR" />
+        <result column="EXTEND_VALUE" property="extendValue" jdbcType="VARCHAR" />
+    </resultMap>
+
+    <!--基础数据查询，若新增条件 请自行添加-->
+    <select id="queryBaseData" resultMap="BaseResultMap" parameterType="com.hand.spc.pspc_sample_data.dto.SampleDataExtend">
+    SELECT
+        psde.EXTEND_ATTRIBUTE,
+        psde.EXTEND_VALUE
+    FROM
+        PSPC_SAMPLE_DATA_EXTEND psde
+    WHERE
+        1 =1
+        <if test="sampleDataId != null and sampleDataId != ''">
+            AND psde.SAMPLE_DATA_ID = #{sampleDataId}
+        </if>
+        <if test="extendAttribute != null and extendAttribute != ''">
+            AND psde.EXTEND_ATTRIBUTE = #{extendAttribute}
+        </if>
+    </select>
+
+</mapper>

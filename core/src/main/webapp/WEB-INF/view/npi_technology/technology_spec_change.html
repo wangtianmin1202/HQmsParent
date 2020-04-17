@@ -1,0 +1,1123 @@
+<#include "../include/header.html">
+
+<script src="${base.contextPath}/common/code?YES_NO=SYS.YES_NO" type="text/javascript"></script>
+<script src="${base.contextPath}/common/code?NPI_METERING_COUNT=NPI_METERING_COUNT"></script>
+<script src="${base.contextPath}/common/code?HQM_STANDARD_UOM=HQM_STANDARD_UOM"></script>
+
+<script type="text/javascript">
+	var BaseUrl = _basePath;
+	var specId = '${RequestParameters.specId!0}';
+	var status = '${RequestParameters.status!0}';
+	var actionType = '${RequestParameters.actionType!0}';
+	var newestVersionCode = '${RequestParameters.versionCode!0}';
+	
+	var standardviewModel = Hap.createGridViewModel(null,{
+    	model:{
+    		'specId':specId
+    	}
+    });
+	var standardviewModelMat = Hap.createGridViewModel("#standardmatGrid",{
+        model:{
+        	'specId':specId        	
+        },
+        save:function () {
+        },
+        remove: function () {
+                Hap.deleteGridSelection({
+                    grid: $('#standardmatGrid')
+                });
+        },
+    });
+    var standardviewModelDet = Hap.createGridViewModel("#standarddetailGrid",{
+        model:{
+        	field:{
+        		/* specRequirement:{validation: {required: true}} */
+        	}        	
+        },
+        save:function () {
+        },
+        remove: function () {
+                Hap.deleteGridSelection({
+                    grid: $('#standarddetailGrid')
+                });
+        },
+    });
+   	$.ajax({
+   		url:"${base.contextPath}/npi/technology/specList/info?specId="+specId,
+   		type:"POST",
+   		dataType:'json',
+   		success: function(data){
+   			standardviewModel.model.set('technologyActionNumber',data.rows[0].technologyActionNumber) ;
+   			standardviewModel.model.set('versionCode',data.rows[0].versionCode);
+   			standardviewModel.model.set('standardWorkingHours',data.rows[0].standardWorkingHours);
+   			standardviewModel.model.set('specRemark',data.rows[0].specRemark);
+   			standardviewModel.model.set('_token',data.rows[0]._token);
+   		}
+   	});
+   	
+   	$.ajax({
+		url:"${base.contextPath}/npi/technology/spec/mat/detail/query?specId="+specId,
+		type:"POST",
+		dataType:'json',
+		success: function(data){
+			standardviewModel.model.set('sparePartId',data.rows[0].materielAttributeNumber);
+			standardviewModel.model.set('detailsName',data.rows[0].detailsName);
+		}
+	});
+   	
+   	//变更表单
+   	var standardHisviewModel = Hap.createGridViewModel(null,{
+	   	model:{
+			'specId':specId
+		},
+		closeWin:function(e) {
+			window.parent.$("#updateWindow").data("kendoWindow").close();
+		},
+		save:function(){
+			//修改方法逻辑 版本字段去除前后缀 
+			standardHisviewModel.model.__status = 'add';
+			//设置所有数据的dirty为true
+			
+			 var ds = $("#standardHismatGrid").data("kendoGrid").dataSource;
+	         $.each(ds.data(), function (idx, data) {
+	             if (data.dirty != true) {
+	            	 data.dirty = true;
+	             }
+	         });
+	         var ds2 = $("#standardHisdetailGrid").data("kendoGrid").dataSource;
+	         $.each(ds2.data(), function (idx, data) {
+	             if (data.dirty != true) {
+	            	 data.dirty = true;
+	             }
+	         });
+	         
+	        Hap.submitForm({
+	            url: '${base.contextPath}/npi/technology/spec/his/addOrEditData',
+	            formModel: standardHisviewModel.model,
+	            grid: {"matList": $("#standardHismatGrid"), "detailList": $("#standardHisdetailGrid")},
+	            success: function (data) {
+	            	standardHisviewModel.closeWin();
+	            }
+	        });
+		}
+    });
+	var standardHisviewModelMat = Hap.createGridViewModel("#standardHismatGrid",{
+        model:{
+        	'specId':specId        	
+        },
+        save:function () {
+        },
+        remove: function () {
+                Hap.deleteGridSelection({
+                    grid: $('#standardHismatGrid')
+                });
+        },
+    });
+    var standardHisviewModelDet = Hap.createGridViewModel("#standardHisdetailGrid",{
+        model:{
+        	field:{
+        		/* specRequirement:{validation: {required: true}} */
+        	}        	
+        },
+        save:function () {
+        },
+        remove: function () {
+                Hap.deleteGridSelection({
+                    grid: $('#standardHisdetailGrid')
+                });
+        },
+    });
+   	if(status == '1') {
+       	$.ajax({
+       		url:"${base.contextPath}/npi/technology/spec/his/selectByLastUpdateDate?specId="+specId,
+       		type:"POST",
+       		dataType:'json',
+       		success: function(data){
+       			standardHisviewModel.model.set('technologyActionNumber',data.rows[0].technologyActionNumber) ;
+       			standardHisviewModel.model.set('hisVersionCode',data.rows[0].hisVersionCode);
+       			standardHisviewModel.model.set('standardWorkingHours',data.rows[0].standardWorkingHours);
+       			standardHisviewModel.model.set('specRemark',data.rows[0].specRemark);
+       			standardHisviewModel.model.set('newestVersionCode',data.rows[0].newestVersionCode);
+       			standardHisviewModel.model.set('specActionType',actionType);
+       			standardHisviewModel.model.set('_token',data.rows[0]._token);
+       		}
+       	});
+       	$.ajax({
+    		url:"${base.contextPath}/npi/technology/spec/mat/detail/query?specId="+specId,
+    		type:"POST",
+    		dataType:'json',
+    		success: function(data){
+    			standardHisviewModel.model.set('sparePartId',data.rows[0].materielAttributeNumber);
+    			standardHisviewModel.model.set('detailsName',data.rows[0].detailsName);
+    		}
+    	});
+   	}else if(status == '3') {
+   		if(newestVersionCode == '-'){
+   			$.ajax({
+   		   		url:"${base.contextPath}/npi/technology/specList/info?specId="+specId,
+   		   		type:"POST",
+   		   		dataType:'json',
+   		   		success: function(data){
+	   		   		standardHisviewModel.model.set('technologyActionNumber',data.rows[0].technologyActionNumber) ;
+	       			standardHisviewModel.model.set('standardWorkingHours',data.rows[0].standardWorkingHours);
+	       			standardHisviewModel.model.set('specRemark',data.rows[0].specRemark);
+	       			standardHisviewModel.model.set('newestVersionCode',data.rows[0].versionCode);
+	       			standardHisviewModel.model.set('specActionType',actionType);
+	       			standardHisviewModel.model.set('_token',data.rows[0]._token);  
+   		   		}
+   		   	});
+   		   	
+   		   	$.ajax({
+   				url:"${base.contextPath}/npi/technology/spec/mat/detail/query?specId="+specId,
+   				type:"POST",
+   				dataType:'json',
+   				success: function(data){
+   					standardHisviewModel.model.set('sparePartId',data.rows[0].materielAttributeNumber);
+   					standardHisviewModel.model.set('detailsName',data.rows[0].detailsName);
+   				}
+   			});
+   		} else{
+   			$.ajax({
+   	       		url:"${base.contextPath}/npi/technology/spec/his/selectByLastUpdateDate?specId="+specId,
+   	       		type:"POST",
+   	       		dataType:'json',
+   	       		success: function(data){
+   	       			standardHisviewModel.model.set('technologyActionNumber',data.rows[0].technologyActionNumber) ;
+   	       			standardHisviewModel.model.set('hisVersionCode',data.rows[0].hisVersionCode);
+   	       			standardHisviewModel.model.set('standardWorkingHours',data.rows[0].standardWorkingHours);
+   	       			standardHisviewModel.model.set('specRemark',data.rows[0].specRemark);
+   	       			standardHisviewModel.model.set('newestVersionCode',data.rows[0].newestVersionCode);
+   	       			standardHisviewModel.model.set('specActionType',actionType);
+   	       			standardHisviewModel.model.set('_token',data.rows[0]._token);  
+   	       		}
+   	       	});
+   	       	$.ajax({
+   	    		url:"${base.contextPath}/npi/technology/spec/mat/detail/query?specId="+specId,
+   	    		type:"POST",
+   	    		dataType:'json',
+   	    		success: function(data){
+   	    			standardHisviewModel.model.set('sparePartId',data.rows[0].materielAttributeNumber);
+   	    			standardHisviewModel.model.set('detailsName',data.rows[0].detailsName);
+   	    		}
+   	    	});
+   		}
+   	}
+</script>
+
+<body>
+
+<div id="page-content">
+	<h4>动作要求</h4>
+	<form id = "standardForm" style="paddiing-bottom:50px;padding-top:15px" class="form-horizontal" method="post" enctype="application/json;charset=UTF-8">
+		<div class="row">
+			<div class="col-sm-6">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-4 control-label">标准工艺动作<span style="color:red;">*</span></label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="technologyActionNumber"  
+								data-bind="value:model.technologyActionNumber"  disabled >
+						</div>
+						<script>
+							$('#technologyActionNumber').kendoComboBox({
+								filter:"contains",
+								valuePrimitive:true,
+								dataTextField:"text",
+								dataValueField:"value",
+								dataSource:{
+									transport:{
+										read:_basePath + "/npi/technology/queryStandardActionName",
+									}
+								}
+							}).data("kendoComboBox");
+						</script>
+					</div>
+				</div>
+			</div>
+			<div class="col-sm-6">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-4 control-label">版本</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="versionCode"  data-role="maskedtextbox" class="k-textbox"
+								data-bind="value:model.versionCode" disabled>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="row" style="margin-top: 10px;">
+			<div class="col-sm-6">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-4 control-label">标准工时（S）<span style="color:red;">*</span></label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="standardWorkingHours"  data-role="maskedtextbox" class="k-textbox"
+								data-bind="value:model.standardWorkingHours" disabled>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="col-sm-6">
+				<div class="form-group" id="testMat">
+					<div class="col-sm-12">
+						<label class="col-sm-4 control-label">产品序列<span style="color:red;">*</span></label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="sparePartId" data-bind="value:model.sparePartId,text:model.detailsName" >
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="row" style="margin-top: 10px;" id="testRemark">
+			<div class="col-sm-12">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-2 control-label">备注<span style="color:red;">*</span></label>
+						<div class="col-sm-10">
+							<input style="width:100%;" id=specRemark  data-role="maskedtextbox" class="k-textbox" maxlength = "20"
+								data-bind="value:model.specRemark" >
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</form>
+	
+	<div id="matDiv" style="display:block;">
+		<div style="clear:both">
+			<span>物料属性明细</span>
+		</div>
+		<div style="clear:both">
+			<div id="standardmatGrid"></div>
+		</div>
+	</div>
+	
+	<div style="clear:both">
+		<span>要求明细</span>
+		<div id="page-detailcontent">
+		</div>
+	</div>
+	<div style="clear:both">
+		<div id="standarddetailGrid"></div>
+	</div>	
+	<script>
+		kendo.bind($('#standardForm'), standardviewModel);
+	</script>
+	<script>
+		$('#standardForm').kendoValidator({
+			messages:{
+				required:'<@spring.message "hap.validation.notempty"/>'
+			},
+			invalidMessageType:"tooltip"
+		});
+	</script>
+	
+	<h4>变更数据</h4>
+	<form id = "standardHisForm" style="paddiing-bottom:50px;padding-top:15px" class="form-horizontal" method="post" enctype="application/json;charset=UTF-8">
+		<div class="row">
+			<div class="col-sm-6">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-4 control-label">标准工艺动作<span style="color:red;">*</span></label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="technologyActionNumberH"  
+								data-bind="value:model.technologyActionNumber">
+						</div>
+						<script>
+							if(actionType == '1'){
+								tANurl = "/npi/technology/queryStandardActionName";
+							} else{
+								tANurl = "/npi/technology/queryTestActionName";
+							}
+							$('#technologyActionNumberH').kendoComboBox({
+								filter:"contains",
+								valuePrimitive:true,
+								dataTextField:"text",
+								dataValueField:"value",
+								dataSource:{
+									transport:{
+										read:_basePath + tANurl,
+									}
+								}
+							}).data("kendoComboBox");
+						</script>
+					</div>
+				</div>
+			</div>
+			<div class="col-sm-6">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-4 control-label">版本</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="hisVersionCode"  data-role="maskedtextbox" class="k-textbox"
+								data-bind="value:model.hisVersionCode" disabled>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="row" style="margin-top: 10px;">
+			<div class="col-sm-6">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-4 control-label">标准工时（S）<span style="color:red;">*</span></label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="standardWorkingHours"  data-role="maskedtextbox" class="k-textbox"
+								data-bind="value:model.standardWorkingHours">
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="col-sm-6">
+				<div class="form-group" id="testHisMat">
+					<div class="col-sm-12">
+						<label class="col-sm-4 control-label">产品序列<span style="color:red;">*</span></label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="sparePartId" data-bind="value:model.sparePartId,text:model.detailsName">
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="row" style="margin-top: 10px;" id="testHisRemark">
+			<div class="col-sm-12">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-2 control-label">备注<span style="color:red;">*</span></label>
+						<div class="col-sm-10">
+							<input style="width:100%;" id=specRemark  data-role="maskedtextbox" class="k-textbox" maxlength = "20"
+								data-bind="value:model.specRemark">
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="row" style="margin-top: 10px;" id="newestVersionCode">
+			<div class="col-sm-12">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-2 control-label">当前最新版本<span style="color:red;">*</span></label>
+						<div class="col-sm-10">
+							<input style="width:100%;"  data-role="maskedtextbox" class="k-textbox" maxlength = "20"
+								data-bind="value:model.newestVersionCode">
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="row" style="margin-top: 10px;" id="specActionType">
+			<div class="col-sm-12">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-2 control-label">动作类型<span style="color:red;">*</span></label>
+						<div class="col-sm-10">
+							<input style="width:100%;"  data-role="maskedtextbox" class="k-textbox" maxlength = "20"
+								data-bind="value:model.specActionType">
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</form>
+	
+	<div id="matHisDiv" style="display:block;">
+		<div style="clear:both">
+			<span>物料属性明细</span>
+			<div id="page-matcontent">
+			    <div class="pull-left" id="toolbar-btn" style="padding-bottom:10px;">
+					<span class="btn btn-primary k-grid-add" style="float:left;margin-right:5px;" data-bind="click:create">选择物料属性</span>
+			        <span data-bind="click:remove" class="btn btn-danger" style="float:left;"><@spring.message "hap.delete"/></span>
+			    </div>
+			    <script>kendo.bind($('#toolbar-btn'), standardHisviewModelMat);</script>
+			</div>
+		</div>
+		<div style="clear:both">
+			<div id="standardHismatGrid"></div>
+		</div>
+	</div>
+	
+	<div style="clear:both">
+		<span>要求明细</span>
+		<div id="page-detailcontent">
+		    <div class="pull-left" id="toolbar-btn-det" style="padding-bottom:10px;">
+				<span class="btn btn-primary k-grid-add" style="float:left;margin-right:5px;" data-bind="click:create">新增P-SPEC要求</span>
+		        <span data-bind="click:remove" class="btn btn-danger" style="float:left;"><@spring.message "hap.delete"/></span>
+		    </div>
+		    <script>kendo.bind($('#toolbar-btn-det'), standardHisviewModelDet);</script>
+		</div>
+	</div>
+	<div style="clear:both">
+		<div id="standardHisdetailGrid"></div>
+	</div>
+	
+	<div id="mainBottom" class="text-right">
+		<span class="btn btn-primary" data-bind="click:save" type="submit" style="margin-right:5px">保存</span>
+		<span class="btn btn-default" data-bind="click:closeWin" type="button" style="margin-right:25px">取消</span>
+	</div>
+	<script>
+		kendo.bind($('#standardHisForm'), standardHisviewModel);
+		kendo.bind($('#mainBottom'), standardHisviewModel);
+	</script>
+	<script>
+		$('#standardHisForm').kendoValidator({
+			messages:{
+				required:'<@spring.message "hap.validation.notempty"/>'
+			},
+			invalidMessageType:"tooltip"
+		});
+	</script>
+<script>
+    var BaseUrl = _basePath;
+    $("#newestVersionCode").attr("style","display:none;");
+    $("#specActionType").attr("style","display:none;");
+	if(actionType == '2') {
+		$("#testMat").attr("style","display:block;");
+		$("#testRemark").attr("style","display:block;");
+		$("#matDiv").attr("style","display:none;");
+	} else{
+		$("#testMat").attr("style","display:none;");
+		$("#testRemark").attr("style","display:none;");
+		$("#matDiv").attr("style","display:block;");
+	}
+	//动作要求数据
+		$("#standardDiv").attr("style","display:block;");
+		var standarddataSourceMat = new kendo.data.DataSource({
+          transport: {
+              read: {
+                  url: BaseUrl + "/npi/technology/spec/mat/detail/query",
+                  type: "POST",
+                  dataType: "json"
+              },
+              parameterMap: function (options, type) {
+                  if (type !== "read" && options.models) {
+                      var datas = Hap.prepareSubmitParameter(options, type);
+                      return kendo.stringify(datas);
+                  } else if (type === "read") {
+                  	standardviewModelDet.model.specId = specId;
+                  	standardviewModelDet.model.versionCode = standardviewModel.model.versionCode;
+                      return Hap.prepareQueryParameter(standardviewModelDet.model.toJSON(), options)
+                  }
+              }
+          },
+          batch: true,
+          serverPaging: true,
+          pageSize: 20,
+          schema: {
+              data: 'rows',
+              total: 'total',
+              model: {
+                  id: "standardActionId",
+                  editable:function(col){
+                  	if(col == 'technologyActionNumber') {
+                  		return false;
+                  	}
+                  	return true;
+                  }
+              }
+          }
+      });
+      var standarddataSourceDet = new kendo.data.DataSource({
+          transport: {
+              read: {
+                  url: BaseUrl + "/npi/technology/spec/detail/query",
+                  type: "POST",
+                  dataType: "json"
+              },
+              parameterMap: function (options, type) {
+                  if (type !== "read" && options.models) {
+                      var datas = Hap.prepareSubmitParameter(options, type);
+                      return kendo.stringify(datas);
+                  } else if (type === "read") {
+                  	standardviewModelDet.model.specId = specId;
+                  	standardviewModelDet.model.versionCode = standardviewModel.model.versionCode;
+                      return Hap.prepareQueryParameter(standardviewModelDet.model.toJSON(), options)
+                  }
+              }
+          },
+          batch: true,
+          serverPaging: true,
+          pageSize: 20,
+          schema: {
+              data: 'rows',
+              total: 'total',
+              model: {
+                  id: "standardActionId",
+                  editable:function(col){
+                  	if(col == 'technologyActionNumber') {
+                  		return false;
+                  	}
+                  	return true;
+                  }
+              }
+          }
+      });
+      var standardmatGrid = $("#standardmatGrid").kendoGrid({
+          dataSource: standarddataSourceMat,
+          resizable: true,
+          scrollable: true,
+          navigatable: false,
+          autoBind:true,
+          selectable: 'multiple, rowbox',
+          dataBound: function () {
+              if (parent.autoResizeIframe) {
+                  parent.autoResizeIframe('${RequestParameters.functionCode!}')
+              }
+          },
+          pageable: {
+              pageSizes: [5, 10, 20, 50],
+              refresh: true,
+              buttonCount: 5
+          },
+          columns: [
+          	{
+                  field: "materielAttributeNumber",
+                  title: '物料属性',
+                  width: 120,
+                  headerAttributes: {
+                      style: "text-align: center"
+                  },
+                  attributes: {
+                      style: "text-align: center"
+                  },
+                  template: function (Item) {
+                      return Item['detailsName'] || ''
+                  },
+                  editor: function (container, options) {
+                      $('<input name="' + options.field + '"/>')
+                          .appendTo(container)
+                          .kendoLov($.extend(<@lov "SPARE_PART_CODE_DETAIL"/>, {
+                          query: function (e) {
+                          },
+                          textField: 'detailsName', 
+                          model: options.model,
+                          select:function(e) {
+                          }
+                      }));
+                  }
+              }
+          ],
+          editable: false
+      }).data("kendoGrid");
+  	
+      var standarddetailGrid = $("#standarddetailGrid").kendoGrid({
+          dataSource: standarddataSourceDet,
+          resizable: true,
+          scrollable: true,
+          navigatable: false,
+          autoBind:true,
+          selectable: 'multiple, rowbox',
+          dataBound: function () {
+              if (parent.autoResizeIframe) {
+                  parent.autoResizeIframe('${RequestParameters.functionCode!}')
+              }
+          },
+          pageable: {
+              pageSizes: [5, 10, 20, 50],
+              refresh: true,
+              buttonCount: 5
+          },
+          columns: [
+          	{
+                  field: "specRequirement",
+                  title: 'SPEC要求',
+                  width: 120,
+                  headerAttributes: {
+                      style: "text-align: center"
+                  },
+                  attributes: {
+                      style: "text-align: center"
+                  } ,
+                  editor: function (container, options) {
+                      $('<input required type="text" class="k-input k-textbox" name="' + options.field + '"/>').appendTo(container);
+                  }
+              },
+              {
+                  field: "meteringCount",
+                  title: '计量/计数',
+                  width: 120,
+                  headerAttributes: {
+                      style: "text-align: center"
+                  },
+                  attributes: {
+                      style: "text-align: center"
+                  },
+                  template: function (dataItem) {
+                      var v = dataItem.meteringCount ? dataItem.meteringCount : "";
+                      $.each(NPI_METERING_COUNT, function (i, n) {
+                          if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                              v = n.meaning;
+                              return v;
+                          }
+                      });
+                      return v;
+                  },
+                  editor: function (container, options) {
+                      $('<input required name="' + options.field + '"/>')
+                          .appendTo(container)
+                          .kendoDropDownList({
+                              dataTextField: "meaning",
+                              dataValueField: "value",
+                              valuePrimitive: true,
+                              dataSource: NPI_METERING_COUNT
+                          });
+                  }
+              },
+              {
+                  field: "lowerLimit",
+                  title: '下限',
+                  width: 120,
+                  headerAttributes: {
+                      style: "text-align: center"
+                  },
+                  attributes: {
+                      style: "text-align: center"
+                  }
+              },
+              {
+                  field: "upperLimit",
+                  title: '上限',
+                  width: 120,
+                  headerAttributes: {
+                      style: "text-align: center"
+                  },
+                  attributes: {
+                      style: "text-align: center"
+                  }
+              },
+              {
+                  field: "unit",
+                  title: '单位',
+                  width: 120,
+                  headerAttributes: {
+                      style: "text-align: center"
+                  },
+                  attributes: {
+                      style: "text-align: center"
+                  },
+                  template: function (dataItem) {
+                      var v = dataItem.unit ? dataItem.unit : "";
+                      $.each(HQM_STANDARD_UOM	, function (i, n) {
+                          if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                              v = n.meaning;
+                              return v;
+                          }
+                      });
+                      return v;
+                  },
+                  editor: function (container, options) {
+                      $('<input required name="' + options.field + '"/>')
+                          .appendTo(container)
+                          .kendoDropDownList({
+                              dataTextField: "meaning",
+                              dataValueField: "value",
+                              valuePrimitive: true,
+                              dataSource: HQM_STANDARD_UOM	
+                          });
+                  }
+              },
+              {
+                  field: "characteristicId",
+                  title: '特性分类',
+                  width: 120,
+                  headerAttributes: {
+                      style: "text-align: center"
+                  },
+                  attributes: {
+                      style: "text-align: center"
+                  },
+                  template:function (dataItem) {
+                      var result = dataItem.characteristicName;
+                      return result||'';
+                  },
+                  editor:function (container, options){
+                          $('<input name="'+options.field+'" required>').appendTo(container).kendoComboBox({
+                              valuePrimitive: true,
+                              dataTextField: "text",
+                              dataValueField: "value",
+                              clearNoData: false,
+                              model: options.model,
+                              dataSource:{
+  								transport:{
+  									read:_basePath + "/npi/technology/queryCharacteristicName",
+  								}
+  							},
+  	                        select:function(e) {
+  	                        	options.model.set('characteristicName',e.item[0].textContent);
+  	                        	console.log(options.model);
+  	                        }
+                          });
+                  }
+              },
+              {
+                  field: "msa",
+                  title: 'MSA',
+                  width: 120,
+                  headerAttributes: {
+                      style: "text-align: center"
+                  },
+                  attributes: {
+                      style: "text-align: center"
+                  }
+              },
+              {
+                  field: "spc",
+                  title: 'SPC',
+                  width: 120,
+                  headerAttributes: {
+                      style: "text-align: center"
+                  },
+                  attributes: {
+                      style: "text-align: center"
+                  }
+              }
+          ],
+          editable: false
+      }).data("kendoGrid");
+      
+      //变更数据
+      if(actionType == '2') {
+    		$("#testHisMat").attr("style","display:block;");
+    		$("#testHisRemark").attr("style","display:block;");
+    		$("#matHisDiv").attr("style","display:none;");
+    	} else{
+    		$("#testHisMat").attr("style","display:none;");
+    		$("#testHisRemark").attr("style","display:none;");
+    		$("#matHisDiv").attr("style","display:block;");
+    	}
+  	  
+    	$("#standardHisDiv").attr("style","display:block;");
+    	var standardHisdataSourceMat = new kendo.data.DataSource({
+            transport: {
+            	read: {
+                    url: BaseUrl + "/npi/technology/spec/mat/detail/query",
+                    type: "POST",
+                    dataType: "json"
+                },
+                destroy: {
+                    url: BaseUrl + "/npi/technology/spec/mat/detail/remove",
+                    type: "POST",
+                    contentType: "application/json"
+                },
+                create:{
+                    url: BaseUrl + "/npi/technology/spec/mat/detail/submit",
+                    type: "POST",
+                    contentType: "application/json",
+                    async: true
+                },
+                parameterMap: function (options, type) {
+                    if (type !== "read" && options.models) {
+                        var datas = Hap.prepareSubmitParameter(options, type);
+                        return kendo.stringify(datas);
+                    } else if (type === "read") {
+                    	standardHisviewModelDet.model.specId = specId;
+                        return Hap.prepareQueryParameter(standardHisviewModelDet.model.toJSON(), options)
+                    }
+                }
+            },
+            batch: true,
+            serverPaging: true,
+            pageSize: 20,
+            schema: {
+                data: 'rows',
+                total: 'total',
+                model: {
+                    id: "standardActionId",
+                    editable:function(col){
+                    	if(col == 'technologyActionNumber') {
+                    		return false;
+                    	}
+                    	return true;
+                    }
+                }
+            }
+        });
+        var standardHisdataSourceDet = new kendo.data.DataSource({
+            transport: {
+            	read: {
+                    url: BaseUrl + "/npi/technology/spec/detail/query",
+                    type: "POST",
+                    dataType: "json"
+                },
+                destroy: {
+                    url: BaseUrl + "/npi/technology/spec/detail/remove",
+                    type: "POST",
+                    contentType: "application/json"
+                },
+                create:{
+                    url: BaseUrl + "/npi/technology/spec/detail/submit",
+                    type: "POST",
+                    contentType: "application/json",
+                    async: true
+                },
+                parameterMap: function (options, type) {
+                    if (type !== "read" && options.models) {
+                        var datas = Hap.prepareSubmitParameter(options, type);
+                        return kendo.stringify(datas);
+                    } else if (type === "read") {
+                    	standardHisviewModelDet.model.specId = specId;
+                        return Hap.prepareQueryParameter(standardHisviewModelDet.model.toJSON(), options)
+                    }
+                }
+            },
+            batch: true,
+            serverPaging: true,
+            pageSize: 20,
+            schema: {
+                data: 'rows',
+                total: 'total',
+                model: {
+                    id: "standardActionId",
+                    editable:function(col){
+                    	if(col == 'technologyActionNumber') {
+                    		return false;
+                    	}
+                    	return true;
+                    }
+                }
+            }
+        });
+        var standardHismatGrid = $("#standardHismatGrid").kendoGrid({
+            dataSource: standardHisdataSourceMat,
+            resizable: true,
+            scrollable: true,
+            navigatable: false,
+            autoBind:true,
+            selectable: 'multiple, rowbox',
+            dataBound: function () {
+                if (parent.autoResizeIframe) {
+                    parent.autoResizeIframe('${RequestParameters.functionCode!}')
+                }
+            },
+            pageable: {
+                pageSizes: [5, 10, 20, 50],
+                refresh: true,
+                buttonCount: 5
+            },
+            columns: [
+            	{
+                    field: "materielAttributeNumber",
+                    title: '物料属性',
+                    width: 120,
+                    headerAttributes: {
+                        style: "text-align: center"
+                    },
+                    attributes: {
+                        style: "text-align: center"
+                    },
+                    template: function (Item) {
+                        return Item['detailsName'] || ''
+                    },
+                    editor: function (container, options) {
+                        $('<input name="' + options.field + '"/>')
+                            .appendTo(container)
+                            .kendoLov($.extend(<@lov "SPARE_PART_CODE_DETAIL"/>, {
+                            query: function (e) {
+                            },
+                            textField: 'detailsName', 
+                            model: options.model,
+                            select:function(e) {
+                            }
+                        }));
+                    }
+                }
+            ],
+            editable: true
+        }).data("kendoGrid");
+    	
+        var standardHisdetailGrid = $("#standardHisdetailGrid").kendoGrid({
+            dataSource: standardHisdataSourceDet,
+            resizable: true,
+            scrollable: true,
+            navigatable: false,
+            autoBind:true,
+            selectable: 'multiple, rowbox',
+            dataBound: function () {
+                if (parent.autoResizeIframe) {
+                    parent.autoResizeIframe('${RequestParameters.functionCode!}')
+                }
+            },
+            pageable: {
+                pageSizes: [5, 10, 20, 50],
+                refresh: true,
+                buttonCount: 5
+            },
+            columns: [
+            	{
+                    field: "specRequirement",
+                    title: 'SPEC要求',
+                    width: 120,
+                    headerAttributes: {
+                        style: "text-align: center"
+                    },
+                    attributes: {
+                        style: "text-align: center"
+                    } ,
+                    editor: function (container, options) {
+                        $('<input required type="text" class="k-input k-textbox" name="' + options.field + '"/>').appendTo(container);
+                    }
+                },
+                {
+                    field: "meteringCount",
+                    title: '计量/计数',
+                    width: 120,
+                    headerAttributes: {
+                        style: "text-align: center"
+                    },
+                    attributes: {
+                        style: "text-align: center"
+                    },
+                    template: function (dataItem) {
+                        var v = dataItem.meteringCount ? dataItem.meteringCount : "";
+                        $.each(NPI_METERING_COUNT, function (i, n) {
+                            if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                                v = n.meaning;
+                                return v;
+                            }
+                        });
+                        return v;
+                    },
+                    editor: function (container, options) {
+                        $('<input required name="' + options.field + '"/>')
+                            .appendTo(container)
+                            .kendoDropDownList({
+                                dataTextField: "meaning",
+                                dataValueField: "value",
+                                valuePrimitive: true,
+                                dataSource: NPI_METERING_COUNT
+                            });
+                    }
+                },
+                {
+                    field: "lowerLimit",
+                    title: '下限',
+                    width: 120,
+                    headerAttributes: {
+                        style: "text-align: center"
+                    },
+                    attributes: {
+                        style: "text-align: center"
+                    }
+                },
+                {
+                    field: "upperLimit",
+                    title: '上限',
+                    width: 120,
+                    headerAttributes: {
+                        style: "text-align: center"
+                    },
+                    attributes: {
+                        style: "text-align: center"
+                    }
+                },
+                {
+                    field: "unit",
+                    title: '单位',
+                    width: 120,
+                    headerAttributes: {
+                        style: "text-align: center"
+                    },
+                    attributes: {
+                        style: "text-align: center"
+                    },
+                    template: function (dataItem) {
+                        var v = dataItem.unit ? dataItem.unit : "";
+                        $.each(HQM_STANDARD_UOM	, function (i, n) {
+                            if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                                v = n.meaning;
+                                return v;
+                            }
+                        });
+                        return v;
+                    },
+                    editor: function (container, options) {
+                        $('<input required name="' + options.field + '"/>')
+                            .appendTo(container)
+                            .kendoDropDownList({
+                                dataTextField: "meaning",
+                                dataValueField: "value",
+                                valuePrimitive: true,
+                                dataSource: HQM_STANDARD_UOM	
+                            });
+                    }
+                },
+                {
+                    field: "characteristicId",
+                    title: '特性分类',
+                    width: 120,
+                    headerAttributes: {
+                        style: "text-align: center"
+                    },
+                    attributes: {
+                        style: "text-align: center"
+                    },
+                    template:function (dataItem) {
+                        var result = dataItem.characteristicName;
+                        return result||'';
+                    },
+                    editor:function (container, options){
+                            $('<input name="'+options.field+'" required>').appendTo(container).kendoComboBox({
+                                valuePrimitive: true,
+                                dataTextField: "text",
+                                dataValueField: "value",
+                                clearNoData: false,
+                                model: options.model,
+                                dataSource:{
+    								transport:{
+    									read:_basePath + "/npi/technology/queryCharacteristicName",
+    								}
+    							},
+    	                        select:function(e) {
+    	                        	options.model.set('characteristicName',e.item[0].textContent);
+    	                 	console.log(options.model);
+    	                        }
+                            });
+                    }
+                },
+                {
+                    field: "msa",
+                    title: 'MSA',
+                    width: 120,
+                    headerAttributes: {
+                        style: "text-align: center"
+                    },
+                    attributes: {
+                        style: "text-align: center"
+                    }
+                },
+                {
+                    field: "spc",
+                    title: 'SPC',
+                    width: 120,
+                    headerAttributes: {
+                        style: "text-align: center"
+                    },
+                    attributes: {
+                        style: "text-align: center"
+                    }
+                }
+            ],
+            editable: true
+        }).data("kendoGrid");
+        
+        kendo.bind($("#standardForm"), standardviewModel);
+        $("#sparePartId").kendoLov($.extend( <@lov "SPARE_PART_CODE_DETAIL" /> , {
+            textField: 'detailsName',
+            valueField: 'sparePartId',
+            change: function() {
+            	standardviewModel.model.sparePartId = this._dataItem.sparePartId;
+            }
+        }));
+        
+        kendo.bind($("#standardHisForm"), standardHisviewModel);
+        $("#sparePartId").kendoLov($.extend( <@lov "SPARE_PART_CODE_DETAIL" /> , {
+            textField: 'detailsName',
+            valueField: 'sparePartId',
+            change: function() {
+            	standardHisviewModel.model.sparePartId = this._dataItem.sparePartId;
+            }
+        }));
+</script>
+</div>
+</body>
+</html>

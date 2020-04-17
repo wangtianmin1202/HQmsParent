@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_online_sku_rule.mapper.OnlineSkuRuleMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_online_sku_rule.dto.OnlineSkuRule">
+        <result column="KID" property="kid" jdbcType="DECIMAL" />
+        <result column="PLANT_ID" property="plantId" jdbcType="DECIMAL" />
+        <result column="SKU_TYPE" property="skuType" jdbcType="VARCHAR" />
+        <result column="INSPECT_QTY" property="inspectQty" jdbcType="DECIMAL" />
+        <result column="PASS_PERCENT" property="passPercent" jdbcType="DECIMAL" />
+        <result column="ENABLE_FLAG" property="enableFlag" jdbcType="VARCHAR" />
+        <result column="PLANT_CODE" property="plantCode" jdbcType="VARCHAR" />
+    </resultMap>
+
+<select id="reSelect" resultMap="BaseResultMap">
+SELECT t.*, hp.plant_code
+  FROM hqm_online_sku_rule t
+  JOIN hcm_plant hp
+    ON t.plant_id = hp.plant_id
+ WHERE 1 = 1
+ <if test="plantId != null">
+ AND t.plant_id = #{plantId}
+ </if>
+   
+</select>
+</mapper>

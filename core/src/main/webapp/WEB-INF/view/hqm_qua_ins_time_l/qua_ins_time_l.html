@@ -1,0 +1,501 @@
+<#include "../include/header.html">
+    <script src="${base.contextPath}/common/code?hqmShiftCode=HQM_SHIFT_CODE"></script>
+    <script src="${base.contextPath}/common/code?yesNo=SYS.YES_NO"></script>
+    <script type="text/javascript">
+        var viewModel = Hap.createGridViewModel("#grid");
+        var timeId = "${RequestParameters.timeId!-1}";
+        viewModel.model.timeId = timeId;
+        viewModel.model.enableFlag = "Y";
+    </script>
+    <script type="text/javascript">
+        viewModel.save = function() {
+            var dataHeadLine = $("#grid").data("kendoGrid").dataSource._data;
+            // 头 行都保存
+            if (!validator.validate()) {
+                return;
+            }
+            if (dataHeadLine.length > 0) {
+                //头数信息
+                dataHeadLine[0].timeId = viewModel.model.timeId;
+                dataHeadLine[0].plantId = viewModel.model.plantId;
+                dataHeadLine[0].prodLineId = viewModel.model.prodLineId;
+                dataHeadLine[0].shiftCode = viewModel.model.shiftCode;
+                dataHeadLine[0].enableFlag = viewModel.model.enableFlag;
+                dataHeadLine[0].inspectorId = viewModel.model.inspectorId;
+                dataHeadLine[0].inspectionTime = viewModel.model.inspectionTime;
+                $.ajax({
+                    url: "${base.contextPath}/hqm/qua/ins/time/l/saveHeadLine",
+                    type: "POST",
+                    data: kendo.stringify(dataHeadLine),
+                    contentType: "application/json",
+                    success: function(data) {
+                        if (data.success) {
+                            if (timeId == -1) {
+                                window.parent.$("#childWindow").data('kendoWindow').close();
+                            } else {
+                                getQuaInsTimeInfo();
+                                kendo.ui.showInfoDialog({
+                                    title: "信息",
+                                    message: '成功'
+                                });
+                            }
+                        } else {
+                            kendo.ui.showErrorDialog({
+                                title: "错误提示",
+                                message: data.message
+                            });
+                        }
+                    }
+                })
+            } else {
+                kendo.ui.showErrorDialog({
+                    title: "错误提示",
+                    message: "没有维护巡检日历明细"
+                });
+            }
+
+        }
+
+        function getMaxOrderCode() {
+            var maxCode = 0;
+            var all = $("#grid").data("kendoGrid").dataSource.data();
+            $.each(all, function(i, e) {
+                if (e.orderNumber > maxCode) {
+                    maxCode = e.orderNumber;
+                }
+            });
+            return maxCode;
+        }
+
+        function replaceValue(obj1, obj2) {
+            var content1 = {};
+            for (var name in JSON.parse(JSON.stringify(obj2))) {
+                if (name == "orderNumber" || name == "uid") continue;
+                content1[name] = obj2[name];
+            }
+            for (var name in JSON.parse(JSON.stringify(obj1))) {
+                if (name == "orderNumber" || name == "uid") continue;
+                obj2.set(name, obj1[name]);
+            }
+            for (var name in JSON.parse(JSON.stringify(content1))) {
+                if (name == "orderNumber" || name == "uid") continue;
+                obj1.set(name, content1[name]);
+            }
+        }
+
+
+        function refreshOrderCode() {
+            var data = grid.dataSource.data();
+            var countPar = data.length;
+            for (var i = 0; i < data.length; i++) {
+                data[i].set("orderNumber", countPar);
+                countPar--;
+            }
+        }
+
+        function getSynchronize(replaceFlag, itemCategory) {
+            $("#childWindow").data("kendoWindow").close();
+            if (replaceFlag == '0' || itemCategory == undefined || itemCategory == null || itemCategory == '0') return;
+            var rows = getAllByItemCategory(itemCategory);
+            if (replaceFlag == '2') {
+                $.each(rows, function(i, e) {
+                    if (e.itemCategory == itemCategory) {
+
+                        e.__status = 'add';
+                        grid.dataSource.data().unshift(e);
+                    }
+                });
+            } else {
+                $.each(rows, function(i, e) {
+                    var data = grid.dataSource.data();
+                    var have = false;
+                    $.each(data, function(j, v) {
+                        if (v.itemCategory == e.itemCategory && v.attributeId == e.attributeId) {
+                            have = true;
+                            e.__status = 'update';
+                            v = e;
+                            break;
+                        }
+                    });
+                    if (!have) {
+                        e.__status = 'add';
+                        grid.dataSource.data().unshift(e);
+                    }
+                });
+
+            }
+            refreshOrderCode();
+        }
+
+        function getQuaInsTimeInfo() {
+        	if (timeId == -1) {
+        		return;
+        	}
+            //头查询
+            $.ajax({
+                url: "${base.contextPath}/hqm/qua/ins/time/h/select",
+                type: "POST",
+                data: {
+                    timeId: timeId,
+                },
+                dataType: 'json',
+                success: function(data) {
+                    if (timeId != -1) {
+                        viewModel.model.set('plantCode', data.rows[0].plantCode);
+                        viewModel.model.set('plantId', data.rows[0].plantId);
+                        viewModel.model.set('prodLineCode', data.rows[0].prodLineCode);
+                        viewModel.model.set('prodLineId', data.rows[0].prodLineId);
+                        viewModel.model.set('shiftCode', data.rows[0].shiftCode);
+                        viewModel.model.set('enableFlag', data.rows[0].enableFlag);
+                        viewModel.model.set('inspectorId', data.rows[0].inspectorId);
+                        viewModel.model.set('inspectorEmployeeName', data.rows[0].inspectorEmployeeName);
+                        viewModel.model.set('inspectionTime',data.rows[0].inspectionTime);
+                    }
+                    grid.dataSource.fetch();
+                }
+            });
+        }
+    </script>
+
+    <body>
+        <div id="page-content">
+            <div id="head">
+                <form class="form-horizontal" id="form1">
+                    <div id="form">
+                        <div class="row">
+                            <div class="pull-left" id="main-form" style="padding-bottom:10px;">
+                                <span class="btn btn-success k-grid-save-changes fa fa-save" style="float:right;width:70px" data-bind="click:save"><@spring.message "hap.save"/></span>
+                            </div>
+                        </div>
+
+                        <div class="row" id="data-content" style="margin-top: 5px;font-size:12px">
+                            <div class="col-sm-3" style="padding:0px;margin:0px">
+                                <lable class="col-xs-5 control-lable" style="text-align:right;padding:0px;margin-top:1%">
+                                    <@spring.message "hqm.qc.plant"/>： </lable>
+                                <div class="col-xs-7 " style="padding:0px ">
+                                    <input id="plantIdLov" required style="width:180px; " data-bind="value:model.plantId,text:model.plantCode">
+                                </div>
+                                <script>
+                                    $("#plantIdLov").kendoLov($.extend( <@lov "LOV_PLANT" /> , {
+                                        textField: 'plantCode',
+                                        valueField: 'plantId',
+                                    }));
+                                </script>
+                            </div>
+                            <div class="col-sm-3" style="padding:0px;margin:0px">
+                                <lable class="col-xs-5 control-lable" style="text-align:right;padding:0px;">
+                                    <@spring.message "hqm.qc.productionline"/>：</lable>
+                                <div class="col-xs-7" style="padding:0px ">
+                                    <input id="prodlineLov" required style="width:180px; " data-bind="value:model.prodLineId,text:model.prodLineCode">
+                                </div>
+                            </div>
+                            <div class="col-sm-3 " style="padding:0px;margin:0px ">
+                                <lable class="col-xs-5 control-lable" style="text-align:right;padding:0px;margin-top:1%">
+                                    <@spring.message "hqm.qc.inspectionshift"/>：</lable>
+                                <div class="col-xs-7" style="padding:0px ">
+                                    <input id="shiftCodeComBox" required style="width:180px; " data-bind="value:model.shiftCode">
+                                </div>
+                            </div>
+                            <div class="col-sm-3 " style="padding:0px;margin:0px ">
+                                <lable class="col-xs-5 control-lable" style="text-align:right;padding:0px;margin-top:1%">
+                                    <@spring.message "hqm.qc.enableflag"/>：</lable>
+                                <div class="col-xs-7" style="padding:0px ">
+                                    <input id="enableflagComboBox" required style="width:180px; " data-bind="value:model.enableFlag">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row" id="data-content1" style="margin-top: 15px;font-size:12px">
+                            <div class="col-sm-3" style=" padding:0px;margin:0px ">
+                                <lable class="col-xs-5 control-lable" style="text-align:right;padding:0px;margin-top:1%">
+                                    <@spring.message "quainstimeh.inspectoremployeename"/>： </lable>
+                                <div class="col-xs-7" style="padding:0px ">
+                                    <input id="inspectorId" required style="width:180px;" data-bind="value:model.inspectorId,text:model.inspectorEmployeeName">
+                                </div>
+                                <script>
+                                    $("#inspectorId").kendoLov($.extend( <@lov "user_lov" /> , {
+                                        textField: 'employeeName',
+                                        valueField: 'userId',
+                                        select: function(e) {
+                                            viewModel.model.inspectorId = e.item.userId;
+                                            viewModel.model.inspectorEmployeeName = e.item.employeeName;
+                                        }
+                                    }));
+                                </script>
+                            </div>
+                            
+                            <div class="col-sm-3" style="padding: 0px;margin: 0px"><!-- 检验时间 -->
+                                <lable class="col-xs-5 control-lable" style="text-align:right;padding:0px;margin-top:1%">
+                                    <@spring.message "quainstimeh.inspectiontime"/>： </lable>
+                                <div class="col-xs-7" style="padding:2px ">
+                                    <input id="inspectionTime" required style="width:180px;" data-bind="value:model.inspectionTime">
+                                </div>
+                                <script>
+                                    $("#inspectionTime").kendoTimePicker({
+                                    	format: "HH:mm",
+                                     	change: function(e) {
+                                     		viewModel.model.inspectionTime = e.sender._oldText;
+                                     	}
+                                    });
+                                </script>
+                            </div>
+                        </div>
+                        <script>
+                            kendo.bind($('#data-content'), viewModel);
+                            kendo.bind($('#data-content1'), viewModel);
+                        </script>
+                        <script>
+                            kendo.bind($('#main-form'), viewModel);
+                        </script>
+                        <div style="clear:both;margin-top:20px">
+                            <div id="grid" style="width:100% "></div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <script>
+            $("#prodlineLov").kendoLov($.extend( <@lov "LOV_PROD_LINE" /> , {
+                query: function(e) {
+                    if (viewModel.model.plantId == '' || viewModel.model.plantId == undefined || viewModel.model.plantId == null) {
+                        return;
+                    }
+                    e.param['enableFlag'] = 'Y'
+                    e.param['plantId'] = viewModel.model.plantId;
+                },
+                textField: 'prodLineCode',
+                valueField: 'prodLineId'
+            }));
+            $("#enableflagComboBox").kendoComboBox({
+                dataTextField: "meaning ",
+                dataValueField: "value ",
+                valuePrimitive: true,
+                dataSource: yesNo
+            });
+            $("#shiftCodeComBox").kendoComboBox({
+                dataTextField: "meaning ",
+                dataValueField: "value ",
+                valuePrimitive: true,
+                dataSource: hqmShiftCode
+            });
+        </script>
+        <script>
+            Hap.initEnterQuery('#query-form', viewModel.query);
+            var BaseUrl = _basePath;
+            dataSource = new kendo.data.DataSource({
+                transport: {
+                    read: {
+                        url: BaseUrl + "/hqm/qua/ins/time/l/select",
+                        type: "POST",
+                        dataType: "json"
+                    },
+                    update: {
+                        url: BaseUrl + "/hqm/qua/ins/time/l/submit",
+                        type: "POST",
+                        contentType: "application/json"
+                    },
+                    destroy: {
+                        url: BaseUrl + "/hqm/qua/ins/time/l/remove",
+                        type: "POST",
+                        contentType: "application/json"
+                    },
+                    create: {
+                        url: BaseUrl + "/hqm/qua/ins/time/l/submit",
+                        type: "POST",
+                        contentType: "application/json"
+                    },
+                    parameterMap: function(options, type) {
+                        if (type !== "read" && options.models) {
+                            var datas = Hap.prepareSubmitParameter(options, type);
+                            return kendo.stringify(datas);
+                        } else if (type === "read") {
+                            var query = {
+                                timeId: timeId,
+                            };
+                            return Hap.prepareQueryParameter(query, options)
+                        }
+                    }
+                },
+                batch: true,
+                serverPaging: true,
+                pageSize: 10,
+                schema: {
+                    data: 'rows',
+                    total: 'total',
+                    model: {
+                        id: "timeId",
+                        fields: {}
+                    }
+                }
+            });
+
+            var grid = $("#grid").kendoGrid({
+                dataSource: dataSource,
+                resizable: true,
+                scrollable: true,
+                autoBind: false,
+                navigatable: false,
+                selectable: 'multiple, rowbox',
+                dataBound: function() {
+                    if (parent.autoResizeIframe) {
+                        parent.autoResizeIframe('${RequestParameters.functionCode!}')
+                    }
+                },
+                pageable: {
+                    pageSizes: [5, 10, 20, 50],
+                    refresh: true,
+                    buttonCount: 5
+                },
+                toolbar: [{
+                    template: '<span id="createButton" class=" btn btn-primary fa fa-plus-square">&nbsp;<@spring.message "hap.new"/></span>'
+                }, {
+                    template: '<span id="deleteButton"  class="btn btn-danger fa fa-trash-o">&nbsp;<@spring.message "hap.delete"/></span>'
+                }, {
+                    template: '<span id="moveUpButton" class="btn btn-primary fa fa-arrow-circle-up">&nbsp;<@spring.message "hqm.qc.moveup"/></span>'
+                }, {
+                    template: '<span id="moveLowButton" class="btn btn-primary fa fa-arrow-circle-down">&nbsp;<@spring.message "hqm.qc.movedown"/></span>'
+                }],
+                columns: [{
+                        field: "orderNumber",
+                        title: '<@spring.message "itemcategoryext.ordercode"/>', //排序码
+                        width: 120,
+                        template: function(dataItem) {
+                            var v = dataItem.orderNumber ? dataItem.orderNumber : (getMaxOrderCode() + 1);
+                            return v;
+                        },
+                        editor: function(container, options) {
+                            var val = options.model.orderNumber ? options.model.orderNumber : (getMaxOrderCode() + 1)
+                            $('<span>' + val + '</span>').appendTo(container);
+                        }
+                    },
+
+                    {
+                        field: "standardOpCode ",
+                        title: '<@spring.message "standardopinspectionh.standardopid"/>',
+                        width: 120,
+                        template: function(Item) {
+                            return Item['standardOpCode'] || ''
+                        },
+                        editor: function(container, options) {
+                            if (viewModel.model.prodLineId == '' || viewModel.model.prodLineId == undefined || viewModel.model.prodLineId == null) {
+                                $('<span>未选择产线</span>').appendTo(container);
+                                return;
+                            }
+                            $('<input name="' + options.field + '"/>')
+                                .appendTo(container)
+                                .kendoLov($.extend( <@lov "LOV_STANDARD" /> , {
+                                    query: function(e) {
+                                        e.param['enableFlag'] = 'Y'
+                                        e.param['prodLineId'] = viewModel.model.prodLineId;
+                                    },
+                                    textField: 'standardOpCode',
+                                    model: options.model,
+                                    change: function() {
+                                        var v = this.value();
+                                        if (v == undefined || v == " ") {
+                                        } else {
+                                            options.model.standardOpCode = this._dataItem.standardOpCode;
+                                            options.model.standardOpId = this._dataItem.standardOpId;
+                                            options.model.workstationId = this._dataItem.workstationId;
+                                            options.model.set('workstationCode', this._dataItem.workstationCode);
+                                            options.model.set('standardOpCode', this._dataItem.standardOpCode);
+                                        }
+                                    }
+                                }));
+                        }
+                    }, {
+                        field: "workstationCode",
+                        title: '<@spring.message "standardopinspectionh.workstationid"/>',
+                        width: 120,
+
+                        editor: function(container, options) {
+                            // $('<span>'+options.model.itemDescriptions+'</span>')
+                            //     .appendTo(container);
+                            $('<span data-bind="text:workstationId"></span>').appendTo(container);
+                        }
+                    }
+//                     , {
+//                         field: "inspectionTime",
+//                         title: '<@spring.message "quainstimel.inspectiontime"/>',
+//                         width: 120,
+//                         format: "{0: HH:mm}",
+//                         editor: function(container, options) {
+//                             var end = options.model.exemptionTimeTo;
+//                             var opts = {
+//                                 format: "HH:mm",
+//                                 change: function(e) {
+//                                     options.model.inspectionTime = e.sender._oldText;
+//                                 }
+//                             };
+
+//                             $('<input name="' + options.field + '"/>')
+//                                 .appendTo(container)
+//                                 .kendoTimePicker(opts);
+//                         }
+
+//                     },
+
+                ],
+                editable: true
+            }).data("kendoGrid");
+            Hap.autoResizeGrid('#grid');
+        </script>
+        <script>
+            var validator = $("#form1").kendoValidator({
+                valid: function(e) {
+                },
+                invalidMessageType: "tooltip "
+                    //errorTemplate: errorTemplate
+            }).data("kendoValidator");
+            $('#createButton').on('click', function() {
+                var countParameter = getMaxOrderCode();
+                var operationFlag = true;
+                if (!operationFlag) return;
+                countParameter++;
+                $("#grid").data("kendoGrid").addRow();
+                $("#grid").data("kendoGrid").dataSource.data()[0].orderNumber = countParameter;
+                $("#grid").data("kendoGrid").editCell($("#grid td:eq(2)"));
+
+            });
+            $('#deleteButton').on('click', function() {
+                var selected = $("#grid").data("kendoGrid").selectedDataItems();
+                $.each(selected, function(i, v) {
+                    $("#grid").data("kendoGrid").dataSource.remove(v);
+                });
+                $("#grid").data("kendoGrid").saveChanges();
+            });
+            $('#moveUpButton').on('click', function() {
+                var items = grid.items()
+                $.each(items, function(i, v) {
+
+                    if (v.className.split(' ').indexOf("k-state-selected") >= 0) {
+                        if (i > 0) {
+                            replaceValue(grid.dataSource.data()[i - 1], grid.dataSource.data()[i]);
+                            var gridnew = $("#grid").data("kendoGrid");
+                            gridnew.select("tr:eq(" + (i - 1) + ")");
+                        }
+                    }
+                });
+            });
+            $('#moveLowButton').on('click', function() {
+                var items = grid.items()
+                $.each(items, function(i, v) {
+
+                    if (v.className.split(' ').indexOf("k-state-selected") >= 0) {
+                        if (i < items.length) {
+                            replaceValue(grid.dataSource.data()[i + 1], grid.dataSource.data()[i]);
+                            var gridnew = $("#grid").data("kendoGrid");
+                            gridnew.select("tr:eq(" + (i + 1) + ")");
+                        }
+                    }
+                });
+            });
+        </script>
+        <script>
+            $(function() {
+                getQuaInsTimeInfo();
+            });
+        </script>
+    </body>
+
+    </html>

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_switch_rule.mapper.SwitchRuleMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_switch_rule.dto.SwitchRule">
+        <result column="SWITCH_RULE_ID" property="switchRuleId" jdbcType="DECIMAL" />
+        <result column="SAMPLE_PLAN_TYPE" property="samplePlanType" jdbcType="VARCHAR" />
+        <result column="SAMPLE_PROCEDURE_TYPE" property="sampleProcedureType" jdbcType="VARCHAR" />
+        <result column="INSPECTION_JUDGE" property="inspectionJudge" jdbcType="VARCHAR" />
+        <result column="SWITCH_SCORE_RULE" property="switchScoreRule" jdbcType="DECIMAL" />
+        <result column="SWITCH_SCORE_LIMIT" property="switchScoreLimit" jdbcType="DECIMAL" />
+        <result column="ENABLE_FLAG" property="enableFlag" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE1" property="globalAttribute1" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE2" property="globalAttribute2" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE3" property="globalAttribute3" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE4" property="globalAttribute4" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE5" property="globalAttribute5" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE6" property="globalAttribute6" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE7" property="globalAttribute7" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE8" property="globalAttribute8" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE9" property="globalAttribute9" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE10" property="globalAttribute10" jdbcType="VARCHAR" />
+    </resultMap>
+
+
+</mapper>

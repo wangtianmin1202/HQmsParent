@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hcm.hcm_item_category_assign.mapper.ItemCategoryAssignMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hcm.hcm_item_category_assign.dto.ItemCategoryAssign">
+        <result column="KID" property="kid" jdbcType="DECIMAL" />
+        <result column="CATEGORY_ID" property="categoryId" jdbcType="DECIMAL" />
+        <result column="ITEM_ID" property="itemId" jdbcType="DECIMAL" />
+        <result column="PLANT_ID" property="plantId" jdbcType="DECIMAL" />
+        <result column="CATEGORY_SET_ID" property="categorySetId" jdbcType="DECIMAL" />
+        <result column="CID" property="cid" jdbcType="DECIMAL" />
+    </resultMap>
+
+
+</mapper>

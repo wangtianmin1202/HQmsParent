@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.spc.repository.mapper.CountSampleDataWaitRMapper">
+	<!-- 可根据自己的需求，是否要使用 -->
+    <resultMap id="BaseResultMap" type="com.hand.spc.repository.dto.CountSampleDataWaitR">
+        <result column="count_sample_data_wait_id" property="countSampleDataWaitId" jdbcType="DECIMAL"/>
+        <result column="tenant_id" property="tenantId" jdbcType="DECIMAL"/>
+        <result column="site_id" property="siteId" jdbcType="DECIMAL"/>
+        <result column="attachment_group_id" property="attachmentGroupId" jdbcType="DECIMAL"/>
+        <result column="ce_group_id" property="ceGroupId" jdbcType="DECIMAL"/>
+        <result column="ce_parameter_id" property="ceParameterId" jdbcType="DECIMAL"/>
+        <result column="sample_value_count" property="sampleValueCount" jdbcType="DECIMAL"/>
+        <result column="sample_time" property="sampleTime" jdbcType="TIMESTAMP"/>
+        <result column="unqualified_quantity" property="unqualifiedQuantity" jdbcType="DECIMAL"/>
+    </resultMap>
+
+    <select id="listExtractCountSampleDataWait"  parameterType="com.hand.spc.repository.dto.CountSampleDataWaitVO" resultMap="BaseResultMap">
+        SELECT
+        pcsdw.count_sample_data_wait_id,
+        pcsdw.tenant_id,
+        pcsdw.site_id,
+        pcsdw.attachment_group_id,
+        pcsdw.ce_group_id,
+        pcsdw.ce_parameter_id,
+        pcsdw.sample_value_count,
+        pcsdw.sample_time,
+        pcsdw.unqualified_quantity
+        FROM
+        pspc_count_sample_data_wait pcsdw
+        WHERE
+        pcsdw.count_sample_data_wait_id IN
+        <foreach collection="countSampleDataWaitIdList" item="id" index="index" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+        ORDER BY
+        pcsdw.sample_time
+    </select>
+    
+    <select id="listExtractCountSampleDataWaitModified"  parameterType="string" resultMap="BaseResultMap">
+        SELECT
+        pcsdw.count_sample_data_wait_id,
+        pcsdw.tenant_id,
+        pcsdw.site_id,
+        pcsdw.attachment_group_id,
+        pcsdw.ce_group_id,
+        pcsdw.ce_parameter_id,
+        pcsdw.sample_value_count,
+        pcsdw.sample_time,
+        pcsdw.unqualified_quantity
+        FROM
+        pspc_count_sample_data_wait pcsdw
+        WHERE 1=1 
+        <if test="whereInSql != null and whereInSql != ''">
+                and ${whereInSql}
+            </if> 
+        ORDER BY
+        pcsdw.sample_time
+    </select>
+    <!-- #{ }是预编译处理，MyBatis在处理#{ }时，它会将sql中的#{ }替换为？，然后调用PreparedStatement的set方法来赋值，传入字符串后，会在值两边加上单引号，如上面的值 “4,44,514”就会变成“ ‘4,44,514’ ” -->
+	<!-- ${ }是字符串替换，MyBatis在处理{ }是字符串替换， MyBatis在处理是字符串替换，MyBatis在处理{ }时,它会将sql中的${ }替换为变量的值，传入的数据不会加两边加上单引号 -->
+
+    <resultMap id="ListCountSampleDataResultMap" type="com.hand.spc.repository.dto.CountSampleDataWaitVO">
+        <result column="tenant_id" property="tenantId" jdbcType="DECIMAL"/>
+        <result column="site_id" property="siteId" jdbcType="DECIMAL"/>
+        <result column="attachment_group_id" property="attachmentGroupId" jdbcType="DECIMAL"/>
+        <result column="ce_group_id" property="ceGroupId" jdbcType="DECIMAL"/>
+        <result column="ce_parameter_id" property="ceParameterId" jdbcType="DECIMAL"/>
+        <collection property="countSampleDataWaitIdList" ofType="java.lang.Long">
+            <result column="count_sample_data_wait_id"/>
+        </collection>
+        <collection property="dataAccessConfigurationList" ofType="com.hand.spc.repository.dto.DataAccessConfigurationR">
+            <result column="time_sampling" property="timeSampling" jdbcType="DECIMAL"/>
+            <result column="isometric_sampling" property="isometricSampling" jdbcType="DECIMAL"/>
+            <result column="effective_type" property="effectiveType"  jdbcType="VARCHAR"/>
+            <result column="sampling_position" property="samplingPosition" jdbcType="VARCHAR"/>
+            <result column="data_upper_limit" property="dataUpperLimit" jdbcType="DECIMAL"/>
+            <result column="data_lower_limit" property="dataLowerLimit" jdbcType="DECIMAL"/>
+        </collection>
+    </resultMap>
+
+    <select id="listCountSampleDataWait" resultMap="ListCountSampleDataResultMap">
+        SELECT
+        pcsdw.count_sample_data_wait_id,
+        pcsdw.tenant_id,
+        pcsdw.site_id,
+        pcsdw.attachment_group_id,
+        pcsdw.ce_group_id,
+        pcsdw.ce_parameter_id,
+        pdac.time_sampling,
+        pdac.isometric_sampling,
+        pdac.effective_type,
+        pdac.sampling_position,
+        pdac.data_upper_limit,
+        pdac.data_lower_limit
+        FROM
+        pspc_count_sample_data_wait pcsdw
+        LEFT JOIN pspc_data_access_configuration pdac ON pdac.tenant_id = pcsdw.tenant_id
+        AND pdac.site_id = pcsdw.site_id
+        AND pdac.attachment_group_id = pcsdw.attachment_group_id
+        AND pdac.ce_group_id = pcsdw.ce_group_id
+        AND pdac.ce_parameter_id = pcsdw.ce_parameter_id
+        AND pdac.configuration_status = 'Y'
+        WHERE
+        pcsdw.tenant_id = #{tenantId}
+        AND pcsdw.site_id = #{siteId}
+    </select>
+
+    <delete id="deleteCountSampleDataWait">
+        DELETE
+        FROM
+        pspc_count_sample_data_wait
+        WHERE
+        tenant_id = #{tenantId}
+        AND site_id = #{siteId}
+        AND count_sample_data_wait_id IN
+        <foreach collection="countSampleDataWaitIdList" item="id" index="index" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+    </delete>
+    
+    <delete id="deleteCountSampleDataDelWait">
+        DELETE
+        FROM
+        pspc_count_sample_data_wait
+        WHERE
+        tenant_id = #{tenantId}
+        AND site_id = #{siteId}
+        AND count_sample_data_wait_id IN
+        <foreach collection="countSampleDataWaitIdDelList" item="id" index="index" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+    </delete>
+
+
+    <select id="batchInsert" parameterType="java.util.List">
+        INSERT INTO pspc_count_sample_data_wait(tenant_id,site_id,sample_value_count,unqualified_quantity,sample_time,ce_group_id,ce_parameter_id,attachment_group_id)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.tenantId},#{item.siteId},#{item.sampleValueCount},#{item.unqualifiedQuantity},#{item.sampleTime},#{item.ceGroupId},#{item.ceParameterId},#{item.attachmentGroupId})
+        </foreach>
+    </select>
+
+    <select id="selectIsCountData" resultType="java.lang.Long" parameterType="com.hand.spc.repository.dto.CountSampleDataWaitVO">
+
+        select
+        sdw.count_sample_data_wait_id
+        FROM
+        pspc_count_sample_data_wait sdw,
+        pspc_entity pe,
+        pspc_chart pc
+        WHERE
+        1 = 1
+        AND pc.chart_id = pe.chart_id
+        AND pc.tenant_id = pe.tenant_id
+        AND pc.site_id = pe.site_id
+        AND sdw.tenant_id = pe.tenant_id
+        AND sdw.site_id = pe.site_id
+        AND sdw.attachment_group_id = pe.attachment_group_id
+        AND sdw.ce_group_id = pe.ce_group_id
+        AND sdw.ce_parameter_id = pe.ce_parameter_id
+        AND pe.entity_status = 'ACTIVE'
+        and pc.chart_type in('nP','P','C','U')
+        AND sdw.tenant_id = #{tenantId}
+        AND sdw.site_id = #{siteId}
+        AND sdw.count_sample_data_wait_id in
+        <foreach collection="countSampleDataWaitIdList" item="id" index="index" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+    </select>
+    
+    <select id="selectIsCountDataModified" resultType="java.lang.Long" parameterType="com.hand.spc.repository.dto.CountSampleDataWaitVO">
+
+        select
+        sdw.count_sample_data_wait_id
+        FROM
+        pspc_count_sample_data_wait sdw,
+        pspc_entity pe,
+        pspc_chart pc
+        WHERE
+        1 = 1
+        AND pc.chart_id = pe.chart_id
+        AND pc.tenant_id = pe.tenant_id
+        AND pc.site_id = pe.site_id
+        AND sdw.tenant_id = pe.tenant_id
+        AND sdw.site_id = pe.site_id
+        AND sdw.attachment_group_id = pe.attachment_group_id
+        AND sdw.ce_group_id = pe.ce_group_id
+        AND sdw.ce_parameter_id = pe.ce_parameter_id
+        AND pe.entity_status = 'ACTIVE'
+        and pc.chart_type in('nP','P','C','U')
+        AND sdw.tenant_id = -1
+        AND sdw.site_id = -1
+        <if test="whereInSql != null and whereInSql != ''">
+                and ${whereInSql}
+            </if> 
+    </select>
+    
+    <insert id="batchInsertCountSampleDataWait" parameterType="java.util.List" useGeneratedKeys="true" keyProperty="countSampleDataWaitId">
+        INSERT INTO pspc_count_sample_data_wait
+        (tenant_id,
+        site_id,
+        attachment_group_id,
+        ce_group_id,
+        ce_parameter_id,
+        sample_value_count,
+        sample_time,
+        unqualified_quantity)
+        VALUES
+        <foreach collection="list" item="item" index="index" separator=",">
+            (#{item.tenantId},
+            #{item.siteId},
+            #{item.attachmentGroupId},
+            #{item.ceGroupId},
+            #{item.ceParameterId},
+            #{item.sampleValueCount},
+            #{item.sampleTime},
+            #{item.unqualifiedQuantity})
+        </foreach>
+    </insert>
+</mapper>

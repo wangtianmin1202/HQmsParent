@@ -1,0 +1,250 @@
+<#include "../include/header.html">
+<script src="${base.contextPath}/common/code?yesNo=SYS.YES_NO"></script> 
+<script src="${base.contextPath}/common/code?hqmstandraduom=HQM_STANDARD_UOM"></script> 
+<script src="${base.contextPath}/common/code?hqminspectionmethod=HQM_INSPECTION_METHOD"></script>
+<script src="${base.contextPath}/common/code?hqmfillintype=HQM_FILL_IN_TYPE"></script>
+<script src="${base.contextPath}/common/code?hqmiqcenabletype=HQM_IQC_ENABLE_TYPE"></script>
+<script type="text/javascript">
+var viewModel = Hap.createGridViewModel("#grid");
+
+</script>
+
+<script type="text/javascript">
+function isEmpty(val){
+	if(val==''||val==null||val==undefined){
+		return true;
+	}else{
+		return false;
+	}
+}
+save = function()
+     {
+		var selected = window.parent.grid.selectedDataItems();
+		$.each(selected,function(index,element){
+			if(!isEmpty(viewModel.model.precision)){
+				element.set("precision",viewModel.model.precision);
+			}
+			if(!isEmpty(viewModel.model.standradfrom)){
+				element.set("standradFrom",viewModel.model.standradfrom);
+			}
+			if(!isEmpty(viewModel.model.standradto)){
+				element.set("standradTo",viewModel.model.standradto);
+			}
+			if(!isEmpty(viewModel.model.standraduom)){
+				element.set("standradUom",viewModel.model.standraduom);
+			}
+			if(!isEmpty(viewModel.model.inspectiontool)){
+				element.set("inspectionTool",viewModel.model.inspectiontool);
+			}
+			if(!isEmpty(viewModel.model.inspectionmethod)){
+				element.set("inspectionMethod",viewModel.model.inspectionmethod);
+			}
+			if(!isEmpty(viewModel.model.fillintype)){
+				element.set("fillInType",viewModel.model.fillintype);
+			}
+			if(!isEmpty(viewModel.model.sampleWayId)){
+				element.set("sampleWayId",viewModel.model.sampleWayId);
+	            console.log(viewModel.model.sampleWayId);    
+	            console.log(viewModel.model.sampleWayCode);    
+				element.set("sampleWayCode",viewModel.model.sampleWayCode);
+			}
+			
+			if(!isEmpty(viewModel.model.enabletype)){
+				element.set("enableType",viewModel.model.enabletype);
+			}
+			if(!isEmpty(viewModel.model.disabletime)){
+				element.set("disableTime",viewModel.model.disabletime);
+			}
+			if(isEmpty(viewModel.model.enabletime)){
+				element.set("enableTime",new Date());
+			}
+		});
+	 	window.parent.$("#childWindowUp").data("kendoWindow").close();
+   }
+   
+reSet =function(){
+	viewModel.model.set("precision",null);
+	viewModel.model.set("standradfrom",null);
+	viewModel.model.set("standradto",null);
+	viewModel.model.set("standraduom",null);
+	viewModel.model.set("inspectiontool",null);
+	viewModel.model.set("inspectionmethod",null);
+	viewModel.model.set("sampleWayId",null);
+	viewModel.model.set("fillintype",null);
+	viewModel.model.set("sampleWayCode",'');
+	viewModel.model.set("enabletype",'');
+	viewModel.model.set("disabletime",'');
+	viewModel.model.set("enabletime",'');
+}
+</script>
+<body>
+<div id="page-content">
+    <div class="pull-right" id="toolbar-btn-head" style="padding-bottom:10px;">
+        <span class="btn btn-success k-grid-save-changes" style="float:right;margin-right:5px;"   onclick="reSet()"><i class="fa fa-refresh" style="margin-right:3px;"></i>重置</span> 
+        <span class="btn btn-success k-grid-save-changes" style="float:right;margin-right:5px;"   onclick="save()"><i class="fa fa-save" style="margin-right:3px;"></i><@spring.message "hap.save"/></span>    
+    </div>
+       <form id="mainform"  class="form-horizontal" method="post" enctype="application/json;charset=UTF-8"style="padding-bottom:10px;> 
+    <div class="row" style="margin-left: 5px;">
+	 	<div class="col-sm-12">
+	 		
+	 	  	<div class="form-group">
+	 	  	
+				<div class="col-sm-12"style="margin-top: 5px;">
+					<label class="col-sm-4 control-label"><@spring.message "inspectiongroupl.precision"/>:</label>
+					<div class="col-sm-4">
+                        <input id="precision" style="width:80%"   data-bind="value:model.precision" class="k-textbox">
+
+					</div>					
+				</div>
+            </div>
+	
+			<div class="form-group">
+				<div class="col-sm-12"style="margin-top: 5px;">
+					<label class="col-sm-4 control-label"><@spring.message "inspectiongroupl.standradfrom"/>:</label>
+					<div class="col-sm-4">
+						<input  id="standradfrom"  name="samplenumber" style="width:80%"  class="k-textbox"data-bind="value:model.standradfrom" >
+
+					</div>					
+				</div>
+
+			</div>
+			
+			<div class="form-group">
+				<div class="col-sm-12"style="margin-top: 5px;">
+					<label class="col-sm-4 control-label"><@spring.message "inspectiongroupl.standradto"/>:</label>
+					<div class="col-sm-4">
+						<input id="standradto"   name="sampleProperties" style="width:80%" class="k-textbox"; data-bind="value:model.standradto" >
+
+					</div>
+				</div>
+	
+			</div>
+		
+			<div class="form-group">
+				<div class="col-sm-12"style="margin-top: 5px;">
+					<label class="col-sm-4 control-label"><@spring.message "inspectiongroupl.standraduom"/>:</label>
+					<div class="col-sm-4">
+                        <input id="standraduom"  style="width:80%"  data-bind="value:model.standraduom">		
+					</div>
+				</div>			
+			</div>	
+			
+			<div class="form-group">
+				<div class="col-sm-12"style="margin-top: 5px;">
+					<label class="col-sm-4 control-label"><@spring.message "inspectiongroupl.inspectiontool"/>:</label>
+					<div class="col-sm-4">
+                        <input  id="inspectiontool" style="width:80%"   class="k-textbox" data-bind="value:model.inspectiontool">		
+					</div>
+				</div>			
+			</div>	
+			
+			<div class="form-group">
+				<div class="col-sm-12"style="margin-top:5px;">
+					<label class="col-sm-4 control-label"><@spring.message "inspectiongroupl.inspectionmethod"/>:</label>
+					<div class="col-sm-4">
+                        <input id="inspectionmethod"  style="width:80%"  data-bind="value:model.inspectionmethod">		
+					</div>
+				</div>			
+			</div>
+			
+			<div class="form-group">
+				<div class="col-sm-12"style="margin-top: 5px;">
+					<label class="col-sm-4 control-label"><@spring.message "inspectiongroupl.fillintype"/>:</label>
+					<div class="col-sm-4">
+                        <input id="fillintype" style="width:80%"   data-bind="value:model.fillintype">		
+					</div>
+				</div>			
+			</div>
+			
+			<div class="form-group">
+				<div class="col-sm-12"style="margin-top: 5px;">
+					<label class="col-sm-4 control-label"><@spring.message "inspectiongroupl.samplewayid"/>:</label>
+					<div class="col-sm-4">
+                        <input id="samplewayid" style="width:80%"   data-bind="value:model.sampleWayId,text:model.sampleWayCode">		
+					</div>
+				</div>			
+			</div>
+			
+			<div class="form-group">
+				<div class="col-sm-12"style="margin-top: 5px;">
+					<label class="col-sm-4 control-label"><@spring.message "inspectiongroupl.enabletype"/>:</label>
+					<div class="col-sm-4">
+                        <input  id="enabletype"  style="width:80%" data-bind="value:model.enabletype">		
+					</div>
+				</div>			
+			</div>
+			
+			<div class="form-group">
+				<div class="col-sm-12"style="margin-top: 5px;">
+					<label class="col-sm-4 control-label"><@spring.message "inspectiongroupl.enabletime"/>:</label>
+					<div class="col-sm-4">
+                        <input id="enabletime"  style="width:80%"  data-role="datetimepicker"  data-bind="value:model.enabletime">		
+					</div>
+					<script>
+                        kendo.bind($('#enabletime'), viewModel);
+                        </script>
+				</div>			
+			</div>
+			
+			<div class="form-group">
+				<div class="col-sm-12"style="margin-top: 5px;">
+					<label class="col-sm-4 control-label"><@spring.message "inspectiongroupl.disabletime"/>:</label>
+					<div class="col-sm-4">
+                        <input id="disabletime" style="width:80%"  data-role="datetimepicker"  data-bind="value:model.disabletime">		
+                        <script>
+                        kendo.bind($('#disabletime'), viewModel);
+                        kendo.bind($('#mainform'), viewModel);
+                        </script>
+					</div>
+				</div>			
+			</div>
+			<div id="grid"></div>				
+		</div>
+	  
+   </form> 
+
+<script>  kendo.bind($('#toolbar-btn-head'), viewModel);  </script>
+</div>
+
+<script type="text/javascript">
+$("#standraduom").kendoComboBox({
+    dataTextField: "meaning",
+    dataValueField: "value",
+    valuePrimitive: true,
+    dataSource: hqmstandraduom
+});	
+$("#inspectionmethod").kendoComboBox({
+    dataTextField: "meaning",
+    dataValueField: "value",
+    valuePrimitive: true,
+    dataSource: hqminspectionmethod
+});	
+$("#fillintype").kendoComboBox({
+    dataTextField: "meaning",
+    dataValueField: "value",
+    valuePrimitive: true,
+    dataSource: hqmfillintype
+});
+$("#enabletype").kendoComboBox({
+    dataTextField: "meaning",
+    dataValueField: "value",
+    valuePrimitive: true,
+    dataSource: hqmiqcenabletype
+});
+$("#code").kendoLov($.extend
+	    (<@lov"LOV_PLANT"/>, {
+	        textField: 'plantCode',
+	        valueField:'plantId',
+	    }));
+$("#samplewayid").kendoLov($.extend
+	    (<@lov"LOV_SAMPLE_MANAGE"/>, {
+	        textField: 'sampleWayCode',
+	        valueField:'sampleWayId',
+	        change:function(){
+	        	viewModel.model.sampleWayCode= this._dataItem.sampleWayCode;
+	        }
+	    }));	    
+
+</script>
+</body>
+</html>

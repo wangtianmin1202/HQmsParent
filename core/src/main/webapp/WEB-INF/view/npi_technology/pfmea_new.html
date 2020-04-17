@@ -1,0 +1,481 @@
+<#include "../include/header.html">
+
+<script type="text/javascript">
+	var BaseUrl = _basePath;
+	var specNumber = '${RequestParameters.specNumber!0}';
+    var viewModel = Hap.createGridViewModel(null,{
+    	model:{
+    		
+    	},
+    	closeWin:function(e) {
+    		window.parent.$("#newWindow").data("kendoWindow").close();
+    	},
+    	 save:function(){
+    		var data = viewModel.model.toJSON();
+    		data.__status = "add";
+    		
+    		var validator = $("#mainForm").data("kendoValidator");
+    		if(validator.validate()) {
+    			//Hap.blockUI();
+    			/* Hap.request({
+    				url: BaseUrl + "/npi/technology/spec/add",
+    				data: kendo.stringify(data),
+    				success:function(data){
+    					if(data.success){
+    						//Hap.unblockUI();
+    						viewModel.closeWin();
+    					}
+    				}
+    			}) */
+    			viewModel.model.specNumber = specNumber;
+    			Hap.submitForm({
+                    url: '${base.contextPath}/npi/invalid/pattern/addData',
+                    formModel: viewModel.model,
+                    grid: {"causeList": $("#patternGrid")},
+                    success: function (data) {
+                    	viewModel.closeWin();
+                    }
+                });
+    		} 
+    	}
+    	
+    });
+    var viewModelPat = Hap.createGridViewModel("#patternGrid",{
+        model:{},
+        save:function () {
+        },
+        remove: function () {
+                Hap.deleteGridSelection({
+                    grid: $('#patternGrid')
+                });
+        },
+    });
+    var viewModelMea = Hap.createGridViewModel("#measureGrid",{
+        model:{
+        	field:{
+        		/* specRequirement:{validation: {required: true}} */
+        	}        	
+        },
+        save:function () {
+        },
+        remove: function () {
+                Hap.deleteGridSelection({
+                    grid: $('#measureGrid')
+                });
+        },
+    });
+    
+    function createPerventionMeasure(uid){
+    	var grid = $("#measureGrid").data("kendoGrid");
+    	grid.addRow();
+    	grid.dataSource._data[0].parentUid=uid;
+    	grid.dataSource._data[0].__status = "add";
+    	//测试grid是否是引用传递
+    	var gridPat = $("#patternGrid").data("kendoGrid");
+    	for(var i =0 ;i < gridPat.dataSource._data.length; i++){
+			if(gridPat.dataSource._data[i].uid == uid){
+				var meaList = gridPat.dataSource._data[i].meaList;
+				if(meaList == null){
+					var arrayObj = new Array();
+					arrayObj.push(grid.dataSource._data[0]);
+					gridPat.dataSource._data[i].meaList = arrayObj;
+				}else{
+					gridPat.dataSource._data[i].meaList.push(grid.dataSource._data[0]);
+				}
+			}
+        }
+    }
+    
+</script>
+
+<body>
+
+<div id="page-content">
+	<form id = "mainForm" style="paddiing-bottom:50px;padding-top:15px" class="form-horizontal" method="post" enctype="application/json;charset=UTF-8">
+		<div class="row">
+			<div class="col-sm-5">
+				<div class="col-sm-12">
+					<div class="form-group">
+						<div class="col-sm-12">
+							<label class="col-sm-4 control-label">失效模式<span style="color:red;">*</span></label>
+							<div class="col-sm-8">
+								<textarea style="width:100%" id="invalidPatternName"
+									data-bind="value:model.invalidPatternName" required ></textarea>
+								<script type="text/javascript">
+									$("#invalidPatternName").kendoTextArea({});
+								</script>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="col-sm-12">
+					<div class="form-group">
+							<div class="col-sm-12">
+								<label class="col-sm-4 control-label">版本</label>
+								<div class="col-sm-8">
+									<input style="width:100%" id="fileTypeName2"  data-role="maskedtextbox" class="k-textbox"
+										data-bind="value:model.specNumber"   placeholder='V1' disabled>
+								</div>
+							</div>
+					</div>
+				</div>
+			</div>
+			<div class="col-sm-6">
+				<div class="col-sm-12">
+					<div class="form-group">
+						<div class="col-sm-12">
+							<label class="col-sm-3 control-label">失效模式后果</label>
+							<div class="col-sm-9">
+								<textarea style="width:100%" id="invalidPatternConsequence"
+									data-bind="value:model.invalidPatternConsequence" required></textarea>
+								<script type="text/javascript">
+									$("#invalidPatternConsequence").kendoTextArea({});
+								</script>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="col-sm-12">
+					<div class="form-group">
+						<div class="col-sm-12">
+							<label class="col-sm-3 control-label">SEV<span style="color:red;">*</span></label>
+							<div class="col-sm-9">
+								<input style="width:100%" id="sev"
+									data-bind="value:model.sev" required>
+								<script type="text/javascript">
+									$("#sev").kendoNumericTextBox({min:0,
+						                 change:function(dataItem){
+						                	 debugger;
+						                    //SEV*OCC*DET
+						                    var patternGridData=$("#patternGrid").data("kendoGrid").dataSource._data;
+						                    var measureGridData=$("#measureGrid").data("kendoGrid").dataSource._data;
+						                    for(var i=0;i<patternGridData.length;i++){
+						                    	for(var j=0;j<measureGridData.length;j++){
+							                    	if(patternGridData[i].uid == measureGridData[j].parentUid){
+							                    		measureGridData[j].rpn=patternGridData[i].occ*this.value()*measureGridData[j].det;
+							                    	}
+							                    }
+						                    }
+				            				$("#measureGrid").data("kendoGrid").refresh();
+						                }});
+								</script>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="col-sm-2"></div>
+		</div>
+		<div class="row">
+			
+			<div class="col-sm-8">
+				
+			</div>
+			<div class="col-sm-4"></div>
+		</div>
+	</form>
+	<div style="clear:both">
+		<span>新增失效原因</span>
+		<div id="page-matcontent">
+		    <div class="pull-left" id="toolbar-btn" style="padding-bottom:10px;">
+				<span class="btn btn-primary k-grid-add" style="float:left;margin-right:5px;" data-bind="click:create">新增失效原因</span>
+		        <span data-bind="click:remove" class="btn btn-danger" style="float:left;"><@spring.message "hap.delete"/></span>
+		    </div>
+		    <script>kendo.bind($('#toolbar-btn'), viewModelPat);</script>
+		</div>
+	</div>
+	<div style="clear:both">
+		<div id="patternGrid"></div>
+	</div>
+	<div style="clear:both">
+		<span>新增预防措施</span>
+		<div id="page-detailcontent">
+		    <div class="pull-left" id="toolbar-btn-det" style="padding-bottom:10px;">
+		        <span data-bind="click:remove" class="btn btn-danger" style="float:left;"><@spring.message "hap.delete"/></span>
+		    </div>
+		    <script>kendo.bind($('#toolbar-btn-det'), viewModelMea);</script>
+		</div>
+	</div>
+	<div style="clear:both">
+		<div id="measureGrid"></div>
+	</div>
+	<div id="mainBottom" class="text-right" style="bottom:15px;position:fixed;float:left;padding-top:15px;border-top:1px solid #e8e1eb;
+		width:100%;background:#fff;margin-right:30px">
+		<span class="btn btn-primary" data-bind="click:save" type="submit" style="margin-right:5px">保存</span>
+		<span class="btn btn-default" data-bind="click:closeWin" type="button" style="margin-right:25px">取消</span>
+	</div>
+	<script>
+		kendo.bind($('#mainForm'), viewModel);
+		kendo.bind($('#mainBottom'), viewModel);
+	</script>
+	<script>
+		$('#mainForm').kendoValidator({
+			messages:{
+				required:'<@spring.message "hap.validation.notempty"/>'
+			},
+			invalidMessageType:"tooltip"
+		});
+	</script>
+<script>
+    var BaseUrl = _basePath;
+    var dataSourcePat = new kendo.data.DataSource({
+        transport: {
+            read: {
+                url: BaseUrl + "/hqm/technology/standard/action/query1",
+                type: "POST",
+                dataType: "json"
+            },
+            destroy: {
+                url: BaseUrl + "/hqm/technology/standard/action/remove",
+                type: "POST",
+                contentType: "application/json"
+            },
+            create:{
+                url: BaseUrl + "/hqm/technology/standard/action/add",
+                type: "POST",
+                contentType: "application/json",
+                async: true
+            },
+            parameterMap: function (options, type) {
+                if (type !== "read" && options.models) {
+                    var datas = Hap.prepareSubmitParameter(options, type);
+                    return kendo.stringify(datas);
+                } else if (type === "read") {
+                    return Hap.prepareQueryParameter(viewModel.model.toJSON(), options)
+                }
+            }
+        },
+        batch: true,
+        serverPaging: true,
+        pageSize: 20,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+                //id: "standardActionId",
+                fields: {
+                	invalidCause :{validation:{required:true}},
+                	occ :{validation:{required:true}}
+                },
+                editable:function(col){
+                	/* if(col == 'technologyActionNumber') {
+                		return false;
+                	} */
+                	return true;
+                } 
+            }
+        }
+    });
+    var dataSourceMea = new kendo.data.DataSource({
+        transport: {
+            read: {
+                url: BaseUrl + "/hqm/technology/standard/action/query11",
+                type: "POST",
+                dataType: "json"
+            },
+            destroy: {
+                url: BaseUrl + "/hqm/technology/standard/action/remove",
+                type: "POST",
+                contentType: "application/json"
+            },
+            create:{
+                url: BaseUrl + "/hqm/technology/standard/action/add",
+                type: "POST",
+                contentType: "application/json",
+                async: true
+            },
+            parameterMap: function (options, type) {
+                if (type !== "read" && options.models) {
+                    var datas = Hap.prepareSubmitParameter(options, type);
+                    return kendo.stringify(datas);
+                } else if (type === "read") {
+                    return Hap.prepareQueryParameter(viewModel.model.toJSON(), options)
+                }
+            }
+        },
+        batch: true,
+        serverPaging: true,
+        pageSize: 20,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+                //id: "standardActionId",
+                fields: {
+                	preventionMeasureNumber :{validation:{required:true}},
+                	detectability :{validation:{required:true}},
+                	det :{validation:{required:true}},
+                	rpn :{validation:{required:true}},
+                	controlCapacity :{validation:{required:true}},
+                	controlFrequency :{validation:{required:true}},
+                	controlMethod :{validation:{required:true}},
+                	reactionPlan :{validation:{required:true}}
+                },
+                editable:function(col){
+                	if(col == 'rpn') {
+                		return false;
+                	}
+                	return true;
+                }
+            }
+        }
+    });
+
+</script>
+
+<script>
+    var patternGrid = $("#patternGrid").kendoGrid({
+        dataSource: dataSourcePat,
+        resizable: true,
+        scrollable: true,
+        navigatable: false,
+        autoBind:false,
+        selectable: 'multiple, rowbox',
+        dataBound: function () {
+            if (parent.autoResizeIframe) {
+                parent.autoResizeIframe('${RequestParameters.functionCode!}')
+            }
+        },
+        columns: [
+        	{
+                field: "invalidCause",
+                title: '失效起因',
+                width: 120
+            },{
+                field: "occ",
+                title: 'OCC',
+                width: 130,
+                editor: function (container, options) {
+                	$('<input required name="' + options.field + '"/>')
+                     .appendTo(container)
+                     .kendoNumericTextBox({
+                    	 min:0,
+		                 change:function(dataItem){
+		                	 debugger;
+			                 var measureGridData=$("#measureGrid").data("kendoGrid").dataSource._data;
+			                 if(measureGridData.length != 0){
+			                     for(var j=0;j<measureGridData.length;j++){
+				                     if(options.model.uid == measureGridData[j].parentUid){
+				                         measureGridData[j].rpn=$("#sev")[0].value*this.value()*measureGridData[j].det;
+				                     }
+				                 }
+	            			     $("#measureGrid").data("kendoGrid").refresh();
+			                 }
+		                }
+                    });
+                }
+            }, {
+                title: '操作',
+                width: 150,
+                headerAttributes: {
+                    style: "text-align: center"
+                },
+                attributes: {
+                    style: "text-align: center;"
+                },
+                template:function (dataItem) { 
+                	return '<a href="#"  style="text-decoration: underline;color:#00F" onclick="createPerventionMeasure(\''+dataItem.uid+'\')" >新增预防措施</a>';
+                }
+            }
+        ],
+        editable: true
+    }).data("kendoGrid");
+	
+    var measureGrid = $("#measureGrid").kendoGrid({
+        dataSource: dataSourceMea,
+        resizable: true,
+        scrollable: true,
+        navigatable: false,
+        autoBind:false,
+        selectable: 'multiple, rowbox',
+        dataBound: function () {
+            if (parent.autoResizeIframe) {
+                parent.autoResizeIframe('${RequestParameters.functionCode!}')
+            }
+        },
+        columns: [
+        	{
+                field: "preventive",
+                title: '预防性',
+                width: 120
+            },{
+                field: "detectability",
+                title: '可探测性',
+                width: 120
+            },{
+                field: "det",
+                title: 'DET',
+                width: 50,
+                editor: function (container, options) {
+                	$('<input required name="' + options.field + '"/>')
+                     .appendTo(container)
+                     .kendoNumericTextBox({
+                    	 min:0,
+		                 change:function(dataItem){
+		                	 debugger;
+		                    //SEV*OCC*DET
+		                    var parentRow=$("#patternGrid").data("kendoGrid").dataSource.getByUid(options.model.parentUid);
+		                    var row=$("#measureGrid").data("kendoGrid").dataSource.getByUid(options.model.uid);
+            				row.rpn=parentRow.occ*this.value()*$("#sev")[0].value;
+            				$("#measureGrid").data("kendoGrid").refresh();
+		                }
+                    });
+                }
+            },{
+                field: "rpn",
+                title: 'RPN',
+                width: 50
+            },
+            {
+                field: "controlCapacity",
+                title: '控制容量',
+                width: 100,
+                headerAttributes: {
+                    style: "text-align: center"
+                },
+                attributes: {
+                    style: "text-align: center"
+                }
+            },
+            {
+                field: "controlFrequency",
+                title: '控制频率',
+                width: 100,
+                headerAttributes: {
+                    style: "text-align: center"
+                },
+                attributes: {
+                    style: "text-align: center"
+                }
+            },
+            {
+                field: "controlMethod",
+                title: '控制方法',
+                width: 120,
+                headerAttributes: {
+                    style: "text-align: center"
+                },
+                attributes: {
+                    style: "text-align: center"
+                }
+            },
+            {
+                field: "reactionPlan",
+                title: '反应计划',
+                width: 120,
+                headerAttributes: {
+                    style: "text-align: center"
+                },
+                attributes: {
+                    style: "text-align: center;"
+                }
+            }
+        ],
+        editable: true
+    }).data("kendoGrid");
+    $("#patternGrid").data("kendoGrid").addRow();
+    //$("#measureGrid").data("kendoGrid").addRow();
+</script>
+</div>
+</body>
+</html>

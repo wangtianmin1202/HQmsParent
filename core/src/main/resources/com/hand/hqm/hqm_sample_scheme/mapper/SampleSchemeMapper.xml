@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_sample_scheme.mapper.SampleSchemeMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_sample_scheme.dto.SampleScheme">
+        <result column="SCHEME_ID" property="schemeId" jdbcType="DECIMAL" />
+        <result column="SAMPLE_PLAN_TYPE" property="samplePlanType" jdbcType="VARCHAR" />
+        <result column="SAMPLE_PROCEDURE_TYPE" property="sampleProcedureType" jdbcType="VARCHAR" />
+        <result column="SAMPLE_SIZE_CODE_LETTER" property="sampleSizeCodeLetter" jdbcType="VARCHAR" />
+        <result column="ACCEPTANCE_QUALITY_LIMIT" property="acceptanceQualityLimit" jdbcType="VARCHAR" />
+        <result column="SAMPLE_SIZE" property="sampleSize" jdbcType="DECIMAL" />
+        <result column="AC_VALUE" property="acValue" jdbcType="DECIMAL" />
+        <result column="RE_VALUE" property="reValue" jdbcType="DECIMAL" />
+        <result column="ENABLE_FLAG" property="enableFlag" jdbcType="VARCHAR" />
+        
+    </resultMap>
+<select id="selectSampleSize" resultMap="BaseResultMap" parameterType="com.hand.hqm.hqm_sample_scheme.dto.SampleScheme">
+	SELECT t.*
+  FROM hqm_sample_scheme t
+ WHERE 1 = 1
+   AND to_number(t.acceptance_quality_limit) = #{acceptanceQualityLimit}
+   AND to_number(t.attribute1) &lt;= #{attribute1}
+   AND to_number(t.attribute2) &gt;= #{attribute2}
+
+</select>
+<select id="reSelect" resultMap="BaseResultMap" parameterType="com.hand.hqm.hqm_sample_scheme.dto.SampleScheme">
+	SELECT t.*
+  FROM hqm_sample_scheme t
+ WHERE 1 = 1
+   <if test="sampleProcedureType !=null">
+   AND t.sample_procedure_type = #{sampleProcedureType}
+   </if>
+   <if test="sampleSizeCodeLetter !=null">
+   AND t.sample_size_code_letter = #{sampleSizeCodeLetter}
+   </if><if test="acceptanceQualityLimit !=null">
+   AND t.acceptance_quality_limit = #{acceptanceQualityLimit}
+   </if><if test="enableFlag !=null">
+   AND t.enable_flag = #{enableFlag}
+   </if>
+   ORDER BY t.scheme_id DESC
+</select>
+</mapper>

@@ -1,0 +1,432 @@
+<#include "../include/header.html">
+<!--
+  description  ECR-流程内嵌界面
+-->
+<style>
+	div[role=tooltip].k-tooltip{
+		padding: 2px;
+		background: #5c9acf;
+	}
+	.k-tooltip-content{
+		padding: 4px;
+		text-align: left;
+		background: #fff;
+		color: #666;
+	}
+	.k-callout {
+		border-bottom-color: #5c9acf;
+	}
+</style>
+
+ <script src="${base.contextPath}/common/code?HPM_ECR_IS=HPM_ECR_IS"></script>
+ <script src="${base.contextPath}/common/code?ECR_TASK_STATUS=ECR_TASK_STATUS"></script>
+
+
+<script type="text/javascript">
+    var viewModel = Hap.createGridViewModel("#grid");
+    viewModel.model.ecrno = "${RequestParameters.ecrno!}";
+    viewModel.model.taskType = "${RequestParameters.taskType!}";
+    viewModel.model.id = "${RequestParameters.id!}";
+    var dutyby = "${RequestParameters.dutyby!}";
+    var flowno = "${RequestParameters.flowno!}";
+    var enable = "${RequestParameters.enable!0}";
+    var toolTipOpt = {
+        		show: function(e){
+        			if($.trim(this.content.text()) !=""){
+        				$('[role="tooltip"]').css("visibility", "visible");
+        			}
+        		},
+        		hide: function(){
+        			$('[role="tooltip"]').css("visibility", "hidden");
+        		},
+        		filter: "td:nth-child(n+3)",
+        		content: function(e){
+        			var element = e.target[0];
+        			if(element.offsetWidth < element.scrollWidth){
+        				var text = $(e.target).text();
+        				return '<div style="min-width:100px;max-width: 1000px;">' + text + '</div>';
+        			}else{//解决鼠标一开始放在上面出现空模块
+        				$('[role="tooltip"]').css("visibility", "hidden");
+        				return "";
+        			}
+        		}
+        };
+</script>
+
+<body>
+
+<div id="page-content">
+    <div class="pull-left" id="toolbar-btn" style="padding-bottom:10px;display:none">
+        <span id="addButton" class="btn btn-primary k-grid-add" style="float:left;margin-right:5px;" data-bind="click:create"><@spring.message "hap.new"/></span>
+        <span id="changeButton" class="btn btn-success k-grid-save-changes" data-bind="click:save" style="float:left;margin-right:5px;"><@spring.message "hap.save"/></span>
+        <span id="removeButton" data-bind="click:remove" class="btn btn-danger" style="float:left;"><@spring.message "hap.delete"/></span>
+    </div>
+    <script>kendo.bind($('#toolbar-btn'), viewModel);</script>
+    <div id="queryPanel" class="pull-right" style="padding-bottom:10px;;display:none">
+    	<div class="k-query-simple" id="query-form">
+        </div>
+        <script>kendo.bind($('#query-form'), viewModel);</script>
+        <div class="k-query-detail" id="query-form2">
+            <div class="rows" style="margin-top:5px">
+            </div>
+        </div>
+        <script>kendo.bind($('#query-form2'), viewModel);</script>
+    </div>
+    <script>
+    kendo.bind($('#query-form'), viewModel);
+    $('#queryPanel').kendoQueryPanel({
+        queryFunction: function () {
+            viewModel.query();
+        },
+        resetFunction: function () {
+            viewModel.reset();
+        }
+    });
+    </script>
+    <div style="clear:both">
+        <div id="grid"></div>
+    </div>
+</div>
+
+<script>
+    Hap.initEnterQuery('#query-form', viewModel.query);
+    var BaseUrl = _basePath;
+    
+    // 文件
+    var dataSource = new kendo.data.DataSource({
+        transport: {
+            read: {
+                url: BaseUrl + "/hpm/ecr/rfq/task/process/query",
+                type: "POST",
+                dataType: "json"
+            },
+            update: {
+                url: BaseUrl + "/hpm/ecr/rfq/task/process/submit?taskType="+viewModel.model.taskType,
+                type: "POST",
+                contentType: "application/json"
+            },
+            destroy: {
+                url: BaseUrl + "/hpm/ecr/rfq/task/process/remove",
+                type: "POST",
+                contentType: "application/json"
+            },
+            create: {
+                url: BaseUrl + "/hpm/ecr/rfq/task/process/submit?taskType="+viewModel.model.taskType,
+                type: "POST",
+                contentType: "application/json"
+            },
+            parameterMap: function (options, type) {
+                if (type !== "read" && options.models) {
+                    var datas = Hap.prepareSubmitParameter(options, type)
+                    return kendo.stringify(datas);
+                } else if (type === "read") {
+                	var pq = Hap.prepareQueryParameter(viewModel.model.toJSON(), options);
+                	if(viewModel.model.get("taskType") == 'RFQ'){
+                		pq.dutyby = dutyby;
+                	}
+                    return pq;
+                }
+            }
+        },
+        batch: true,
+        serverPaging: true,
+        pageSize: 10,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+                id: "id",
+                fields: {
+                	askFinishedDate:{type:'date'},
+                	planFinishedDate:{type:'date'},
+                	actFinishedDate:{type:'date'},
+                },
+                editable:function(col){
+                	console.log(3);
+                	if(col=='skuCode' || col=='descriptions' || col=='taskType' || col=='currentVersion' ||
+                			col=='dutyby' || col=='askFinishedDate' || col=='taskSeq' || col=='newVersion' || col=='edit'){
+                		return false;
+                	}
+                	if(enable && enable == 'N'){
+                		return false;
+                	}else{
+                		return true;
+                	}
+					return true;
+                }
+            }
+        }
+    });
+
+	$("#grid").kendoTooltip(toolTipOpt).data("kendoTooltip");
+    var grid = $("#grid").kendoGrid({
+        dataSource: dataSource,
+        resizable: true,
+        scrollable: true,
+        navigatable: false,
+        sortable:true,
+        // selectable: 'multiple, rowbox',
+        dataBound: function () {
+            if (parent.autoResizeIframe) {
+                parent.autoResizeIframe('${RequestParameters.functionCode!}')
+            }
+        },
+        pageable: {
+            pageSizes: [5, 10, 20, 50],
+            refresh: true,
+            buttonCount: 5
+        },
+        columns: [
+                    {
+                field: "skuCode",
+                title: '<@spring.message "ecrtaskprocess.skuCode"/>',
+                width: 120,
+                attributes:{style:"white-space:nowrap;text-overflow:ellipsis;"}
+            },
+                    {
+                field: "descriptions",
+                title: '<@spring.message "codedetail.itemname"/>',
+                width: 120,
+                attributes:{style:"white-space:nowrap;text-overflow:ellipsis;"}
+            },
+                    {
+                field: "taskType",
+                title: '<@spring.message "pqccalendar.forktype"/>',
+                width: 120,
+                attributes:{style:"white-space:nowrap;text-overflow:ellipsis;"}
+            },
+            {
+                field: "taskSeq",
+                title: '<@spring.message "ecrrfq.rfqseq"/>',
+                width: 120,
+                attributes:{style:"white-space:nowrap;text-overflow:ellipsis;"}
+            },
+                    {
+                field: "isNeed",
+                title: '<@spring.message "ecrtaskprocess.isNeed"/>',
+                width: 120,
+                attributes:{style:"white-space:nowrap;text-overflow:ellipsis;"},
+                template: function (dataItem) {
+                    var v = dataItem.isNeed ? dataItem.isNeed : "";
+                    $.each(HPM_ECR_IS, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return v;
+                        }
+                    })
+                    return v;
+                },
+                editor: function (container, options) {
+                    $('<input name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            dataTextField: "meaning",
+                            dataValueField: "value",
+                            valuePrimitive: true,
+                            dataSource: HPM_ECR_IS
+                        });
+                }
+            },
+                    {
+                field: "currentVersion",
+                title: '<@spring.message "ecrmain.technical.currentversion"/>',
+                width: 120,
+                attributes:{style:"white-space:nowrap;text-overflow:ellipsis;"}
+            },
+
+                    {
+                field: "editFlag",
+                title: '<@spring.message "ecrtaskprocess.editFlag"/>',
+                width: 120,
+                attributes:{style:"white-space:nowrap;text-overflow:ellipsis;"},
+                template: function (dataItem) {
+                    var v = dataItem.editFlag ? dataItem.editFlag : "";
+                    $.each(HPM_ECR_IS, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return v;
+                        }
+                    })
+                    return v;
+                },
+                editor: function (container, options) {
+                    $('<input name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            dataTextField: "meaning",
+                            dataValueField: "value",
+                            valuePrimitive: true,
+                            dataSource: HPM_ECR_IS
+                        });
+                }
+            },
+                    {
+                field: "dutyby",
+                title: '<@spring.message "ecrmain.qtp.dutyby"/>',
+                width: 120,
+                attributes:{style:"white-space:nowrap;text-overflow:ellipsis;"}
+            },
+            
+                    {
+                field: "planFinishedDate",
+                title: '<@spring.message "ecrmain.qtp.planfinisheddate"/>',
+                width: 120,
+                attributes:{style:"white-space:nowrap;text-overflow:ellipsis;"},
+                format:'{0:yyyy-MM-dd}',
+                editor: function (container, options) {
+                	var isNeed = options.model.isNeed;
+                	var editFlag = options.model.editFlag;
+					if(editFlag == 'Y' || isNeed == 'Y'){
+	                    $('<input required name="' + options.field + '"/>')
+	                        .appendTo(container)
+	                        .kendoDatePicker({min: new Date()});
+					} else {
+						$('<input name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDatePicker({min: new Date()});
+					}
+                }
+            },
+                    {
+                field: "actFinishedDate",
+                title: '<@spring.message "ecrmain.qtp.actfinisheddate"/>',
+                width: 120,
+                attributes:{style:"white-space:nowrap;text-overflow:ellipsis;"},
+                format:'{0:yyyy-MM-dd}',
+                editor: function (container, options) {
+					$('<input name="' + options.field + '"/>')
+                       .appendTo(container)
+                       .kendoDatePicker({max: new Date()});
+                }
+            },
+
+	            {
+		        field: "askFinishedDate",
+		        title: '<@spring.message "ecrmain.qtp.askfinisheddate"/>',
+		        width: 120,
+		        attributes:{style:"white-space:nowrap;text-overflow:ellipsis;"},
+		        format:'{0:yyyy-MM-dd}'
+        	},
+                    {
+                field: "newVersion",
+                title: '<@spring.message "ecrtaskprocess.newVersion"/>',
+                width: 120,
+                attributes:{style:"white-space:nowrap;text-overflow:ellipsis;"}
+            },
+                    {
+                field: "taskStatus",
+                title: '<@spring.message "ecrprojecttracking.status"/>',
+                width: 120,
+                attributes:{style:"white-space:nowrap;text-overflow:ellipsis;"},
+                template: function (dataItem) {
+                    var v = dataItem.taskStatus ? dataItem.taskStatus : "";
+                    $.each(ECR_TASK_STATUS, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return v;
+                        }
+                    })
+                    return v;
+                },
+                editor: function (container, options) {
+                    $('<input name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            dataTextField: "meaning",
+                            dataValueField: "value",
+                            valuePrimitive: true,
+                            dataSource: ECR_TASK_STATUS
+                        });
+                    
+                }
+            },
+                    {
+            	field:'edit',
+                title: '<@spring.message "editoder.operate"/>',
+                width: 60,
+                template:function(e){
+                	var v = e;
+                	return Hap.createAnchor('<@spring.message "hap.save"/>',save, v.id);
+                }
+            }
+        ],
+        editable: true
+    }).data("kendoGrid");
+	Hap.autoResizeGrid("#grid");
+	
+	// 显示隐藏列
+	if (viewModel.model.taskType == 'RFQ' ||viewModel.model.taskType == 'QTP' 
+			||viewModel.model.taskType == 'VTP' ||viewModel.model.taskType == 'PCI'
+			||viewModel.model.taskType == 'designReview' ) {
+		grid.showColumn('taskSeq');
+		grid.showColumn('isNeed');
+		grid.hideColumn('currentVersion');
+		grid.hideColumn('editFlag');
+		grid.hideColumn('newVersion');
+	} else {
+		grid.hideColumn('taskSeq');
+		grid.hideColumn('isNeed');
+		grid.showColumn('currentVersion');
+		grid.showColumn('editFlag');
+		grid.showColumn('newVersion');
+	}
+	if(enable =='N'){
+		grid.hideColumn('edit');
+    }
+
+
+	// 保存
+	function save(e){
+		console.log(e);
+		var data = grid.dataSource.data();
+		var thisData = [];
+		$.each(data, function(i,n){
+			if(e == n.id){
+				thisData = n;
+				isneed = null;
+				if(viewModel.model.taskType == 'RFQ'||viewModel.model.taskType == 'QTP'
+					||viewModel.model.taskType == 'VTP' ||viewModel.model.taskType == 'PCI'
+					||viewModel.model.taskType == 'designReview' ){
+						isneed = n.isNeed;
+				}else {
+					isneed = n.editFlag;
+				}
+					
+				if(isneed=='Y'&&n.planFinishedDate==null){
+					kendo.ui.showInfoDialog({
+						message:'计划完成时间字段不能为空！'
+					})
+				}else{
+					$.ajax({
+						type:'POST',
+						url: BaseUrl + "/hpm/ecr/rfq/task/process/submit?taskType="+viewModel.model.taskType,
+						dataType:'json',
+						contentType:'application/json',
+						data: kendo.stringify([thisData.toJSON()]),
+						success: function(e){
+							grid.dataSource.read();
+						}
+					})
+				}
+			}
+		})
+	}
+
+	
+ 	var data =['1762','3491'];
+ 	
+ 	function rfqStart(){
+ 		$.ajax({  
+ 		    url : BaseUrl + '/hpm/ecr/rfq/process/rfqStart?ecrno=ECR20200349',  
+ 		    data : "list="+ data,  
+ 		    type : "POST",  
+ 		    success : function(data) {  
+ 		    	console.log(data);
+ 	    	}  
+ 		});
+ 	}
+
+  
+</script>
+</body>
+</html>

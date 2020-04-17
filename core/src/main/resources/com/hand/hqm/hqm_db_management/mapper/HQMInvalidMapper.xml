@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_db_management.mapper.HQMInvalidMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_db_management.dto.HQMInvalid">
+        <result column="INVALID_ID" property="invalidId" jdbcType="DECIMAL" />
+        <result column="FUNCTION_ID" property="functionId" jdbcType="DECIMAL" />
+        <result column="STRUCTURE_ID" property="structureId" jdbcType="DECIMAL" />
+        <result column="INVALID_NAME" property="invalidName" jdbcType="VARCHAR" />
+        <result column="INVALID_CONSEQUENCE" property="invalidConsequence" jdbcType="VARCHAR" />
+        <result column="SERIOUS" property="serious" jdbcType="DECIMAL" />
+        <result column="SPECIAL_CHARACTER_TYPE" property="specialCharacterType" jdbcType="VARCHAR" />
+        <result column="INVALID_REASON" property="invalidReason" jdbcType="VARCHAR" />
+        <result column="PREVENT_MEASURE" property="preventMeasure" jdbcType="VARCHAR" />
+        <result column="DETECT_MEASURE" property="detectMeasure" jdbcType="VARCHAR" />
+        <result column="OCCURRENCE" property="occurrence" jdbcType="DECIMAL" />
+        <result column="DETECTION" property="detection" jdbcType="DECIMAL" />
+        <result column="RPN" property="rpn" jdbcType="DECIMAL" />
+        <result column="FUNCTION_NAME" property="functionName" jdbcType="VARCHAR" />
+        <result column="STRUCTURE_NAME" property="structureName" jdbcType="VARCHAR" />
+    </resultMap>
+
+	<select id="query" resultMap="BaseResultMap">
+		select 
+		hi.*
+		from 
+		HQM_INVALID hi
+	</select>
+
+</mapper>

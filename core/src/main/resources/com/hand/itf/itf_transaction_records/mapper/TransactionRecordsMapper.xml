@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.itf.itf_transaction_records.mapper.TransactionRecordsMapper">
+    <resultMap id="BaseResultMap" type="com.hand.itf.itf_transaction_records.dto.TransactionRecords">
+        <result column="TRANS_ID" property="transId" jdbcType="DECIMAL" />
+        <result column="SYSTEM_CODE" property="systemCode" jdbcType="VARCHAR" />
+        <result column="TRANSACTION_TYPE" property="transactionType" jdbcType="VARCHAR" />
+        <result column="ITF_CODE" property="itfCode" jdbcType="VARCHAR" />
+        <result column="TRANSACTION_TIME" property="transactionTime" jdbcType="DATE" />
+        <result column="TRANSACTION_DATA" property="transactionData" jdbcType="VARCHAR" />
+        <result column="TRANSACTION_FLAG" property="transactionFlag" jdbcType="VARCHAR" />
+        <result column="TRANSACTION_ASCEND" property="transactionAscend" jdbcType="VARCHAR" />
+        <result column="TRANSACTION_RETURN" property="transactionReturn" jdbcType="VARCHAR" />
+    </resultMap>
+
+    <select id="queryTransactionRecords" resultMap="BaseResultMap" parameterType="com.hand.itf.itf_transaction_records.dto.TransactionRecords">
+        SELECT t.trans_id
+        ,t.system_code
+        ,t.transaction_type
+        ,t.itf_code
+        ,t.transaction_time
+        ,t.transaction_data
+        ,t.transaction_flag
+        ,t.transaction_ascend
+        ,t.transaction_return
+        FROM   itf_transaction_records t
+        WHERE  1 = 1
+        <if test="systemCode!=null">
+            AND    t.system_code = #{systemCode}
+        </if>
+        <if test="transactionType!=null">
+            AND    t.transaction_type = #{transactionType}
+        </if>
+        <if test="itfCode!=null">
+            AND    t.itf_code = #{itfCode}
+        </if>
+        <if test="transactionData!=null">
+            AND    t.transaction_data like  '%' || #{transactionData} || '%'
+        </if>
+        <if test="transactionFlag!=null">
+            AND    t.transaction_flag = #{transactionFlag}
+        </if>
+        <if test="startDate!=null">
+            AND    t.transaction_time &gt;= #{startDate}
+        </if>
+        <if test="endDate!=null">
+            AND    t.transaction_time &lt; #{endDate}
+        </if>
+    </select>
+
+</mapper>

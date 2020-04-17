@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.spc.pspc_classify_group.mapper.ClassifyGroupMapper">
+    <resultMap id="BaseResultMap" type="com.hand.spc.pspc_classify_group.dto.ClassifyGroup">
+        <result column="classify_group_id" property="classifyGroupId" jdbcType="DECIMAL" />
+        <result column="tenant_id" property="tenantId" jdbcType="DECIMAL" />
+        <result column="site_id" property="siteId" jdbcType="DECIMAL" />
+        <result column="classify_group" property="classifyGroup" jdbcType="VARCHAR" />
+        <result column="classify_status" property="classifyStatus" jdbcType="VARCHAR" />
+        <result column="description" property="description" jdbcType="VARCHAR" />
+        <result column="classify_type" property="classifyType" jdbcType="VARCHAR" />
+    </resultMap>
+    <select id="selectClassifyGroupLov" resultMap="BaseResultMap" parameterType="com.hand.spc.pspc_classify_group.dto.ClassifyGroup">
+        select pcg.classify_group_id,
+         pcg.classify_group,
+         pcg.classify_status,
+         pcg.description
+    from pspc_classify_group pcg
+   where pcg.classify_status = 'Y'
+        <if test="classifyGroup != null and classifyGroup != ''">
+          and pcg.classify_group like concat('%',concat(#{classifyGroup},'%'))
+        </if>
+        <if test="description != null and description != ''">
+            and pcg.description like concat('%',concat(#{description},'%'))
+        </if>
+        <if test="ceParameterId != null">
+            AND pcg.classify_type in ('BOTH','OOC')
+            and pcg.classify_status = 'Y'
+            AND pcg.classify_group_id IN (
+            SELECT
+            pcpr.classify_group_id
+            FROM
+            pspc_ce_parameter_relation pcpr,
+            pspc_ce_parameter pcp
+            WHERE
+            pcp.ce_parameter_id = pcpr.ce_parameter_id
+            AND pcp.ce_parameter_id = #{ceParameterId})
+        </if>
+        order by pcg.classify_group_id
+    </select>
+
+
+
+</mapper>

@@ -1,0 +1,208 @@
+<!--
+    create:lkj
+    date:2018年06月19日18:53:31
+    desc:描述维护导入导出
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <#include "../include/header.html"/>
+    <title>描述维护导入导出</title>
+    <style>
+        html,body
+        {
+            width: 100%;
+            height: 100%;
+            padding: 0px;
+            margin: 0px;
+        }
+    </style>
+    <script>
+
+        //导出
+        function exportExcel() {
+            var tableName = $("#tableName").val();
+            var $inputToken=$('<input>').attr({name:"${_csrf.parameterName}",value:"${_csrf.token}",type:"hidden"});
+            var idsInput=$('<input>').attr({name:"tableName",id:"tableName",value:tableName});
+            var $form = $("<form>");
+            $form.attr({
+                target: 'id_iframe',
+                method: 'post',
+                action: '${base.contextPath}/exportExcelTableColumnsAndColumnsDesc'
+            });
+            $form.append($inputToken);
+            $form.append(idsInput);
+            $form.id='smbForm';
+            $("#batchDiv").empty().append($form);
+            $($form).submit();
+            $("#batchDiv").empty();
+
+        }
+
+        function uploadFile() {
+            var formData = new FormData($("#myForm1")[0]);
+            $.ajax({
+                url: '${base.contextPath}/importPromptData',
+                type: 'POST',
+                data: formData,
+                async : false,
+                cache : false,
+                contentType : false,
+                processData : false,
+                success:function (data) {
+                    if(data.success){
+                        Hap.showToast({
+                            type: 'success',
+                            message: '导入数据成功'
+                        });
+                    }else {
+                        kendo.ui.showInfoDialog({
+
+                            message: data.message
+                        });
+                    }
+                }
+            });
+            $("#file").val("");
+        }
+
+        function createTable() {
+            var formData = new FormData($("#myForm2")[0]);
+            $.ajax({
+                url: '${base.contextPath}/importCreateTable',
+                type: 'POST',
+                data: formData,
+                async : false,
+                cache : false,
+                contentType : false,
+                processData : false,
+                success:function (data) {
+                    if(data.success){
+                        window.location = location;
+                    }else {
+                        kendo.ui.showInfoDialog({
+                            message: data.message
+                        });
+                    }
+                }
+            });
+            $("#file").val("");
+        }
+    </script>
+    <style type="text/css">
+    /*文件上传 控件*/
+    .upload{position:relative; display:inline-block; height:33px;line-height:33px; overflow:hidden;vertical-align:middle; cursor:pointer;}
+    .upload .upload-input-file{position:absolute; right:0; top:0; font-size:100px; opacity:0; filter:alpha(opacity=0);cursor:pointer;width: 72px}
+    .upload .upload-btn{outline:none;border:0; padding:0px 15px;color:#fff;background:#1D92AF;cursor:pointer; /*border-radius:3px;*/}
+    .upload .upload-url { -moz-box-sizing: border-box; -webkit-box-sizing: border-box; box-sizing: border-box; border-radius:2px;
+        border: solid 1px #ddd; width: 200px; height:30px;-webkit-line-height: 1;line-height: 30px\9;-ms-line-height: 30px; text-indent:3px;}
+    .upload .upload-tip {display:none; background-color:#1c84c6; padding:2px 10px; color:#fefefe; font-size:12px !important;border-radius:3px;}
+    </style>
+
+</head>
+<body>
+<div id="dialog"></div>
+<div id="batchDiv" style="display: none"></div>
+<iframe id="id_iframe" name="id_iframe" style="display:none;width: 0px;height: 0px"></iframe>
+
+<div id="page-content">
+    <div class="pull-left" id="toolbar-btn" style="padding-bottom:10px;">
+        <span id="IMPORT">
+            <form id="myForm1" action="" enctype="multipart/form-data" style="float: left;width: 70px;">
+                <div style="float: left">
+                    <span class="upload">
+                        <span class="btn btn-primary" style="float:left;" >
+                            <i class="fa fa-file-excel-o" style="margin-right:3px;"></i><@spring.message "excel.import"/>描述维护
+                        </span>
+                        <span class="upload-tip"></span>
+                        <input accept="application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                               type="file" id="file" name="file" onchange="uploadFile()" width="100px"  class="upload-input-file" />
+                    </span>
+                </div>
+            </form>
+        </span>
+        <!-- 新建表-->
+        <span>
+            <form id="myForm2" action="" enctype="multipart/form-data" style="float: left;width: 70px;">
+                <div style="float: left">
+                    <span class="upload">
+                        <span class="btn btn-primary" style="float:left;margin-left: 59px" >
+                            <i class="fa fa-file-excel-o" style="margin-right:3px;"></i>创建表
+                        </span>
+                        <span class="upload-tip"></span>
+                        <input accept="application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                               type="file" id="file2" name="file2" onchange="createTable()"  class="upload-input-file" />
+                    </span>
+                </div>
+            </form>
+        </span>
+        <!--下载建表模板-->
+        <span onclick="downCreateTable()" class="btn btn-primary" style="float:left;margin-left: 78px" >下载建表模板</span>
+        <!--自定义报表-->
+        <span onclick="myReport()" class="btn btn-primary" style="float:left;margin-left: 5px" >定义报表</span>
+        <script>
+            function myReport() {
+                var url = 'reportUtil.html';
+                var dialog = $("#dialog").kendoWindow({
+                    actions: ["Close"],
+                    width: 700,
+                    height: 500,
+                    title: '定义报表',
+                    content: url,
+                    iframe: true,
+                    visible: false,
+                    resizable: false,
+                    modal: true,
+                    close: function () { // 关闭弹框出发函数
+                        // $('#grid').data('kendoGrid').dataSource.page(1);
+                    }
+                }).data("kendoWindow");
+                dialog.center().open();
+            }
+            function downCreateTable() {
+                window.open(_basePath+"/lib/templates/createTableTemplate.xlsx")
+            }
+            function downCreateTable2() {
+                window.open(_basePath+"/lib/app/sqsd.apk")
+            }
+        </script>
+        <!--根据表名导入数据-->
+        <span onclick="importDataByTableName()" class="btn btn-primary" style="float:left;margin-left: 5px" >数据导入</span>
+        <script>
+            function importDataByTableName() {
+                var url = 'import_by_table_name.html';
+                var dialog = $("#dialog").kendoWindow({
+                    actions: ["Close"],
+                    width: 700,
+                    height: 500,
+                    title: '数据导入',
+                    content: url,
+                    iframe: true,
+                    visible: false,
+                    resizable: false,
+                    modal: true,
+                    close: function () { // 关闭弹框出发函数
+                        // $('#grid').data('kendoGrid').dataSource.page(1);
+                    }
+                }).data("kendoWindow");
+                dialog.center().open();
+            }
+
+        </script>
+    </div>
+    <div style="clear:both">
+        <div id="grid" style="width: 100%;height: 100%;text-align: center;margin-top: 10%">
+            <input required type="text" id="tableName" name="tableName" style="width:40%;"
+                   placeholder='请输入表名，如果多个表,请用逗号分隔。例:table1,table2'
+                   data-bind="value:model.promptCode" class="k-textbox">
+            <br/>
+            <!-- onclick="exportExcel()" -->
+            <span onclick="exportExcel()" style="margin-top: 20px" class="btn btn-primary k-grid-excel" ><i class="fa fa-file-excel-o" style="margin-right:3px;"></i><@spring.message "导出表字段描述"/></span>
+        </div>
+    </div>
+</div>
+<script>
+    Hap.autoResizeGrid("#grid");
+</script>
+</body>
+</html>

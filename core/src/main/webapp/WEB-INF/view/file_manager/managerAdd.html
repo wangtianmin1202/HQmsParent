@@ -1,0 +1,313 @@
+<#include "../include/header.html">
+<script type="text/javascript">
+var fileId;
+var classifyidList;
+var classifycode;	
+</script>
+<style>
+	.k-file-name{
+		font-size:14px;
+		color:#333;
+	}
+	.k-file-size{
+		margin-left:15px;
+		color:#9d9d9d;
+	}
+</style>
+<script type="text/javascript">
+
+</script>
+<script type="text/javascript">
+
+/* $(function(){	
+	document.getElementById("import").style.display= "none";//隐藏	
+})
+ */
+ $(function() {
+	 $("#expirationDateDiv").hide();
+ })
+ 
+ 
+  function save(){
+	
+	console.log("expirationDate : " + $('#expirationDate').val())
+	
+	if(classifyidList.length > 3 && classifyidList.includes('143')) {
+		kendo.ui.showWarningDialog({
+            message: "证书文件只能单独上传！"
+         });
+		 return;
+	}
+
+	 if($('#code').val()==null||$('#code').val()==''||$('#code').val()==undefined)
+		{
+			 kendo.ui.showWarningDialog({
+	            message: "文件编码必输！"
+	         });
+			 return;
+		}
+		
+
+		if($('#title').val()==null||$('#title').val()==''||$('#title').val()==undefined)
+		{
+			 kendo.ui.showWarningDialog({
+	            message: "文件标题必输！"
+	         });
+			 return;
+		}
+		
+		if(classifyidList == '143') {
+			if($('#expirationDate').val()==null||$('#expirationDate').val()==undefined)
+			{
+				 kendo.ui.showWarningDialog({
+		            message: "有效期必输！"
+		         });
+				 return;
+			}
+  	  }
+		
+		if($('#type').val()==null||$('#type').val()==''||$('#type').val()==undefined)
+		{
+			 kendo.ui.showWarningDialog({
+	            message: "请选择文件分类！"
+	         });
+			 return;
+		} 
+		
+		 var s=$('#files1').data("kendoUpload").getFiles()/* [0].rawFile.name */;
+		 console.log(s);
+		   if(s.length==0){
+			   kendo.ui.showInfoDialog({message: "请选择上传文件"});
+			   return;
+			 }	
+		  
+		   
+     $("#files1").data("kendoUpload").upload();
+	  console.log("2"); 
+	 
+}	 
+  function  check()
+  {
+	  console.log("111"+fileId)
+	 if(fileId==""||fileId=="undefined"||fileId==null)
+  	{
+     	kendo.ui.showWarningDialog({
+	            message: "请先保存数据"
+	        });
+     	return;
+  	}
+  	var dialog = $("#childWindow6").kendoWindow({
+          width: window.parent.innerWidth * 0.45,
+          height: window.parent.innerHeight *0.5,
+          title: '权限管理',
+          visible: false,
+          iframe: true,
+          modal: true,
+          close: function(){	
+             },
+          content: '../file_permission/permission.html?fileId='+fileId
+      }).data("kendoWindow");   
+      dialog.center().open(); 
+
+  	}
+ 
+  
+  
+ /*  function TypeLoad(classifycode,classifyid)
+  {  
+	$("#type").attr("value",classifycode);	  
+	classifyidList =classifyid;
+  }
+ */
+  
+  
+  function show()
+  {	  
+	  var comfirmNum =0;
+	  var dialog = window.$("#childWindowX").kendoWindow({
+          width: window.innerWidth * 0.9,
+          height: window.innerHeight *0.8,
+          title: '选择类别',
+          visible: false,
+          iframe: true,
+          modal: true,
+          close: function(){	
+        	  console.log(classifycode);
+        	  $("#type").val(classifycode);
+        	  
+        	  if(classifyidList == '143') {
+        		  $("#expirationDateDiv").show();
+        	  }
+        	  if(classifyidList != '143') {
+        		  $("#expirationDateDiv").hide();
+        	  }
+          },
+          content: '../file_classify/classify.html?comfirmNum='+comfirmNum
+      }).data("kendoWindow");   
+	    dialog.center().open();   
+  }
+
+</script>
+<body>
+<div id="childWindow1"></div>
+<div id="childWindow6"></div>
+<div id="childWindowX"></div>
+<div id="page-content">
+<div class="col-sm-12">
+<div class="col-sm-3" style="weight: 100%;">
+   <span></span>
+ </div>
+ <div class="col-sm-3" style="weight: 100%; margin-left:1.4%;">
+<div class="row">
+<span><@spring.message "iso.file.upload"/></span>
+</div>
+<div class="row">
+			<div class="row" id="import">																				
+					<form id="mainform" class="form-horizontal" ">
+					<div class="row" style="width:100%">
+						<div class="form-group">
+							
+							<div class="col-sm-12">
+							<div class="demo-section k-content">
+								<input name="files" id="files1" type="file" accept=".xlsx,.pdf,.docx,.pptx,.gif,.jpg,.png,.jpeg,.xls,.docm,.xlsm,.ppt,.pptm,.doc" />
+							</div>	
+							</div>
+							</div>	
+							</div>
+							</form>		
+							<script>
+								$("#files1").kendoUpload({
+									async: {
+				                    	saveUrl: "${base.contextPath}/file/manager/fileupload/upload?${_csrf.parameterName}=${_csrf.token}",//
+										autoUpload: false,
+										
+									},
+									multiple: false,//只能单选
+									showFileList:true,
+									select:function(e){
+										//debugger;
+										console.log(e.files[0].name); 
+										var file =e.files[0].name;
+										var filenum = file.substring(0,12);
+										var filename =file.substring(12,file.indexOf('.'));
+										console.log(filenum); 
+										console.log(filename); 
+										$('#code').val(filenum);
+							  			$('#title').val(filename);
+				                    },
+									upload: function(e){
+										//$('#code').val();
+										//debugger;
+										e.data = {
+												fileNum : $('#code').val(),
+									  			fileTitle : $('#title').val(),
+									  			classifyIds : classifyidList,
+									  			remark : $('#remark').val(),
+									  			expirationDate : $('#expirationDate').val(),
+									        }
+									},
+				                    success: function(e){
+				                    	//debugger;
+				                        var response = e.response;
+				                        if(response.success){
+				                        	kendo.ui.showInfoDialog({message: "导入成功"});
+				                        	fileId =  response.message;
+				                        //	 window.parent.$("#childWindow1").data("kendoWindow").close();       
+				                        	}else{
+				                        	kendo.ui.showErrorDialog({message:"失败原因:"+response.message+"请重新上传文件"});
+				                        	
+				                        	}
+				                     },
+										
+								});								
+				 </script>
+							
+</div>
+</div>
+<div class="col-sm-3" style="weight: 100%;">
+   <span></span>
+ </div>
+</div>
+<div id="childWindow"></div>
+ <div id="childWindowe"></div>
+<div id="childWindowd"></div>
+<div id="childWindowr"></div>   
+   <form id="mainform"  class="form-horizontal" method="post" enctype="application/json;charset=UTF-8"> 
+    <div class="row" style="margin-left: 5px;">
+	 	<div class="col-sm-12">
+	 		
+	 	  	<div class="form-group">
+	 	  	
+				<div class="col-sm-12"style="margin-top: 20px;">
+					<label class="col-sm-3 control-label">*<@spring.message "iso.manager.filecode"/>:</label>
+					<div class="col-sm-9">
+                        <input id="code" style="width:100%" required class="k-textbox" data-role="maskedtextbox" >
+
+					</div>					
+				</div>
+            </div>
+	
+			<div class="form-group">
+				<div class="col-sm-12"style="margin-top: 20px;">
+					<label class="col-sm-3 control-label">*<@spring.message "iso.manager.filetitle"/>:</label>
+					<div class="col-sm-9">
+						<input required name="samplenumber" style="width:100%" id="title" class="k-textbox" >
+
+					</div>					
+				</div>
+
+			</div>
+			
+			<div class="form-group">
+				<div class="col-sm-12"style="margin-top: 20px;">
+					<label class="col-sm-3 control-label">*<@spring.message "iso.manager.fileclassify"/>:</label>
+					<div class="col-sm-9">
+						<input required name="sampleProperties" style="width:100%" id="type" class="k-textbox"onclick="show()" >
+
+					</div>
+				</div>
+			</div>
+			
+			<div class="form-group" id = "expirationDateDiv">
+				<div class="col-sm-12"style="margin-top: 20px;">
+					<label class="col-sm-3 control-label">*<@spring.message "employee.effectiveenddate"/>:</label>
+					<div class="col-sm-9">
+						<!-- 有效期至 -->
+            			<input type="text" id = "expirationDate"  data-role="datepicker" style="width:150px;margin-right:5px;" >
+            		
+            			<script type="text/javascript">
+    					$("#expirationDate").kendoDatePicker({
+    						format: "yyyy-MM-dd",
+    						change:function(){
+    							
+    						}
+    					});
+    				</script>
+            		
+					</div>
+				</div>
+			</div>
+			
+			
+		
+			<div class="form-group">
+				<div class="col-sm-12"style="margin-top: 20px;">
+					<label class="col-sm-3 control-label"><@spring.message "iso.manager.remark"/>:</label>
+					<div class="col-sm-9">
+                        <input  style="width:100%" id="remark"   class="k-textbox">
+					
+					</div>
+
+				</div>			
+			</div>					
+		</div>
+	  </div>
+     <div id="mainBottom" class="text-right" style="bottom: 15px;position: fixed;  float: left;padding-top:15px;border-top:1px solid #ebebeb;width:100%; background: #fff;">
+<!--         <span class="btn btn-primary" onclick="save()" type="submit" style="margin-right:20px"><@spring.message "hap.save"/></span>
+ -->         <!--    <span class="btn btn-success k-grid-save-changes" onclick="check()"  style="float:right;margin-right:30px;">权限管理</span> -->
+            <span class="btn btn-primary" onclick="save()"  style="float:right;margin-right:30px;"><@spring.message "hap.save"/></span>
+   </div>
+   </form>  
+</div>
+</body>
+</html>

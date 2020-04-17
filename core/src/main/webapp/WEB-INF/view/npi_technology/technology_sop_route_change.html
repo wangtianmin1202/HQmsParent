@@ -1,0 +1,237 @@
+<#include "../include/header.html">
+
+<!--
+ * description: FQC检验单新建对话框 hqm_inspection_attribute
+ * author:tianmin.wang 
+ * date:20190730
+ -->
+
+<script src="${base.contextPath}/common/code?yesNo=SYS.YES_NO"></script><!-- 是否 -->
+<script src="${base.contextPath}/common/code?hqmIqcInspectionType=HQM_INSPECTION_TYPE"></script><!-- 检验类型 -->
+<script src="${base.contextPath}/common/code?hqmFqcSourceType=HQM_FQC_SOURCE_TYPE"></script>
+<script src="${base.contextPath}/common/code?hqmFqcInspectionFrom=HQM_FQC_INSPECTION_FROM"></script>
+<body>
+
+<script type="text/javascript">
+	var BaseUrl = _basePath;
+	var routeCode = '${RequestParameters.routeCode!0}';
+	var routeId = '${RequestParameters.routeId!0}';
+	var versionNumber = '${RequestParameters.versionNumber!0}';
+	var refId = '${RequestParameters.refId!0}';
+	var viewModel = Hap.createGridViewModel(null,{
+		model:{
+			
+		},
+		closeWin:function(e) {
+			window.parent.$("#newWindow").data("kendoWindow").close();
+		},
+		save:function(){
+			debugger;
+			var data = viewModel.model.toJSON();
+			data.__status = "add";
+			//校验逻辑
+			if(data.beforeSopName == '' || data.beforeSopName == undefined ){
+				kendo.ui.showWarningDialog({
+					message: "动画名称必填"
+				});
+				return;
+			}
+			if(data.beginDate == ''||data.beginDate == undefined ){
+				kendo.ui.showWarningDialog({
+					message: "生效日期必填"
+				});
+				return;
+			}
+			if(data.fileId == ''|| data.fileId == undefined ){
+				kendo.ui.showWarningDialog({
+					message: "附件必须上传"
+				});
+				return;
+			}
+			Hap.request({
+				url: BaseUrl + "/npi/sop/route/ref/change",
+				data: kendo.stringify(data),
+				success:function(data){
+					if(data.success){
+						//Hap.unblockUI();
+						viewModel.closeWin();
+					}
+				}
+			})
+		},
+	});
+	var newVersionNumber='Ver'+(Number(versionNumber)+1)+'.0'
+	viewModel.model.set('routeCode',routeCode);
+	viewModel.model.set('newVersionNumber',newVersionNumber);
+	viewModel.model.set('versionNumber',(Number(versionNumber)+1));
+	viewModel.model.set('refId',refId);
+	viewModel.model.set('routeId',routeId);
+</script>
+
+
+<div id="page-content">
+	<form id="mainform"  class="form-horizontal" method="post" enctype="application/json;charset=UTF-8">
+		<div class="row" style="margin-left: 5px;">
+	 		<div class="col-sm-12">
+		 	  	<div class="form-group" style="margin-top:20px;" >
+		 	  		<div class="col-sm-2"></div>
+					<div class="col-sm-6">
+						<label class="col-sm-3 control-label">组合件编码:</label>
+						<div class="col-sm-9">
+	                        <input id="lovPlant" required style="width:100%" name="plantId"
+									data-bind="value:model.routeCode" readonly="readonly">
+						</div>
+					</div>
+					<div class="col-sm-4"></div>
+	            </div>
+	            <div class="form-group" style="margin-top:20px;" >
+		 	  		<div class="col-sm-2"></div>
+					<div class="col-sm-6">
+						<label class="col-sm-3 control-label">动画版本:</label>
+						<div class="col-sm-9">
+	                        <input id="lovPlant" required style="width:100%" name="plantId"
+									data-bind="value:model.newVersionNumber" readonly="readonly">
+						</div>
+					</div>
+					<div class="col-sm-4"></div>
+	            </div>
+				<!--  生产日期 -->
+				<div class="form-group" style="margin-top:20px;">
+					<div class="col-sm-2">
+					</div>
+					<div class="col-sm-6">
+						<label class="col-sm-3 control-label">生效日期:</label>
+						<div class="col-sm-9">
+	                        <input id="beginDatePicker" required style="width:100%" name="beginDate"
+	                        data-label="生效日期"
+	                               data-bind="value:model.beginDate">
+							<span data-for="beginDate" class=".k-invalid-msg"></span>
+						</div>
+						<script type="text/javascript">
+							$("#beginDatePicker").kendoDateTimePicker({
+								//ARIATemplate: "Date: #=kendo.toString(data.current, 'G')#",
+								/* max:new Date(), */
+								format: "yyyy-MM-dd HH:mm:ss",
+								change:function(){
+									viewModel.model.beginDate = this.value().format("yyyy-MM-dd hh:mm:ss");
+								}
+							});
+						</script>
+					</div>
+					<div class="col-sm-4"></div>
+				</div>
+				<!-- 动画编码 -->
+				<div class="form-group" style="margin-top:20px;">
+					<div class="col-sm-2">
+					</div>
+					<div class="col-sm-6">
+						<label class="col-sm-3 control-label">动画编码:</label>
+						<div class="col-sm-9">
+							<input  style="width:100%" name="sopCode" 
+								disabled data-bind="value:model.sopCode" data-role="maskedtextbox" >
+						</div>
+					</div>
+					<div class="col-sm-4"></div>
+				</div>
+				<!-- 动画名称 -->
+				<div class="form-group" style="margin-top:20px;">
+					<div class="col-sm-2">
+					</div>
+					<div class="col-sm-6">
+						<label class="col-sm-3 control-label">动画名称:</label>
+						<div class="col-sm-9">
+	                        <input required style="width:100%" name="beforeSopName"
+	                               data-label="动画名称" id="beforeSopName"
+	                               data-bind="value:model.beforeSopName" data-role="maskedtextbox">
+							<span data-for="beforeSopName" class=".k-invalid-msg"></span>
+						</div>
+					</div>
+					<div class="col-sm-4"></div>
+				</div>
+				<!-- 附件 -->
+				<div class="form-group" style="margin-top:20px;">
+					<div class="col-sm-2">
+					</div>
+					<div class="col-sm-6">
+						<label class="col-sm-3 control-label">附件:</label>
+						<div class="col-sm-9">
+	                        <input name="files" id="files1" type="file" accept=".wmv,.rmvb,.jpeg,.jpg,.mp4" />
+						</div>
+						<script>
+							$("#files1").kendoUpload({
+								async: {
+			                    	saveUrl: "${base.contextPath}/npi/sop/route/ref/upload?${_csrf.parameterName}=${_csrf.token}",//
+									autoUpload: false,
+									
+								},
+								multiple: false,//只能单选
+								showFileList:true,
+								validation: {
+							        maxFileSize: 20971520
+							    },
+								select:function(e){
+									//debugger;
+									/* console.log(e.files[0].name); 
+									var file =e.files[0].name;
+									var filenum = file.substring(0,12);
+									var filename =file.substring(12,file.indexOf('.')); */
+			                    },
+								upload: function(e){
+									debugger;
+					                //e.preventDefault();
+									e.data = {
+											fileNum : e.files[0].name,
+								  			fileTitle : $('#title').val(),
+								  			remark : $('#remark').val(),
+								  			expirationDate : $('#expirationDate').val(), 	
+								        }
+								},
+			                    success: function(e){
+			                    	//debugger;
+			                        var response = e.response;
+			                        if(response.success){
+			                        	kendo.ui.showInfoDialog({message: "导入成功"});
+			                        	var fileId = response.message;
+			                        	viewModel.model.set('fileId',fileId);
+			                        }else{
+			                        	kendo.ui.showErrorDialog({message:"失败原因:"+response.message+"请重新上传文件"});
+			                        }
+			                     },
+									
+							});								
+			 			</script>
+					</div>
+					<div class="col-sm-4"></div>
+				</div>
+			</div>
+		</div>
+	</form>
+</div>
+<div id="mainBottom" class="text-right" style="bottom: 15px;position: fixed;  float: left;padding-top:15px;border-top:1px solid #ebebeb;width:100%; background: #fff;">
+        <span class="btn btn-primary" data-bind="click:save" type="submit" style="margin-right:5px"><@spring.message "hap.save"/></span>
+        <span class="btn btn-default" data-bind="click:closeWin" type="button" style="margin-right:25px;"><@spring.message "hap.cancel"/></span>
+</div>
+
+<script type="text/javascript">
+    kendo.bind($('#mainBottom'),viewModel);
+	kendo.bind($('#mainform'), viewModel);
+
+    function isNotEmpty(obj) {
+        if(obj != undefined && obj != null && obj != ""){
+            return true;
+        }else{
+            return false;
+        }
+    }
+    var initMinDate = new Date(1900, 0, 1);
+    var initMaxDate = new Date(2099, 11, 31);
+	//验证
+	$("#mainform").kendoValidator({
+    	messages: {
+            required: '<@spring.message "hap.validation.notempty"/>'
+    	},
+		invalidMessageType : "tooltip"
+    });
+</script>
+</body>
+</html>

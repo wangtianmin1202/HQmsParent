@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_qua_ins_time_h.mapper.QuaInsTimeHMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_qua_ins_time_h.dto.QuaInsTimeH">
+        <result column="TIME_ID" property="timeId" jdbcType="DECIMAL" />
+        <result column="PLANT_ID" property="plantId" jdbcType="DECIMAL" />
+        <result column="PROD_LINE_ID" property="prodLineId" jdbcType="DECIMAL" />
+        <result column="SHIFT_CODE" property="shiftCode" jdbcType="VARCHAR" />
+        <result column="ENABLE_FLAG" property="enableFlag" jdbcType="VARCHAR" />
+        <result column="UPDATE_DATE" property="updateDate" jdbcType="VARCHAR" />
+         <result column="PLANT_CODE" property="plantCode" jdbcType="VARCHAR" />
+         <result column="PROD_LINE_CODE" property="prodLineCode" jdbcType="VARCHAR" />
+         <result column="UPDATED_BY" property="updateBy" jdbcType="VARCHAR" />
+         <result column="INSPECTION_TIME" property="inspectionTime" jdbcType="VARCHAR" />
+         
+         <result column="INSPECTOR_ID" property="inspectorId" jdbcType="DECIMAL" />
+         <result column="INSPECTOR_EMPLOYEE_NAME" property="inspectorEmployeeName" jdbcType="VARCHAR" />
+         
+         <result column="CHECK_DATE" property="checkDate" jdbcType="DATE" />
+         
+    </resultMap>
+
+ <select id="myselect" resultMap="BaseResultMap"  parameterType="com.hand.hqm.hqm_qua_ins_time_h.dto.QuaInsTimeH">   
+SELECT h.time_id,
+       h.plant_id,
+       hp.plant_code,
+       h.prod_line_id,
+       hpl.prod_line_code,
+       h.shift_code,
+       h.enable_flag,
+       he.name            AS updated_by,
+       h.last_update_date AS update_date,
+       h.inspector_id,
+       hei.name           AS inspector_employee_name,
+       h.inspection_time
+  FROM hqm_qua_ins_time_h h
+  LEFT JOIN sys_user su
+    ON h.last_updated_by = su.user_id
+  LEFT JOIN hr_employee he
+    ON su.employee_id = he.employee_id
+  LEFT JOIN sys_user sui
+    ON h.inspector_id = sui.user_id
+  LEFT JOIN hr_employee hei
+    ON sui.employee_id = hei.employee_id, hcm_plant hp, hcm_production_line hpl
+ WHERE hp.plant_id = h.plant_id
+   AND hpl.prod_line_id = h.prod_line_id
+	  <if test="timeId!= null">
+     AND  h.time_id = #{timeId}
+   </if>
+    <if test="prodLineId!= null">
+     AND  h.prod_line_id = #{prodLineId}
+   </if>
+   <if test="plantId != null">
+     and  h.plant_id = #{plantId}
+   </if>
+   <if test="shiftCode != null">
+     and  h.shift_code = #{shiftCode}
+   </if>
+   <if test="enableFlag != null">
+     and  h.enable_flag = #{enableFlag}
+   </if>
+   </select>
+
+<!-- 定时生成巡检任务的JOB 查询 -->
+	<select id="jobSelect" resultMap="BaseResultMap">
+	SELECT t.*,
+       to_date(to_char(SYSDATE, 'yyyyMMdd') || t.inspection_time, 'yyyyMMddHH24:mi') AS check_date
+  FROM hqm_qua_ins_time_h t
+  JOIN hcm_calendar hc
+    ON t.prod_line_id = hc.prod_line_id
+  JOIN hcm_calendar_shift hcs
+    ON hc.calendar_id = hcs.calendar_id
+   AND t.shift_code = hcs.shift_code
+   AND trunc(SYSDATE) = trunc(hcs.calendar_day)
+	</select>
+	
+<!-- 	<select id="jobSelect" resultMap="BaseResultMap"> -->
+<!--    	SELECT t.*, -->
+<!--        to_date(to_char(SYSDATE, 'yyyyMMdd') || ll.inspection_time, 'yyyyMMddHH24:mi') AS check_date -->
+<!--   FROM hqm_qua_ins_time_h t -->
+<!--   JOIN hcm_calendar hc -->
+<!--     ON t.prod_line_id = hc.prod_line_id -->
+<!--   JOIN hcm_calendar_shift hcs -->
+<!--     ON hc.calendar_id = hcs.calendar_id -->
+<!--    AND t.shift_code = hcs.shift_code -->
+<!--    AND trunc(SYSDATE) = trunc(hcs.calendar_day) -->
+<!--   JOIN (SELECT MIN(l.inspection_time) AS inspection_time, l.time_id -->
+<!--           FROM hqm_qua_ins_time_l l -->
+<!--          GROUP BY l.time_id) ll -->
+<!--    </select> -->
+</mapper>

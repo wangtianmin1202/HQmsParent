@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_nc_group.mapper.NcGroupMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_nc_group.dto.NcGroup">
+        <result column="NG_GROUP_ID" property="ngGroupId" jdbcType="DECIMAL" />
+        <result column="NG_GROUP_CODE" property="ngGroupCode" jdbcType="VARCHAR" />
+        <result column="NG_GROUP_NAME" property="ngGroupName" jdbcType="VARCHAR" />
+        <result column="NG_GROUP_APPEARANCE" property="ngGroupAppearance" jdbcType="VARCHAR" />
+        <result column="ENABLE_FLAG" property="enableFlag" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE1" property="globalAttribute1" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE2" property="globalAttribute2" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE3" property="globalAttribute3" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE4" property="globalAttribute4" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE5" property="globalAttribute5" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE6" property="globalAttribute6" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE7" property="globalAttribute7" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE8" property="globalAttribute8" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE9" property="globalAttribute9" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE10" property="globalAttribute10" jdbcType="VARCHAR" />
+    </resultMap>
+
+<select id="lovselect" resultMap="BaseResultMap" parameterType="com.hand.hqm.hqm_nc_group.dto.NcGroup">
+        SELECT t.ng_group_id, t.ng_group_code, t.ng_group_name
+	    FROM hqm_ng_group t
+        WHERE 1 = 1
+        AND T.ENABLE_FLAG='Y'
+</select>
+
+
+</mapper>

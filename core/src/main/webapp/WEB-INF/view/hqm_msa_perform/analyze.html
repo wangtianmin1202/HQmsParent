@@ -1,0 +1,158 @@
+<#include "../include/header.html">
+<script src="${base.contextPath}/common/code?HQM_MSA_ANALYSIS_CONTENT=HQM_MSA_ANALYSIS_CONTENT"></script>
+<script src="${base.contextPath}/lib/prints/doc_print.js" type="text/javascript" charset="UTF-8"></script>
+<body>
+<script type="text/javascript">
+	var parentData = window.parent.parentData;
+	$(function(){
+		var jsonData = {
+			'measurePlanId':parentData.msaPlanId	
+		}
+		$.ajax({
+	        url: '${base.contextPath}/hqm/msa/plan/line/query',
+	        type: 'POST',
+	        data: jsonData,
+	        dataType: "json",
+	        success: function (response) {
+	            if (response.success) {
+	            	var str = '';
+	            	var responseData = response.rows;
+	            	for(var i=0;i<responseData.length;i++){
+	            		//订单状态
+	            		var meaning = responseData[i].msaContent ? responseData[i].msaContent : "";
+	                    $.each(HQM_MSA_ANALYSIS_CONTENT, function (i, n) {
+	                        if ((n.value || '').toLowerCase() == (meaning || '').toLowerCase()) {
+	                        	meaning = n.meaning;
+	                        }
+	                    });
+	        			str += '<tr><td style="width:20%"><input type="radio" name="check" value="'+ meaning + '_' +responseData[i].measurePlanLineId +'" style="margin-top:5%"></td><td style="width:80%">'+ meaning +'</td></tr>'	            		
+	            	}
+	        		$("table").append(str)
+	            } else {
+	            	kendo.ui.showWarningDialog({
+	                    message: response.message
+	                });
+	            }
+	        }
+	    }); 
+	})
+	var viewModel = kendo.observable({
+		model: {
+		},
+		save: function(e){
+		    if(typeof(viewModel.model.codeSum) == 'undefined'){
+				kendo.ui.showInfoDialog({
+					title: "提示",
+	    			message: '条码张数不能为空'
+	    		})
+	    		return;
+			}else if(typeof(viewModel.model.packingLevel) == 'undefined' || viewModel.model.packingLevel == ''){
+				kendo.ui.showInfoDialog({
+					title: "提示",
+	    			message: '包装方式不能为空'
+	    		});
+	    		return;
+			}
+		 	var data= viewModel.model.toJSON();
+		 	data.supplierId = supplierId;
+		    $.ajax({
+		        url: '${base.contextPath}/hcs/out/barcode/addInfo',
+		        type: 'POST',
+		        data: data,
+		        async: false,
+		        dataType: "json",
+		        success: function (response) {
+		            if (response.success) {
+		            	Hap.showToast({
+                			type:'success',
+                			"positionClass": "toast-bottom-right",
+                			message:"新建成功",
+                			hideDuration:10*1000
+                		})
+		            	window.parent.viewModel.refresh();
+		            	window.parent.$("#addWindow").data("kendoWindow").close();
+		            } else {
+		            	kendo.ui.showWarningDialog({
+		                    message: response.message
+		                });
+		            }
+		        }
+		    });  
+			
+		},
+		closeWin: function(e){
+        	window.parent.$("#analyzeWindow").data("kendoWindow").close();
+        },
+        confirm: function(){
+        	var splitData = $("input[name='check']:checked").val().split('_');
+        	var meaning = splitData[0];
+        	if(meaning == "稳定性"){
+                openWindow('<@spring.message "msaplan.analysis.stability"/>','stability_save.html','stability',splitData[1])
+        	}else if(meaning == "偏倚"){
+        		openWindow('<@spring.message "msaplan.analysis.bias"/>','msa_bias_value.html','biasValue',splitData[1])
+        	}else if(meaning == "重复性和再现性"){
+        		openWindow('<@spring.message "msaplan.analysis.grr"/>','msa_grr_value.html','grr',splitData[1])
+        	}else if(meaning == "线性"){
+        		openWindow('<@spring.message "msaplan.analysis.linear"/>','msa_linear_value.html','linear',splitData[1])
+        	}
+        }
+	});
+	//分析详细界面
+	function openWindow(title,url,id,measurePlanLineId){
+		var jsonData = {
+				'measurePlanLineId':measurePlanLineId	
+			}
+			$.ajax({
+		        url: '${base.contextPath}/hqm/msa/plan/line/query',
+		        type: 'POST',
+		        data: jsonData,
+		        dataType: "json",
+		        success: function (response) {
+		            if (response.success) {
+		            	var responseData = response.rows;
+		            	
+		            	parentData.measurePlanLineId = measurePlanLineId;
+		        		parentData.analyzeDate = responseData[0].analyzeDate;
+		        		var selectFunction = window.parent.$("#"+id).kendoWindow({
+		                    actions: ["Close"],
+		                    width: 1400,
+		        			height: 750,
+		                    title: title,
+		                    visible: false,
+		                    iframe: true,
+		                    modal: true,
+		                    content: url
+		                   /*  close: function (e) {
+		                        window.parent.$("#dialog").data("kendoWindow").open();
+		                    } */
+		                }).data("kendoWindow");
+		                selectFunction.center().open();
+		            }
+		        }
+		    }); 
+		
+	}
+</script>
+<div id="analyzeDetailWindow"></div>
+<div id="page-content">
+	<div style=" height:255px; overflow:scroll;">
+		<table  style='color: black;width: 100%;table-layout: fixed;font-size: small;text-align: center;border-color:#697882;overflow-y:scroll' border='2px'>
+			<tr>
+				<th style="width:20%"></th>
+				<th style="text-align: center;width:80%"><@spring.message "msaplan.analysis.content"/></th>
+			</tr>
+		</table>
+	</div>
+	
+</div>
+<div id="mainBottom" class="text-center" style="bottom: 15px;position: fixed;  float: left;padding-top:15px;border-top:1px solid #ebebeb;width:100%; background: #fff;">
+	        <span class="btn btn-danger" style="float:right;margin-right:30px;" data-bind="click:closeWin"><i class="fa fa-trash-o" style="margin-right:3px;"></i><@spring.message "msaplan.cancel"/></span>
+        <span class="btn btn-success k-grid-save-changes fa fa-check" data-bind="click:confirm" style="float:right;margin-right:5px;"><@spring.message " hap.confirm "/></span>
+</div>
+
+<script type="text/javascript">
+    kendo.bind($('#mainBottom'),viewModel);
+	kendo.bind($('#mainform'), viewModel);
+</script>
+</body>
+</html>

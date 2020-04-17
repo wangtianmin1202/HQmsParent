@@ -1,0 +1,701 @@
+<#--
+ * description: 检验项基础数据维护INSPECTION_ATTRIBUTE.html
+ * author:tianmin.wang 
+ * date:20190729
+ -->
+<#include "../include/header.html">
+<style>
+	.k-file-name{
+		font-size:14px;
+		color:#333;
+	}
+	.k-file-size{
+		margin-left:15px;
+		color:#9d9d9d;
+	}
+</style>
+<script src="${base.contextPath}/common/code?yesNo=SYS.YES_NO"></script><!-- 是否 -->
+<script src="${base.contextPath}/common/code?hqmSampleStandardType=HQM_IQC_SAMPLE_STANDARD_TYPE"></script>
+<script src="${base.contextPath}/common/code?hqmAttributeCategory=HQM_IQC_ATTRIBUTE_CATEGORY"></script>
+<script src="${base.contextPath}/common/code?hqmInspectionLevels=HQM_IQC_INSPECTION_LEVELS"></script>
+<script src="${base.contextPath}/common/code?hqmAcceptanceQualityLimit=HQM_IQC_AQL"></script>
+<script src="${base.contextPath}/common/code?hqmSourceType=HQM_SOURCE_TYPE_TEMP"></script>
+<script src="${base.contextPath}/common/code?hqmStandardType=HQM_IQC_STANDARD_TYPE"></script>
+<script src="${base.contextPath}/common/code?hqmFillInType=HQM_FILL_IN_TYPE"></script>
+<script src="${base.contextPath}/common/code?hqmFrequencyType=HQM_IQC_FREQUENCY_TYPE"></script>
+<script src="${base.contextPath}/common/code?hqmQualityGrade=HQM_IQC_QUALITY_GRADE"></script>
+<script src="${base.contextPath}/common/code?HQM_INSPECTION_METHOD=HQM_INSPECTION_METHOD"></script>
+<script src="${base.contextPath}/common/code?HQM_INSPECTION_PLACE=HQM_INSPECTION_PLACE"></script>
+<script src="${base.contextPath}/common/code?HQM_INSPECTION_ATTRIBUTE_TYPE=HQM_INSPECTION_ATTRIBUTE_TYPE"></script>
+<script type="text/javascript">
+    
+</script>
+<script type="text/javascript">
+	var attribute2 = "${RequestParameters.attribute2!'-1'}";
+    var viewModel = Hap.createGridViewModel("#grid");
+    viewModel.importExcel = function(){
+    	var newModelWindow = $('#excelimport').kendoWindow({
+            title: '查询',
+            width: 500,
+            height: 300,
+            modal: true
+        }).data('kendoWindow');
+    	newModelWindow.center().open();
+    }
+    viewModel.exportModel = function(){
+    	//window.location.href="${base.contextPath}/resources/files/inspection_attribute_model.xlsx";
+    	$("#excelIframe").attr("src","${base.contextPath}/resources/files/检验项目管理导入模板.xlsx");
+    	//$("#excelIframe").attr("src","./inspection_attribute_model.xlsx");
+    }
+    viewModel.selectedCopy = function(){
+    	console.log(grid.dataSource._data[0]);
+    	//return;
+    	var selected = grid.selectedDataItems();
+    	if(selected.length>0){
+    		$.each(selected,function(index,element){
+        		var ele = JSON.parse(JSON.stringify(element));
+        		grid.addRow();
+        		for(var key in ele){
+        			if(key=='attributeId'||key=='dirty'||key=='id'||key=='uid'||key=="_token")continue;
+        			grid.dataSource._data[0].set(key,ele[key]);
+        		}
+        	});
+    	}else{
+    		kendo.ui.showInfoDialog({ message: "<@spring.message 'error.hqm_choose_line_01'/>" }).done(function (e) {
+                if(e.button == 'OK'){
+                	$("#grid").data('kendoGrid').dataSource.read();
+                }});
+    	}
+    }
+    function viewHis(relId){
+		var dialog = $("#hisWindow").kendoWindow({
+			width: 1500,
+			height: 700,
+	        title: '历史',
+	        visible: false,
+	        iframe: true,
+	        modal: true,
+	        content: '../hcm_object_events/inspection_attribute_oe.html?businessKeyId=' + relId
+	    }).data("kendoWindow");
+	    dialog.center().open();
+	}
+</script>
+<body>
+<div id="hisWindow"></div>
+<iframe id="excelIframe" class="multi-download" style="display:none"></iframe>
+<div id="excelimport" style="display:none">
+	<form id="mainform" class="form-horizontal">
+	<div class="row" style="width:95%">
+		<div class="form-group">
+			<label class="col-sm-3 control-label"><@spring.message "attachcategory.attachment"/></label>
+			<div class="col-sm-7">
+			<div class="demo-section k-content">
+				<input name="files" id="files1" type="file" accept=".xlsx" />
+			</div>
+			<script>
+				$(document).ready(function() {
+					$("#files1").kendoUpload({
+						async: {
+                        saveUrl: "${base.contextPath}/hqm/inspection/attribute/excelimport/upload?${_csrf.parameterName}=${_csrf.token}",//
+						autoUpload: true
+						},
+						upload       : function(e){
+						},
+                        success      : function(e){
+                        	var response = e.response;
+                        	if(response.success){
+                        		$("#grid").data("kendoGrid").dataSource.data(response.rows);
+                        		kendo.ui.showInfoDialog({message: "导入成功"+response.rows.length});
+                        	}else{
+                        		kendo.ui.showErrorDialog({
+                                        message: response.message
+                                    });
+                        		
+                        	}
+                        },
+						showFileList:false,
+									});
+								});
+				</script>
+			</div>
+		</div>
+	</div>
+	</form>
+</div>
+<div id="page-content">
+    <div class="pull-left" id="toolbar-btn" style="padding-bottom:10px;">
+    	<span class="btn btn-primary fa fa-plus-square"
+                         style="float:left;margin-right:5px" data-bind="click:create"><@spring.message "hap.new"/></span>
+        <span class="btn btn-success k-grid-save-changes fa fa-save" style="float:left;margin-right:5px;"
+                          data-bind="click:save"><@spring.message "hap.save"/></span>
+        <span  data-bind="click:exportModel" class="btn btn-success fa fa-file-excel-o" style="float:left;margin-right:5px;">&nbsp;<@spring.message "hqm.qc.templatedownload"/></span>
+        <span  data-bind="click:importExcel" class="btn btn-primary fa fa-upload" style="float:left;margin-right:5px;">&nbsp;<@spring.message "hap.import"/></span>
+        <span  data-bind="click:exportExcel" class="btn btn-primary fa fa-file-excel-o" style="float:left;margin-right:5px;">&nbsp;<@spring.message "hap.exportexcel"/></span>
+        <span  data-bind="click:remove" class="btn btn-danger fa fa-trash-o" style="float:left;margin-right:5px;"><@spring.message "hap.delete"/></span>
+        <span  data-bind="click:selectedCopy" class="btn btn-warning fa fa-files-o" style="float:left;"><@spring.message "hqm.qc.copy"/></span>
+    </div>
+    <script>kendo.bind($('#toolbar-btn'), viewModel);</script>
+    <div id="queryPanel" class="pull-right" style="margin-right:5px;padding-bottom:10px;">
+        <div class="k-query-simple" id="query-form">
+            <!-- <input id="sampleProcedureType"  placeholder="<@spring.message 'inspectionattribute.sampleproceduretype'/>" style="width:150px;margin-right:5px" data-bind="value:model.sampleProcedureType"> -->
+            <input data-role="maskedtextbox" placeholder="<@spring.message 'inspectionattribute.inspectionattribute'/>" style="width:150px;" data-bind="value:model.inspectionAttribute">
+            <input id="standardType" placeholder="<@spring.message 'inspectionattribute.standardType'/>"  style="margin-left:5px;" data-bind="value:model.standardType">
+            <input id="attributeType"  placeholder="<@spring.message 'inspectionattribute.attributetype'/>"  style="margin-left:5px;" data-bind="value:model.attributeType">
+        </div>
+        <script>kendo.bind($('#query-form'), viewModel);</script>
+        <div class="k-query-detail" id="query-form2">
+            <div class="rows">
+<!--                 <input id="inspectionLevels" placeholder="<@spring.message 'inspectionattribute.inspectionlevels'/>" style="display:none; width:150px;" data-bind="value:model.inspectionLevels"> -->
+                <input id="qualityCharacterGrade" placeholder="<@spring.message 'inspectionattribute.qualitycharactergrade'/>"  style="width:150px;" data-bind="value:model.qualityCharacterGrade">
+                <input id="fillInType" placeholder="<@spring.message 'inspectionattribute.fillInType'/>" data-bind="value:model.fillInType">
+            </div>
+        </div>
+        <script>kendo.bind($('#query-form2'), viewModel);</script>
+         <div style="clear:both"></div>
+    </div>
+        <script>kendo.bind($('#query-form2'), viewModel);</script>
+    <div style="clear:both">
+        <div id="grid"></div>
+    </div>
+</div>
+<script>
+	$("#sampleProcedureType").kendoComboBox({
+	    dataTextField: "meaning",
+	    dataValueField: "value",
+	    valuePrimitive: true,
+	    dataSource: hqmSampleStandardType
+	});
+// 	$("#inspectionLevels").kendoComboBox({
+// 	    dataTextField: "meaning",
+// 	    dataValueField: "value",
+// 	    valuePrimitive: true,
+// 	    dataSource: hqmInspectionLevels
+// 	});
+	$("#qualityCharacterGrade").kendoComboBox({
+	    dataTextField: "meaning",
+	    dataValueField: "value",
+	    valuePrimitive: true,
+	    dataSource: hqmQualityGrade
+	});
+	$("#attributeType").kendoComboBox({
+	    dataTextField: "meaning",
+	    dataValueField: "value",
+	    valuePrimitive: true,
+	    dataSource: hqmAttributeCategory
+	});
+	$("#standardType").kendoComboBox({
+	    dataTextField: "meaning",
+	    dataValueField: "value",
+	    valuePrimitive: true,
+	    dataSource: hqmStandardType
+	});
+	$("#fillInType").kendoComboBox({
+	    dataTextField: "meaning",
+	    dataValueField: "value",
+	    valuePrimitive: true,
+	    dataSource: hqmFillInType
+	});
+</script>
+<script type="text/javascript">
+	$('#queryPanel').kendoQueryPanel({
+	    queryFunction: function () {
+	        viewModel.query();
+	    },
+	    resetFunction: function () {
+	        viewModel.reset();
+	    }
+	});
+    Hap.initEnterQuery('#query-form', viewModel.query);
+    var BaseUrl = _basePath;
+    dataSource = new kendo.data.DataSource({
+        transport: {
+            read: {
+                url: BaseUrl + "/hqm/inspection/attribute/select",
+                type: "POST",
+                dataType: "json"
+            },
+            update: {
+                url: BaseUrl + "/hqm/inspection/attribute/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            destroy: {
+                url: BaseUrl + "/hqm/inspection/attribute/remove",
+                type: "POST",
+                contentType: "application/json"
+            },
+            create: {
+                url: BaseUrl + "/hqm/inspection/attribute/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            parameterMap: function (options, type) {
+            	
+                if (type !== "read" && options.models) {
+                    var datas = Hap.prepareSubmitParameter(options, type)
+                    return kendo.stringify(datas);
+                } else if (type === "read") {
+                	if(attribute2 != '-1'){
+                		viewModel.model.attribute2 = attribute2;
+                	}
+                    return Hap.prepareQueryParameter(viewModel.model.toJSON(), options)
+                }
+            }
+        },
+        batch: true,
+        serverPaging: true,
+        pageSize: 20,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+                id: "attributeId",
+                fields: {
+                	precision:{
+                		type:"number"
+                	},
+                	enableFlag:{
+                		type:"boolean",
+                        defaultValue:"Y",
+                        checkedValue: 'Y',
+                        uncheckedValue: 'N'
+                	},
+                	attributeType:{
+                		type:"string",
+                	},
+                	attribute1:{
+                		type:"string",
+                		defaultValue: "1",
+                	},
+                	inspectionAttribute:{
+                		type:'string',
+                		validation: {
+                            required: true,
+                            required:{message: "值需维护"},
+                        },
+                	},
+                }
+            }
+        }
+    });
+    </script>
+    <script>
+   	var grid = $("#grid").kendoGrid({
+   		excel: {
+    		fileName:"检验项目.xlsx",
+    		filterable: true,
+    	},
+    	excelExport: function(e){
+    		var rows = e.workbook.sheets[0].rows;
+    		var datas = e.data;
+    		
+    		for(var i=1;i<rows.length; i++){
+    			rows[i].cells[1].value = Hap.getCodeMeaning(hqmAttributeCategory,datas[i-1].attributeType);
+    			rows[i].cells[3].value = Hap.getCodeMeaning(hqmStandardType,datas[i-1].standardType);
+    			rows[i].cells[4].value = Hap.getCodeMeaning(hqmFillInType,datas[i-1].fillInType);
+    			//rows[i].cells[6].value = Hap.getCodeMeaning(HQM_INSPECTION_METHOD,datas[i-1].inspectionMethod);
+    		}
+    	},
+        dataSource: dataSource,
+        resizable: true,
+        scrollable: true,
+        navigatable: false,
+        allowCopy: false,
+        sortable:true,
+        selectable: 'multiple, rowbox',
+        dataBound: function () {
+            if (parent.autoResizeIframe) {
+                parent.autoResizeIframe('${RequestParameters.functionCode!}')
+            }
+        },
+        pageable: {
+            pageSizes: [5, 10, 20, 50],
+            refresh: false,
+            buttonCount: 5
+        },
+        columns: [
+            {
+                field: "sampleProcedureType",
+                title: '<@spring.message "inspectionattribute.sampleproceduretype"/>',//抽样标准类型 from lookup_code: hqm_sample_standard_type
+                width: 120,
+                hidden:true,
+                template: function (dataItem) {
+                    var v = dataItem.sampleProcedureType ? dataItem.sampleProcedureType : "";
+                    $.each(hqmSampleStandardType, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return v;
+                        }
+                    });
+                    return v;
+                },
+                editor: function (container, options) {
+                    $('<input name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            dataTextField: "meaning",
+                            dataValueField: "value",
+                            valuePrimitive: true,
+                            dataSource:hqmSampleStandardType
+                        });
+                },
+                attributes: {style: "text-align:center"},
+                headerAttributes: {style: "text-align:center"}
+            },
+            {
+                field: "inspectionAttribute",
+                title: '<@spring.message "inspectionattribute.inspectionattribute"/>',//检验项名称
+                width: 180,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"}
+            },
+            {
+                field: "attributeType",
+                title: '<@spring.message "inspectionattribute.attributetype"/>',//检验项类型 from lookup_code: hqm_attribute_category
+                width: 120,
+                template: function (dataItem) {
+                    var v = dataItem.attributeType ? dataItem.attributeType : "";
+                    $.each(hqmAttributeCategory, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return v;
+                        }
+                    });
+                    return v;
+                },
+                editor: function (container, options) {
+                    $('<input name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            dataTextField: "meaning",
+                            dataValueField: "value",
+                            valuePrimitive: true,
+                            dataSource:hqmAttributeCategory
+                        });
+                },
+                attributes: {style: "text-align:center"},
+                headerAttributes: {style: "text-align:center"}
+            },
+                    {
+                field: "inspectionLevels",
+                title: '<@spring.message "inspectionattribute.inspectionlevels"/>',//检验水平from lookup_code: hqm_inspection_levels
+                width: 120,
+                hidden:true,
+                template: function (dataItem) {
+                    var v = dataItem.inspectionLevels ? dataItem.inspectionLevels : "";
+                    $.each(hqmInspectionLevels, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return v;
+                        }
+                    });
+                    return v;
+                },
+                editor: function (container, options) {
+                    $('<input name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            dataTextField: "meaning",
+                            dataValueField: "value",
+                            valuePrimitive: true,
+                            dataSource:hqmInspectionLevels
+                        });
+                },
+                attributes: {style: "text-align:center"},
+                headerAttributes: {style: "text-align:center"}
+            },
+                    {
+                field: "qualityCharacterGrade",
+                title: '<@spring.message "inspectionattribute.qualitycharactergrade"/>',//质量特性等级from lookup_code: hqm_quality_grade
+                width: 120,
+                template: function (dataItem) {
+                    var v = dataItem.qualityCharacterGrade ? dataItem.qualityCharacterGrade : "";
+                    $.each(hqmQualityGrade, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return v;
+                        }
+                    });
+                    return v;
+                },
+                editor: function (container, options) {
+                    $('<input name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoComboBox({
+                            dataTextField: "meaning",
+                            dataValueField: "value",
+                            valuePrimitive: true,
+                            dataSource:hqmQualityGrade
+                        });
+                },
+                attributes: {style: "text-align:center"},
+                headerAttributes: {style: "text-align:center"}
+            },
+                    {
+                field: "acceptanceQualityLimit",
+                title: '<@spring.message "inspectionattribute.acceptancequalitylimit"/>',//aql值(质量接收限) from lookup_code: HQM_ ACCEPTANCE_QUALITY_LIMIT
+                width: 120,
+                hidden:true,
+                template: function (dataItem) {
+                    var v = dataItem.acceptanceQualityLimit ? dataItem.acceptanceQualityLimit : "";
+                    $.each(hqmAcceptanceQualityLimit, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return v;
+                        }
+                    });
+                    return v;
+                },
+                editor: function (container, options) {
+                    $('<input name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            dataTextField: "meaning",
+                            dataValueField: "value",
+                            valuePrimitive: true,
+                            dataSource:hqmAcceptanceQualityLimit
+                        });
+                },
+                attributes: {style: "text-align:center"},
+                headerAttributes: {style: "text-align:center"}
+            },
+                    {
+                field: "sourceType",
+                title: '<@spring.message "inspectionattribute.sourcetype"/>',//检验项来源 from lookup_code:HQM_SOURCE_TYPE
+                width: 120,
+                hidden:true,
+                template: function (dataItem) {
+                    var v = dataItem.sourceType ? dataItem.sourceType : "";
+                    $.each(hqmSourceType, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return v;
+                        }
+                    });
+                    return v;
+                },
+                editor: function (container, options) {
+                    $('<input name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            dataTextField: "meaning",
+                            dataValueField: "value",
+                            valuePrimitive: true,
+                            dataSource:hqmSourceType
+                        });
+                },
+                attributes: {style: "text-align:center"},
+                headerAttributes: {style: "text-align:center"}
+            },
+                    {
+                field: "standardType",
+                title: '<@spring.message "inspectionattribute.standardtype"/>',//规格类型from lookup_code: HQM_STANDARD_TYPE
+                width: 120,
+                template: function (dataItem) {
+                    var v = dataItem.standardType ? dataItem.standardType : "";
+                    $.each(hqmStandardType, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return v;
+                        }
+                    });
+                    return v;
+                },
+                editor: function (container, options) {
+                    $('<input name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            dataTextField: "meaning",
+                            dataValueField: "value",
+                            valuePrimitive: true,
+                            dataSource:hqmStandardType
+                        });
+                },
+                attributes: {style: "text-align:center"},
+                headerAttributes: {style: "text-align:center"}
+            },
+                    {
+                field: "fillInType",
+                title: '<@spring.message "inspectionattribute.fillintype"/>',//结果记录 填写类型 from lookup_code:hqm_fill_in_type
+                width: 120,
+                hidden: true,
+                template: function (dataItem) {
+                    var v = dataItem.fillInType ? dataItem.fillInType : "";
+                    $.each(hqmFillInType, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return v;
+                        }
+                    });
+                    return v;
+                },
+                editor: function (container, options) {
+                    $('<input name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            dataTextField: "meaning",
+                            dataValueField: "value",
+                            valuePrimitive: true,
+                            dataSource:hqmFillInType
+                        });
+                },
+                attributes: {style: "text-align:center"},
+                headerAttributes: {style: "text-align:center"}
+            },
+            
+            {
+                field: "inspectionMethod",
+                title: '<@spring.message "inspectionattribute.inspectionmethod"/>',//检验方法
+                width: 120,
+                attributes: {style: "text-align:center"},
+                headerAttributes: {style: "text-align:center"}
+            },
+                    {
+                field: "frequencyType",
+                title: '<@spring.message "inspectionattribute.frequencytype"/>',//频次类型from lookup_code: hqm_frequency_type
+                width: 120,
+                hidden:true,
+                template: function (dataItem) {
+                    var v = dataItem.frequencyType ? dataItem.frequencyType : "";
+                    $.each(hqmFrequencyType, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return v;
+                        }
+                    });
+                    return v;
+                },
+                editor: function (container, options) {
+                    $('<input name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            dataTextField: "meaning",
+                            dataValueField: "value",
+                            valuePrimitive: true,
+                            dataSource:hqmFrequencyType
+                        });
+                },
+                attributes: {style: "text-align:center"},
+                headerAttributes: {style: "text-align:center"}
+            },
+                    {
+                field: "frequency",
+                title: '<@spring.message "inspectionattribute.frequency"/>',//频次
+                width: 120,
+                hidden:true,
+                editor:function(container,options){
+                	$('<input name="' + options.field + '"/>')
+                    .appendTo(container)
+                    .kendoNumericTextBox({
+                    	step: 1,
+                        format: "0"
+                    });
+                },
+                attributes: {style: "text-align:center"},
+                headerAttributes: {style: "text-align:center"}
+            }, 
+                    {
+                field: "inspectionTool",
+                title: '<@spring.message "inspectionattribute.inspectiontool"/>',//检验工具
+                width: 500,
+                template:function(item){
+                	var v = item.inspectionTool?item.inspectionTool:"";
+                	return '<span>' + v + '<span>';
+                },
+                attributes: {style: "text-align:center"},
+                headerAttributes: {style: "text-align:center"}
+            },   
+                    {
+                field: "remark",
+                title: '<@spring.message "inspectionattribute.remark"/>',//备注
+                width: 120,
+                attributes: {style: "text-align:center"},
+                headerAttributes: {style: "text-align:center"}
+            },
+            {
+                field: "enableFlag",
+                title: '<@spring.message "inspectionattribute.enableflag"/>',//有效性
+                attributes: {style: "text-align:center;"},
+                headerAttributes: {style: "text-align:center"},
+                width: 80,
+                attributes: {style: "text-align:center"},
+                headerAttributes: {style: "text-align:center"}
+                
+            },
+                    {
+                field: "attribute1",
+                title: '<@spring.message "inspectionattribute.attribute1"/>',//
+                width: 120,
+                template: function (dataItem) {
+                    var v = dataItem.attribute1 ? dataItem.attribute1 : "";
+                    $.each(HQM_INSPECTION_PLACE, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return v;
+                        }
+                    });
+                    return v;
+                },
+                editor: function (container, options) {
+                    $('<input name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            dataTextField: "meaning",
+                            dataValueField: "value",
+                            valuePrimitive: true,
+                            dataSource:HQM_INSPECTION_PLACE
+                        });
+                },
+                attributes: {style: "text-align:center"},
+                headerAttributes: {style: "text-align:center"}
+            },
+                    {
+                field: "attribute2",
+                title: '<@spring.message "inspectionattribute.attribute2"/>',//
+                width: 120,
+                template: function (dataItem) {
+                    var v = dataItem.attribute2 ? dataItem.attribute2 : "";
+                    $.each(HQM_INSPECTION_ATTRIBUTE_TYPE, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return v;
+                        }
+                    });
+                    return v;
+                },
+                editor: function (container, options) {
+                    $('<input name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            dataTextField: "meaning",
+                            dataValueField: "value",
+                            valuePrimitive: true,
+                            dataSource: HQM_INSPECTION_ATTRIBUTE_TYPE
+                        });
+                },
+                attributes: {style: "text-align:center"},
+                headerAttributes: {style: "text-align:center"}
+            },
+            {
+		        title: '<@spring.message "hap.operate"/>',//操作
+		        width: 80,
+		        template: function(item){
+		        	var str = '<a style="color: blue;" href="javascript:void(0);" onclick="viewHis('+ item.attributeId +')"><@spring.message "hap.his"/></a>';
+		        	return str;
+		        }
+        
+    		}
+        ],
+        editable: true
+    }).data("kendoGrid");
+    Hap.autoResizeGrid('#grid');
+</script>
+<script>
+$(function(){
+// 	console.log("${Session.userId}");
+// 	console.log("${Session.userName}");
+});
+
+</script>
+</body>
+</html>

@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.spc.pspc_attachment.mapper.SpcAttachmentMapper">
+    <resultMap id="BaseResultMap" type="com.hand.spc.pspc_attachment.dto.SpcAttachment">
+        <result column="attachment_id" property="attachmentId" jdbcType="DECIMAL" />
+        <result column="tenant_id" property="tenantId" jdbcType="DECIMAL" />
+        <result column="site_id" property="siteId" jdbcType="DECIMAL" />
+        <result column="attachment_code" property="attachmentCode" jdbcType="VARCHAR" />
+        <result column="attachment_type" property="attachmentType" jdbcType="VARCHAR" />
+        <result column="description" property="description" jdbcType="VARCHAR" />
+        <result column="level_o" property="levelO" jdbcType="VARCHAR" />
+        <result column="parent_attachment_id" property="parentAttachmentId" jdbcType="DECIMAL" />
+
+
+        <result column="attachment_group_id" property="attachmentGroupId" jdbcType="DECIMAL" />
+        <result column="attachment_relation_id" property="attachmentRelationId" jdbcType="DECIMAL" />
+    </resultMap>
+
+
+    <select id="selectAttachmentsByCroupId" parameterType="com.hand.spc.pspc_attachment.dto.SpcAttachment" resultMap="BaseResultMap">
+        SELECT par.attachment_relation_id
+              ,par.attachment_group_id
+              ,pa.attachment_id
+              ,pa.attachment_code
+              ,pa.attachment_type
+              ,pa.description
+        FROM   pspc_attachment_relation par
+              ,pspc_attachment          pa
+        WHERE  par.attachment_id = pa.attachment_id
+        AND    par.attachment_group_id = #{attachmentGroupId}
+    </select>
+
+    <select id="selectParentAttachment" parameterType="com.hand.spc.pspc_attachment.dto.SpcAttachment" resultMap="BaseResultMap">
+        SELECT
+            pa.attachment_id,
+            pa.attachment_code,
+            pa.attachment_type,
+            pa.description,
+            pa.parent_attachment_id
+        FROM
+            pspc_attachment pa
+        WHERE
+            pa.parent_attachment_id IS NULL
+            <if test="attachmentCode != null and attachmentCode != ''">
+                and pa.attachment_code like concat('%',concat(#{attachmentCode,jdbcType=VARCHAR},'%'))
+            </if>
+            <if test="description != null and description != ''">
+                and pa.description like concat('%',concat(#{description,jdbcType=VARCHAR},'%'))
+            </if>
+            <if test="attachmentType != null and attachmentType != ''">
+                and pa.attachment_type = #{attachmentType,jdbcType=VARCHAR}
+            </if>
+    </select>
+
+    <select id="selectAttachmentLov" parameterType="com.hand.spc.pspc_attachment.dto.SpcAttachment" resultMap="BaseResultMap">
+        SELECT
+            pa.attachment_id,
+            pa.attachment_code,
+            pa.description,
+            scvb.meaning attachment_type
+        FROM
+            PSPC_ATTACHMENT pa
+            LEFT JOIN sys_code_b scb ON scb.CODE = 'PSPC.ATTACHMENT.TYPE'
+            LEFT JOIN sys_code_value_b scvb ON scvb.code_id = scb.code_id
+            AND scvb.VALUE = pa.attachment_type
+        where 1 = 1
+        <if test="attachmentCode != null and attachmentCode != ''">
+          and pa.attachment_code like concat('%',concat(#{attachmentCode,jdbcType=VARCHAR},'%'))
+        </if>
+        <if test="description != null and description != ''">
+            and pa.description like concat('%',concat(#{description,jdbcType=VARCHAR},'%'))
+        </if>
+        <if test="attachmentType != null and attachmentType != ''">
+            and pa.attachment_type = #{attachmentType,jdbcType=VARCHAR}
+        </if>
+    </select>
+</mapper>

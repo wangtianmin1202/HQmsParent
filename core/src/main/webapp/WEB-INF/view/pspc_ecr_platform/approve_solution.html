@@ -1,0 +1,1193 @@
+<#include "../include/header.html"> 
+ <script src="${base.contextPath}/common/code?HQM_8D_PROBLEM_SOURCE=HQM_8D_PROBLEM_SOURCE"></script>
+ <script src="${base.contextPath}/common/code?HPM_ECR_ONHAND_STATUS=HPM_ECR_ONHAND_STATUS"></script>
+ <script src="${base.contextPath}/common/code?HQM_8D_PROBLEM_LEVEL=HQM_8D_PROBLEM_LEVEL"></script>
+ <script src="${base.contextPath}/common/code?HQM_8D_PROBLEM_TYPE=HQM_8D_PROBLEM_TYPE"></script>
+ <script src="${base.contextPath}/common/code?HPM_ECR_ITEM_TYPE=HPM_ECR_ITEM_TYPE"></script>
+ <script src="${base.contextPath}/common/code?HPM_ITEM_RESULT=HPM_ITEM_RESULT"></script>
+<body>
+<style>
+  .btn-foot{
+        width: 95%;
+        position: absolute;
+        bottom: 20px;
+    }
+#_loading_div {
+    vertical-align: middle;
+    display: inline-block;
+    width: 100%;
+    height: 100%;
+    margin: 0 auto;
+    text-align: center;
+    position: absolute;
+    z-index: 3;
+    line-height: 20;
+    opacity: 0.7;
+    display: none;
+    position: absolute;
+    top: 0px;
+    background: #f7f7f7;
+       
+}
+
+
+.data-table {
+        width: 100%;
+        text-align: center;
+        border-color: #DDDDDD;
+    }
+
+    .data-thead {
+        color: #758697;
+        background-color: #F5F5F5;
+    }
+
+    .data-table .data-thead tr {
+        height: 40px;
+    }
+
+    .data-table .data-thead th {
+        padding: 0px;
+        text-align: center;
+        font-weight: bold;
+        font-family: "Helvetica Neue", "Luxi Sans", "DejaVu Sans", Tahoma, "Microsoft Yahei", "Hiragino Sans GB", sans-serif;
+        font-size: 12px;
+    }
+
+    .data-table .data-thead th div {
+        width: 100%;
+        height: 100%;
+        padding: 10px;
+        position: relative;
+        background-color: #F5F5F5;
+    }
+
+    .data-tbody {
+        font-weiht: 100;
+        color: #758697;
+        font-family: "Helvetica Neue", "Luxi Sans", "DejaVu Sans", Tahoma, "Microsoft Yahei", "Hiragino Sans GB", sans-serif;
+        font-size: 12px;
+    }
+
+    .data-tbody tr{
+        height: 35px;
+    }
+
+    .data-tbody td{
+        padding: 5px 10px;
+    }
+</style>
+<script>
+var viewModel =Hap.createGridViewModel("#girdSkuDetail");
+var viewModelSku =Hap.createGridViewModel("#girdSku");  
+viewModel.model.ecrno= "${RequestParameters.ecrno!}";
+viewModelSku.model.ecrno="${RequestParameters.ecrno!}";
+var userId= "${Session.userId!}";
+var flowno = "${RequestParameters.flowno!0}";
+
+/**
+ * 设置节点不可编辑
+ */
+if(flowno==110){
+	viewModel.model.isEnabled = true;
+}else{
+	viewModel.model.isEnabled = false;
+}
+
+ function onhandSave(){
+	 var dialog = $("#onhandWindow").kendoWindow({
+         actions: ["Close"],
+         width: "60%",
+         height: "80%",
+         title: '库存明细',
+         visible: false,
+         iframe: true,
+         modal: true,
+         content: 'mt_andon_action_object.html?actionId=' + actionId+'&action='+action+'&actionDesc='+actionDesc,
+         close: function () {
+         }
+     }).data("kendoWindow");
+     dialog.center().open();
+ }
+</script>
+<div style="width:98%">
+<div id="onhandWindow"></div>
+	<div class="row"> 
+
+		<div class="col-xs-1">
+		  
+		</div>
+		<div class="col-xs-1">
+			<div  style="margin-top:20px;float:left;width:100%">
+				<span><@spring.message "ecrsoultion.changetype"/></span>
+				</div>
+		</div>
+		<div class="col-xs-3" style="margin-top:10px"> 			
+				<div class="row" style="margin-bottom:10px;float:left;width:75%">
+    			<input id="changeType"  required style="width:100%" data-bind="value:model.risk" >				
+				<script type="text/javascript">
+					kendo.bind($("#changeType"),viewModel);
+					$("#changeType").kendoDropDownList({
+				        dataTextField: "meaning",
+				        dataValueField: "value",
+				        valuePrimitive: true,
+				        dataSource: HQM_8D_PROBLEM_TYPE
+					});
+				</script>
+				</div>
+		</div>
+    
+     <div class="col-xs-7">
+	</div>
+    </div>
+    <script>kendo.bind($('#toolbar-btn'), viewModel);</script>
+    
+	<div id="gridRow" class="row"> 
+		<div class="col-xs-1">
+		  
+		</div>
+		<div class="col-xs-1" style="margin-top:20px ">
+		  <span><@spring.message "ecrsolution.solutiontext"/></span>
+		</div>
+		<div  class="col-xs-9"  style="margin-top:10px;margin-left:-0.35%">
+			
+				<div style=" margin-bottom:10px; float:left;width:100% ">
+    			<textarea  required style="width:100%;height:80px"  id="problemDescriptionD2" data-bind="value:model.solutionMsg"></textarea>
+    			<script>
+                	$("#problemDescriptionD2").kendoTextArea({
+                    });
+                </script>
+                <script type="text/javascript">
+					kendo.bind($("#problemDescriptionD2"),viewModel);
+				</script>
+				</div>
+				</div>
+         <div class="col-xs-1">
+		</div>
+	</div>
+	
+	<div class="row">
+    	<div class="col-xs-1">
+		  
+		</div>
+		
+		<div class="col-xs-11"style="margin-top:20px;float:left ;">
+		  <span style="font-size:18px" ><@spring.message "ecrsolution.itemreuslt"/></span>
+		</div> 
+    </div> 
+	<div class="row"> 
+		<div class="col-xs-1">
+		  
+		</div> 
+		<div class="col-xs-10" > 
+			 <div id="dataTableDiv"  >
+		            <!-- table id="dataTable" border="1" cellpadding="0px" cellspacing="0px" class="data-table">
+		                <thead id="dataThead" class="data-thead"></thead>
+		                <tbody id="dataTbody" class="data-tbody"></tbody>
+		            </table> -->
+		        </div>
+        </div>
+        <div class="col-xs-1">
+		</div>
+	</div>
+	<!-- 设计评审 -->
+	 
+	<div class="row">
+    	<div class="col-xs-1">
+		  
+		</div>
+		
+		<div class="col-xs-11"style="margin-top:20px;float:left ;">
+		  <span style="font-size:18px" ><@spring.message "ecrsolution.design"/></span>
+		</div> 
+    </div> 
+    <div class="row"> 
+		<div class="col-xs-1">
+		  
+		</div> 
+		<div class="col-xs-10" > 
+			 <div id="gridDesign">		           
+		        </div>
+        </div>
+        <div class="col-xs-1">
+		</div>
+	</div>
+	<!-- SKU成本变化 -->
+	<div class="row">
+    	<div class="col-xs-1">
+		  
+		</div>
+		
+		<div class="col-xs-11"style="margin-top:20px;float:left ;">
+		  <span style="font-size:18px" ><@spring.message "ecrsolution.skutitle"/></span>
+		</div> 
+    </div> 
+	<div id="details"></div>
+	<div style="padding:10px">
+		<div class="col-xs-1">
+		  
+		</div>
+		<span class="btn btn-primary" onclick="openWindow()">详情</span></div>
+    <div class="row"> 
+		<div class="col-xs-1">
+		  
+		</div> 
+		<div class="col-xs-10" > 
+			 <div id="girdSku">		           
+		        </div>
+        </div>
+        <div class="col-xs-1">
+		</div>
+	</div>
+	<!-- SKU成本变化明细 -->
+	<div class="row" style="display:none">
+    	<div class="col-xs-1">
+		  
+		</div>
+		
+		<div class="col-xs-8"style="margin-top:20px;float:left ;">
+		  <span style="font-size:18px" ><@spring.message "ecrsolution.skudetail"/></span>
+		</div> 
+		<div id="bts1" class="col-xs-2" style="margin-top:20px;float:left ;">
+		  <span id="addDetails" data-bind="click:create" class="btn btn-primary"   type="submit" style="margin-right:5px"><@spring.message "ecrsolution.additem"/></span>
+		</div>
+		<div class="col-xs-1">
+		  
+		</div>
+    </div> 
+     <script>kendo.bind($('#bts1'), viewModel);</script>
+	<div class="row" style="display:none"> 
+		<div class="col-xs-1">
+		  
+		</div> 
+		<div class="col-xs-10" > 
+			 <div id="girdSkuDetail">		           
+		        </div>
+        </div>
+        <div class="col-xs-1">
+		</div>
+	</div>	  	 		
+  <div id="mainBottom" class="text-center" style="float: left;padding-top:15px;width:90%; background: #fff;display:none">
+   		<span id="svaeBtn" class="btn btn-primary"  onclick="saveData()" type="submit" style="margin-right:5px"><@spring.message "hap.save"/></span>
+        <span id="confirms" class="btn btn-primary"  onclick="commit()" type="submit" style="margin-right:5px"><@spring.message "hap.commit"/></span>
+        <span class="btn btn-default" data-bind="click:closeWin" type="button" style="margin-right:25px;"><@spring.message "hap.cancel"/></span>
+ </div> 
+</div>
+<script type="text/javascript">	
+//点击现有申请单进入界面时，不允许修改
+var loading = {
+    baosight: {
+        showPageLoadingMsg: function (showMessage) {
+            if ($("#_loading_div").length == 0) {
+                $("body").append('<div id="_loading_div" style="font-size: 24px"> <i class="fa fa-refresh fa-spin"></i><span><@spring.message "calberporder.info"/></span></div>');
+            }
+            $("#_loading_div").show();
+        },
+        hidePageLoadingMsg: function () {
+            $("#_loading_div").hide();
+        }
+    }
+}
+//$('#dataTableDiv').css("display",'none');
+
+/*var webWidth=window.screen.availHeight*0.2;    
+$('#girdSkuDetail').css("height",webWidth*0.5);
+$('#girdSku').css("height",webWidth*0.3);
+$('#gridDesign').css("height",webWidth*0.2);
+$('#dataTableDiv').css("height",webWidth*0.3); 
+ */
+ 
+ function saveData(){
+	 var paraModel=Hap.createGridViewModel("#girdSkuDetail");
+	 //头数据存储
+	   var row=$("#girdSku").data("kendoGrid").select();
+      var data =$("#girdSku").data("kendoGrid").dataItem(row);     
+      viewModelSku.model.set("skuId",data.skuId);
+      viewModelSku.model.set("skuDescription",data.skuDescription);
+      viewModelSku.model.set("sumYears",data.sumYears);
+      viewModelSku.model.set("sumItemCost",data.sumItemCost);
+      viewModelSku.model.set("sumWorkCost",data.sumWorkCost);
+      viewModelSku.model.set("sumCost",data.sumCost);
+      paraModel.model.set("headList", viewModelSku.model.toJSON());
+	 //循环遍历行数据	
+	 	 var all=	$("#girdSkuDetail").data("kendoGrid").dataSource.data();
+	 	 var array=[];
+	 	 for(var i=0;i<all.length;i++){ 
+		    viewModel.model.itemId=all[i].itemId;
+			viewModel.model.itemSkuKid=all[i].itemSkuKid; 
+		    viewModel.model.subItem=all[i].subItem;
+			viewModel.model.subItemFlag=all[i].subItemFlag
+		    viewModel.model.itemChangeType=all[i].itemChangeType;
+			viewModel.model.uom=all[i].uom
+		    viewModel.model.ecrUse=all[i].ecrUse;
+			viewModel.model.bomUse=all[i].bomUse
+		    viewModel.model.price=all[i].price;
+			viewModel.model.itemDesc=all[i].itemDesc
+			viewModel.model.itemCode=all[i].itemCode
+			 array.push(viewModel.model.toJSON());
+		 }
+	 	paraModel.model.set("lineList", array);
+	 	 loading.baosight.showPageLoadingMsg(true);
+	 	// var data= viewModel.model.toJSON();
+	 	 $.ajax({
+	 	        url: '${base.contextPath}/hpm/ecr/item/sku/save',
+	 	        data:JSON.stringify( paraModel.model.toJSON() ) ,
+	 	        type: 'POST',
+	 	        dataType: 'json',
+	 	        contentType: "application/json;charset=UTF-8",
+	 	        success: function (args) {
+	 	        	if(args.success){
+	 	        	 kendo.ui.showInfoDialog({
+	                      title: $l('hap.tip.info'),
+	                      message: "成功"
+	                  });
+	 	        	}
+	 	        	else{
+	 	        		kendo.ui.showInfoDialog({
+	 	                     title: $l('hap.tip.info'),
+	 	                     message:args.message
+	 	                 });
+	 	        	}
+	 	        	loading.baosight.hidePageLoadingMsg();
+	 	        },
+	 	        async: true
+	 	    });
+ }
+
+function commit(){
+	if(viewModel.model.readFlag=="Y"){
+		return;
+	}
+	  	 var all=	$("#girdSkuDetail").data("kendoGrid").dataSource.data();
+	 var array=[];
+	 for(var i=0;i<all.length;i++){
+		 viewModel.model.onhandStatus=all[i].onhandStatus;
+		 viewModel.model.kid=all[i].kid; 
+		 array.push(viewModel.model.toJSON());
+	 }
+	 
+	 loading.baosight.showPageLoadingMsg(true);
+	// var data= viewModel.model.toJSON();
+	 $.ajax({
+	        url: '${base.contextPath}/hpm/ecr/influencedmaterial/item/control/save',
+	        data:JSON.stringify( array ) ,
+	        type: 'POST',
+	        dataType: 'json',
+	        contentType: "application/json;charset=UTF-8",
+	        success: function (args) {
+	        	if(args.success){
+	        	 kendo.ui.showInfoDialog({
+                     title: $l('hap.tip.info'),
+                     message: "成功"
+                 });
+	        	}
+	        	else{
+	        		kendo.ui.showInfoDialog({
+	                     title: $l('hap.tip.info'),
+	                     message:args.message
+	                 });
+	        	}
+	        	loading.baosight.hidePageLoadingMsg();
+	        },
+	        async: true
+	    });
+ }
+var BaseUrl = _basePath; 
+
+
+/*SKU成本明细
+ *
+ */
+  var dataSourceSkuDetail=new kendo.data.DataSource({
+	  
+	    batch: true,
+	    serverPaging: true,
+	    pageSize: 10,
+	    schema: {
+	    	data: 'rows',
+	        total: 'total',
+	        model: {
+	            id: "itemSkuKid",
+	            fields: {  
+	            	   itemId:{},
+	            	   subItemFlag:{
+                        type: 'Boolean',
+                        checkedValue:'Y',
+                        uncheckedValue:'N',
+                        defualtValue:'Y'},
+                     
+                        itemCode:{ type:"string", validation:{required : true }} 
+	            } ,
+	            editable: function (col) {
+	            	 if(this.isNew())
+	            		 return true;
+	           	 if(col=="ischild")
+	           		 return false;
+	           	 if(col=="itemCode"){
+	           		 if(this.isNew())
+	           			 return true;
+	           		 return false;
+	           	 }
+	           	if(col=="bomUse"){
+	           		 if(this.isNew())
+	           			 return true;
+	           		 return false;
+	           	 }
+	           	 if(col=="ecrUse"){
+	           		 return true;
+	           	 }
+	           	 if(col=="itemChangeType"){
+	           		 return true;
+	           	 }	
+	           	if(col=="subItemFlag"){
+	           		 return true;
+	           	 }
+	           	if(col=="subItem"){
+	           		 return true;
+	           	 }	           	
+	           	if(col=="itemChange"){
+	           		 return true;
+	           	 }
+	             return false;
+	           }
+	        }
+	    }
+	});
+  
+  function isNumber(value) {         //验证是否为数字
+	    var patrn = /^(-)?\d+(\.\d+)?$/;
+	    if (patrn.exec(value) == null || value == "") {
+	       return false
+	} else {
+	       return true
+	   }
+	}
+  /*function  saves(){
+
+      var row=$("#girdSku").data("kendoGrid").select();
+      var data =$("#girdSku").data("kendoGrid").dataItem(row);
+     data.set("sumItemCost","13");
+    // $("#girdSku").data("kendoGrid").refresh();
+  }*/
+var girdSkuDetail= $("#girdSkuDetail").kendoGrid({
+    dataSource: dataSourceSkuDetail,
+    resizable: true,
+    scrollable: true,
+    navigatable: false,
+    sortable:false,
+    editable: true,	
+    selectable: 'multiple, rowbox',  	 
+    columns: [
+        {
+            field: "sku",
+            title: '<@spring.message "ecrsolution.sku"/>',
+            width: 120 
+        },
+                {
+            field: "itemCode",
+            title: '<@spring.message "ecrsolution.itemcode"/>',
+            width: 120 ,
+            template: function (dataItem) {
+                return dataItem['itemCode'] || ''
+            },
+            editor: function (container, options) {
+                $('<input name="' + options.field + '"/>')
+                    .appendTo(container)
+                    .kendoLov($.extend(<@lov "HPM_ITEM_LOV"/>, {
+                    valueField: "itemId",
+                    textField: 'itemCode',
+                    model: options.model,
+                    select: function(e) {                       
+                    	   options.model.itemId=e.item.itemId;
+                           options.model.set("itemDesc", e.item.itemDesc);
+                           options.model.set("price", e.item.price);                        
+                           options.model.set("uom", e.item.uom);                                                                            
+                    }
+                }));
+            }
+        },  {
+            field: "itemDesc",
+            title: '<@spring.message "ecrsolution.itemdesc"/>',
+            width: 120, 
+            template:function (dataItem) {
+            	var v = dataItem.itemDesc;
+                if(v==undefined){
+                	return '';	
+                }
+            	return dataItem.itemDesc;
+            },
+            editor: function(container, options) {     
+                $('<span data-bind="text:itemDesc"></span>').appendTo(container);            	 
+            }
+        },
+        {
+            field: "price",
+            title: '<@spring.message "ecrsolution.itemprice"/>',
+            width: 120, 
+            template:function (dataItem) {
+            	var v = dataItem.price;
+                if(v==undefined){
+                	return '';	
+                }
+            	return dataItem.price;
+            },
+            editor: function(container, options) {            	 
+            	$('<span data-bind="text:price"></span>').appendTo(container);
+            }
+        },      
+        {
+            field: "bomUse",
+            title: '<@spring.message "ecrsolution.bomuse"/>',
+            width: 120 , 
+            template:function (dataItem) {
+            	var v = dataItem.bomUse;
+                if(v==undefined){
+                	return '';	
+                }
+            	return dataItem.bomUse;
+            },
+            editor: function(container, options) {  
+            	if(options.model.itemSkuId==''||options.model.itemSkuId==undefined){            		            	
+            		$('<input name="' + options.field + '"/>')
+                    .appendTo(container)
+                    .kendoNumericTextBox({
+                    	  decimals: 6
+                    }); 
+            	}
+            	else{
+            		$('<span data-bind="text:bomUse"></span>').appendTo(container);
+            	}            	
+            }
+        },
+        {
+            field: "ecrUse",
+            title: '<@spring.message "ecrsolution.ecruse"/>',
+            width: 120,
+            template:function(dataItem){
+              	 var v = dataItem.ecrUse;
+                if(v==undefined){
+                	return '';	
+                }
+                if(!isNumber(dataItem.ecrUse)){
+       			 kendo.ui.showInfoDialog({
+       	             title: $l('hap.tip.info'),
+       	             message: "请确认ufr是否为数字"
+       	         });
+       			 return '';
+       		}
+              //  saves();
+                
+                var result=( dataItem.ecrUse-dataItem.bomUse)*dataItem.price;
+               dataItem.set("itemChange",result);
+               
+             
+           	return v;
+           }
+        },
+        {
+            field: "uom",
+            title: '<@spring.message "ecrsolution.itemuom"/>',
+            width: 120, 
+            template:function (dataItem) {
+            	var v = dataItem.uom;
+                if(v==undefined){
+                	return '';	
+                }
+            	return dataItem.uom;
+            },
+            editor: function(container, options) {            	 
+            	$('<span data-bind="text:uom"></span>').appendTo(container);
+            }
+        },
+        {
+            field: "itemChange",
+            title: '<@spring.message "ecrsolution.itemchange"/>',
+            width: 120, 
+            template:function (dataItem) {
+            	var v = dataItem.itemChange;
+                if(v==undefined){
+                	return '';	
+                }
+            	return dataItem.itemChange;
+            },
+            editor: function(container, options) {            	 
+            	$('<span data-bind="text:itemChange"></span>').appendTo(container);
+            }
+           
+        },
+        {
+            field: "itemChangeType",
+            title: '<@spring.message "ecrsolution.itemchangetype"/>',
+            width: 120,
+            template: function (dataItem) {
+                var v = dataItem.itemChangeType;
+                if(v==undefined){
+                	return '';	
+                }
+                $.each(HPM_ECR_ITEM_TYPE, function (i, n) {
+                    if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                        v = n.meaning;
+                        return v;
+                    }
+                });
+                return v;
+            },
+            editor: function (container, options) {
+            	 
+            		$('<input name="' + options.field + '"/>')
+                    .appendTo(container)
+                    .kendoDropDownList({
+                        dataTextField: "meaning",
+                        dataValueField: "value",
+                        dataSource: HPM_ECR_ITEM_TYPE,
+                        valuePrimitive: true
+                    }); 
+            }
+        },
+        {
+            field: "subItemFlag",
+            title: '<@spring.message "ecrsolution.ischild"/>',
+            width: 45,
+            attributes: {style: "text-align:center;white-space:nowrap;text-overflow:ellipsis;text-align:center;"}
+        },
+        {
+            field: "subItem",
+            title: '<@spring.message "ecrsolution.ischild"/>',
+            width: 120,
+            template: function (dataItem) {
+                var v = dataItem.subItem;
+                if(v==undefined){
+                	return '';	
+                }
+                $.each(HPM_ECR_ITEM_TYPE, function (i, n) {
+                    if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                        v = n.meaning;
+                        return v;
+                    }
+                });
+                return v;
+            },
+            editor: function(container, options) {
+            	if(options.model.subItemFlag=="Y"){
+	                //create input element and add the validation attribute
+	                var input = $('<input name="' + options.field + '"  />');
+	                //append the editor
+	                input.appendTo(container);
+	                //enhance the input into NumericTextBox
+	                input.kendoDropDownList({
+	                    dataTextField: "meaning",
+	                    dataValueField: "value",
+	                    dataSource: HPM_ECR_ITEM_TYPE,
+	                    valuePrimitive: true
+	                }); 
+            	}
+            	else{
+	                //create tooltipElement element, NOTE: data-for attribute should match editor's name attribute
+            		$('<span data-bind="text:subItem"></span>').appendTo(container);
+            	}
+              }
+        },
+       /* {
+            field: "planyear",
+            title: '<@spring.message "ecrsolution.planyear"/>',
+            width: 120,
+            template: function (dataItem) { 
+          	return    '<a href="#" onclick="editrow('+ dataItem.itemSkuKid +')"><@spring.message "fmea.edit"/></a>&nbsp;&nbsp;' 
+              			   + '<a href="#" onclick="submit('+ dataItem.levelId +',' + dataItem.itemSkuKid +')"><@spring.message "hap.save"/></a>&nbsp;&nbsp;' ;
+          		 
+          	 
+            },
+        },*/            
+    ], 
+    edit:function(e){
+      
+    },
+    change:onLineChange,
+    filter: function(e) {
+        if (e.filter == null) {
+          console.log("filter has been cleared");
+        } else {
+          console.log(e.filter.logic);
+          console.log(e.filter.filters[0].field);
+          console.log(e.filter.filters[0].operator);
+          console.log(e.filter.filters[0].value);
+        }
+      }
+}).data("kendoGrid");
+
+
+ function onLineChange(e){
+	 var a=1;
+	 
+ }
+	var index = 1
+	$('#girdSkuDetail thead th').each(function (i, v) {
+		if ($(v).attr('data-title') ==  '<@spring.message "ecrsolution.ischild"/>') {
+			if (index == 1) {
+				$(v).attr('colspan', 2);
+				$(v).css('text-align', 'center');
+			} else {
+				$(v).hide();
+			}
+			index++;
+		}
+	}); 
+
+/* SKU成本变化*/
+  var dataSourceSku=new kendo.data.DataSource({
+	  transport: {
+   	   read: {
+              url: BaseUrl + "/hpm/ecr/item/sku/query/head",
+              type: "POST",
+              dataType: "json"
+          } ,
+          parameterMap: function (options, type) {
+              if (type !== "read" && options.models) {
+                  var datas = Hap.prepareSubmitParameter(options, type)
+                  return kendo.stringify(datas);
+              } else if (type === "read") {
+                  return Hap.prepareQueryParameter(viewModel.model.toJSON(), options)
+              }
+          },
+	  },
+	  RequesEnd:function(e){},
+	    batch: true,
+	    serverPaging: true,
+	    pageSize: 10,
+	   
+
+  		 aggregate: [ { field: "skuDescription", aggregate: "count" },
+                 { field: "sumCost", aggregate: "sum" },
+                 { field: "sumItemCost", aggregate: "sum" },
+                 { field: "sumWorkCost", aggregate: "sum" },
+                 { field: "sumYears", aggregate: "sum" }],
+	    schema: {
+	    	data: 'rows',
+	        total: 'total',
+	        model: {
+	            id: "skuId",
+	            fields: {  
+	            	sumCost: { type: "number" }, 
+                     sumItemCost: { type: "number" },
+                     sumWorkCost: { type: "number" },
+                     sumYears: { type: "number" }
+	            },
+	            editable: function (col) {
+	            	 return true;
+	              
+	            }
+	        }
+	    }
+	});
+ 
+var girdSku= $("#girdSku").kendoGrid({
+    dataSource: dataSourceSku,
+    resizable: true,
+    scrollable: true,
+    navigatable: false,
+    sortable:true,
+    selectable: 'single, rowbox',  	    	    
+    columns: [
+        {
+            field: "skuDescription",
+            title: '<@spring.message "ecrsolution.sku"/>',
+            width: 120 , aggregates: ["count"], footerTemplate: "Total Count: #=count#", groupFooterTemplate: "Count: #=count#", 
+            template:function (dataItem) {
+            	var v = dataItem.skuDescription;
+                if(v==undefined){
+                	return '';	
+                }
+            	return dataItem.skuDescription;
+            },
+            editor: function(container, options) {            	 
+            	$('<span data-bind="text:skuDescription"></span>').appendTo(container);
+            }
+        },
+                {
+            field: "sumCost",
+            title: '<@spring.message "ecrsolution.yearsum"/>',
+            width: 120, aggregates: ["sum"],footerTemplate: "Sum: #=sum#", groupHeaderColumnTemplate: "Sum: #=sum#" , 
+            template:function (dataItem) {
+            	var v = dataItem.sumCost;
+                if(v==undefined){
+                	return '';	
+                }
+            	return dataItem.sumCost;
+            },
+            editor: function(container, options) {            	 
+            	$('<span data-bind="text:sumCost"></span>').appendTo(container);
+            }
+        },  {
+            field: "sumItemCost",
+            title: '<@spring.message "ecrsolution.itemsum"/>',
+            width: 120, aggregates: ["sum"],footerTemplate: "Sum: #=sum#", groupHeaderColumnTemplate: "Sum: #=sum#" , 
+            template:function (dataItem) {
+            	var v = dataItem.sumItemCost;
+                if(v==undefined){
+                	return '';	
+                }
+            	return dataItem.sumItemCost;
+            },
+            editor: function(container, options) {            	 
+            	$('<span data-bind="text:sumItemCost"></span>').appendTo(container);
+            }
+        },
+        {
+            field: "sumWorkCost",
+            title: '<@spring.message "ecrsolution.worksum"/>',
+            width: 120, aggregates: ["sum"],footerTemplate: "Sum: #=sum#", groupHeaderColumnTemplate: "Sum: #=sum#" , 
+            template:function (dataItem) {
+            	var v = dataItem.sumWorkCost;
+                if(v==undefined){
+                	return '';	
+                }
+            	return dataItem.sumWorkCost;
+            },
+            editor: function(container, options) {            	 
+            	var row = $("#girdSku").data("kendoGrid").select();
+            	var data = $("#girdSku").data("kendoGrid").dataItem(row);
+            	if(data==null){
+            		$('<span data-bind="text:sumWorkCost"></span>').appendTo(container);	
+            	}
+            	else{
+	            	
+	            	if(data.skuDescription==options.model.skuDescription){            		            	
+	            		$('<input name="' + options.field + '"/>')
+	                    .appendTo(container)
+	                    .kendoNumericTextBox({
+	                    	  decimals: 6
+	                    }); 
+	            	}
+	            	else{
+	            		$('<span data-bind="text:sumWorkCost"></span>').appendTo(container);
+	            	}
+            	}
+            }
+        },      
+        {
+            field: "sumYears",
+            title: '<@spring.message "ecrsolution.planyear"/>',
+            width: 120, aggregates: ["sum"],footerTemplate: "Sum: #=sum#", groupHeaderColumnTemplate: "Sum: #=sum#" , 
+            template:function (dataItem) {
+            	var v = dataItem.sumYears;
+                if(v==undefined){
+                	return '';	
+                }
+            	return dataItem.sumYears;
+            },
+            editor: function(container, options) {            	 
+            	$('<span data-bind="text:sumYears"></span>').appendTo(container);
+            }
+        },
+                 
+            
+    ],
+    change:onChange,
+    editable: true 
+}).data("kendoGrid");
+
+function onChange(e){
+	var row=$("#girdSku").data("kendoGrid").select();
+	viewModel.model.skuId=$("#girdSku").data("kendoGrid").dataItem(row).skuId;
+	$.ajax({
+        url: '${base.contextPath}/hpm/ecr/item/sku/query/line',
+        data:JSON.stringify( viewModel.model.toJSON() ) ,
+        type: 'POST',
+        dataType: 'json',
+        contentType: "application/json;charset=UTF-8",
+        success: function (args) {
+        	girdSkuDetail.dataSource.data("");
+        	if(args.rows.length>0){
+        		 for (var i =0; i < args.rows.length; i++){
+	    			 
+	    			 girdSkuDetail.dataSource.add(args.rows[i]);
+	    		 }
+        	}
+        	else{
+        		kendo.ui.showInfoDialog({
+                     title: $l('hap.tip.info'),
+                     message:args.message
+                 });
+        	}
+        	loading.baosight.hidePageLoadingMsg();
+        },
+        async: true
+    });
+}
+  
+ /*  设计评审*/
+ var dataSourceDesgin = new kendo.data.DataSource({
+     
+    batch: true,
+    serverPaging: true,
+    pageSize: 10,
+    schema: {
+    	data: 'rows',
+        total: 'total',
+        model: {
+            id: "kid",
+            fields: {            	 
+            },
+            editable: function (col) {
+            	 
+              
+            }
+        }
+    }
+});
+ 
+ var gridDesign = $("#gridDesign").kendoGrid({
+	    dataSource: dataSourceDesgin,
+	    resizable: true,
+	    scrollable: true,
+	    navigatable: false,
+	    sortable:true,
+	    selectable: 'multiple, rowbox',  	    	    
+	    columns: [
+	        {
+	            field: "itemCode ",
+	            title: '<@spring.message "ecrsolution.designnum"/>',
+	            width: 120 
+	        },
+	                {
+	            field: "itemDescriptions",
+	            title: '<@spring.message "ecrsolution.desginstatus"/>',
+	            width: 120
+	        },  {
+	            field: "itemVersions",
+	            title: '<@spring.message "ecrsolution.desginby"/>',
+	            width: 120
+	        },
+	        {
+	            field: "buyers",
+	            title: '<@spring.message "ecrsolution.planfinished"/>',
+	            width: 120
+	        },      
+	        {
+	            field: "onhandQtys",
+	            title: '<@spring.message "ecrsolution.actfinished"/>',
+	            width: 120
+	        },
+	                 
+	            
+	    ],
+	    editable: true 
+	}).data("kendoGrid");
+ 
+ 
+	 
+	 
+var dataSource1 = new kendo.data.DataSource({
+		    
+		    batch: true,
+		    serverPaging: true,
+		    pageSize: 10,
+		    schema: {
+		    	data: 'rows',
+		        total: 'total',
+		        model: {
+		            id: "itemId",
+		            fields: {
+		            	itemCode:{
+		                    
+		                     validation:{
+		                         required:true,
+		                         custom:function(e){
+		                        	 if(e[0]!= undefined && e[0] != ""){
+		                 			var length=e[0].value;
+		                 			var datas=$("#gridItem").data('kendoGrid').dataSource.data();
+		                 			$.each(datas,function(i,v){
+		                 				if(v.itemId==length){
+		                 					  
+		                 					return false;
+		                 				}
+		                 			});
+		                        	 }
+		                 			return true;
+		                 		}
+		                        
+		                     }
+		                 }
+		            },
+		            editable: function (col) {
+		            	if (this.isNew()) {
+	                        return true;
+	                    }
+		                 
+		                return false;
+		            }
+		        }
+		    }
+		});
+ var grid1 = $("#dataTableDiv").kendoGrid({
+     dataSource: dataSource1,
+     resizable: true,
+     scrollable: true,
+     navigatable: false,
+   	 sortable:true,
+     selectable: 'multiple, rowbox',   
+     dataBound: function () {
+         if (parent.autoResizeIframe) {
+             parent.autoResizeIframe('${RequestParameters.functionCode!}')
+         }
+     },
+    
+     editable: false
+ }).data("kendoGrid");
+ viewModel.model.ecrno="ECR20200034";
+ viewModel.model.status="A";
+ $.ajax({
+	    url: '${base.contextPath}/hpm/ecr/influencedmaterial/item/control/result',
+	    data:JSON.stringify( viewModel.model.toJSON() ) ,
+	    type: 'POST',
+	    dataType: 'json',
+	    contentType: "application/json;charset=UTF-8",
+	    success: function (args) { 
+	    	 if(args.success){
+	    			var columns = [];
+	    		 if(args.rows.length>0){
+	    			 for (var i =0; i < args.rows[0].itemCodes.length; i++) {
+	    				 columns.push({
+	    		 				field: "item" + i,
+	    		 				title: args.rows[0].itemCodes[i],
+	    		 				width: 120
+	    		 			});
+	    			 }
+	    			 columns.push({
+ 		 				field: "ite1"  ,
+ 		 				title: "报废金额",
+ 		 				width: 120
+ 		 			});
+	    			 columns.push({
+ 		 				field: "ite2" ,
+ 		 				title: "物料最长交货周期",
+ 		 				width: 120
+ 		 			});
+	    			 columns.push({
+ 		 				field: "ite3" ,
+ 		 				title: "建议切换时间",
+ 		 				width: 120
+ 		 			});
+	    			 columns.push({
+ 		 				field: "ite4"  ,
+ 		 				title: "审批结果",
+ 		 				width: 120,
+ 		 	            template: function (dataItem) {
+ 		 	                var v = dataItem.ite4;
+ 		 	                $.each(HPM_ITEM_RESULT, function (i, n) {
+ 		 	                    if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+ 		 	                        v = n.meaning;
+ 		 	                        return v;
+ 		 	                    }
+ 		 	                });
+ 		 	              var uid = dataItem.uid;
+ 		 	              if (dataItem.ite4 == "A") {
+ 		 	                    setTimeout(function () {
+ 		 	                         $("tr[data-uid=" + uid + "]").css("background", "green");
+ 		 	                         $("tr[data-uid=" + uid + "]").css("color", "white");
+ 		 	                     }, 0);
+ 		 	               } 
+ 		 	                return v;
+ 		 	            },
+ 		 	            editor: function (container, options) {
+ 		 	            	 
+ 		 	            		$('<input name="' + options.field + '"/>')
+ 		 	                    .appendTo(container)
+ 		 	                    .kendoDropDownList({
+ 		 	                        dataTextField: "meaning",
+ 		 	                        dataValueField: "value",
+ 		 	                        dataSource: HPM_ITEM_RESULT,
+ 		 	                        valuePrimitive: true
+ 		 	                    }); 
+ 		 	            } 	
+ 		 			});
+	    		 
+	    			 grid1.setOptions({
+	    		 		columns: columns
+	    		 	});
+	    			 var viewModel1 =Hap.createGridViewModel(grid1);  
+	    		 //加载列结束 新增数据	    			 	    		 	 
+		    		 for (var i =0; i < args.rows.length; i++){
+		    			 var value =[];		    			 
+		    			 for(var j=0;j<args.rows[i].qtys.length;j++){
+		    				 viewModel1.model.set("item" + j,args.rows[i].qtys[j]);
+		    			 }
+		    			 var date=new Date();
+		    			 date=args.rows[i].adviceChangeTime;
+		    			 date=new Date(date).format("yyyy-MM-dd");	
+		    			 viewModel1.model.set("ite1", args.rows[i].scrap);
+		    			 viewModel1.model.set( "ite2",args.rows[i].cycleDays);
+		    			 viewModel1.model.set( "ite3",date);
+		    			 viewModel1.model.set( "ite4",args.rows[i].status);
+
+		    			 viewModel1.model.set( "groupId",args.rows[i].groupId);
+		    			 grid1.dataSource.add(viewModel1.model);
+		    		 }
+		    		 $('#dataTableDiv').css('display','table'); 
+	    		 }
+	    		 //如果查询不到数据证明不需要展示 则隐藏对应的gird
+	    		 else{
+	    			$('#dataTableDiv').css('display','none'); 
+	    		 }
+	    	 }
+	    },
+	    async: false
+});
+  
+   /**
+  * 设置节点不可编辑
+  */
+ if(flowno!=110){
+		girdSku.selectable = '';
+	}
+ 
+ 
+ /**
+  * 审批操作
+  */
+ var executeWorkFlowTask = function(actionCallBack,p){
+	 // 保存
+	if(p.approveResult == 'APPROVED' && flowno == 110){
+		saveData();	
+	}
+	
+	var ecrno = "${RequestParameters.ecrno!}";
+	
+	/* 	console.log("ecrno: " +　ecrno);
+	console.log("approveResult: " + p.approveResult);
+	console.log("flowno: " +　flowno); */
+	
+	var skuCost = 0;
+	if(girdSku.dataSource.data().length != 0){
+		skuCost = girdSku.dataSource._aggregateResult.sumCost.sum;
+	}
+	var url = "${base.contextPath}/hpm/ecr/process/solution/updateStatus";
+	url = url + "?ecrno=" + ecrno + "&approveResult=" + p.approveResult
+			+ "&flowno=" + flowno + "&skuCost=" + skuCost;
+			
+	/* console.log("skuCost: " +　skuCost);
+	console.log("url: " + url); */
+	
+	$.ajax({
+		url: url,
+		success: function(args){
+			// 审批
+			actionCallBack.call(window.parent,p);
+	  	}
+	})
+		
+}
+ 
+ function openWindow(){
+	$("#details").kendoWindow({
+		title: '详情',
+		content:'solution.html?ecrno='+viewModel.model.ecrno,
+		height:'90%',
+		width:'90%',
+		model:true,
+		visiable:false,
+		iframe:true
+	}).data("kendoWindow").center().open();
+ }
+</script>
+</body>

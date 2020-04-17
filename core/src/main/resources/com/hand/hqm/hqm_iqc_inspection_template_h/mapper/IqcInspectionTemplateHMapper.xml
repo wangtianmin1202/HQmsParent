@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_iqc_inspection_template_h.mapper.IqcInspectionTemplateHMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_iqc_inspection_template_h.dto.IqcInspectionTemplateH">
+        <result column="HEADER_ID" property="headerId" jdbcType="DECIMAL" />
+        <result column="PLANT_ID" property="plantId" jdbcType="DECIMAL" />
+        <result column="ITEM_ID" property="itemId" jdbcType="DECIMAL" />
+        <result column="ITEM_CODE" property="itemCode" jdbcType="VARCHAR" />
+        <result column="PLANT_CODE" property="plantCode" jdbcType="VARCHAR" />
+        <result column="ITEM_DESCRIPTIONS" property="itemDescriptions" jdbcType="VARCHAR" />
+        <result column="CREATION_DATE" property="creationDate" jdbcType="DATE" />
+        <result column="COLUMN_CREATION_DATE" property="columnCreationDate" jdbcType="DATE" />
+        <result column="ITEM_CATEGORY" property="itemCategory" jdbcType="VARCHAR" />
+        <result column="VERSION_NUM" property="versionNum" jdbcType="VARCHAR" />
+        <result column="DRAWING_NUMBER" property="drawingNumber" jdbcType="VARCHAR" />
+        <result column="SOURCE_TYPE" property="sourceType" jdbcType="VARCHAR" />
+        <result column="ENABLE_FLAG" property="enableFlag" jdbcType="VARCHAR" />
+        <result column="HISTORY_NUM" property="historyNum" jdbcType="DECIMAL" />
+        <result column="STATUS" property="status" jdbcType="VARCHAR" />
+        <result column="ITEM_CATEGORY_CODE" property="itemCategoryCode" jdbcType="VARCHAR" />
+        <result column="TIME_LIMIT" property="timeLimit" jdbcType="DECIMAL" />
+        <result column="MAIN_TYPE" property="mainType" jdbcType="VARCHAR" />
+        <result column="SAMPLE_WAY_ID" property="sampleWayId" jdbcType="DECIMAL" />
+        <result column="ITEM_EDITION" property="itemEdition" jdbcType="VARCHAR" />
+        <result column="SAMPLE_WAY_CODE" property="sampleWayCode" jdbcType="VARCHAR" />
+        <result column="SAMPLE_WAY_DESCRIPTION" property="sampleWayDescription" jdbcType="VARCHAR" />
+        
+        <result column="SAMPLE_PROCEDURE_TYPE" property="sampleProcedureType" jdbcType="VARCHAR" />
+        <result column="INSPECTION_LEVELS" property="inspectionLevels" jdbcType="VARCHAR" />
+        <result column="ACCEPTANCE_QUALITY_LIMIT" property="acceptanceQualityLimit" jdbcType="VARCHAR" />
+        
+        <result column="ECR_NUMBER" property="ecrNumber" jdbcType="VARCHAR" />
+        <result column="VTP_NUMBER" property="vtpNumber" jdbcType="VARCHAR" />
+    </resultMap>
+<select id="myselect" resultMap="BaseResultMap"
+            parameterType="com.hand.hqm.hqm_iqc_inspection_template_h.dto.IqcInspectionTemplateH">
+SELECT t.*,
+       hi.item_code,
+       hp.plant_code,
+       hsm.sample_way_code,
+       hsm.description              AS sample_way_description,
+       hsm.sample_procedure_type,
+       hsm.inspection_levels,
+       hsm.acceptance_quality_limit,
+       hi.descriptions              AS item_descriptions,
+       t.creation_date              AS column_creation_date
+  FROM hqm_iqc_inspection_template_h t, hcm_item hi, hcm_plant hp, hqm_sample_manage hsm
+ WHERE 1 = 1
+   AND t.item_id = hi.item_id
+   AND t.plant_id = hi.plant_id
+   AND t.plant_id = hp.plant_id
+   AND t.sample_way_id = hsm.sample_way_id(+)
+       <if test="itemId != null">
+       AND t.item_id = #{itemId}
+       </if>
+       <if test="plantId != null">
+       AND t.plant_id = #{plantId}
+       </if>
+       <if test="itemCategory != null">
+       AND t.item_category = #{itemCategory}
+       </if>
+       <if test="status != null">
+       AND t.status = #{status}
+       </if>
+       <if test="enableFlag != null">
+       AND t.enable_flag = #{enableFlag}
+       </if>
+       <if test="sourceType != null">
+       AND t.source_type = #{sourceType}
+       </if>
+       <if test="headerId != null">
+       AND t.header_id = #{headerId}
+       </if>
+       <if test="mainType != null">
+       AND t.main_type = #{mainType}
+       </if>
+       <if test="itemEdition != null">
+       AND t.item_edition = #{itemEdition}
+       </if>
+       <!--ORDER BY t.enable_flag DESC,t.plant_id,t.item_id  modified by jy 20190926  -->
+       ORDER BY t.header_id DESC
+    </select>
+
+
+<select id="selectforCopy" resultMap="BaseResultMap"
+            parameterType="com.hand.hqm.hqm_iqc_inspection_template_h.dto.IqcInspectionTemplateH">
+        SELECT t.*,
+        	hi.item_code,
+           hp.plant_code,
+           hi.descriptions AS item_descriptions,
+           t.creation_date AS column_creation_date
+      FROM hqm_iqc_inspection_template_h t, hcm_item hi, hcm_plant hp
+     WHERE 1 = 1
+       AND t.item_id = hi.item_id
+       AND t.plant_id = hi.plant_id
+       AND t.plant_id = hp.plant_id
+       <if test="itemId!=null">
+       AND t.item_id = #{itemId}
+       </if>
+         <if test="itemDescriptions!=null">
+       AND hi.descriptions  LIKE concat('%',concat(#{itemDescriptions,jdbcType=VARCHAR},'%'))     
+       </if>
+       <if test="plantId!=null">
+       AND t.plant_id = #{plantId}
+       </if>
+       <if test="itemCategory!=null">
+       AND t.item_category = #{itemCategory}
+       </if>
+       <if test="status!=null">
+       AND t.status = #{status}
+       </if>
+       <if test="enableFlag!=null">
+       AND t.enable_flag = #{enableFlag}
+       </if>
+       <if test="sourceType!=null">
+       AND t.source_type = #{sourceType}
+       </if>
+       <if test="headerId!=null">
+       AND t.header_id &lt;&gt; #{headerId}
+       </if>
+     
+       <!--ORDER BY t.enable_flag DESC,t.plant_id,t.item_id  modified by jy 20190926  -->
+       ORDER BY t.header_id DESC
+    </select>
+
+<!-- 根据物料组ID 找模板 临时检验项 -->
+<select id="selectByCategoryId" resultMap="BaseResultMap"
+            parameterType="com.hand.hqm.hqm_temporary_inspection.dto.TemporaryInspection">
+SELECT t.*
+  FROM hqm_iqc_inspection_template_h t
+  JOIN hcm_item_category_assign hica
+    ON t.item_id = hica.item_id
+   AND t.plant_id = hica.plant_id
+ WHERE 1 = 1
+   AND t.status = '4'
+   AND t.plant_id = #{plantId}
+   AND hica.category_id = #{categoryId}
+   AND t.main_type = #{inspectionType}
+</select>
+
+<!-- 物料版本的LOV查询 -->
+<select id="itemEditionLov" resultMap="BaseResultMap"
+            parameterType="com.hand.hqm.hqm_iqc_inspection_template_h.dto.IqcInspectionTemplateH">
+SELECT t.item_edition
+  FROM hqm_iqc_inspection_template_h t
+ WHERE 1 = 1
+   AND t.status = '4'
+   AND t.main_type = #{mainType}
+   <if test="itemEdition != null">
+   AND t.item_edition LIKE concat('%',concat(#{itemEdition},'%'))
+   </if>
+ GROUP BY t.item_edition
+</select>
+
+</mapper>

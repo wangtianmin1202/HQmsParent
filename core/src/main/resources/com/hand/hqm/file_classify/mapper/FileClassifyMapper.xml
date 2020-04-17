@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.file_classify.mapper.FileClassifyMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.file_classify.dto.Classify">
+        <result column="CLASSIFY_ID" property="classifyId" jdbcType="DECIMAL" />
+        <result column="CLASSIFY_CODE" property="classifyCode" jdbcType="VARCHAR" />
+        <result column="CLASSIFY_DESCRIPTIONS" property="classifyDescriptions" jdbcType="VARCHAR" />
+        <result column="PARENT_CLASSIFY_ID" property="parentClassifyId" jdbcType="DECIMAL" />
+        <result column="MAIN_CLASSIFY_CODE" property="mainClassifyCode" jdbcType="VARCHAR" />
+        <result column="ENABLE_FLAG" property="enableFlag" jdbcType="VARCHAR" />
+    </resultMap>
+
+	<select id="queryByCondition" parameterType="com.hand.hqm.file_classify.dto.Classify" resultMap="BaseResultMap">
+    	select fc.*
+    	from FILE_CLASSIFY fc
+    	<where>
+    		<if test="classifyCode != null and classifyCode != ''">
+       			and fc.CLASSIFY_CODE = #{classifyCode}   
+    		</if>
+    		<if test="classifyDescriptions != null and classifyDescriptions != ''">
+       			and fc.CLASSIFY_DESCRIPTIONS = #{classifyDescriptions}   
+    		</if>
+    		<if test="parentClassifyId != null and parentClassifyId != ''">
+       			and fc.PARENT_CLASSIFY_ID = #{parentClassifyId}   
+    		</if>
+    	</where>
+    </select> 
+    
+<!--从根找到所有叶子数据 -->
+ <select id="myselect" parameterType="com.hand.hqm.file_classify.dto.Classify" resultMap="BaseResultMap">
+      /*从根找到所有叶子数据  */
+select *
+   from FILE_CLASSIFY h
+  start with h.classify_id = #{classifyId}
+connect by prior h.classify_id = h.parent_classify_id
+    </select>
+    
+    <!--从叶子找到所有根数据 -->
+  <select id="myselectforleaf" parameterType="com.hand.hqm.file_classify.dto.Classify" resultMap="BaseResultMap"> 
+      /*从叶子找到所有根数据  */   
+    select *
+   from FILE_CLASSIFY h
+  start with h.classify_id = #{classifyId} 
+connect by  h.classify_id = prior h.parent_classify_id
+ order by h.classify_id     
+  </select>  
+     <!--查询非父节点的节点 -->
+ <select id="selectParentInvalid" parameterType="com.hand.hqm.file_classify.dto.Classify" resultMap="BaseResultMap">
+       select h.* from FILE_CLASSIFY h where h.parent_classify_id is null 
+            <if test="classifyCode != null and classifyCode != ''">
+                and h.CLASSIFY_CODE like concat('%',concat(#{classifyCode,jdbcType=VARCHAR},'%'))
+            </if>
+             <if test="classifyId != null ">
+                and h.CLASSIFY_ID = #{classifyId}  
+            </if>
+             <if test="enableFlag != null ">
+                and h.ENABLE_FLAG = #{enableFlag} 
+            </if>  
+ 
+            <if test="mainClassifyCode != null "> 
+                and h.MAIN_CLASSIFY_CODE = #{mainClassifyCode} 
+            </if>    
+            order by h.creation_date   
+             
+    </select>
+    <!--根据父节点找叶子节点 -->
+  <select id="selectInvalidByParent" parameterType="com.hand.hqm.file_classify.dto.Classify" resultMap="BaseResultMap">
+      select h.* from FILE_CLASSIFY h where
+             h.PARENT_CLASSIFY_ID =#{parentClassifyId}   
+         <if test="enableFlag != null ">
+                and h.ENABLE_FLAG = #{enableFlag}  
+         </if> 
+          order by h.creation_date      
+    </select>  
+    <!--查找第一层节点 -->
+    <select id="myselectone" parameterType="com.hand.hqm.file_classify.dto.Classify" resultMap="BaseResultMap">
+select *
+   from FILE_CLASSIFY h
+  where h.parent_classify_id is null
+    </select> 
+   <!--查找第二层节点 -->
+   <select id="myselecttwo" parameterType="com.hand.hqm.file_classify.dto.Classify" resultMap="BaseResultMap">    
+select * 
+   from FILE_CLASSIFY h  
+  where h.parent_classify_id = #{classifyId} 
+    </select>   
+    <!--查找第三层节点 -->
+    <select id="myselectthr" parameterType="com.hand.hqm.file_classify.dto.Classify" resultMap="BaseResultMap">    
+select *
+   from FILE_CLASSIFY h
+  where h.parent_classify_id = #{classifyId} 
+    </select>   
+    <!--节点LOV查询 --> 
+    <select id="myselectLov" parameterType="com.hand.hqm.file_classify.dto.Classify" resultMap="BaseResultMap">    
+select h.CLASSIFY_ID ,h.CLASSIFY_CODE,h.CLASSIFY_DESCRIPTIONS   
+   from FILE_CLASSIFY h
+  where 1=1 
+   <if test="classifyCode != null ">
+       and  h.CLASSIFY_CODE LIKE concat('%',concat( #{classifyCode ,jdbcType=VARCHAR},'%'))  
+    </if>
+     <if test="classifyDescriptions != null ">
+       and  h.CLASSIFY_DESCRIPTIONS LIKE concat('%',concat( #{classifyDescriptions ,jdbcType=VARCHAR},'%'))   
+    </if>
+    </select>    
+</mapper>

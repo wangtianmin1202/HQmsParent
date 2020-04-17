@@ -1,0 +1,493 @@
+<#include "../include/header.html">
+
+<script src="${base.contextPath}/common/code?YES_NO=SYS.YES_NO" type="text/javascript"></script>
+<script src="${base.contextPath}/common/code?NPI_METERING_COUNT=NPI_METERING_COUNT"></script>
+<script src="${base.contextPath}/common/code?HQM_STANDARD_UOM=HQM_STANDARD_UOM"></script>
+<script src="${base.contextPath}/common/code?NPI_CHARACTERISTIC_NAME=NPI_CHARACTERISTIC_NAME"></script>
+<script src="${base.contextPath}/common/code?NPI_CHARACTERISTIC_MSA=NPI_CHARACTERISTIC_MSA"></script>
+<script src="${base.contextPath}/common/code?NPI_CHARACTERISTIC_SPC=NPI_CHARACTERISTIC_SPC"></script>
+<script type="text/javascript">
+	var BaseUrl = _basePath;
+	var specId = '${RequestParameters.specId!0}';
+    var viewModel = Hap.createGridViewModel(null,{
+    	model:{
+    		'specId':specId
+    	},
+    	closeWin:function(e) {
+    		window.parent.$("#editWindow").data("kendoWindow").close();
+    	},
+    	save:function(){
+    		//修改方法逻辑 版本字段去除前后缀 
+    		viewModel.model.__status = 'update';
+    		//设置所有数据的dirty为true
+    		
+             var ds2 = $("#detailGrid").data("kendoGrid").dataSource;
+             $.each(ds2.data(), function (idx, data) {
+                 if (data.dirty != true) {
+                	 data.dirty = true;
+                 }
+             });
+             
+            Hap.submitForm({
+                url: '${base.contextPath}/npi/technology/spec/submitTest',
+                formModel: viewModel.model,
+                grid: {"detailList": $("#detailGrid")},
+                success: function (data) {
+                	viewModel.closeWin();
+                }
+            });
+    	}
+    });
+    var viewModelDet = Hap.createGridViewModel("#detailGrid",{
+        model:{
+        	field:{
+        		/* specRequirement:{validation: {required: true}} */
+        	}        	
+        },
+        save:function () {
+        },
+        remove: function () {
+                Hap.deleteGridSelection({
+                    grid: $('#detailGrid')
+                });
+        },
+    });
+    
+    $.ajax({
+		url:"${base.contextPath}/npi/technology/specList/query?specId="+specId,
+		type:"POST",
+		dataType:'json',
+		success: function(data){
+			viewModel.model.set('standActionId',data.rows[0].standActionId) ;
+            viewModel.model.set('specVersion',data.rows[0].specVersion);
+            viewModel.model.set('standardWorkingHours',data.rows[0].standardWorkingHours);
+            viewModel.model.set('specRemark',data.rows[0].specRemark);
+            viewModel.model.set('_token',data.rows[0]._token);
+		}
+	});
+    
+    $.ajax({
+		url:"${base.contextPath}/npi/technology/spec/mat/detail/query?specId="+specId,
+		type:"POST",
+		dataType:'json',
+		success: function(data){
+		    debugger;
+            viewModel.model.set('sparePartId',data.rows[0].sparePartId);
+            viewModel.model.set('detailsName',data.rows[0].detailsName);
+		}
+	});
+    
+</script>
+
+<body>
+
+<div id="page-content">
+	<form id = "mainForm" style="paddiing-bottom:50px;padding-top:15px" class="form-horizontal" method="post" enctype="application/json;charset=UTF-8">
+		<div class="row">
+			<div class="col-sm-6">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-4 control-label">标准工艺动作<span style="color:red;">*</span></label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="standActionId"  
+								data-bind="value:model.standActionId"  required >
+						</div>
+						<script>
+							$('#standActionId').kendoComboBox({
+								filter:"contains",
+								valuePrimitive:true,
+								dataTextField:"text",
+								dataValueField:"value",
+								dataSource:{
+									transport:{
+										read:_basePath + "/npi/technology/queryTestActionName",
+									}
+								}
+							}).data("kendoComboBox");
+						</script>
+					</div>
+				</div>
+			</div>
+			<div class="col-sm-6">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-2 control-label">版本</label>
+						<div class="col-sm-10">
+							<input style="width:100%" id="specVersion"  data-role="maskedtextbox" class="k-textbox"
+								data-bind="value:model.specVersion" disabled>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="row" style="margin-top: 10px;">
+			<div class="col-sm-6">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-4 control-label">产品序列<span style="color:red;">*</span></label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="sparePartId" data-bind="value:model.sparePartId,text:model.detailsName" >
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="col-sm-6">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-2 control-label">备注<span style="color:red;">*</span></label>
+						<div class="col-sm-10">
+							<input style="width:100%;" id=specRemark  data-role="maskedtextbox" class="k-textbox" maxlength = "20"
+								   data-bind="value:model.specRemark" >
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</form>
+	<div style="clear:both">
+		<span>要求明细</span>
+		<div id="page-detailcontent">
+		    <div class="pull-left" id="toolbar-btn-det" style="padding-bottom:10px;">
+				<span class="btn btn-primary k-grid-add" style="float:left;margin-right:5px;" data-bind="click:create">新增P-SPEC要求</span>
+		        <span data-bind="click:remove" class="btn btn-danger" style="float:left;"><@spring.message "hap.delete"/></span>
+		    </div>
+		    <script>kendo.bind($('#toolbar-btn-det'), viewModelDet);</script>
+		</div>
+	</div>
+	<div style="clear:both">
+		<div id="detailGrid"></div>
+	</div>
+	<div id="mainBottom" class="text-right" style="bottom:15px;position:fixed;float:left;padding-top:15px;border-top:1px solid #e8e1eb;
+		width:100%;background:#fff;margin-right:30px">
+		<span class="btn btn-primary" data-bind="click:save" type="submit" style="margin-right:5px">保存</span>
+		<span class="btn btn-default" data-bind="click:closeWin" type="button" style="margin-right:25px">取消</span>
+	</div>
+	<script>
+		kendo.bind($('#mainForm'), viewModel);
+		kendo.bind($('#mainBottom'), viewModel);
+	</script>
+	<script>
+		$('#mainForm').kendoValidator({
+			messages:{
+				required:'<@spring.message "hap.validation.notempty"/>'
+			},
+			invalidMessageType:"tooltip"
+		});
+	</script>
+<script>
+    var BaseUrl = _basePath;
+    var dataSourceDet = new kendo.data.DataSource({
+        transport: {
+            read: {
+                url: BaseUrl + "/npi/technology/spec/detail/query",
+                type: "POST",
+                dataType: "json"
+            },
+            destroy: {
+                url: BaseUrl + "/npi/technology/spec/detail/remove",
+                type: "POST",
+                contentType: "application/json"
+            },
+            create:{
+                url: BaseUrl + "/npi/technology/spec/detail/submit",
+                type: "POST",
+                contentType: "application/json",
+                async: true
+            },
+            parameterMap: function (options, type) {
+                if (type !== "read" && options.models) {
+                    var datas = Hap.prepareSubmitParameter(options, type);
+                    return kendo.stringify(datas);
+                } else if (type === "read") {
+                	viewModelDet.model.specId = specId
+                    return Hap.prepareQueryParameter(viewModelDet.model.toJSON(), options)
+                }
+            }
+        },
+        batch: true,
+        serverPaging: true,
+        pageSize: 20,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+                id: "standardActionId",
+                fields: {
+                    specRequirement :{validation:{required:true}},
+                    meteringCount :{validation:{required:true}},
+                    characteristicId :{validation:{required:true}},
+                    msa :{validation:{required:true}},
+                    spc :{validation:{required:true}},
+                    lowerLimit :{validation:{required:true}},
+                    upperLimit :{validation:{required:true}},
+                    unit :{validation:{required:true}}
+                },
+                editable:function(col){
+                	if(col == 'standActionId'  || col == 'msa' || col == 'spc') {
+                		return false;
+                	}
+                	return true;
+                }
+            }
+        }
+    });
+
+</script>
+
+<script>
+	
+    var detailGrid = $("#detailGrid").kendoGrid({
+        dataSource: dataSourceDet,
+        resizable: true,
+        scrollable: true,
+        navigatable: false,
+        //sortable:true,
+        autoBind:true,
+        selectable: 'multiple, rowbox',
+        dataBound: function () {
+            if (parent.autoResizeIframe) {
+                parent.autoResizeIframe('${RequestParameters.functionCode!}')
+            }
+        },
+        pageable: {
+            pageSizes: [5, 10, 20, 50],
+            refresh: true,
+            buttonCount: 5
+        },
+        columns: [
+        	{
+                field: "specRequirement",
+                title: 'SPEC要求',
+                width: 120,
+                headerAttributes: {
+                    style: "text-align: center"
+                },
+                attributes: {
+                    style: "text-align: center"
+                } ,
+                editor: function (container, options) {
+                    $('<input required type="text" class="k-input k-textbox" name="' + options.field + '"/>').appendTo(container);
+                }
+            },
+            {
+                field: "meteringCount",
+                title: '计量/计数',
+                width: 120,
+                headerAttributes: {
+                    style: "text-align: center"
+                },
+                attributes: {
+                    style: "text-align: center"
+                },
+                template: function (dataItem) {
+                    var v = dataItem.meteringCount ? dataItem.meteringCount : "";
+                    $.each(NPI_METERING_COUNT, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return v;
+                        }
+                    });
+                    return v;
+                },
+                editor: function (container, options) {
+                    $('<input required name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            dataTextField: "meaning",
+                            dataValueField: "value",
+                            valuePrimitive: true,
+                            dataSource: NPI_METERING_COUNT,
+                            change: function(e) {
+                                debugger;
+                                var row=$("#detailGrid").data("kendoGrid").dataSource.getByUid(options.model.uid);
+                                var id=this.value();
+                                $.ajax({
+                                    url:_basePath + "/hqm/characteristic/classification/query?meteringCount="+id+'&characteristicName='+row.characteristicId,
+                                    async:false,
+                                    success:function(data){
+                                        if(data.rows.length != 0){
+                                            //这里下拉框和lov的获取到的options不同 下拉框获取的是自己那个字段的，和lov的不一样，这里方法是通过uid获取到数据，然后手动set数据，然后刷新grid(不然数据不显示)
+                                            row.msa=data.rows[0].msa;
+                                            row.spc=data.rows[0].spc;
+                                            $("#detailGrid").data("kendoGrid").refresh();
+                                        }
+                                    }
+                                });
+                            }
+                        });
+                }
+            },
+            {
+                field: "lowerLimit",
+                title: '下限',
+                width: 120,
+                headerAttributes: {
+                    style: "text-align: center"
+                },
+                attributes: {
+                    style: "text-align: center"
+                },
+                editor: function (container, options) {
+                    $('<input required name="' + options.field + '"/>').appendTo(container).kendoNumericTextBox({
+                        min:0,
+                    });
+                }
+            },
+            {
+                field: "upperLimit",
+                title: '上限',
+                width: 120,
+                headerAttributes: {
+                    style: "text-align: center"
+                },
+                attributes: {
+                    style: "text-align: center"
+                },
+                editor: function (container, options) {
+                    $('<input required name="' + options.field + '"/>').appendTo(container).kendoNumericTextBox({
+                        min:0,
+                    });
+                }
+            },
+            {
+                field: "unit",
+                title: '单位',
+                width: 120,
+                headerAttributes: {
+                    style: "text-align: center"
+                },
+                attributes: {
+                    style: "text-align: center"
+                },
+                template: function (dataItem) {
+                    var v = dataItem.unit ? dataItem.unit : "";
+                    $.each(HQM_STANDARD_UOM	, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return v;
+                        }
+                    });
+                    return v;
+                },
+                editor: function (container, options) {
+                    $('<input required name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            dataTextField: "meaning",
+                            dataValueField: "value",
+                            valuePrimitive: true,
+                            dataSource: HQM_STANDARD_UOM
+                        });
+                }
+            },
+            {
+                field: "characteristicId",
+                title: '特性分类',
+                width: 120,
+                headerAttributes: {
+                    style: "text-align: center"
+                },
+                attributes: {
+                    style: "text-align: center"
+                },
+                template:function (dataItem) {
+                    var result = dataItem.characteristicName;
+                    return result||'';
+                },
+                template: function (dataItem) {
+                    var v = dataItem.characteristicId ? dataItem.characteristicId : "";
+                    $.each(NPI_CHARACTERISTIC_NAME, function (i, n) {
+                        if ((n.value || '') == (v || '')) {
+                            v = n.meaning;
+                            return v;
+                        }
+                    });
+                    return v;
+                },
+                editor: function (container, options) {
+                    $('<input required name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            dataTextField: "meaning",
+                            dataValueField: "value",
+                            valuePrimitive: true,
+                            dataSource: NPI_CHARACTERISTIC_NAME,
+                            change: function(e) {
+                                debugger;
+                                var row=$("#detailGrid").data("kendoGrid").dataSource.getByUid(options.model.uid);
+                                var id=this.value();
+                                $.ajax({
+                                    url:_basePath + "/hqm/characteristic/classification/query?meteringCount="+row.meteringCount+'&characteristicName='+id,
+                                    async:false,
+                                    success:function(data){
+                                        if(data.rows.length != 0){
+                                            //这里下拉框和lov的获取到的options不同 下拉框获取的是自己那个字段的，和lov的不一样，这里方法是通过uid获取到数据，然后手动set数据，然后刷新grid(不然数据不显示)
+                                            row.msa=data.rows[0].msa;
+                                            row.spc=data.rows[0].spc;
+                                            $("#detailGrid").data("kendoGrid").refresh();
+                                        }
+                                    }
+                                });
+                            }
+                        });
+                }
+            },
+            {
+                field: "msa",
+                title: 'MSA',
+                width: 120,
+                headerAttributes: {
+                    style: "text-align: center"
+                },
+                attributes: {
+                    style: "text-align: center"
+                },
+                template: function(dataItem) {
+                    var v = dataItem.msa ? dataItem.msa : "";
+                    $.each(NPI_CHARACTERISTIC_MSA, function(i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return v;
+                        }
+                    })
+                    return v;
+                }
+            },
+            {
+                field: "spc",
+                title: 'SPC',
+                width: 120,
+                headerAttributes: {
+                    style: "text-align: center"
+                },
+                attributes: {
+                    style: "text-align: center"
+                },
+                template: function(dataItem) {
+                    debugger;
+                    var v = dataItem.spc ? dataItem.spc : "";
+                    $.each(NPI_CHARACTERISTIC_SPC, function(i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return v;
+                        }
+                    })
+                    return v;
+                }
+            }
+        ],
+        editable: true
+    }).data("kendoGrid");
+    
+    kendo.bind($("#mainForm"), viewModel);
+    $("#sparePartId").kendoLov($.extend( <@lov "PLM_PRODUCT_SERIES" /> , {
+        textField: 'detailsName',
+        valueField: 'sparePartId',
+        change: function() {
+            viewModel.model.sparePartId = this._dataItem.seriesId;
+        }
+    }));
+</script>
+</div>
+</body>
+</html>

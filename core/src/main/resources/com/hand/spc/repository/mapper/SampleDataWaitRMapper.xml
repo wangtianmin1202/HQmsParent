@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.spc.repository.mapper.SampleDataWaitRMapper">
+
+    <resultMap id="sampleDataWaitList" type="com.hand.spc.repository.dto.SampleDataWaitR">
+
+        <result column="tenant_id" property="tenantId" jdbcType="DECIMAL"/>
+        <result column="site_id" property="siteId" jdbcType="DECIMAL"/>
+        <result column="attachment_group_description" property="attachmentGroupDescription" jdbcType="VARCHAR"/>
+        <result column="ce_group" property="ceGroup" jdbcType="VARCHAR"/>
+        <result column="ce_parameter" property="ceParameter" jdbcType="VARCHAR"/>
+        <result column="creation_date" property="creationDate" jdbcType="DATE"/>
+        <result column="sample_time" property="sampleTime" jdbcType="DATE"/>
+        <result column="sample_value" property="sampleValue" jdbcType="DECIMAL"/>
+
+        <collection property="sampleDataExtendWaitList" ofType="com.hand.spc.repository.dto.SampleDataExtendWaitR">
+
+            <result column="extend_attribute" property="extendAttribute" jdbcType="VARCHAR"/>
+            <result column="extend_value" property="extendValue" jdbcType="VARCHAR"/>
+
+        </collection>
+    </resultMap>
+
+    <select id="sampleDataWaitList" resultType="com.hand.spc.repository.dto.SampleDataWaitR">
+        SELECT sw.tenant_id,
+        sw.site_id,
+        ag.attachment_group_description,
+        cg.ce_group,
+        cp.ce_parameter,
+        sw.creation_date,
+        sw.sample_time,
+        sw.sample_value,
+        sew.extend_attribute,
+        sew.extend_value
+        FROM
+        pspc_sample_data_wait sw
+        LEFT JOIN pspc_sample_data_extend_wait sew ON sw.sample_data_wait_id = sew.sample_data_wait_id,
+        pspc_attachment_group ag,
+        pspc_ce_group cg,
+        pspc_ce_parameter cp
+        WHERE
+        sw.attachment_group_id = ag.attachment_group_id
+        AND sw.ce_group_id = cg.ce_group_id
+        AND sw.ce_parameter_id = cp.ce_parameter_id
+        AND sw.tenant_id =#{tenantId,jdbcType=DECIMAL}
+        AND sw.site_id =#{siteId,jdbcType=DECIMAL}
+        <if test="sampleDataExtend !=null and sampleDataExtend!=''">
+            AND sew.extend_attribute IN
+            <foreach collection="array" item="item" index="index" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="attachmentGroupId !=null and attachmentGroupId!=''">
+            AND sw.attachment_group_id =#{attachmentGroupId,jdbcType=DECIMAL}
+        </if>
+        <if test="ceGroupId !=null and ceGroupId!=''">
+            AND sw.ce_group_id =#{ceGroupId,jdbcType=DECIMAL}
+        </if>
+        <if test="ceParameterId !=null and ceParameterId!=''">
+            AND sw.ce_parameter_id =#{ceParameterId,jdbcType=DECIMAL}
+        </if>
+        <if test="sampleBeginTime !=null">
+            AND sw.sample_time &gt;=#{sampleBeginTime,jdbcType=DATE}
+        </if>
+        <if test="sampleEndTime !=null">
+            AND sw.sample_time &lt;#{sampleEndTime,jdbcType=DATE}
+        </if>
+    </select>
+
+    <delete id="deleteSampleDataWait">
+        DELETE
+        FROM
+        pspc_sample_data_wait
+        WHERE
+        tenant_id = #{tenantId}
+        AND site_id = #{siteId}
+        AND sample_data_wait_id IN
+        <foreach collection="sampleDataWaitIdList" item="id" index="index" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+    </delete>
+
+    <insert id="insertDataFromTmp">
+        INSERT INTO pspc_sample_data_wait (
+            tenant_id,
+            site_id,
+            attachment_group_id,
+            sample_value,
+            sample_time,
+            ce_group_id,
+            ce_parameter_id,
+            edited
+        ) SELECT
+            tenant_id,
+            site_id,
+            attachment_group_id,
+            sample_value,
+            sample_time,
+            ce_group_id,
+            ce_parameter_id,
+            edited
+        FROM
+            pspc_sample_data_tmp
+        WHERE
+            tenant_id = #{tenantId}
+        AND site_id = #{siteId}
+    </insert>
+
+    <resultMap id="GroupSampleDataResultMap" type="com.hand.spc.repository.dto.SampleGroupDataVO">
+        <result column="tenant_id" property="tenantId" jdbcType="DECIMAL"/>
+        <result column="site_id" property="siteId" jdbcType="DECIMAL"/>
+        <result column="attachment_group_id" property="attachmentGroupId" jdbcType="DECIMAL"/>
+        <result column="ce_group_id" property="ceGroupId" jdbcType="DECIMAL"/>
+        <result column="ce_parameter_id" property="ceParameterId" jdbcType="DECIMAL"/>
+        <collection property="sampleDataWaitIdList" ofType="java.lang.Long">
+            <result column="sample_data_wait_id"/>
+        </collection>
+        <collection property="dataAccessConfigurationList" ofType="com.hand.spc.repository.dto.DataAccessConfigurationR">
+            <result column="time_sampling" property="timeSampling" jdbcType="DECIMAL"/>
+            <result column="isometric_sampling" property="isometricSampling" jdbcType="DECIMAL"/>
+            <result column="effective_type" property="effectiveType"  jdbcType="VARCHAR"/>
+            <result column="sampling_position" property="samplingPosition" jdbcType="VARCHAR"/>
+            <result column="data_upper_limit" property="dataUpperLimit" jdbcType="DECIMAL"/>
+            <result column="data_lower_limit" property="dataLowerLimit" jdbcType="DECIMAL"/>
+        </collection>
+    </resultMap>
+
+    <select id="listSampleGroupData" resultMap="GroupSampleDataResultMap">
+        SELECT
+            psdw.tenant_id,
+            psdw.site_id,
+            psdw.attachment_group_id,
+            psdw.ce_group_id,
+            psdw.ce_parameter_id,
+            psdw.sample_data_wait_id,
+            pdac.time_sampling,
+            pdac.isometric_sampling,
+            pdac.effective_type,
+            pdac.sampling_position,
+            pdac.data_upper_limit,
+            pdac.data_lower_limit
+        FROM
+            pspc_sample_data_wait psdw
+        LEFT JOIN pspc_data_access_configuration pdac ON pdac.tenant_id = psdw.tenant_id
+        AND pdac.site_id = psdw.site_id
+        AND pdac.attachment_group_id = psdw.attachment_group_id
+        AND pdac.ce_group_id = psdw.ce_group_id
+        AND pdac.ce_parameter_id = psdw.ce_parameter_id
+        AND pdac.configuration_status = 'Y'
+        WHERE
+            psdw.tenant_id = #{tenantId}
+        AND psdw.site_id = #{siteId}
+   </select>
+
+    <!-- 可根据自己的需求，是否要使用 -->
+    <resultMap id="BaseResultMap" type="com.hand.spc.repository.dto.SampleDataWaitR">
+        <result column="sample_data_wait_id" property="sampleDataWaitId" jdbcType="DECIMAL"/>
+        <result column="tenant_id" property="tenantId" jdbcType="DECIMAL"/>
+        <result column="site_id" property="siteId" jdbcType="DECIMAL"/>
+        <result column="attachment_group_id" property="attachmentGroupId" jdbcType="DECIMAL"/>
+        <result column="ce_group_id" property="ceGroupId" jdbcType="DECIMAL"/>
+        <result column="ce_parameter_id" property="ceParameterId" jdbcType="DECIMAL"/>
+        <result column="sample_value" property="sampleValue" jdbcType="DECIMAL"/>
+        <result column="sample_time" property="sampleTime" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <select id="listExtractSampleDataWait"  parameterType="com.hand.spc.repository.dto.SampleGroupDataVO" resultMap="BaseResultMap">
+        SELECT
+        psdw.sample_data_wait_id,
+        psdw.tenant_id,
+        psdw.site_id,
+        psdw.attachment_group_id,
+        psdw.ce_group_id,
+        psdw.ce_parameter_id,
+        psdw.sample_value,
+        psdw.sample_time
+        FROM
+        pspc_sample_data_wait psdw
+        WHERE
+        psdw.sample_data_wait_id IN
+        <foreach collection="sampleDataWaitIdList" item="id" index="index" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+        ORDER BY
+        psdw.sample_time
+    </select>
+    
+    <select id="listExtractSampleDataWaitModified"  parameterType="com.hand.spc.repository.dto.SampleGroupDataVO" resultMap="BaseResultMap">
+        SELECT
+        psdw.sample_data_wait_id,
+        psdw.tenant_id,
+        psdw.site_id,
+        psdw.attachment_group_id,
+        psdw.ce_group_id,
+        psdw.ce_parameter_id,
+        psdw.sample_value,
+        psdw.sample_time
+        FROM
+        pspc_sample_data_wait psdw
+        WHERE 1=1 
+        <if test="whereInSql != null and whereInSql != ''">
+                and ${whereInSql}
+            </if> 
+        ORDER BY
+        psdw.sample_time
+    </select>
+    
+    <insert id="batchInsert" parameterType="java.util.List">
+        INSERT INTO pspc_sample_data_wait(tenant_id,site_id,sample_value,sample_time,ce_group_id,ce_parameter_id,attachment_group_id)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.tenantId},#{item.siteId},#{item.sampleValue},#{item.sampleTime},#{item.ceGroupId},#{item.ceParameterId},#{item.attachmentGroupId})
+        </foreach>
+    </insert>
+
+    <delete id="batchDeleteSampleDataWaitByIds" parameterType="java.util.List">
+        delete from pspc_sample_data_wait
+        where
+        sample_data_wait_id IN
+        <foreach collection="idList" item="id" index="index" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+    </delete>
+    
+</mapper>

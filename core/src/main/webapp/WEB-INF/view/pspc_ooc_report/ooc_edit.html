@@ -1,0 +1,310 @@
+<#include "../include/header.html">
+<script type="text/javascript">
+    // var viewModel = Hap.createGridViewModel("#grid");
+    var subBaseUrl;
+    var oocType = '${RequestParameters.oocType!}';
+    var viewModel = kendo.observable({
+        model: {
+            oocId : '${RequestParameters.oocId!}'
+        }
+    });
+
+    //判断查询类型
+    if(oocType === 'OOC') {
+        subBaseUrl = '/pspc/ooc';
+    } else {
+        subBaseUrl = '/pspc/count/ooc';
+    }
+
+    //查询信息
+    $.ajax({
+        type: "POST",
+        url: _basePath + subBaseUrl + '/query/report/edit',
+        data:JSON.stringify(viewModel.model),//json序列化
+        datatype:"json", //此处不能省略
+        async:false,//同步请求
+        contentType: "application/json; charset=utf-8",
+        success:function(data){
+            if(data.success){
+                viewModel.model = data.rows[0];
+                $("#remark").html(viewModel.model.remark == null ? "" : viewModel.model.remark);
+            } else {
+                Hap.showToast({
+                    type: 'error',  //1.success 2.error
+                    message: data.message,
+                    // showDuration:3000,//3秒后显示成功框
+                    hideDuration: 4000, //展示3秒成功框
+                    "positionClass": "toast-bottom-right",
+                });
+            }
+        },
+        error:function(data){
+            Hap.showToast({
+                type:'error',  //1.success 2.error
+                message: data,
+                // showDuration:3000,//3秒后显示成功框
+                hideDuration:2000, //展示3秒成功框
+                "positionClass": "toast-bottom-right",
+            });
+        }
+    });
+</script>
+<style>
+    .dialog-div .input-read-only, .dialog-div .input-read-only:hover{
+        background-color: #ddd;
+    }
+
+    .dialog-div label{
+        color: black;
+        font-size: 14px;
+        line-height: 30px;
+        text-align: right;
+        float: left;
+        margin-right: 10px;
+    }
+
+    .dialog-div input{
+        width:150px;
+    }
+
+    td a{
+        color:#204d74;
+    }
+
+    .dialog-div .row{
+        margin-top: 20px;
+    }
+
+    .btn-foot{
+        width: 95%;
+        position: absolute;
+        bottom: 20px;
+    }
+
+    .k-textbox .k-icon {
+        top: 50%;
+        margin: -8px -7px 0;
+        position: absolute;
+    }
+
+    .dialog-div .k-state-hover>.k-i-close,.dialog-div .k-state-focused>.k-i-close{
+        top: 22px;
+        margin-right: 1px;
+    }
+</style>
+<body>
+<div id="page-content">
+        <div class="container dialog-div" style="width: 95%">
+            <div class="row">
+                <div class="col-sm-4 col-md-4">
+                    <label>实体控制图:</label>
+                    <div>
+                        <input class="k-textbox input-read-only" disabled="disabled" data-bind="value:model.entityCode"/>
+                    </div>
+                </div>
+                <div class="col-sm-4 col-md-4">
+                    <label>实体控制图版本:</label>
+                    <div>
+                        <input class="k-textbox input-read-only" disabled="disabled" data-bind="value:model.entityDesc"/>
+                    </div>
+                </div>
+                <div class="col-sm-4 col-md-4">
+                    <label>附着对象组:</label>
+                    <div>
+                        <input class="k-textbox input-read-only" disabled="disabled" data-bind="value:model.attachmentGroupDesc"/>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-sm-4 col-md-4">
+                    <label>控制要素组:</label>
+                    <div>
+                        <input class="k-textbox input-read-only" disabled="disabled" data-bind="value:model.ceGroup"/>
+                    </div>
+                </div>
+                <div class="col-sm-4 col-md-4">
+                    <label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;控制要素:</label>
+                    <div>
+                        <input class="k-textbox input-read-only" disabled="disabled" data-bind="value:model.ceParameter"/>
+                    </div>
+                </div>
+                <div class="col-sm-4 col-md-4">
+                    <label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;控制图:</label>
+                    <div>
+                        <input class="k-textbox input-read-only" disabled="disabled" data-bind="value:model.chartCode"/>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-sm-4 col-md-4">
+                    <label>&nbsp;&nbsp;&nbsp;规则简称:</label>
+                    <div>
+                        <input class="k-textbox input-read-only" disabled="disabled" data-bind="value:model.judgementShortCode"/>
+                    </div>
+                </div>
+                <div class="col-sm-4 col-md-4">
+                    <label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;规则描述:</label>
+                    <div>
+                        <input class="k-textbox input-read-only" disabled="disabled" data-bind="value:model.judgementCode"/>
+                    </div>
+                </div>
+                <div class="col-sm-4 col-md-4">
+                    <label>&nbsp;&nbsp;&nbsp;消息类型:</label>
+                    <div>
+                        <input class="k-textbox input-read-only" disabled="disabled" data-bind="value:model.messageTypeCode"/>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-sm-4 col-md-4">
+                    <label>&nbsp;&nbsp;OCC状态:</label>
+                    <div>
+                        <input class="k-textbox input-read-only" disabled="disabled" data-bind="value:model.oocStatus"/>
+                    </div>
+                </div>
+                <div class="col-sm-4 col-md-4">
+                    <label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;创建时间:</label>
+                    <div>
+                        <input class="k-textbox input-read-only" disabled="disabled" data-bind="value:model.creationDateStr"/>
+                    </div>
+                </div>
+                <div class="col-sm-4 col-md-4">
+                    <label>原因分类组:</label>
+                    <div>
+                        <input id="classifyGroupId" class="k-textbox" data-bind="value:model.classifyGroupId"/>
+                        <script>
+                            $("#classifyGroupId").kendoLov($.extend(<@lov "PSPC_PSPC_CLASSFY_GROUP"/>,{
+                                textField: 'description',
+                                valueField:'classifyGroupId',
+                                query:function (e) {
+                                    e.param['ceParameterId']=viewModel.model.ceParameterId;
+                                },
+                                select:function (e) {
+                                    $("#classifyId").data("kendoLov").text('');
+                                    $("#classifyId").data("kendoLov").value(null);
+                                    viewModel.model.classifyId = null;
+                                }
+                            })).data("kendoLov");
+                            $("#classifyGroupId").data("kendoLov").text(viewModel.model.classifyGroupDesc == null ? "" : viewModel.model.classifyGroupDesc);
+                        </script>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-4 col-md-4">
+                    <label>原因分类项:</label>
+                    <div>
+                        <input id="classifyId" class="k-textbox" data-bind="value:model.classifyId"/>
+                        <script>
+                            $("#classifyId").kendoLov($.extend(<@lov "PSPC_CLASSIFY_BY_CEPARAMTER"/>,{
+                                textField: 'description',
+                                valueField:'classifyId',
+                                query:function (e) {
+                                    e.param['classifyGroupId']=viewModel.model.classifyGroupId;
+                                }
+                            })).data("kendoLov");
+                            $("#classifyId").data("kendoLov").text(viewModel.model.classifyDesc == null ? "" : viewModel.model.classifyDesc);
+                        </script>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-12 col-md-12">
+                    <label>备注:</label>
+                    <textarea id="remark" data-bind="value:model.remark" style="width: 100%; height: 100px;"></textarea>
+                </div>
+            </div>
+
+        </div>
+        <div class="btn-foot">
+            <div class="pull-right">
+                <span class="btn btn-primary k-grid-add" onclick="EditOoc()" style="float:left;margin-right:5px;" ><@spring.message "hap.ok"/></span>
+            </div>
+        </div>
+</div>
+
+<script type="text/javascript">
+    kendo.bind($('#page-content'), viewModel);
+
+    //编辑OOC
+    function EditOoc() {
+        //获取输入内容
+        var obj = {
+            remark: $('#remark').val(),
+            classifyGroupId: viewModel.model.classifyGroupId,
+            classifyId: viewModel.model.classifyId
+        };
+
+        //判断原因输入是否正确
+        if((obj.classifyId != null && obj.classifyId !== '')
+            && (obj.classifyGroupId == null || obj.classifyGroupId === '')) {
+            Hap.showToast({
+                type: 'error',  //1.success 2.error
+                message: '请输入原因分类组',
+                hideDuration: 2000, //展示3秒成功框
+                "positionClass": "toast-bottom-right"
+            });
+            return;
+        }
+
+        //判断类型
+        if(oocType === 'OOC') {
+            obj.oocId = viewModel.model.oocId;
+        } else {
+            obj.countOocId = viewModel.model.oocId;
+        }
+
+        //如果选择了原因或者备注则改变状态为PROCESSED，否则为UNPROCESSED
+        if((obj.classifyId != null && obj.classifyId !== '')
+            || (obj.classifyGroupId != null && obj.classifyGroupId !== '')
+            || (obj.remark != null && obj.remark !== '')) {
+            obj.oocStatus = 'PROCESSED';
+        } else {
+            obj.oocStatus = 'UNPROCESSED';
+        }
+
+        //提交信息
+        $.ajax({
+            type: "POST",
+            url: _basePath + subBaseUrl + '/save/report',
+            data:JSON.stringify(obj),//json序列化
+            datatype:"json", //此处不能省略
+            async:false,//同步请求
+            contentType: "application/json; charset=utf-8",
+            success:function(data){
+                if(data.success){
+                    Hap.showToast({
+                        type: 'success',  //1.success 2.error
+                        message: '保存成功',
+                        // showDuration:3000,//3秒后显示成功框
+                        hideDuration: 2000, //展示3秒成功框
+                        "positionClass": "toast-bottom-right",
+                    });
+                } else {
+                    Hap.showToast({
+                        type: 'error',  //1.success 2.error
+                        message: data.message,
+                        // showDuration:3000,//3秒后显示成功框
+                        hideDuration: 4000, //展示3秒成功框
+                        "positionClass": "toast-bottom-right",
+                    });
+                }
+            },
+            error:function(data){
+                Hap.showToast({
+                    type:'error',  //1.success 2.error
+                    message: data,
+                    // showDuration:3000,//3秒后显示成功框
+                    hideDuration:2000, //展示3秒成功框
+                    "positionClass": "toast-bottom-right",
+                });
+            }
+        });
+        window.parent.$("#dialog").data("kendoWindow").close();
+    }
+</script>
+</body>
+</html>

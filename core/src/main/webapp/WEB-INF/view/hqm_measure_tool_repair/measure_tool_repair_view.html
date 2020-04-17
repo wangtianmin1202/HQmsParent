@@ -1,0 +1,194 @@
+
+<#include "../include/header.html">
+
+
+<script type="text/javascript">
+	var BaseUrl = _basePath;
+	var measureToolRepairId = '${RequestParameters.measureToolRepairId!0}';
+    var viewModel = Hap.createGridViewModel(null,{
+    	model:{
+    		measureToolId:null
+    	},
+    	closeWin:function(e) {
+    		window.parent.$("#viewWindow").data("kendoWindow").close();
+    	},
+    	queryInfo:function(){
+    		if(measureToolRepairId != 0){
+    			$.ajax({
+    				url:BaseUrl+"/hqm/measure/tool/repair/queryByCondition?measureToolRepairId="+measureToolRepairId,
+    				success:function(data){
+    					var a0 = data.rows[0] || {};
+    					for(var k in a0){
+    						viewModel.model.set(k,a0[k]);
+    					}
+    				}
+    			})
+    		}
+    	}
+    	/* save:function(){
+    		var data = viewModel.model.toJSON();
+    		data.__status = "add";
+    		
+    		var validator = $("#mainForm").data("kendoValidator");
+    		if(validator.validate()) {
+    			Hap.blockUI();
+    			Hap.request({
+    				url: BaseUrl + "/hqm/measure/tool/repair/add",
+    				data: kendo.stringify(data),
+    				success:function(data){
+    					if(data.success){
+    						Hap.unblockUI();
+    						viewModel.closeWin();
+    					}
+    				}
+    			})
+    		}
+    	},
+    	getCodeRule:function(code){
+    		var result = null;
+    		$.ajax({
+    			url:_basePath + "/hqm/measure/tool/repair/getCode?code="+code,
+    			async:false,
+    			success:function(data){
+    				result = data;
+    			}
+    		});
+    		return result;
+    	}, */
+    	
+    });
+    //设置维修单号
+    //viewModel.model.set("repairNumber", viewModel.getCodeRule('MEASURE_TOOL_REPAIR_NUMBER'));
+    viewModel.queryInfo();
+</script>
+
+<body>
+
+<div id="page-content">
+	<form id = "mainForm" style="paddiing-bottom:50px" class="form-horizontal" method="post" enctype="application/json;charset=UTF-8">
+		<div class="row">
+			<div class="col-sm-12">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-2 control-label">维修单号</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="repairNumber"  data-role="maskedtextbox" class="k-textbox"
+								data-bind="value:model.repairNumber" disabled>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-sm-12">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-2 control-label">量具编号</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="measureToolId"  data-label="量具编号"
+								data-bind="value:model.measureToolId,text:model.measureToolNum" disabled>
+						</div>
+						<script>
+							//选择量具
+							$("#measureToolId").kendoLov($.extend(<@lov "LOV_HQM_MEASURE_TOOL_REPAIR"/>,{
+								change:function(e){
+									//viewModel.model.set("measureToolId",e.sender._dataItem.measureToolId);
+									viewModel.model.set("descriptions",e.sender._dataItem.descriptions);
+									viewModel.model.set("measuringRange",e.sender._dataItem.measuringRange);
+									viewModel.model.set("measureToolType",e.sender._dataItem.measureToolType);
+								},
+							}));
+						</script>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-sm-12">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-2 control-label">量具名称</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="descriptions"  data-role="maskedtextbox" class="k-textbox"
+								data-bind="value:model.descriptions" disabled>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-sm-12">
+					<div class="form-group">
+						<div class="col-sm-12">
+							<label class="col-sm-2 control-label">规格</label>
+							<div class="col-sm-8">
+								<input style="width:100%" id="measuringRange"  data-role="maskedtextbox" class="k-textbox"
+									data-bind="value:model.measuringRange" disabled>
+							</div>
+						</div>
+					</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-sm-12">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-2 control-label">型号</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="measureToolType"  data-role="maskedtextbox" class="k-textbox"
+								data-bind="value:model.measureToolType" disabled>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-sm-12">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-2 control-label">申请日期</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="repairStartTime"  data-role="datepicker" class="k-datepicker"
+								data-bind="value:model.repairStartTime" disabled>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-sm-12">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-2 control-label">维修完成日期</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="repairEndTime"  data-role="datepicker" class="k-datepicker"
+								data-bind="value:model.repairEndTime" disabled>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</form>
+	<div style="clear:both">
+		<div id="grid"></div>
+	</div>
+	<div id="mainBottom" class="text-right" style="bottom:15px;position:fixed;float:left;padding-top:15px;border-top:1px solid #e8e1eb;
+		width:100%;background:#fff;margin-right:30px">
+		<span class="btn btn-default" data-bind="click:closeWin" type="button" style="margin-right:25px">关闭</span>
+		<!-- <span class="btn btn-primary" data-bind="click:save" type="submit" style="margin-right:25px">保存</span> -->
+	</div>
+	<script>
+		kendo.bind($('#mainForm'), viewModel);
+		kendo.bind($('#mainBottom'), viewModel);
+	</script>
+	<script>
+		$('#mainForm').kendoValidator({
+			messages:{
+				required:'<@spring.message "hap.validation.notempty"/>'
+			},
+			invalidMessageType:"tooltip"
+		});
+	</script>
+</div>
+</body>
+</html>

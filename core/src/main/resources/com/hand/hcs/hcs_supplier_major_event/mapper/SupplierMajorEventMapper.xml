@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hcs.hcs_supplier_major_event.mapper.SupplierMajorEventMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hcs.hcs_supplier_major_event.dto.SupplierMajorEvent">
+        <result column="EVENT_ID" property="eventId" jdbcType="DECIMAL" />
+        <result column="SUPPLIER_ID" property="supplierId" jdbcType="DECIMAL" />
+        <result column="PLANT_ID" property="plantId" jdbcType="DECIMAL" />
+        <result column="EVENT" property="event" jdbcType="VARCHAR" />
+        <result column="ITEM_ID" property="itemId" jdbcType="DECIMAL" />
+        <result column="START_DATE" property="startDate" jdbcType="DATE" />
+        <result column="END_DATE" property="endDate" jdbcType="DATE" />
+        <result column="ADJUST_DATE" property="adjustDate" jdbcType="DECIMAL" />
+        <result column="ENABLE_FLAG" property="enableFlag" jdbcType="VARCHAR" />
+        
+        <!-- 业务字段 -->
+        <result column="item_name" property="itemName" jdbcType="VARCHAR" />
+        <result column="item_code" property="itemCode" jdbcType="VARCHAR" />
+        <result column="plant_code" property="plantCode" jdbcType="VARCHAR" />
+        <result column="plant_name" property="plantName" jdbcType="VARCHAR" />
+        <result column="supplier_code" property="supplierCode" jdbcType="VARCHAR" />
+        <result column="supplier_name" property="supplierName" jdbcType="VARCHAR" />
+        <result column="start_date_to" property="startDateTo" jdbcType="VARCHAR" />
+        <result column="start_date_from" property="startDateFrom" jdbcType="VARCHAR" />
+        <result column="end_date_to" property="endDateTo" jdbcType="VARCHAR" />
+        <result column="end_date_from" property="endDateFrom" jdbcType="VARCHAR" />
+    </resultMap>
+	<!-- 供应商重大调整 查询 -->
+	<select id="query" resultMap="BaseResultMap" parameterType="com.hand.hcs.hcs_supplier_major_event.dto.SupplierMajorEvent">
+		select hsme.supplier_id,
+		       hsme.EVENT,
+		       hsme.event_id,
+		       hs.supplier_code,
+		       hs.supplier_name,
+		       hsme.item_id,
+		       hi.ITEM_CODE,
+		       hi.descriptions item_name,
+		       hsme.start_date,
+		       hsme.end_date,
+		       hsme.adjust_date,
+		       hsme.plant_id,
+		       hp.plant_code,
+		       hp.descriptions plant_name,
+		       hsme.enable_flag,
+		       hsme.creation_date
+		from sys_user su 
+		left join hcs_supplier_major_event hsme on decode(su.user_type,'S',su.supplier_id,hsme.supplier_id) = hsme.supplier_id
+		left join hcs_suppliers hs on hsme.supplier_id = hs.supplier_id
+		left join hcm_item hi on hsme.item_id = hi.ITEM_ID  and hsme.plant_id = hi.PLANT_ID
+		left join hcm_plant hp on hsme.plant_id = hp.plant_id
+		where su.user_id = #{request.userId}
+		<if test="supplierId != null">
+			and hsme.supplier_id = #{supplierId}
+		</if>
+		<if test="itemId != null">
+			and hsme.item_id = #{itemId}
+		</if>
+		<if test="plantId != null">
+			and hsme.plant_id = #{plantId}
+		</if>
+		<if test="enableFlag != null">
+			and hsme.enable_flag = #{enableFlag}
+		</if>
+		<if	test="startDateFrom != null">
+			and to_date(to_char(hsme.start_date , 'yyyy-mm-dd') , 'yyyy-mm-dd') &gt;= to_date(#{startDateFrom}, 'yyyy-mm-dd hh24:mi:ss')
+		</if>
+		<if	test="startDateTo != null">
+			and to_date(to_char(hsme.start_date , 'yyyy-mm-dd') , 'yyyy-mm-dd') &lt;= to_date(#{startDateTo}, 'yyyy-mm-dd hh24:mi:ss')
+		</if>
+		<if	test="endDateFrom != null">
+			and to_date(to_char(hsme.end_date , 'yyyy-mm-dd') , 'yyyy-mm-dd') &gt;= to_date(#{endDateFrom}, 'yyyy-mm-dd hh24:mi:ss')
+		</if>
+		<if	test="endDateTo != null">
+			and to_date(to_char(hsme.end_date , 'yyyy-mm-dd') , 'yyyy-mm-dd') &lt;= to_date(#{endDateTo}, 'yyyy-mm-dd hh24:mi:ss')
+		</if>
+		order by hsme.creation_date desc
+	</select>
+</mapper>

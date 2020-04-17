@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hcs.hcs_suppliers.mapper.SuppliersMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hcs.hcs_suppliers.dto.Suppliers">
+        <result column="SUPPLIER_ID" property="supplierId" jdbcType="DECIMAL" />
+        <result column="SUPPLIER_CODE" property="supplierCode" jdbcType="VARCHAR" />
+        <result column="SUPPLIER_NAME" property="supplierName" jdbcType="VARCHAR" />
+        <result column="SUPPLIER_NAME_ALT" property="supplierNameAlt" jdbcType="VARCHAR" />
+        <result column="START_DATE" property="startDate" jdbcType="DATE" />
+        <result column="END_DATE" property="endDate" jdbcType="DATE" />
+        <result column="CID" property="cid" jdbcType="DECIMAL" />       
+        <result column="PAYMENT_TERMS" property="paymentTerms" jdbcType="DECIMAL" />     
+        
+        <!-- 业务字段 -->
+        <result column="supplers_site_id" property="supplersSiteId" jdbcType="DECIMAL" />
+        <result column="supplier_site_code" property="supplierSiteCode" jdbcType="VARCHAR" />
+        <result column="user_id" property="userId" jdbcType="DECIMAL" />
+        <result column="user_name" property="userName" jdbcType="VARCHAR" />
+        <result column="user_type" property="userType" jdbcType="VARCHAR" />
+        <result column="email" property="email" jdbcType="VARCHAR" />
+        <result column="SUPPLIER_SITE_DESCRIPTION" property="supplierSiteDescription" jdbcType="VARCHAR" />
+    </resultMap>
+	<!-- 供应商lov -->
+    <select id="lovselect" resultMap="BaseResultMap" parameterType="com.hand.hcs.hcs_suppliers.dto.Suppliers">
+SELECT hsu.supplier_id,
+       hsu.supplier_code,
+       hsu.supplier_name,
+       hsi.supplers_site_id,
+       hsi.supplier_site_code,
+       hsi.description AS supplier_site_description
+  FROM hcs_suppliers hsu LEFT JOIN hcs_supplier_site hsi ON hsu.supplier_id = hsi.supplier_id
+ WHERE 1 = 1
+        <if test="supplierCode!=null">
+            AND hsu.supplier_code LIKE concat('%',concat(#{supplierCode,jdbcType=VARCHAR},'%'))
+        </if>
+        <if test="supplierName!=null">
+            AND hsu.supplier_name LIKE concat('%',concat(#{supplierName,jdbcType=VARCHAR},'%'))
+        </if>
+        <if test="supplierId!=null">
+            AND hsu.supplier_id = #{supplierId}
+        </if>
+    </select>
+    <!-- 供应商lov -->
+    <select id="supplierLov" resultMap="BaseResultMap" parameterType="com.hand.hcs.hcs_suppliers.dto.Suppliers">
+    		 select hs.supplier_id, 
+			        hs.supplier_code, 
+			        hs.supplier_name
+			  from hcs_suppliers hs
+			 where 1=1
+			 and hs.start_date &lt;= sysdate
+			 and nvl(hs.end_date,sysdate) &gt;= sysdate
+			 <if test="supplierId!=null">
+	            and hs.supplier_id = #{supplierId}
+	         </if>
+	         <if test="supplierCode!=null">
+	            AND hs.supplier_code LIKE concat('%',concat(#{supplierCode,jdbcType=VARCHAR},'%'))
+	        </if>
+	        <if test="supplierName!=null">
+	            AND hs.supplier_name LIKE concat('%',concat(#{supplierName,jdbcType=VARCHAR},'%'))
+	        </if>
+    </select>
+    <!-- 供方账号管理查询 -->
+    <select id="query" resultMap="BaseResultMap" parameterType="com.hand.hcs.hcs_suppliers.dto.Suppliers">
+		    select su.user_name, 
+			       hs.supplier_id,
+			       hs.supplier_code,
+			       hs.supplier_name,
+			       su.user_id,
+			       su.email
+			from sys_user su 
+			join hcs_suppliers hs on su.supplier_id = hs.supplier_id
+			where su.user_type = 'S'
+			and hs.start_date &lt;= sysdate
+			and nvl(hs.end_date,sysdate) &gt;= sysdate
+			<if test="userName!=null"> 
+				and su.user_name like concat('%',concat(#{userName},'%'))
+			</if>
+			<if test="supplierId!=null">
+				and hs.supplier_id = #{supplierId}
+			</if>
+    </select>
+<!--     删除供应商用户关系 -->
+    <update id="updateSupplier" parameterType="com.hand.hcs.hcs_suppliers.dto.Suppliers">
+		UPDATE SYS_USER  SET USER_TYPE = NULL ,SUPPLIER_ID = NULL,LAST_UPDATED_BY = #{request.userId},REQUEST_ID  = -1,
+       PROGRAM_ID = -1, OBJECT_VERSION_NUMBER = OBJECT_VERSION_NUMBER + 1, LAST_UPDATE_DATE  = CURRENT_TIMESTAMP where USER_ID = #{userId} 
+	</update>
+<!-- 	更新用户供应商信息 -->
+	<update id="updateUserInfo" parameterType="com.hand.hcs.hcs_suppliers.dto.Suppliers">
+		UPDATE SYS_USER  SET USER_TYPE = #{userType} ,SUPPLIER_ID = #{supplierId},LAST_UPDATED_BY = #{request.userId},REQUEST_ID  = -1,
+       PROGRAM_ID = -1, OBJECT_VERSION_NUMBER = OBJECT_VERSION_NUMBER + 1, LAST_UPDATE_DATE  = CURRENT_TIMESTAMP where USER_ID = #{userId} 
+	</update>
+	
+	<update id="updateHaveYes" parameterType="com.hand.hcs.hcs_suppliers.dto.Suppliers">
+		UPDATE hcs_suppliers
+   SET end_date              = NULL,
+       supplier_name         = #{supplierName},
+       payment_terms		 = #{paymentTerms},
+       last_updated_by       = -2,
+       request_id            = -1,
+       program_id            = -1,
+       object_version_number = object_version_number + 1,
+       last_update_date      = SYSDATE
+ WHERE supplier_code = #{supplierCode}
+	</update>
+	
+	<update id="updateHaveNo" parameterType="com.hand.hcs.hcs_suppliers.dto.Suppliers">
+		UPDATE hcs_suppliers
+   SET end_date              = NULL,
+   	   start_date            = #{startDate},
+       supplier_name         = #{supplierName},
+       payment_terms		 = #{paymentTerms},
+       last_updated_by       = -2,
+       request_id            = -1,
+       program_id            = -1,
+       object_version_number = object_version_number + 1,
+       last_update_date      = SYSDATE
+ WHERE supplier_code = #{supplierCode}
+	</update>
+	<select id="getSupplierIdByCode" resultType="java.lang.Float">
+	SELECT t.supplier_id FROM hcs_suppliers t WHERE t.supplier_code = #{0}
+	</select>
+	
+	<select id="getSupplierNameById" resultType="java.lang.String">
+	SELECT t.supplier_name FROM hcs_suppliers t WHERE t.supplier_id = #{0}
+	</select>
+</mapper>

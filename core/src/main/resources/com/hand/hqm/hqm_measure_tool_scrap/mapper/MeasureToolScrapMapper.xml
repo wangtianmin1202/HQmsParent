@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_measure_tool_scrap.mapper.MeasureToolScrapMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_measure_tool_scrap.dto.MeasureToolScrap">
+        <result column="MEASURE_TOOL_SCRAP_ID" property="measureToolScrapId" jdbcType="DECIMAL" />
+        <result column="MEASURE_TOOL_ID" property="measureToolId" jdbcType="DECIMAL" />
+        <result column="SCRAP_NUMBER" property="scrapNumber" jdbcType="VARCHAR" />
+        <result column="APPLICATION_DATE" property="applicationDate" jdbcType="DATE" />
+        <result column="END_DATE" property="endDate" jdbcType="DATE" />
+        <result column="REASON" property="reason" jdbcType="VARCHAR" />
+        <result column="BUSINESS_KEY" property="businessKey" jdbcType="VARCHAR" />
+        <result column="PROCESS_START_TIME" property="processStartTime" jdbcType="DATE" />
+        <result column="PROCESS_END_TIME" property="processEndTime" jdbcType="DATE" />
+        <result column="PROCESS_INSTANCE_ID" property="processInstanceId" jdbcType="VARCHAR" />
+        <result column="PROCESS_STATUS" property="processStatus" jdbcType="VARCHAR" />
+        <result column="STATUS" property="status" jdbcType="VARCHAR" />
+        <result column="measure_tool_num" property="measureToolNum" jdbcType="VARCHAR" />
+        <result column="descriptions" property="descriptions" jdbcType="VARCHAR" />
+        <result column="measure_tool_type" property="measureToolType" jdbcType="VARCHAR" />
+        <result column="measuring_range" property="measuringRange" jdbcType="VARCHAR" />
+        <result column="task_id" property="taskId" jdbcType="VARCHAR" />
+        <result column="CREATED_BY" property="createdBy" jdbcType="DECIMAL" />
+    </resultMap>
+
+	<select id="queryByCondition" resultMap="BaseResultMap" parameterType="com.hand.hqm.hqm_measure_tool_scrap.dto.MeasureToolScrap">
+		select 
+			hmts.MEASURE_TOOL_SCRAP_ID,
+			hmts.SCRAP_NUMBER,
+			hmts.MEASURE_TOOL_ID,
+			hmts.APPLICATION_DATE,
+			hmts.END_DATE,
+			hmts.status,
+			hmts.reason,
+			hmts.BUSINESS_KEY,
+			hmts.PROCESS_START_TIME,
+			hmts.PROCESS_END_TIME,
+			hmts.PROCESS_INSTANCE_ID,
+			hmts.PROCESS_STATUS,
+			hmts.created_by,
+			hmt.measure_tool_num as measure_tool_num,
+			hmt.descriptions as descriptions,
+			hmt.measuring_range as measuring_range,
+			hmt.measure_tool_type as measure_tool_type
+		from hqm_measure_tool_scrap hmts
+		left join hqm_measure_tool hmt on hmt.MEASURE_TOOL_ID = hmts.MEASURE_TOOL_ID
+		where 1=1
+		<if test="measureToolScrapId != null and measureToolScrapId != ''">
+			and hmts.MEASURE_TOOL_SCRAP_ID = #{measureToolScrapId}
+		</if>
+		<if test="processInstanceId != null and processInstanceId != ''">
+			and hmts.PROCESS_INSTANCE_ID = #{processInstanceId}
+		</if>
+		<if test="businessKey != null and businessKey != ''">
+			and hmts.BUSINESS_KEY = #{businessKey}
+		</if>
+		<if test="scrapNumber != null and scrapNumber != ''">
+			and hmts.SCRAP_NUMBER like concat('%',concat(#{scrapNumber},'%'))
+		</if>
+		<if test="measureToolNum != null and measureToolNum != ''">
+			and hmt.measure_tool_num like concat('%',concat(#{measureToolNum},'%'))
+		</if>
+		<if test="measureToolType != null and measureToolType != ''">
+			and hmt.measure_tool_type like concat('%',concat(#{measureToolType},'%'))
+		</if>
+		order by hmts.MEASURE_TOOL_SCRAP_ID desc
+	</select>
+
+	<select id="queryTask" resultType="com.hand.wfl.util.WflTask">
+		select 
+			t.id_ as taskId,
+			t.task_def_key_ as taskDefKey,
+			t.PROC_DEF_ID_ as processInstanceId,
+			t.NAME_ as taskName,
+			t.ASSIGNEE_ as employeeCode,
+			t.END_TIME_ as taskEndTime,
+			he.employee_id as employeeId,
+			su.user_id as userId
+		from ACT_HI_TASKINST t
+		left join hr_employee he on he.employee_code = t.ASSIGNEE_
+		left join sys_user su on su.employee_id = he.employee_id
+		where t.proc_inst_id_ = #{processInstanceId}
+			and t.END_TIME_ is null
+	</select>
+	
+	<select id="queryVariable" resultType="com.hand.wfl.util.WflVariable">
+		select 
+			t.PROC_INST_ID_ as processInstanceId,
+			t.EXECUTION_ID_ as executionId,
+			t.NAME_ as name,
+			t.TEXT_ as text
+		from ACT_RU_VARIABLE t
+		where t.proc_inst_id_ = #{processInstanceId}
+	</select>
+</mapper>

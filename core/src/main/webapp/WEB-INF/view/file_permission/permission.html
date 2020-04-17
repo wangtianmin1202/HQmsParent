@@ -1,0 +1,313 @@
+<#include "../include/header.html">
+<script src="${base.contextPath}/common/code?hqmFileAuthority=HQM_FILE_AUTHORITY"></script><!--角色-->
+<script type="text/javascript">
+    var viewModel = Hap.createGridViewModel("#grid");
+    var fileId = "${RequestParameters.fileId}";
+   
+    viewModel.model.fileId =fileId;    
+    
+    console.log("ID:"+ viewModel.model.fileId);
+    console.log("穿入:"+ fileId);
+</script>
+
+
+<script type="text/javascript">
+	viewModel.save=function(e){
+	    var dataHeadLine = $("#grid").data("kendoGrid").dataSource._data;
+	        console.log(dataHeadLine);
+	        if(dataHeadLine.length==0)
+	        	{
+	        	kendo.ui.showInfoDialog({
+                    message: "无新增数据！"
+              });  	
+		 		return;
+	        	
+	        	}
+	        
+	       if(dataHeadLine[0].permissionId == null||dataHeadLine[0].permissionId == ""||dataHeadLine[0].permissionId == undefined)
+	    	  { 
+	    	 
+	    	  }
+	        else
+	    	   {
+	    	   kendo.ui.showInfoDialog({
+	                  message: "无新增数据！"
+	              });  	
+			 		return;
+	    	   }
+		 	if(dataHeadLine[0].permissionCode==null||dataHeadLine[0].permissionCode==''||dataHeadLine[0].permissionCode==undefined)
+		 		{ 
+		 		kendo.ui.showInfoDialog({
+                    message: "权限必输"
+              });  	
+		 		return;
+		 		}
+		 	if(dataHeadLine[0].characterId==null||dataHeadLine[0].characterId==''||dataHeadLine[0].characterId==undefined)
+	 		{ 
+	 		kendo.ui.showInfoDialog({
+                message: "角色必输"
+            });  	
+	 		return;
+	 		}
+			console.log(dataHeadLine);	
+			{
+				$.ajax({
+			        url: '${base.contextPath}/file/permission/addnew',
+			        type: 'POST',
+			        data: kendo.stringify(dataHeadLine),
+                    contentType: "application/json",
+			        success: function (response) {
+			            if (response.success) {	
+			            	
+			            	kendo.ui.showInfoDialog({
+			                      message: "成功"
+			               }); 
+			            	$("#grid").data("kendoGrid").dataSource.page(1);
+			            } else {
+			            	kendo.ui.showWarningDialog({
+			                    message: response.message
+			                });
+			            }
+			        }
+			    });
+			}
+			
+
+		}
+
+</script>
+<body>
+<div id="page-content">
+    <div class="pull-left" id="toolbar-btn" style="padding-bottom:10px;">
+            <span type="button" class="btn btn-primary"  style="float:left;margin-left:5px;margin-right:5px" data-bind="click:create"><i class="fa fa-plus-square" style="margin-right:3px;"></i><@spring.message "hap.new"/></span>  
+        <span class="btn btn-success k-grid-save-changes" style="float:left;margin-right:5px;"  data-bind="click:save"><i class="fa fa-save" style="margin-right:3px;"></i><@spring.message "hap.save"/></span>      
+        <span class="btn btn-danger" style="float:left;" data-bind="click:remove"><i class="fa fa-trash-o" style="margin-right:5px;"></i><@spring.message "hap.delete"/></span>
+      
+        <span class="btn btn-success k-grid-save-changes" style="float:right;margin-left:5px;"  data-bind="click:query">查询</span>      
+    </div>
+    <script>kendo.bind($('#toolbar-btn'), viewModel);</script>
+    <div id="queryPanel" class="pull-right" id="query-form" style="padding-bottom:10px;">   
+    	<div class="k-query-simple" id="query-form">
+    	  <input  id="permissionCode"  placeholder="权限" data-bind="value:model.permissionCode"> 
+    	  <input  id="roleId"  placeholder="角色" data-bind="value:model.characterId"> 
+          <input  id="userId"  placeholder='用户'   data-bind="value:model.userId">  
+        </div>
+        <script>kendo.bind($('#query-form'), viewModel);</script>
+    </div>
+    <div style="clear:both;wight:80%">
+        <div id="grid"></div>
+    </div>
+</div>
+<script type="text/javascript">
+$("#permissionCode").kendoComboBox({
+    dataTextField: "meaning",
+    dataValueField: "value",
+    valuePrimitive: true,
+    dataSource:hqmFileAuthority
+});
+$("#roleId").kendoLov($.extend
+	    (<@lov"LOV_ROLE"/>, {
+	        textField: 'roleName',
+	        valueField:'roleId',
+	    }));
+	    
+$("#userId").kendoLov($.extend
+	    (<@lov"LOV_USER"/>, {
+	        textField: 'userName',
+	        valueField:'userId',
+	    }));
+    var BaseUrl = _basePath;
+    dataSource = new kendo.data.DataSource({
+        transport: {
+            read: {
+                url: BaseUrl + "/file/permission/selecthead",
+                type: "POST",
+                dataType: "json"
+            },
+            update: {
+                url: BaseUrl + "/file/permission/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            destroy: {
+                url: BaseUrl + "/file/permission/remove",
+                type: "POST",
+                contentType: "application/json"
+            },
+            create: {
+                url: BaseUrl + "/file/permission/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            parameterMap: function (options, type) {
+                if (type !== "read" && options.models) {
+                    var datas = Hap.prepareSubmitParameter(options, type)
+                    return kendo.stringify(datas);
+                } else if (type === "read") {
+                    return Hap.prepareQueryParameter(viewModel.model.toJSON(), options)
+                }
+                if(type === "create")
+                	{
+                	 viewModel.model.fileId =fileId;
+                	 console.log("穿入数据:"+ fileId);
+                	}
+            }
+        },
+        batch: true,
+        serverPaging: true,
+        pageSize: 20,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+                id: "permissionId",
+                fields: {                	
+		               roleName:{
+		                		validation:{              			
+		                			required:true,	
+		                			  NoValidation:function(input){
+		                                   if ( input.val() == "") {
+		                                      
+		                                        input.attr("data-NoValidation-msg", "角色必输");
+		                                           return false;
+		
+		                                   }
+		                                   return true;
+		                              },
+		                  	}
+		                 } 
+                },
+                editable:function(col){
+                	   if(col =='permissionCode'||col =='roleName'||col =='userName')
+                  		  {
+			              	 if((!this.id==null)||(!this.isNew()))
+			                	{ 
+			                		return false;
+			                    }
+			                	return true ;
+              		       }
+	              	  else{
+	              	          return true;
+	                       }
+                   }
+            }
+        }
+    });
+
+    var  grid= $("#grid").kendoGrid({
+        dataSource: dataSource,
+        resizable: true,
+        scrollable: true,
+        navigatable: false,
+        sortable: {
+        	mode: "multiple"
+        },
+        selectable: 'multiple, rowbox',
+        dataBound: function () {
+            if (parent.autoResizeIframe) {
+                parent.autoResizeIframe('${RequestParameters.functionCode!}')
+            }
+        },
+        
+        columns: [
+           
+        	{
+                field: "permissionCode",
+                title: '权限',
+                width: 120,
+                attributes: {style: "text-align:center"},
+                headerAttributes: {style: "text-align:center"},
+                template: function (dataItem) {
+                    var v = dataItem.permissionCode ? dataItem.permissionCode : "";
+                    $.each(hqmFileAuthority, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return v;
+                        }
+                    })
+                    return v;
+                },
+                editor: function (container, options) {
+                    $('<input name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            dataTextField: "meaning",
+                            dataValueField: "value",
+                            valuePrimitive: true,
+                            dataSource: hqmFileAuthority
+                        });
+                    options.model.fileId =fileId;
+                },
+               
+            },
+             {
+                field: "roleName",
+                title: '角色',
+                width: 120,
+                template: function (Item) {
+                    return Item['roleName'] || ''
+                },
+                editor: function (container, options) {
+                    $('<input name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoLov($.extend(<@lov "LOV_ROLE"/>, {
+                        textField: 'roleName',
+                        model: options.model,
+                        change:function() {
+                            var v = this.value();
+                            if (v == undefined  || v == ""){
+                                options.model.set('roleName', "");
+                                options.model.set('characterId','')
+                            }else{
+                            	options.model.roleName =  this._dataItem.roleName;
+                            	options.model.characterId = this._dataItem.roleId;
+                            }
+                        }
+                    }));
+                 
+                }
+            },
+            {
+                field: "userName",
+                title: '用户',
+                width: 120,
+                template: function (Item) {
+                    return Item['userName'] || ''
+                },
+                editor: function (container, options) {
+                	if(options.model.characterId==''||options.model.characterId==undefined||options.model.characterId==null){
+                        $('<span>请先选择角色</span>').appendTo(container);
+                        return;
+                    }
+                    $('<input name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoLov($.extend(<@lov "LOV_USER_ROLE"/>, {
+                         query: function (e) {
+                                 e.param['roleId'] = options.model.characterId
+                         },
+                        textField: 'userName',
+                        model: options.model,
+                        change:function() {
+                            var v = this.value();
+                            if (v == undefined  || v == ""){
+                                options.model.set('userName', "");
+                                options.model.set('userId','')
+                            }else{
+                            	options.model.userName =  this._dataItem.userName;
+                            	options.model.userId = this._dataItem.userId;
+                            }
+                        }
+                    }));
+                 
+                }
+            },
+        ],
+        editable: true
+    }).data('kendoGrid');
+
+</script>
+
+
+
+</body>
+</html>

@@ -1,0 +1,196 @@
+<#include "../include/header.html">
+<!--
+ * @description: 检验单新建对话框 hqm_inspection_attribute
+ * @author: tianmin.wang
+ * @date: 20190821
+ -->
+<style>
+ span{
+ font-size:14px;
+ }
+</style>
+<script type="text/javascript">
+	var uid = "${RequestParameters.uid!'-1'}";
+    var viewModel = Hap.createGridViewModel("#grid");
+    var selectedDates = new Array();
+    viewModel.save = function(){
+    	var datas = window.parent.grid.dataSource.data()
+    	var returnIds = '';
+    	var returnNames = '';
+    	$.each(selectedDates,function(i,v){
+    		returnIds = returnIds + v.userId + ',';
+    		returnNames = returnNames + v.employeeName + ',';
+    	});
+    	$.each(datas,function(i,v){
+    		if(v.uid == uid){
+    			v.set('warningObject',returnIds.length > 0 ? returnIds.substr(0,returnIds.length-1) : '');
+    			v.set('warningObjectName',returnNames.length > 0 ? returnNames.substr(0,returnNames.length-1) : '');
+    		}
+    	});
+    	window.parent.$("#iframe1").data("kendoWindow").close();
+    }
+	viewModel.closeWin = function(){
+    	window.parent.$("#iframe1").data("kendoWindow").close();
+    }
+</script>
+<body>
+<div id="page-content">
+    <div id="toolbar-btn" style="padding-bottom:10px;">
+    	<div class="row">
+    		<div class="col-xs-2">
+    		<span>用户:</span>
+    		</div>
+    		<div class="col-xs-8">
+    		<input id="orgUnitDes" data-role="maskedtextbox" style="width:300px;margin-right:5px;"
+                   data-bind="value:model.userName">
+    		</div>
+    		<div class="col-xs-2">
+    		<span id="querySpan" class="btn btn-primary" style="float:left;margin-right:5px;" data-bind="click:query"><@spring.message "hap.query"/></span>
+    		</div>
+    	</div>
+    	<div class="row" style="margin-top:20px;">
+    		<div class="col-xs-2">
+    			<span>姓名:</span>
+    		</div>
+    		<div class="col-xs-8">
+    			<input id="employeeName" data-role="maskedtextbox" style="width:300px;margin-right:5px;"
+                   data-bind="value:model.employeeName">
+    		</div>
+    	</div>
+    	
+        
+    </div>
+    <div class="text-left" style="border: 2px solid #EEEEEE;border-radius:10px;">
+		<span>已选择人员</span><br>
+		<div id="checkedUserPanel">
+        	
+        </div>
+	</div>
+    <script>kendo.bind($('#toolbar-btn'), viewModel);</script>
+    <div style="clear:both">
+        <div id="grid"></div>
+    </div>
+
+</div>
+<div id="mainBottom" style="margin-left:90%;bottom: 15px;position: fixed;  float: right;border-top:1px solid #ebebeb;width:10%; background: #fff;">
+        <span class="btn btn-primary" data-bind="click:save" type="submit" style="margin-right:5px"><@spring.message "hap.save"/></span>
+        <span class="btn btn-default" data-bind="click:closeWin" type="button" style="margin-right:25px;"><@spring.message "hap.cancel"/></span>
+</div>
+
+
+<script type="text/javascript">
+	$(document).keydown(function(event){
+		if (event.keyCode == 13) {
+			viewModel.model.userName = $("#orgUnitDes").val();
+			viewModel.model.employeeName = $("#employeeName").val();
+			viewModel.query();
+		}
+	});
+	kendo.bind($('#mainBottom'),viewModel);
+    Hap.initEnterQuery('#query-form', viewModel.query);
+    var BaseUrl = _basePath;
+    dataSource = new kendo.data.DataSource({
+        transport: {
+            read: {
+                url: BaseUrl + "/user/sys/query",
+                type: "POST",
+                dataType: "json"
+            },
+            parameterMap: function (options, type) {
+                if (type !== "read" && options.models) {
+                    var datas = Hap.prepareSubmitParameter(options, type)
+                    return kendo.stringify(datas);
+                } else if (type === "read") {
+                    return Hap.prepareQueryParameter(viewModel.model.toJSON(), options)
+                }
+            }
+        },
+        batch: true,
+        serverPaging: true,
+        pageSize: 5,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+                id: "kid",
+                fields: {},
+                editable:function(col){
+                	return false;
+                }
+            }
+        }
+    });
+
+    var grid = $("#grid").kendoGrid({
+        dataSource: dataSource,
+        resizable: true,
+        autoBind: true,
+        scrollable: true,
+        navigatable: false,
+        //selectable: 'multiple,rowbox',
+        dataBound: function () {
+            if (parent.autoResizeIframe) {
+                parent.autoResizeIframe('${RequestParameters.functionCode!}')
+            }
+        },
+        pageable: {
+            pageSizes: [5,10,20,50],
+            refresh: true,
+            buttonCount: 5
+        },
+        columns: [
+            {
+                field: "userName",
+                title: '<@spring.message "sysuser.userName"/>',//
+                width: 120
+            },
+            {
+                field: "employeeName",
+                title: '<@spring.message "sysuser.employeename"/>',//
+                width: 120
+            },
+            
+        ],
+        editable: true
+    }).data("kendoGrid");
+
+</script>
+<script>
+//var selection = $('#chooseGrid').data('kendoGrid').selectedDataItems();
+function judgeHave(userId){
+	var count = 0;
+	$.each(selectedDates,function(i,v){
+		if(v.userId == userId)count++;
+	});
+	if(count>0)return true;
+	return false;
+}
+function removeHaved(userId){
+	$.each(selectedDates,function(i,v){
+		if(v.userId == userId){
+			selectedDates.splice(selectedDates.indexOf(v),1);
+			return false;
+		}
+	});
+}
+$('#grid').on('click', 'td', function () {
+		var rowIndex = $(this).parent().index();
+        var data = grid.dataSource.data()[rowIndex];
+        if(!judgeHave(data.userId)){
+        	selectedDates.push(data);
+	        $("#checkedUserPanel").append('<span class="fa fa-user" style="margin-right:10px;background-color:#7AEBBE;border-radius:5px;">&nbsp'+data.employeeName+
+	        '<span user-id="'+data.userId+'" class="fa fa-trash" style="margin-left:5px;cursor:pointer;font-size:16px;"></span></span>');
+	        $('span[user-id="'+data.userId+'"]').on('click',function(){
+	        	removeHaved($(this).attr("user-id"));
+	        	$(this).parent().remove();
+	        });
+        }
+    });
+$(function(){
+	if(uid != "-1"){
+		
+	}
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,587 @@
+<#include "../include/header.html">
+<script src="${base.contextPath}/common/code?HQM_MEASURE_TOOL_TYPE=HQM_MEASURE_TOOL_TYPE"></script>
+<script src="${base.contextPath}/common/code?HQM_MET_CHEAK_CYCLE=HQM_MET_CHEAK_CYCLE"></script>
+<script src="${base.contextPath}/common/code?HQM_CHECK_TYPE=HQM_CHECK_TYPE"></script>
+<script src="${base.contextPath}/common/code?HQM_MEASURE_TOOL_STATUS=HQM_MEASURE_TOOL_STATUS"></script>
+<script src="${base.contextPath}/common/code?HQM_MEASURE_TOOL_POSITION_STATUS=HQM_MET_POSITION_STATUS"></script>
+<script src="${base.contextPath}/common/code?HQM_MSA_TYPE=HQM_MSA_TYPE"></script>
+<script src="${base.contextPath}/common/code?HQM_MSA_CYCLE=HQM_MSA_CYCLE"></script>
+<script src="${base.contextPath}/common/code?HQM_MET_CHEAK_CYCLE=HQM_MET_CHEAK_CYCLE"></script>
+<script src="${base.contextPath}/common/code?SYS_YES_NO=SYS.YES_NO"></script>
+<script src="${base.contextPath}/common/code?HQM_MSA_STATUS=HQM_MSA_STATUS"></script>
+<script src="${base.contextPath}/common/code?HQM_MSA_RESULT=HQM_MSA_RESULT"></script>
+<script src="${base.contextPath}/common/code?HQM_MSA_CONTENT=HQM_MSA_ANALYSIS_CONTENT"></script>
+<script src="${base.contextPath}/common/code?HQM_NUM_MSA_CONTENT=HQM_NUM_MSA_CONTENT"></script>
+<script src="${base.contextPath}/common/code?HQM_MET_UOM=HQM_MET_UOM"></script>
+<script src="${base.contextPath}/common/code?HQM_DEFAULT_PLANT=HQM_DEFAULT_PLANT"></script>
+<script src="${base.contextPath}/common/code?HQM_INSIDE_CHECK_AGENCY=HQM_INSIDE_CHECK_AGENCY"></script>
+<script src="${base.contextPath}/common/code?HQM_MSA_FLAG=HQM_MSA_FLAG"></script>
+<script type="text/javascript">
+var RESULT = [];
+var viewModel = Hap.createGridViewModel("#grid");
+$(function(){
+	viewModel.model.set('measureToolPositionStatus','I')
+	viewModel.model.set('measureToolStatus','1')
+	var grid = $("#grid").data("kendoGrid");
+	var plantCode = HQM_DEFAULT_PLANT[0].value;
+	
+	var planData = {
+		'plantCode' : plantCode
+	}
+	$.ajax({
+		url:"${base.contextPath}/hcm/plant/query",
+		type:"POST",
+		data: planData,
+		dataType: "json",
+	  		success: function(data){
+	  			if(data.success){
+					if(data.rows.length == 1){
+						viewModel.model.set('plantId',data.rows[0].plantId);
+						viewModel.model.set('plantCode',data.rows[0].plantCode);
+						$("#plantId").siblings('span').children('input').val(viewModel.model.plantCode)
+					}
+	  			}
+	  		}
+	})
+})
+function formatDate(date) {
+	  var d = new Date(date),
+	    month = '' + (d.getMonth() + 1),
+	    day = '' + d.getDate(),
+	    year = d.getFullYear();
+	  if (month.length < 2) month = '0' + month;
+	  if (day.length < 2) day = '0' + day;
+	 
+	  return [year, month, day].join('-');
+} 
+function closeWindow(){
+	window.parent.$("#addWindow").data("kendoWindow").close();
+}
+function checkStr(str){
+	if(str == null || str === '' ||typeof(str) == "undefined"){
+		return false;
+	}
+	return true;
+}
+//保存
+viewModel.save = function(){
+	var validator = $("#mainForm").kendoValidator().data("kendoValidator");
+	if (validator.validate()) {
+// 		var msaContentList = $("#msaContent").data("kendoMultiSelect").value();
+// 		viewModel.model.set('msaContentList',JSON.stringify(msaContentList).replace(/\[|]/g,''));
+		viewModel.model.set('purchaseDate',formatDate(viewModel.model.purchaseDate));
+		$.ajax({
+	   		url:"${base.contextPath}/hqm/measure/tool/saveData",
+	   		type: "POST",
+	   		data: viewModel.model.toJSON(),
+	   		dataType: "json",
+	   		success: function(data){
+	   			if(data.success){
+	   				Hap.showToast({
+            			type:'success',
+            			"positionClass": "toast-bottom-right",
+            			message:'保存成功',
+            			hideDuration:10*1000
+            		})
+	   				window.parent.viewModel.refresh();
+	   				window.parent.$("#addWindow").data("kendoWindow").close();
+	   			}else{
+	   				kendo.ui.showErrorDialog({
+							title: "提示",
+			    			message: data.message
+		    		})
+		    		return;
+	   		 }
+	   		}
+	   	})  
+	}
+
+}
+function clearNoNum(obj) { 
+    	obj.value = obj.value.replace(/[^\d]/g,""); //清除"数字"和"."以外的字符  
+    	if(obj.value.length > 5){
+    		obj.value = obj.value.substring(0,5)
+    	} 
+}
+</script>
+<body>
+<div id="page-content">
+   <div class="row">
+    <div class="pull-left" id="toolbar-btn" style="padding-bottom:10px;">
+    	<span class="btn btn-success k-grid-save-changes" style="float:left;margin-right:5px;"data-bind="click:save"><i class="fa fa-save" style="margin-right:3px;"></i><@spring.message "hap.save"/></span>
+        <span class="btn btn-primary fa fa-undo" style="float:left;margin-right:5px;" onClick="closeWindow()">&nbsp;<@spring.message "return.back"/></span>
+    </div>
+    <script>kendo.bind($('#toolbar-btn'), viewModel);</script>
+    <div class="pull-right" id="query-form" style="padding-bottom:10px;">
+           
+        <div style="clear:both"></div>
+    </div>
+    <script>kendo.bind($('#query-form'), viewModel);</script>
+    </div>
+    <div id="mainForm" class="panel-body" style="margin-right:5px;padding-bottom:10px;width: 100%;">
+	    <div class="row" style="margin-top: 5px;font-size:small">
+	    		<!-- 工厂 -->
+			    <div class="col-sm-6">
+			    	<div class="form-group">
+				    	 <lable class="col-xs-5 control-lable" style="text-align:right;margin-top:2%"><@spring.message "measuretool.plantcode"/>：</lable>
+				    	 <div class="col-xs-7" >
+		    	    	 <input id="plantId" style="width: 100%;" required data-bind="value:model.plantId"/>
+			    	    	 <script>
+			    	    	 		kendo.bind($("#plantId"),viewModel);
+				                	$("#plantId").kendoLov($.extend
+				                	    (<@lov"LOV_HCM_PLANT"/>, {
+				                	        textField: 'plantCode',
+				                	        valueField:'plantId',
+				                	        query: function(e){
+				                	        	e.param['enableFlag'] = 'Y';
+				                	        }
+				                	}));
+				            </script> 
+		    	    	</div>
+		    	     </div>
+			    </div>
+	    		<!-- 供应商 -->
+			    <div class="col-sm-6">
+			    	<lable class="col-xs-5 control-lable" style="text-align:right;margin-top:2%"><@spring.message "dimensionproblemdescription.supplier"/>：</lable>
+			    	<div class="col-xs-7" >
+			    	    	 <!-- <input id="measureToolSupplier" style="width: 100%;" data-role="maskedtextbox"  required data-bind="value:model.measureToolSupplier">
+			    	    	 <script>kendo.bind($("#measureToolSupplier"),viewModel);</script> -->
+			    	    	 
+			    	    	<input id="measureToolSupplier" style="width: 100%;" required data-bind="value:model.measureToolSupplier"/>
+			    	    	 <script>
+			    	    	 		kendo.bind($("#measureToolSupplier"),viewModel);
+				                	$("#measureToolSupplier").kendoLov($.extend
+				                	    (<@lov"LOV_SUPPLIER_SRM"/>, {
+				                	        textField: 'supplierCode',
+				                	        valueField:'supplierId',
+				                	        query: function(e){
+				                	        	//e.param['supplierId'] = supplierId;
+				                	        }
+				                	}));
+				            </script> 
+			    	</div>
+			    </div>
+			    
+	    </div>
+	    <div class="row" style="margin-top: 5px;font-size:small">
+	    		<!-- 类型 -->
+			    <div class="col-sm-6">
+			    	<div class="form-group">
+				    	 <lable class="col-xs-5 control-lable" style="text-align:right;margin-top:2%"><@spring.message "measuretool.measuretooltype"/>：</lable>
+				    	 <div class="col-xs-7" >
+			    	    	 <input id="measureToolType" style="width: 100%;" required data-bind="value:model.measureToolType"/>
+		    				 <script type="text/javascript">
+		    					kendo.bind($("#measureToolType"),viewModel)
+		    					$("#measureToolType").kendoComboBox({
+		    				        dataTextField: "meaning",
+		    				        dataValueField: "value",
+		    				        valuePrimitive: true,
+		    				        dataSource: HQM_MEASURE_TOOL_TYPE,
+		    				        change:function(e){
+		    				        	if(isNotEmpty(this._old)){
+		    				        		$("#descriptions").removeAttr("disabled");
+		    				        		$("#descriptions").attr("required",true);
+		    				        		$("#descriptions").removeAttr("class");
+		    				        		$("#descriptions").attr("class","k-textbox");
+		    				        		$("#descriptions").val(this._prev);
+		    				        		viewModel.model.descriptions = this._prev;
+		    				        	}else{
+		    				        		$("#descriptions").val("");
+		    				        		$("#descriptions").removeAttr("required");
+		    				        		$("#descriptions").attr("disabled",true);
+		    				        		$("#descriptions").removeAttr("class");
+		    				        		$("#descriptions").attr("class","k-textbox k-state-disabled");
+		    				        		viewModel.model.descriptions = '';
+		    				        	}
+		    				        }
+		    					});
+		    				 </script>
+		    	    	</div>
+		    	     </div>
+			    </div>
+			    <!-- 制造厂商 -->
+	    		<div class="col-sm-6">
+	    			<div class="form-group">
+	                    <label class="col-sm-5 control-label" style="text-align:right;margin-top:2%"><@spring.message "measuretool.measureToolMaker"/>：</label>
+	                    <div class="col-sm-7">
+	                        <input id="measureToolMaker" data-role="maskedtextbox" required type="text" style="width: 100%;" data-bind="value:model.measureToolMaker">
+	                        <script>kendo.bind($('#measureToolMaker'), viewModel);</script>
+	                    </div>
+	                </div>
+			    </div> 
+	    </div>
+	    <div class="row" style="margin-top: 5px;font-size:small">
+	    	<!-- 设备编号 -->
+	    		<div class="col-sm-6">
+	    			<div class="form-group">
+	                    <label class="col-sm-5 control-label" style="text-align:right;margin-top:2%"><@spring.message "measuretool.measuretoolnum"/>：</label>
+	                    <div class="col-sm-7">
+	                        <input id="measureToolNum" data-role="maskedtextbox" required type="text" style="width: 100%;" data-bind="value:model.measureToolNum">
+	                        <script>kendo.bind($('#measureToolNum'), viewModel);</script>
+	                    </div>
+	                </div>
+			    </div> 
+			    <!-- 设备名称 -->
+			    <div class="col-sm-6">
+			    	<div class="form-group">
+			    	   <lable class="col-xs-5 control-lable" style="text-align:right;margin-top:2%"><@spring.message "measuretool.descriptions"/>：</lable>
+			    	   <div class="col-xs-7" >
+			    	    	 <input id="descriptions" style="width: 100%;" disabled  data-role="maskedtextbox" type="text" data-bind="value:model.descriptions"/>
+			    	    	 <script>kendo.bind($("#descriptions"),viewModel);</script>
+			    	   </div>
+			        </div>	   
+			    </div>
+	    </div>
+	    <div class="row" style="margin-top: 5px;font-size:small">
+	    		<!-- 单位 -->
+			    <div class="col-sm-6">
+			    	<div class="form-group">
+				    	 <lable class="col-xs-5 control-lable" style="text-align:right;margin-top:2%"><@spring.message "单位"/>：</lable>
+				    	 <div class="col-xs-7" >
+		    	    	 <input id="uom" style="width: 100%;" required data-bind="value:model.uom"/>
+	    				 <script type="text/javascript">
+	    					kendo.bind($("#uom"),viewModel)
+	    					$("#uom").kendoComboBox({
+	    				        dataTextField: "meaning",
+	    				        dataValueField: "value",
+	    				        valuePrimitive: true,
+	    				        dataSource: HQM_MET_UOM
+	    					});
+	    				 </script>
+		    	    	</div>
+		    	     </div>
+			    </div>
+			    <!-- 购买日期 -->
+			    <div class="col-sm-6">
+			    	<lable class="col-xs-5 control-lable" style="text-align:right;margin-top:2%"><@spring.message "measuretool.purchasedate"/>：</lable>
+			  		<div class="col-xs-7">
+			    	    	 <input id="purchaseDate" style="width: 100%;" required    data-bind="value:model.purchaseDate">
+			    	    	 <script>
+			    	    	 	kendo.bind($("#purchaseDate"),viewModel);
+			    	    	 	var datePicker = $("#purchaseDate").kendoDatePicker({
+		    					    format: "{0:yyyy-MM-dd}",
+		    					    change: function(){
+		    					    }
+		    					}); 
+			    	    	 	//$("#purchaseDate").attr("readonly","readonly");
+			    				//datePicker[0] 
+			    	    	 </script>
+			    	    	 
+			    	</div>
+			    </div>
+	    </div>
+	    <div class="row" style="margin-top: 5px;font-size:size:small">
+	    		<!-- 测量精度 -->
+	    		<div class="col-sm-6">
+	    			<div class="form-group">
+	                    <label class="col-sm-5 control-label" style="text-align:right;margin-top:2%"><@spring.message "measuretool.measurementaccuracy"/>：</label>
+	                    <div class="col-sm-7" >
+	                        <input id="measurementAccuracy" data-role="maskedtextbox" type="text" style="width: 100%;" data-bind="value:model.measurementAccuracy">
+	                        <script>kendo.bind($('#measurementAccuracy'), viewModel);</script>
+	                    </div>
+	                </div>
+			    </div> 
+			    <!-- 测量范围 -->
+	    		<div class="col-sm-6">
+			    	<lable class="col-xs-5 control-lable" style="text-align:right;margin-top:2%"><@spring.message "measuretool.measuringrange"/>：</lable>
+			  		<div class="col-xs-7" >
+			    	    	 <input id="measuringRange" style="width: 100%;" data-role="maskedtextbox" data-bind="value:model.measuringRange">
+			    	    	 <script>kendo.bind($("#measuringRange"),viewModel);</script>
+			    	</div>
+			    </div>
+			    
+	    </div>
+	    <div class="row" style="margin-top: 5px;font-size:size:small">
+	    		
+			    <!-- 检验方式 -->
+			    <div class="col-sm-6">
+			    	<lable class="col-xs-5 control-lable" style="text-align:right;margin-top:2%"><@spring.message "measuretool.checktype"/>：</lable>
+			 		<div class="col-xs-7" >
+		    	    	 <input id="checkType" style="width: 100%;" required data-bind="value:model.checkType">
+	    				 <script type="text/javascript">
+	    					kendo.bind($("#checkType"),viewModel)
+	    					$("#checkType").kendoComboBox({
+	    				        dataTextField: "meaning",
+	    				        dataValueField: "value",
+	    				        valuePrimitive: true,
+	    				        dataSource:HQM_CHECK_TYPE,
+	    				        change:function(e){
+	    				        	if(this._old == '1'){
+	    				        		//内校	    				        		
+	    				        		$("#checkedBy").siblings('span').children('input').val(HQM_INSIDE_CHECK_AGENCY[0].meaning)
+	    				        		$("#checkedBy").attr("disabled","true").data('kendoLov').enable(false);
+	    				        	}else if(!checkStr(this._old)){
+	    				        		
+	    				        		$("#checkedBy").attr("disabled","true").data('kendoLov').enable(false);
+										$("#checkedBy").siblings('span').children('input').val('')
+	    				        	}else if(this._old == '2'){
+										//外校
+										$("#checkedBy").parent('span').removeAttr("class")
+								 		$("#checkedBy").parent('span').attr("class","k-widget k-lov k-header k-state-required")
+										$("#checkedBy").siblings('span').children('input').val('')
+										$("#checkedBy").attr("disabled","false").data('kendoLov').enable(true);
+	    				        	}else if(this._old == '3'){
+										//无需校验
+	    				        		$("#checkedBy").siblings('span').children('input').val('')
+	    				        		$("#checkedBy").attr("disabled","true").data('kendoLov').enable(false);
+										viewModel.model.checkedBy = '';
+	    				        	}
+	    				        }
+	    					});
+	    				 </script>
+		    	    </div>
+			    </div>	
+			    <!-- 校验周期 -->
+	    		<div class="col-sm-6">
+	    			<lable class="col-xs-5 control-lable" style="text-align:right;margin-top:2%"><@spring.message "measuretool.checkcycle"/>：</lable>
+			    	<div class="col-xs-7">
+			    	    	 <input id="checkCycle" style="width: 100%;" required  data-bind="value:model.checkCycle">
+		    				 <script type="text/javascript">
+		    					kendo.bind($("#checkCycle"),viewModel)
+		    					$("#checkCycle").kendoComboBox({
+		    				        dataTextField: "meaning",
+		    				        dataValueField: "value",
+		    				        valuePrimitive: true,
+		    				        dataSource:HQM_MET_CHEAK_CYCLE
+		    					});
+		    				 </script>
+			    	</div>
+			    </div>
+	    </div>
+	    <div class="row" style="margin-top: 5px;font-size:size:small">
+	    		
+			    <!-- 校验机构 -->
+			    <div class="col-sm-6">
+			    	<lable class="col-xs-5 control-lable" style="text-align:right;margin-top:2%"><@spring.message "measuretool.checkedby"/>：</lable>
+			    	<div class="col-xs-7">
+			    	    	 <input id="checkedBy" disabled style="width: 100%;"  data-bind="value:model.checkedBy"/>
+			    	    	 <script>
+			    	    	 		kendo.bind($("#checkedBy"),viewModel);
+				                	$("#checkedBy").kendoLov($.extend
+				                	    (<@lov"LOV_SUPPLIER_SRM"/>, {
+				                	        textField: 'supplierCode',
+				                	        valueField:'supplierId',
+				                	        query: function(e){
+				                	        	//e.param['supplierId'] = supplierId;
+				                	        }
+				                	}));
+				            </script>
+			    	</div>
+			    </div>
+<!-- 			    是否需进行MSA -->
+<!-- 			    <div class="col-sm-6"> -->
+<!-- 			    	<lable class="col-xs-5 control-lable" style="text-align:right;margin-top:2%"> 是否需进行MSA：</lable> -->
+<!-- 			  		<div class="col-xs-7"> -->
+<!-- 		    	    	 <input id="msaFlag" style="width: 100%;" required data-bind="value:model.msaFlag"> -->
+<!-- 	    				 <script type="text/javascript"> -->
+<!-- // 	    					kendo.bind($("#msaFlag"),viewModel) -->
+<!-- // 	    					$("#msaFlag").kendoComboBox({ -->
+<!-- // 	    				        dataTextField: "meaning", -->
+<!-- // 	    				        dataValueField: "value", -->
+<!-- // 	    				        valuePrimitive: true, -->
+<!-- // 	    				        dataSource:SYS_YES_NO, -->
+<!-- // 	    				        change:function(e){ -->
+<!-- // 	    				        	if(this._old == 'Y'){ -->
+<!-- // 	    				        		$("#msaType").attr("disabled","false").data('kendoComboBox').enable(true); -->
+<!-- // 	    				        		$("#msaContent").attr("disabled","false").data('kendoMultiSelect').enable(true); -->
+<!-- // 	    				        		$("#msaCycle").attr("disabled","false").data('kendoComboBox').enable(true); -->
+	    				        		
+<!-- // 	    				        		$("#msaType").siblings('span').children('input').attr("required",true); -->
+<!-- // 	    				        		$("#msaCycle").siblings('span').children('input').attr("required",true); -->
+	    				        		
+<!-- // 	    				        		$("#msaContent").attr("required",true) -->
+<!-- // 	    				        		$("#msaContent").siblings('div').css("background","#FFF8C5"); -->
+<!-- // 	    				        		//$("#msaContent").siblings('span').children('input').css("background","#FFF8C5") -->
+	    				        		
+<!-- // 	    				        		$("#positionTitle").removeAttr("disabled"); -->
+<!-- // 	    				        		$("#positionTitle").attr("required","required"); -->
+<!-- // 	    				        		$("#positionTitle").css("background",""); -->
+	    				        		
+<!-- // 	    				        		$("#judgementStandard").removeAttr("class"); -->
+<!-- // 	    				        		$("#judgementStandard").attr("class","k-textbox"); -->
+<!-- // 	    				        		$("#judgementStandard").removeAttr("disabled"); -->
+<!-- // 	    				        		$("#judgementStandard").attr("required","required"); -->
+<!-- // 	    				        		$("#judgementStandard").css("background",""); -->
+<!-- // 	    				        		viewModel.model.set('measureToolStatus','2') -->
+	    				        		
+<!-- // 	    				        	}else{ -->
+<!-- // 	    				        		$("#msaType").attr("disabled","true").data('kendoComboBox').enable(false); -->
+<!-- // 	    				        		$("#msaContent").attr("disabled","true").data('kendoMultiSelect').enable(false); -->
+<!-- // 	    				        		$("#msaCycle").attr("disabled","true").data('kendoComboBox').enable(false); -->
+<!-- // 	    				        		$("#positionTitle").attr("disabled","true"); -->
+<!-- // 	    				        		$("#positionTitle").css("background","#EDEDED"); -->
+<!-- // 	    				        		$("#judgementStandard").attr("disabled","true"); -->
+<!-- // 	    				        		$("#judgementStandard").css("background","#EDEDED"); -->
+	    				        		
+<!-- // 	    				        		$("#msaType").siblings('span').children('input').attr("required",false); -->
+<!-- // 	    				        		$("#msaCycle").siblings('span').children('input').attr("required",false); -->
+	    				        		
+
+<!-- // 	    				        		$("#msaContent").removeAttr("required"); -->
+<!-- // 	    				        		$("#msaContent").css("background",""); -->
+<!-- // 	    				        		$("#msaContent").siblings('div').css("background","#EDEDED"); -->
+	    				        		
+<!-- // 	    				        		viewModel.model.set('measureToolStatus','1') -->
+<!-- // 	    				        		viewModel.model.set('positionTitle',null) -->
+<!-- // 	    				        		viewModel.model.set('judgementStandard',null) -->
+<!-- // 	    				        		viewModel.model.set('msaType',null) -->
+<!-- // 	    				        		viewModel.model.set('msaCycle',null) -->
+	    				        		
+<!-- // 	    				        		$("#msaContent").data("kendoMultiSelect").value(""); -->
+<!-- // 	    				        	} -->
+<!-- // 	                            } -->
+<!-- // 	    					}); -->
+<!-- 	    				 </script> -->
+<!-- 		    	     </div> -->
+<!-- 			    </div> -->
+	    </div>
+<!-- 	    <div class="row" style="margin-top: 5px;font-size:size:small"> -->
+	    		
+<!-- 			    测量系统类型 -->
+<!-- 			    <div class="col-sm-6"> -->
+<!-- 			    	<lable class="col-xs-5 control-lable" style="text-align:right;margin-top:2%"> 测量系统类型：</lable> -->
+<!-- 			  		<div class="col-xs-7"> -->
+<!-- 		    	    	 <input id="msaType" style="width: 100%;" disabled  data-bind="value:model.msaType"> -->
+<!-- 	    				 <script type="text/javascript"> -->
+<!-- // 	    					kendo.bind($("#msaType"),viewModel) -->
+<!-- // 	    					$("#msaType").kendoComboBox({ -->
+<!-- // 	    				        dataTextField: "meaning", -->
+<!-- // 	    				        dataValueField: "value", -->
+<!-- // 	    				        valuePrimitive: true, -->
+<!-- // 	    				        dataSource:HQM_MSA_TYPE, -->
+<!-- // 	    				        change:function(e){ -->
+	    				        	
+<!-- // 	    				        	if(this._old == 1){ -->
+<!-- // 	    				        		//计量型 -->
+<!-- // 	    				        		RESULT = HQM_MSA_CONTENT -->
+<!-- // 	    				        	}else if(this._old == 2){ -->
+<!-- // 	    				        		 //计数型 -->
+<!-- // 	    				        		RESULT = HQM_NUM_MSA_CONTENT -->
+<!-- // 	    				        	} -->
+<!-- // 	    				        	$("#msa").empty(); -->
+<!-- // 	    				        	//var str = '<input class="msaContent" id="msaContent">'; -->
+<!-- // 	    				        	var str = '<select id="msaContent" class="msaContent" multiple="multiple">'; -->
+<!-- // 	    				        	$("#msa").append(str); -->
+<!-- // 	    				        	$("#msaContent").kendoMultiSelect({ -->
+<!-- // 							            dataTextField: "meaning", -->
+<!-- // 							            dataValueField: "value", -->
+<!-- // 							            dataSource: RESULT -->
+<!-- // 							        }); -->
+<!-- // 	    				        	var multiselect = $("#msaContent").data("kendoMultiSelect"); -->
+<!-- //     				        		$("#msaContent").attr("required",true) -->
+<!-- //     				        		$("#msaContent").siblings('div').css("background","#FFF8C5"); -->
+<!-- //     				        		$("#msaContent").siblings('div').children('input').attr('style','width:100%') -->
+<!-- //     				        		if(this._old == 2){ -->
+<!-- //     				        			//clear filter -->
+<!-- // 		    				        	multiselect.dataSource.filter({}); -->
+<!-- // 		    				        	//set value -->
+<!-- // 		    				        	multiselect.value([RESULT[0].value]); -->
+<!-- // 	    				        	}  -->
+<!-- // 	    				        } -->
+<!-- // 	    					}); -->
+<!-- 	    				 </script> -->
+<!-- 		    	     </div> -->
+<!-- 			    </div> -->
+			    
+<!-- 			    msa周期 -->
+<!-- 			    <div class="col-sm-6"> -->
+<!-- 			    	<lable class="col-xs-5 control-lable" style="text-align:right;margin-top:2%"> MSA周期：</lable> -->
+<!-- 			  		<div class="col-xs-7"> -->
+<!-- 		    	    	 <input id="msaCycle" style="width: 100%;"  disabled data-bind="value:model.msaCycle"> -->
+<!-- 	    				 <script type="text/javascript"> -->
+<!-- // 	    					kendo.bind($("#msaCycle"),viewModel) -->
+<!-- // 	    					$("#msaCycle").kendoComboBox({ -->
+<!-- // 	    				        dataTextField: "meaning", -->
+<!-- // 	    				        dataValueField: "value", -->
+<!-- // 	    				        valuePrimitive: true, -->
+<!-- // 	    				        dataSource:HQM_MSA_CYCLE -->
+<!-- // 	    					}); -->
+<!-- 	    				 </script> -->
+<!-- 		    	     </div> -->
+<!-- 			    </div> -->
+<!-- 	    </div> -->
+<!-- 	    <div class="row" style="margin-top: 5px;font-size:size:small"> -->
+	    		
+<!-- 			    库存状态 -->
+<!-- 			    <div class="col-sm-6"> -->
+<!-- 			    	<lable class="col-xs-5 control-lable" style="text-align:right;margin-top:2%"> 库存状态：</lable> -->
+<!-- 			  		<div class="col-xs-7"> -->
+<!-- 		    	    	 <input id="measureToolPositionStatus" style="width: 100%;" disabled  data-bind="value:model.measureToolPositionStatus"> -->
+<!-- 	    				 <script type="text/javascript"> -->
+<!-- // 	    					kendo.bind($("#measureToolPositionStatus"),viewModel) -->
+<!-- // 	    					$("#measureToolPositionStatus").kendoComboBox({ -->
+<!-- // 	    				        dataTextField: "meaning", -->
+<!-- // 	    				        dataValueField: "value", -->
+<!-- // 	    				        valuePrimitive: true, -->
+<!-- // 	    				        dataSource:HQM_MEASURE_TOOL_POSITION_STATUS, -->
+<!-- // 	    					}); -->
+<!-- 	    				 </script> -->
+<!-- 		    	     </div> -->
+<!-- 			    </div> -->
+<!-- 			    状态 -->
+<!-- 			    <div class="col-sm-6"> -->
+<!-- 			    	<lable class="col-xs-5 control-lable" style="text-align:right;margin-top:2%"> 状态：</lable> -->
+<!-- 			  		<div class="col-xs-7"> -->
+<!-- 		    	    	 <input id="measureToolStatus" style="width: 100%;" disabled data-bind="value:model.measureToolStatus"> -->
+<!-- 	    				 <script type="text/javascript"> -->
+<!-- // 	    					kendo.bind($("#measureToolStatus"),viewModel) -->
+<!-- // 	    					$("#measureToolStatus").kendoComboBox({ -->
+<!-- // 	    				        dataTextField: "meaning", -->
+<!-- // 	    				        dataValueField: "value", -->
+<!-- // 	    				        valuePrimitive: true, -->
+<!-- // 	    				        dataSource:HQM_MEASURE_TOOL_STATUS -->
+<!-- // 	    					}); -->
+<!-- 	    				 </script> -->
+<!-- 		    	     </div> -->
+<!-- 			    </div>	 -->
+<!-- 	    </div> -->
+<!-- 	    <div class="row" style="margin-top: 5px;font-size:size:small"> -->
+<!-- 	    		关键工序 -->
+<!-- 			    <div class="col-sm-6"> -->
+<!-- 			    	<lable class="col-xs-5 control-lable" style="text-align:right;margin-top:2%"> 关键工序：</lable> -->
+<!-- 			  		<div class="col-xs-7"> -->
+<!-- 			    	    	 <input id="keyProcess" style="width: 100%;" data-bind="value:model.keyProcess"  data-role="maskedtextbox" type="text"/> -->
+<!-- 			    	    	 <script>kendo.bind($("#keyProcess"),viewModel);</script> -->
+<!-- 			    	</div> -->
+<!-- 			    </div> -->
+<!-- 			    岗位名称 -->
+<!-- 			    <div class="col-sm-6"> -->
+<!-- 			    	<lable class="col-xs-5 control-lable" style="text-align:right;margin-top:2%"> 岗位名称：</lable> -->
+<!-- 			  		<div class="col-xs-7"> -->
+<!-- 			    	    	 <input id="positionTitle" style="width: 100%;" data-bind="value:model.positionTitle"  data-role="maskedtextbox" type="text"/> -->
+<!-- 			    	    	 <script>kendo.bind($("#positionTitle"),viewModel);</script> -->
+<!-- 			    	</div> -->
+<!-- 			    </div> -->
+<!-- 	    </div> -->
+<!-- 	    <div class="row" style="margin-top: 5px;font-size:size:small"> -->
+<!-- 	    		判定标准 -->
+<!-- 			    <div class="col-sm-6"> -->
+<!-- 			    	<lable class="col-xs-5 control-lable" style="text-align:right;margin-top:2%"> 判定标准：</lable> -->
+<!-- 			  		<div class="col-xs-7"> -->
+<!-- 			  				 <input id="judgementStandard" onkeyup="clearNoNum(this)" onblur="clearNoNum(this)" onfocus="clearNoNum(this)" disabled style="width: 100%;" data-bind="value:model.judgementStandard"  data-role="maskedtextbox" type="text"/> -->
+<!-- 			    	    	 <script>kendo.bind($("#judgementStandard"),viewModel);</script> -->
+<!-- 			    	</div> -->
+<!-- 			    </div> -->
+<!-- 	    		<div class="col-sm-6" style="text-align:center;width:50%"> -->
+<!-- 	    			<lable class="col-xs-5 control-lable" style="text-align:right;margin-top:2%"> MSA分析内容：</lable> -->
+<!-- 			  		<div id="msa" class="col-xs-7"> -->
+<!-- 			  			<select class="msaContent"  multiple="multiple" disabled id="msaContent"></select> -->
+<!-- <!-- 		    	    	 <input class="msaContent" disabled id="msaContent"> --> 
+<!-- 	    				 <script type="text/javascript"> -->
+<!-- // 						        $(".msaContent").kendoMultiSelect({ -->
+<!-- // 						            dataTextField: "meaning", -->
+<!-- // 						            dataValueField: "value", -->
+<!-- // 						            dataSource: HQM_MSA_CONTENT -->
+<!-- // 						        }).data('kendoMultiSelect'); -->
+<!-- // 						        $("#msaContent").siblings('div').css("background","#EDEDED"); -->
+<!-- // 						        $("#msaContent").siblings('div').children('input').removeAttr('style') -->
+<!-- // 						        $("#msaContent").siblings('div').children('input').attr('style','width:100%') -->
+<!-- 						</script> -->
+						
+<!-- 		    		</div>    		 -->
+<!-- 	    		</div> -->
+<!-- 	    </div> -->
+    </div>
+</div>
+</body>
+</html>

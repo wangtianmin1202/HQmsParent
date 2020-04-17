@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.npi.npi_route.mapper.TechnologyWpActionEquipDetailMapper">
+    <resultMap id="BaseResultMap" type="com.hand.npi.npi_route.dto.TechnologyWpActionEquipDetail">
+        <result column="ACTION_EQUIP_ID" property="actionEquipId" jdbcType="DECIMAL" />
+        <result column="WP_ACTION_ID" property="wpActionId" jdbcType="DECIMAL" />
+        <result column="ACTION_ID" property="actionId" jdbcType="DECIMAL" />
+        <result column="ACTION_NAME" property="actionName" jdbcType="VARCHAR" />
+        <result column="EQUIPMENT_CODE" property="equipmentCode" jdbcType="VARCHAR" />
+        <result column="EQUIPMENT_NAME" property="equipmentName" jdbcType="VARCHAR" />
+        <result column="STATUS" property="status" jdbcType="VARCHAR" />
+        <result column="QTY" property="qty" jdbcType="DECIMAL" />
+        <result column="ACTION_TYPE" property="actionType" jdbcType="VARCHAR" />
+    </resultMap>
+
+
+	<update id="updateData" parameterType="com.hand.npi.npi_route.dto.TechnologyWpActionEquipDetail">
+		update NPI_TECHNOLOGY_WP_ACTION_EQUIP_DETAIL t
+			set t.wp_action_id = #{wpActionId},
+				t.action_id = #{actionId},
+				t.status = #{status},
+				t.qty = #{qty},
+				t.action_type = #{actionType}
+			where t.equipment_code= #{equipmentCode}
+	</update>
+	
+	
+	<select id="selectInfoAux" parameterType="com.hand.npi.npi_route.dto.TechnologyWpActionEquipDetail" resultMap="BaseResultMap">
+		SELECT T.*,T1.ACTION_NAME 
+			FROM NPI_TECHNOLOGY_WP_ACTION_EQUIP_DETAIL T 
+			JOIN NPI_TECHNOLOGY_AUXILIARY_ACTION T1
+    	ON T.ACTION_ID = T1.AUXILIARY_ACTION_ID
+    	WHERE t.WP_ACTION_ID  = #{wpActionId}
+	</select>
+	<select id="selectInfoSta" parameterType="com.hand.npi.npi_route.dto.TechnologyWpActionEquipDetail"  resultMap="BaseResultMap">
+		SELECT T.*,T1.ACTION_NAME 
+			FROM NPI_TECHNOLOGY_WP_ACTION_EQUIP_DETAIL T 
+			JOIN Npi_Technology_Standard_Action T1
+    	ON T.ACTION_ID = T1.Standard_Action_Id 
+    	WHERE t.WP_ACTION_ID  = #{wpActionId}
+	</select>
+</mapper>

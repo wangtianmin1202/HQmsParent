@@ -1,0 +1,446 @@
+<#include "../include/header.html">
+<script src="${base.contextPath}/common/code?HQM_MEASURE_TOOL_TYPE=HQM_MEASURE_TOOL_TYPE"></script>
+<script src="${base.contextPath}/common/code?HQM_MET_CHEAK_CYCLE=HQM_MET_CHEAK_CYCLE"></script>
+<script src="${base.contextPath}/common/code?HQM_CHECK_TYPE=HQM_CHECK_TYPE"></script>
+<script src="${base.contextPath}/common/code?HQM_MEASURE_TOOL_STATUS=HQM_MEASURE_TOOL_STATUS"></script>
+<script src="${base.contextPath}/common/code?HQM_MEASURE_TOOL_POSITION_STATUS=HQM_MET_POSITION_STATUS"></script>
+<script src="${base.contextPath}/common/code?HQM_MSA_TYPE=HQM_MSA_TYPE"></script>
+<script src="${base.contextPath}/common/code?HQM_MSA_CYCLE=HQM_MSA_CYCLE"></script>
+<script src="${base.contextPath}/common/code?HQM_MET_CHEAK_CYCLE=HQM_MET_CHEAK_CYCLE"></script>
+<script src="${base.contextPath}/common/code?SYS_YES_NO=SYS.YES_NO"></script>
+<script src="${base.contextPath}/common/code?HQM_MSA_STATUS=HQM_MSA_STATUS"></script>
+<script src="${base.contextPath}/common/code?HQM_MSA_RESULT=HQM_MSA_RESULT"></script>
+<script src="${base.contextPath}/common/code?HQM_MSA_CONTENT=HQM_MSA_ANALYSIS_CONTENT"></script>
+<script src="${base.contextPath}/common/code?HQM_NUM_MSA_CONTENT=HQM_NUM_MSA_CONTENT"></script>
+<script src="${base.contextPath}/common/code?HQM_MET_UOM=HQM_MET_UOM"></script>
+<script src="${base.contextPath}/common/code?HQM_DEFAULT_PLANT=HQM_DEFAULT_PLANT"></script>
+<script src="${base.contextPath}/common/code?HQM_INSIDE_CHECK_AGENCY=HQM_INSIDE_CHECK_AGENCY"></script>
+<script src="${base.contextPath}/common/code?HQM_MSA_FLAG=HQM_MSA_FLAG"></script>
+<script type="text/javascript">
+var RESULT = [];
+var viewModel = Hap.createGridViewModel("#grid");
+$(function(){
+	var parentData = window.parent.parentData;
+	viewModel.model.set('measureToolId',parentData[0].measureToolId);
+	viewModel.model.set('plantId',parentData[0].plantId);
+	viewModel.model.set('plantCode',parentData[0].plantCode);
+	$("#plantId").siblings('span').children('input').val(viewModel.model.plantCode)
+	viewModel.model.set('measureToolSupplier',parentData[0].measureToolSupplier);
+	viewModel.model.set('measureToolSupplierName',parentData[0].measureToolSupplierName);
+	$("#measureToolSupplier").siblings('span').children('input').val(viewModel.model.measureToolSupplierName)
+	viewModel.model.set('measureToolType',parentData[0].measureToolType);
+	viewModel.model.set('measureToolMaker',parentData[0].measureToolMaker);
+	viewModel.model.set('measureToolNum',parentData[0].measureToolNum);
+	viewModel.model.set('descriptions',parentData[0].descriptions);
+	viewModel.model.set('uom',parentData[0].uom);
+	viewModel.model.set('purchaseDate',parentData[0].purchaseDate);
+	viewModel.model.set('measurementAccuracy',parentData[0].measurementAccuracy);
+	viewModel.model.set('measuringRange',parentData[0].measuringRange);
+	viewModel.model.set('checkType',parentData[0].checkType);
+	viewModel.model.set('checkCycle',parentData[0].checkCycle);
+	viewModel.model.set('checkedBy',parentData[0].checkedBy);
+	viewModel.model.set('supplierName',parentData[0].supplierName);
+	$("#checkedBy").siblings('span').children('input').val(viewModel.model.supplierName)
+	viewModel.model.set('msaFlag',parentData[0].msaFlag);
+	viewModel.model.set('msaType',parentData[0].msaType);
+	viewModel.model.set('msaCycle',parentData[0].msaCycle);
+	viewModel.model.set('measureToolPositionStatus',parentData[0].measureToolPositionStatus);
+	viewModel.model.set('measureToolStatus',parentData[0].measureToolStatus);
+	viewModel.model.set('keyProcess',parentData[0].keyProcess);
+	viewModel.model.set('positionTitle',parentData[0].positionTitle);
+	$("#positionTitle").siblings('span').children('input').val(viewModel.model.positionTitle)
+	viewModel.model.set('judgementStandard',parentData[0].judgementStandard);
+	viewModel.model.set('msaContent',parentData[0].msaContent);
+	viewModel.model.set('useDepartment',parentData[0].useDepartment);
+	viewModel.model.set('name',parentData[0].name);
+	$("#useDepartment").siblings('span').children('span').children('input').val(viewModel.model.name)
+	viewModel.model.set('principal',parentData[0].principal);
+	viewModel.model.set('userName',parentData[0].userName);
+	$("#principal").siblings('span').children('input').val(viewModel.model.userName)
+	viewModel.model.set('enableFlag',parentData[0].enableFlag);
+	viewModel.model.set('nextCheckDate',parentData[0].nextCheckDate);
+	viewModel.model.set('msaResult',parentData[0].msaResult);
+	viewModel.model.set('msaStatus',parentData[0].msaStatus);
+	
+	if(parentData[0].msaFlag == 'Y'){
+		$("#msaType").attr("disabled","false").data('kendoComboBox').enable(true);
+		$("#msaContent").attr("disabled","false").data('kendoMultiSelect').enable(true);
+		$("#msaCycle").attr("disabled","false").data('kendoComboBox').enable(true);
+		
+		$("#msaType").siblings('span').children('input').attr("required",true);
+		$("#msaCycle").siblings('span').children('input').attr("required",true);
+		
+		$("#msaContent").attr("required",true)
+		$("#msaContent").siblings('div').css("background","#FFF8C5");
+		
+		$("#positionTitle").attr("disabled","false").data('kendoLov').enable(true);
+   		$("#positionTitle").attr("required",true)
+   		$("#positionTitle").parent('span').removeAttr("class")
+   		$("#positionTitle").parent('span').attr("class","k-widget k-lov k-header k-state-required")
+		
+		$("#judgementStandard").removeAttr("class");
+		$("#judgementStandard").attr("class","k-textbox");
+		$("#judgementStandard").removeAttr("disabled");
+		$("#judgementStandard").attr("required","required");
+		$("#judgementStandard").css("background","");
+		
+	}else{
+		$("#msaType").attr("disabled","true").data('kendoComboBox').enable(false);
+		$("#msaContent").attr("disabled","true").data('kendoMultiSelect').enable(false);
+		$("#msaCycle").attr("disabled","true").data('kendoComboBox').enable(false);
+		$("#positionTitle").attr("disabled","true").data('kendoLov').enable(false);
+		$("#judgementStandard").attr("disabled","true");
+		$("#judgementStandard").css("background","#EDEDED");
+		
+		$("#msaType").siblings('span').children('input').attr("required",false);
+		$("#msaCycle").siblings('span').children('input').attr("required",false);
+		
+
+		$("#msaContent").removeAttr("required");
+		$("#msaContent").css("background","");
+		$("#msaContent").siblings('div').css("background","#EDEDED");
+		
+		viewModel.model.set('positionTitle',null)
+		viewModel.model.set('judgementStandard',null)
+		viewModel.model.set('msaType',null)
+		viewModel.model.set('msaCycle',null)
+		
+		$("#msaContent").data("kendoMultiSelect").value("");
+	}
+	if(parentData[0].msaType == 1){
+		//计量型
+		RESULT = HQM_MSA_CONTENT
+	}else if(parentData[0].msaType == 2){
+		 //计数型
+		RESULT = HQM_NUM_MSA_CONTENT
+	}
+ 	$("#msa").empty();
+	//var str = '<input class="msaContent" id="msaContent">';
+	var str = '<select id="msaContent" class="msaContent" multiple="multiple">';
+	$("#msa").append(str);
+ 	$("#msaContent").kendoMultiSelect({
+        dataTextField: "meaning",
+         dataValueField: "value",
+        dataSource: RESULT
+    });
+	var multiselect = $("#msaContent").data("kendoMultiSelect");
+	$("#msaContent").attr("required",true)
+	$("#msaContent").siblings('div').css("background","#FFF8C5");
+	$("#msaContent").siblings('div').children('input').attr('style','width:100%')
+	if(parentData[0].msaType == 2){
+		//clear filter
+    	multiselect.dataSource.filter({});
+    	//set value
+     	multiselect.value([RESULT[0].value]);
+ 	} 
+	
+	var msaData = {
+			'measureToolId':viewModel.model.measureToolId
+	};
+	var msaArry = [];
+	$.ajax({
+   		url:"${base.contextPath}/hqm/measure/tool/msa/query",
+   		type: "POST",
+   		data: msaData,
+   		dataType: "json",
+   		success: function(data){
+   			if(data.success){
+   				var resultData = data.rows;
+   				for(var i=0;i<resultData.length;i++){
+   					msaArry.push(resultData[i].msaContent)
+   				}
+   				$("#msaContent").data("kendoMultiSelect").value(msaArry)
+   			}else{
+   				kendo.ui.showErrorDialog({
+						title: "提示",
+		    			message: data.message
+	    		})
+	    		return;
+   		 }
+   		}
+   	}) 
+})
+function formatDate(date) {
+	  var d = new Date(date),
+	    month = '' + (d.getMonth() + 1),
+	    day = '' + d.getDate(),
+	    year = d.getFullYear();
+	  if (month.length < 2) month = '0' + month;
+	  if (day.length < 2) day = '0' + day;
+	 
+	  return [year, month, day].join('-');
+} 
+function closeWindow(){
+	window.parent.$("#editWindow").data("kendoWindow").close();
+}
+function checkStr(str){
+	if(str == null || str === '' ||typeof(str) == "undefined"){
+		return false;
+	}
+	return true;
+}
+//保存
+viewModel.save = function(){
+	var validator = $("#mainForm").kendoValidator().data("kendoValidator");
+	if (validator.validate()) {
+		var msaContentList = $("#msaContent").data("kendoMultiSelect").value();
+		viewModel.model.set('msaContentList',JSON.stringify(msaContentList).replace(/\[|]/g,''));
+		viewModel.model.set('purchaseDate',formatDate(viewModel.model.purchaseDate));
+		$.ajax({
+	   		url:"${base.contextPath}/hqm/measure/tool/updateData",
+	   		type: "POST",
+	   		data: viewModel.model.toJSON(),
+	   		dataType: "json",
+	   		success: function(data){
+	   			if(data.success){
+	   				Hap.showToast({
+            			type:'success',
+            			"positionClass": "toast-bottom-right",
+            			message:'编辑成功',
+            			hideDuration:10*1000
+            		})
+	   				window.parent.viewModel.refresh();
+	   				window.parent.$("#editWindow").data("kendoWindow").close();
+	   			}else{
+	   				kendo.ui.showErrorDialog({
+							title: "提示",
+			    			message: data.message
+		    		})
+		    		return;
+	   		 }
+	   		}
+	   	})  
+	}
+
+}
+function clearNoNum(obj) { 
+    	obj.value = obj.value.replace(/[^\d]/g,""); //清除"数字"和"."以外的字符  
+    	if(obj.value.length > 5){
+    		obj.value = obj.value.substring(0,5)
+    	} 
+}
+</script>
+<body>
+<div id="page-content">
+   <div class="row">
+    <div class="pull-left" id="toolbar-btn" style="padding-bottom:10px;">
+    	<span class="btn btn-success k-grid-save-changes" style="float:left;margin-right:5px;"data-bind="click:save"><i class="fa fa-save" style="margin-right:3px;"></i><@spring.message "hap.save"/></span>
+        <span class="btn btn-primary fa fa-undo" style="float:left;margin-right:5px;" onClick="closeWindow()">&nbsp;<@spring.message "return.back"/></span>
+    </div>
+    <script>kendo.bind($('#toolbar-btn'), viewModel);</script>
+    <div class="pull-right" id="query-form" style="padding-bottom:10px;">
+           
+        <div style="clear:both"></div>
+    </div>
+    <script>kendo.bind($('#query-form'), viewModel);</script>
+    </div>
+    <div id="mainForm" class="panel-body" style="margin-right:5px;padding-bottom:10px;width: 100%;">
+	    
+	    <div class="row" style="margin-top: 5px;font-size:size:small">
+
+<!-- 			    是否需进行MSA -->
+			    <div class="col-sm-6">
+			    	<lable class="col-xs-5 control-lable" style="text-align:right;margin-top:2%"> 是否需进行MSA：</lable>
+			  		<div class="col-xs-7">
+		    	    	 <input id="msaFlag" style="width: 100%;" required data-bind="value:model.msaFlag">
+	    				 <script type="text/javascript">
+	    					kendo.bind($("#msaFlag"),viewModel)
+	    					$("#msaFlag").kendoComboBox({
+	    				        dataTextField: "meaning",
+	    				        dataValueField: "value",
+	    				        valuePrimitive: true,
+	    				        dataSource:HQM_MSA_FLAG,
+	    				        change:function(e){
+	    				        	if(this._old == 'Y'){
+	    				        		$("#msaType").attr("disabled","false").data('kendoComboBox').enable(true);
+	    				        		$("#msaContent").attr("disabled","false").data('kendoMultiSelect').enable(true);
+	    				        		$("#msaCycle").attr("disabled","false").data('kendoComboBox').enable(true);
+	    				        		
+	    				        		$("#msaType").siblings('span').children('input').attr("required",true);
+	    				        		$("#msaCycle").siblings('span').children('input').attr("required",true);
+	    				        		
+	    				        		$("#msaContent").attr("required",true)
+	    				        		$("#msaContent").siblings('div').css("background","#FFF8C5");
+	    				        		//$("#msaContent").siblings('span').children('input').css("background","#FFF8C5")
+	    				        		
+	    				        		$("#positionTitle").removeAttr("disabled");
+	    				        		$("#positionTitle").attr("required","required");
+	    				        		$("#positionTitle").css("background","");
+	    				        		
+	    				        		$("#judgementStandard").removeAttr("class");
+	    				        		$("#judgementStandard").attr("class","k-textbox");
+	    				        		$("#judgementStandard").removeAttr("disabled");
+	    				        		$("#judgementStandard").attr("required","required");
+	    				        		$("#judgementStandard").css("background","");
+	    				        		viewModel.model.set('measureToolStatus','2')
+	    				        		
+	    				        	}else{
+	    				        		$("#msaType").attr("disabled","true").data('kendoComboBox').enable(false);
+	    				        		$("#msaContent").attr("disabled","true").data('kendoMultiSelect').enable(false);
+	    				        		$("#msaCycle").attr("disabled","true").data('kendoComboBox').enable(false);
+	    				        		$("#positionTitle").attr("disabled","true");
+	    				        		$("#positionTitle").css("background","#EDEDED");
+	    				        		$("#judgementStandard").attr("disabled","true");
+	    				        		$("#judgementStandard").css("background","#EDEDED");
+	    				        		
+	    				        		$("#msaType").siblings('span').children('input').attr("required",false);
+	    				        		$("#msaCycle").siblings('span').children('input').attr("required",false);
+	    				        		
+
+	    				        		$("#msaContent").removeAttr("required");
+	    				        		$("#msaContent").css("background","");
+	    				        		$("#msaContent").siblings('div').css("background","#EDEDED");
+	    				        		
+	    				        		viewModel.model.set('measureToolStatus','1')
+	    				        		viewModel.model.set('positionTitle',null)
+	    				        		viewModel.model.set('judgementStandard',null)
+	    				        		viewModel.model.set('msaType',null)
+	    				        		viewModel.model.set('msaCycle',null)
+	    				        		
+	    				        		$("#msaContent").data("kendoMultiSelect").value("");
+	    				        	}
+	                            }
+	    					});
+	    				 </script>
+		    	     </div>
+			    </div>
+<!-- 			    测量系统类型 -->
+			    <div class="col-sm-6">
+			    	<lable class="col-xs-5 control-lable" style="text-align:right;margin-top:2%"> 测量系统类型：</lable>
+			  		<div class="col-xs-7">
+		    	    	 <input id="msaType" style="width: 100%;" disabled  data-bind="value:model.msaType">
+	    				 <script type="text/javascript">
+ 	    					kendo.bind($("#msaType"),viewModel)
+ 	    					$("#msaType").kendoComboBox({
+ 	    				        dataTextField: "meaning",
+	    				        dataValueField: "value",
+    				        valuePrimitive: true,
+	    				        dataSource:HQM_MSA_TYPE,
+    				        change:function(e){
+	    				        	
+	    				        	if(this._old == 1){
+	    				        		//计量型
+	    				        		RESULT = HQM_MSA_CONTENT
+	    				        		viewModel.model.set('judgementStandard',30)
+	    				        	}else if(this._old == 2){
+	    				        		 //计数型
+	    				        		RESULT = HQM_NUM_MSA_CONTENT
+	    				        		viewModel.model.set('judgementStandard',80)
+	    				        	}else{
+	    				        		viewModel.model.set('judgementStandard','')
+	    				        	}
+ 	    				        	$("#msa").empty();
+	    				        	//var str = '<input class="msaContent" id="msaContent">';
+	    				        	var str = '<select id="msaContent" class="msaContent" multiple="multiple">';
+	    				        	$("#msa").append(str);
+ 	    				        	$("#msaContent").kendoMultiSelect({
+							            dataTextField: "meaning",
+ 							            dataValueField: "value",
+							            dataSource: RESULT
+							        });
+	    				        	var multiselect = $("#msaContent").data("kendoMultiSelect");
+    				        		$("#msaContent").attr("required",true)
+    				        		$("#msaContent").siblings('div').css("background","#FFF8C5");
+    				        		$("#msaContent").siblings('div').children('input').attr('style','width:100%')
+    				        		if(this._old == 2){
+    				        			//clear filter
+		    				        	multiselect.dataSource.filter({});
+		    				        	//set value
+ 		    				        	multiselect.value([RESULT[0].value]);
+ 	    				        	} 
+ 	    				        }
+ 	    					});
+	    				 </script>
+		    	     </div>
+			    </div>
+	    </div>
+	    <div class="row" style="margin-top: 5px;font-size:size:small">
+	    		
+			    
+<!-- 			    msa周期 -->
+			    <div class="col-sm-6">
+			    	<lable class="col-xs-5 control-lable" style="text-align:right;margin-top:2%"> MSA周期：</lable>
+			  		<div class="col-xs-7">
+		    	    	 <input id="msaCycle" style="width: 100%;"  disabled data-bind="value:model.msaCycle">
+	    				 <script type="text/javascript">
+ 	    					kendo.bind($("#msaCycle"),viewModel)
+	    					$("#msaCycle").kendoComboBox({
+ 	    				        dataTextField: "meaning",
+	    				        dataValueField: "value",
+ 	    				        valuePrimitive: true,
+	    				        dataSource:HQM_MSA_CYCLE
+ 	    					});
+	    				 </script>
+		    	     </div>
+			    </div>
+			    <!-- 			    msa分析内容 -->
+			    <div class="col-sm-6" style="text-align:center;width:50%">
+	    			<lable class="col-xs-5 control-lable" style="text-align:right;margin-top:2%"> MSA分析内容：</lable>
+			  		<div id="msa" class="col-xs-7">
+<!-- 			  			<select class="msaContent"  multiple="multiple" disabled id="msaContent"></select> -->
+ 		    	    	 <input class="msaContent" disabled id="msaContent"> 
+	    				 <script type="text/javascript">
+ 						        $(".msaContent").kendoMultiSelect({
+ 						            dataTextField: "meaning",
+						            dataValueField: "value",
+ 						            dataSource: HQM_MSA_CONTENT
+ 						        }).data('kendoMultiSelect');
+ 						        $("#msaContent").siblings('div').css("background","#EDEDED");
+ 						        $("#msaContent").siblings('div').children('input').removeAttr('style')
+ 						        $("#msaContent").siblings('div').children('input').attr('style','width:100%')
+						</script>
+						
+		    		</div>    		
+	    		</div>
+	    </div>
+
+	    <div class="row" style="margin-top: 5px;font-size:size:small">
+	    <!-- 	    		判定标准 -->
+			    <div class="col-sm-6">
+			    	<lable class="col-xs-5 control-lable" style="text-align:right;margin-top:2%"> 判定标准：</lable>
+			  		<div class="col-xs-7">
+			  				 <input id="judgementStandard" onkeyup="clearNoNum(this)" onblur="clearNoNum(this)" onfocus="clearNoNum(this)" disabled style="width: 100%;" data-bind="value:model.judgementStandard"  data-role="maskedtextbox" type="text"/>
+			    	    	 <script>kendo.bind($("#judgementStandard"),viewModel);</script>
+			    	</div>
+			    </div>
+<!-- 	    		关键工序 -->
+			    <div class="col-sm-6">
+			    	<lable class="col-xs-5 control-lable" style="text-align:right;margin-top:2%"> 关键工序：</lable>
+			  		<div class="col-xs-7">
+			    	    	 <input id="keyProcess" style="width: 100%;" data-bind="value:model.keyProcess"  data-role="maskedtextbox" type="text"/>
+			    	    	 <script>kendo.bind($("#keyProcess"),viewModel);</script>
+			    	</div>
+			    </div>
+	    </div>
+	    <div class="row" style="margin-top: 5px;font-size:size:small">
+<!-- 			    岗位名称 -->
+			    <div class="col-sm-6">
+		    		<lable class="col-xs-5 control-lable" style="text-align:right;margin-top:2%"><@spring.message "measuretool.positionTitle"/>：</lable>
+			    	 <div class="col-xs-7" >
+	    	    	 <input id="positionTitle" style="width: 100%;"  data-bind="value:model.positionTitle"/>
+		    	    	 <script>
+		    	    	 		kendo.bind($("#positionTitle"),viewModel);
+			                	$("#positionTitle").kendoLov($.extend
+			                	    (<@lov"LOV_POSITION_ANALYS_REL"/>, {
+			                	        textField: 'positionTitle',
+			                	        valueField:'positionTitle',
+			                	        query: function(e){
+			                	        	//e.param['enableFlag'] = 'Y';
+			                	        }
+			                	}));
+			            </script> 
+	    	    	</div>
+<!-- 			    	<lable class="col-xs-5 control-lable" style="text-align:right;margin-top:2%"> 岗位名称：</lable> -->
+<!-- 			  		<div class="col-xs-7"> -->
+<!-- 			    	    	 <input id="positionTitle" style="width: 100%;"  data-bind="value:model.positionTitle"  data-role="maskedtextbox" type="text"/> -->
+<!-- 			    	    	 <script>kendo.bind($("#positionTitle"),viewModel);</script> -->
+<!-- 			    	</div> -->
+			    </div>
+
+	    		
+	    </div>
+
+    </div>
+</div>
+</body>
+</html>

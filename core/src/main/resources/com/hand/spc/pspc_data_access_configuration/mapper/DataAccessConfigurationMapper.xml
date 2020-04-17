@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.spc.pspc_data_access_configuration.mapper.DataAccessConfigurationMapper">
+    <resultMap id="BaseResultMap" type="com.hand.spc.pspc_data_access_configuration.dto.DataAccessConfiguration">
+        <result column="data_access_configuration_id" property="dataAccessConfigurationId" jdbcType="DECIMAL" />
+        <result column="tenant_id" property="tenantId" jdbcType="DECIMAL" />
+        <result column="site_id" property="siteId" jdbcType="DECIMAL" />
+        <result column="ce_group_id" property="ceGroupId" jdbcType="DECIMAL" />
+        <result column="attachment_group_id" property="attachmentGroupId" jdbcType="DECIMAL" />
+        <result column="ce_parameter_id" property="ceParameterId" jdbcType="DECIMAL" />
+        <result column="configuration_status" property="configurationStatus" jdbcType="VARCHAR" />
+        <result column="time_sampling" property="timeSampling" jdbcType="DECIMAL" />
+        <result column="isometric_sampling" property="isometricSampling" jdbcType="DECIMAL" />
+        <result column="effective_type" property="effectiveType" jdbcType="VARCHAR" />
+        <result column="sampling_position" property="samplingPosition" jdbcType="VARCHAR" />
+        <result column="data_upper_limit" property="dataUpperLimit" jdbcType="DECIMAL" />
+        <result column="data_lower_limit" property="dataLowerLimit" jdbcType="DECIMAL" />
+        <result column="CID" property="cid" jdbcType="DECIMAL" />
+
+        <result column="ce_group" property="ceGroup" jdbcType="VARCHAR" />
+        <result column="attachment_group" property="attachmentGroup" jdbcType="VARCHAR" />
+        <result column="ce_parameter" property="ceParameter" jdbcType="VARCHAR" />
+
+    </resultMap>
+    <select id="selectData" resultMap="BaseResultMap">
+        SELECT
+            pdac.*,pcg.ce_group,pcp.ce_parameter,pag.attachment_group_description as attachment_group
+        FROM
+            pspc_data_access_configuration pdac
+        LEFT JOIN pspc_ce_group pcg ON pcg.ce_group_id = pdac.ce_group_id
+        LEFT JOIN pspc_ce_parameter pcp ON pcp.ce_parameter_id = pdac.ce_parameter_id
+        LEFT JOIN pspc_attachment_group pag ON pag.attachment_group_id = pdac.attachment_group_id
+        WHERE
+            1 = 1
+        <if test="ceGroupId!=null">
+            and pdac.ce_group_id=#{ceGroupId}
+        </if>
+        <if test="attachmentGroupId!=null">
+            and pdac.attachment_group_id=#{attachmentGroupId}
+        </if>
+        <if test="ceParameterId!=null">
+            and pdac.ce_parameter_id=#{ceParameterId}
+        </if>
+    </select>
+
+
+</mapper>

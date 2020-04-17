@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_msa_check_plan.mapper.MetCheckPlanLineMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_msa_check_plan.dto.MetCheckPlanLine">
+        <result column="CHECK_PLAN_LINE_ID" property="checkPlanLineId" jdbcType="DECIMAL" />
+        <result column="CHECK_PLAN_ID" property="checkPlanId" jdbcType="DECIMAL" />
+        <result column="MEASURETOOL_ID" property="measuretoolId" jdbcType="DECIMAL" />
+        <result column="CHECK_RESULT" property="checkResult" jdbcType="VARCHAR" />
+        <result column="CHECK_DATE" property="checkDate" jdbcType="DATE" />
+        <result column="DISQUALIFICATION_REASON" property="disqualificationReason" jdbcType="VARCHAR" />
+        <result column="ATTACHMENT_ADDRESS" property="attachmentAddress" jdbcType="VARCHAR" />
+        <result column="MEASURETOOL_NUM" property="measuretoolNum" jdbcType="VARCHAR" />
+        <result column="MEASURETOOL_NAME" property="measuretoolName" jdbcType="VARCHAR" />
+        
+        <!-- 业务字段 -->
+        <result column="USER_NAME" property="userName" jdbcType="VARCHAR" />
+        <result column="MEASURETOOL_TYPE" property="measuretoolType" jdbcType="VARCHAR" />
+    </resultMap>
+    <!-- 校验历史查询 -->
+    <select id="selectCheckPlanLine" resultMap="BaseResultMap" parameterType="com.hand.hqm.hqm_msa_check_plan.dto.MetCheckPlanLine">
+            select 
+            v.* 
+            from (
+            select        
+                 hmcpl.check_plan_line_id,
+		         hmcpl.check_plan_id,
+		         hmcpl.measuretool_id,
+		         (select hmt.measure_tool_num from HQM_MEASURE_TOOL hmt where hmt.measure_tool_id=hmcpl.measuretool_id) as measuretool_num,
+		         (select hmt.descriptions from HQM_MEASURE_TOOL hmt where hmt.measure_tool_id=hmcpl.measuretool_id) as measuretool_name,
+		         hmcpl.check_result,
+		         hmcpl.check_date,
+		         hmcpl.disqualification_reason,
+		         hmcpl.attachment_address,
+		         hmcpl.created_by,
+		         hmcpl.creation_date,
+		         hmcpl.last_updated_by,
+		         hmcpl.last_update_date
+           from HQM_MET_CHECK_PLAN_LINE hmcpl
+           where hmcpl.check_plan_id=#{checkPlanId})v
+           where 1=1
+           <if test="measuretoolNum != null and measuretoolNum != ''">
+                and v.measuretool_num =#{measuretoolNum}
+            </if>
+            <if test="checkResult != null and checkResult != ''">
+                and v.check_result =#{checkResult}
+            </if>
+            <if test="checkPlanLineId != null and checkPlanLineId != ''">
+                and v.check_plan_line_id =#{checkPlanLineId}
+            </if>
+            order by v.check_plan_line_id 
+           
+    </select>
+	<!-- 校验历史查询 -->
+	<select id="query" resultMap="BaseResultMap" parameterType="com.hand.hqm.hqm_msa_check_plan.dto.MetCheckPlanLine">
+		select t.check_plan_line_id,
+		       t.check_plan_id,
+		       t.measuretool_id,
+		       t.check_date,
+		       t.last_updated_by,
+		       t.check_result,
+		       t.disqualification_reason,
+		       t.attachment_address,
+		       su.user_name,
+		       hmt.measure_tool_num MEASURETOOL_NUM,
+		       hmt.measure_tool_type MEASURETOOL_TYPE,
+		       hmt.descriptions MEASURETOOL_NAME
+		from HQM_MET_CHECK_PLAN_LINE t
+		left join sys_user su on t.last_updated_by = su.user_id
+		left join hqm_measure_tool hmt on t.measuretool_id = hmt.measure_tool_id
+		where 1=1
+		<if test="measuretoolId != null">
+			and t.measuretool_id =#{measuretoolId}
+		</if>
+	</select>
+</mapper>

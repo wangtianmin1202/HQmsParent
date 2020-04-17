@@ -1,0 +1,870 @@
+<#include "../include/header.html">
+<script src="${base.contextPath}/common/code?INDIVISUATION_SYMBOL=INDIVISUATION_SYMBOL"></script>
+<script src="${base.contextPath}/common/code?INDIVIDUATION_OPERATION=INDIVIDUATION_OPERATION"></script>
+
+<script>
+    var templateName;
+    var jsondata;
+    var functionCode = "${RequestParameters.functionCode!'-1'}";
+    var individuationValue = "${RequestParameters.individuationValue!'-1'}";
+</script>
+
+<body>
+<script>
+    /*
+    重置值类型框
+     */
+    function resetChildNode(parentNode,name,more) {
+        var div = document.getElementById(parentNode);
+        while (div.hasChildNodes()) //当div下还存在子节点时 循环继续
+        {
+            div.removeChild(div.firstChild);
+        }
+
+        var input1 = document.createElement('input');
+        input1.setAttribute('id', name);
+        input1.setAttribute('type', 'text');
+        input1.setAttribute('data-bind', 'value:model.' + name);
+        if(more){
+            input1.setAttribute('class', 'k-textbox');
+            input1.setAttribute('autocomplete', 'off');
+        }
+
+        var span = document.getElementById(parentNode);
+        span.insertBefore(input1, null);
+    }
+
+    function onChange(columnid,operationid,valueid,spanid) {
+        var individuationData;
+        var id = $("#" + columnid).val();
+
+        $.ajax({
+            url: '${base.contextPath}/sys/individuation/query/query?individuationId=' + id,
+            type: 'POST',
+            jsonType: "json",
+            async: false,
+            success: function (data) {
+                if (data.success) {
+                    individuationData = data.rows[0];
+                }
+            }
+        });
+
+        if (individuationData.columnType == "DATE" || individuationData.columnType == "TEXT" || individuationData.columnType == "NUM") {
+            $("#" + operationid).kendoDropDownList({
+                dataTextField: "meaning",
+                dataValueField: "value",
+                dataSource: {
+                    transport: {
+                        read: {
+                            url: _basePath + '/sys/individuation/query/query/code?tag=' + individuationData.columnType,
+                            dataType: "json"
+                        }
+                    },
+                    schema: {
+                        data: 'rows'
+                    }
+                }
+            });
+        } else {
+            $("#" + operationid).kendoDropDownList({
+                dataTextField: "meaning",
+                dataValueField: "value",
+                valuePrimitive: true,
+                dataSource: INDIVIDUATION_OPERATION,
+                index: 1
+            });
+        }
+
+        if (individuationData.columnType == "DATE") {
+            resetChildNode(spanid,valueid,false);
+
+            $("#" +valueid).kendoDateTimePicker({
+                format: "yyyy-MM-dd HH:mm:ss",
+                change: function () {
+                    viewModel.model.receiveDate = this.value().format("yyyy-MM-dd hh:mm:ss");
+                }
+            });
+        } else if (individuationData.columnType == "NUM") {
+            resetChildNode(spanid,valueid,false);
+
+            $("#" +valueid).kendoNumericTextBox();
+        } else {
+            resetChildNode(spanid,valueid,true);
+        }
+    }
+</script>
+
+<script>
+    //数据绑定
+    function setData() {
+        jsondata = {
+            "functionCode":functionCode,
+            "templateName": templateName,
+            "columnCode1": column11.value(),
+            "operationCode1": column12.value(),
+            "value1": $("#column13").val(),
+
+            "logicCode1": column21.value(),
+            "columnCode2": column22.value(),
+            "operationCode2": column23.value(),
+            "value2": $("#column24").val(),
+
+            "logicCode2": column31.value(),
+            "columnCode3": column32.value(),
+            "operationCode3": column33.value(),
+            "value3": $("#column34").val(),
+
+            "logicCode3": column41.value(),
+            "columnCode4": column42.value(),
+            "operationCode4": column43.value(),
+            "value4": $("#column44").val(),
+
+            "logicCode4": column25.value(),
+
+            "columnCode5": column14.value(),
+            "operationCode5": column15.value(),
+            "value5": $("#column16").val(),
+
+            "logicCode5": column26.value(),
+            "columnCode6": column27.value(),
+            "operationCode6": column28.value(),
+            "value6": $("#column29").val(),
+
+            "logicCode6": column36.value(),
+            "columnCode7": column37.value(),
+            "operationCode7": column38.value(),
+            "value7": $("#column39").val(),
+
+            "logicCode7": column46.value(),
+            "columnCode8": column47.value(),
+            "operationCode8": column48.value(),
+            "value8": $("#column49").val()
+        }
+    }
+
+    //保存
+    function onSave() {
+        var editDialog = $("#confirmDialog").kendoWindow({
+            width: 400,
+            height: 60,
+            contentHeight: 'auto',
+            title: false,
+            visible: false,
+            modal: true,
+        }).data("kendoWindow");
+        editDialog.center().open();
+    }
+
+    //保存-确定
+    function confirmWin() {
+        templateName = $("#templateName").val();
+
+        setData();
+
+        $.ajax({
+            url: "${base.contextPath}/sys/individuation/query/query/save",
+            type: "POST",
+            data: jsondata,
+            jsonType: "json",
+        })
+
+        $("#confirmDialog").data("kendoWindow").close();
+    }
+
+    //保存-关闭
+    function closeWin() {
+        $("#confirmDialog").data("kendoWindow").close();
+    }
+
+    //重置
+    function onReset() {
+        $("#column13").val("");
+        $("#column16").val("");
+        $("#column24").val("");
+        $("#column29").val("");
+        $("#column34").val("");
+        $("#column39").val("");
+        $("#column44").val("");
+        $("#column49").val("");
+    }
+
+    //查询
+    function onQuery() {
+        var sql;
+        setData();
+
+        $.ajax({
+            url: "${base.contextPath}/sys/individuation/query/query/onquery",
+            type: "POST",
+            data: jsondata,
+            jsonType: "json",
+            async:false,
+            success:function (data) {
+                sql=data;
+            }
+        })
+
+        window.parent.individuationSql=sql;
+
+        window.parent.$("#individuationWindow").data("kendoWindow").close();
+
+    }
+
+</script>
+
+<script>
+    var viewModel = kendo.observable({
+        model: {},
+        save: function (e) {
+        }
+    });
+</script>
+
+<div class="page-content">
+
+    <form id="mainform" class="form-horizontal" method="post" enctype="application/json;charset=UTF-8">
+        <div class="row" style="margin-left:5px;">
+            <div class="col-sm-12">
+                <div class="form-group">
+                    <div class="col-sm-1">
+                        <label class=" control-label"><@spring.message "individuationquery.firstgroup"/></label>
+                    </div>
+
+                    <div class="col-sm-1">
+                        <span>
+                            <input id="column11" style="width:100%" data-bind="value:model.column11" data-role="maskedtextbox">
+                            <script>
+                                var column11 =$("#column11").kendoDropDownList({
+                                    dataTextField: "columnDesc",
+                                    dataValueField: "individuationId",
+                                    change:function(e){
+                                        onChange("column11","column12","column13","span13");
+                                    },
+                                    dataSource: {
+                                        transport: {
+                                            read: {
+                                                url: _basePath + '/sys/individuation/query/query/function?code=' + functionCode,
+                                                dataType: "json"
+                                            }
+                                        },
+                                        schema: {
+                                            data: 'rows'
+                                        }
+                                    }
+                                }).data("kendoDropDownList");
+                            </script>
+                        </span>
+                    </div>
+
+                    <div class="col-sm-1">
+                        <span>
+                            <input id="column12" style="width:100%" data-bind="value:model.column12"
+                                   data-role="maskedtextbox">
+                            <script>
+                                var column12 =$("#column12").kendoDropDownList({
+                                    dataTextField: "meaning",
+                                    dataValueField: "value",
+                                    valuePrimitive: true,
+                                    dataSource: INDIVIDUATION_OPERATION
+                                }).data("kendoDropDownList");
+                            </script>
+                        </span>
+                    </div>
+
+                    <div id="div13" class="col-sm-2">
+                        <span id="span13">
+                            <input id="column13" type="text" class="k-textbox" autocomplete="off"
+                                   data-bind="value:model.column13">
+                        </span>
+                    </div>
+
+                    <div class="col-sm-2"></div>
+
+                    <div class="col-sm-1">
+                        <label class=" control-label"><@spring.message "individuationquery.secondgroup"/></label>
+                    </div>
+
+                    <div class="col-sm-1">
+                        <span>
+                            <input id="column14" style="width:100%" data-bind="value:model.column14"
+                                   data-role="maskedtextbox">
+                            <script>
+                                var column14 =$("#column14").kendoDropDownList({
+                                    dataTextField: "columnDesc",
+                                    dataValueField: "individuationId",
+                                    change:function(e){
+                                        onChange("column14","column15","column16","span16");
+                                    },
+                                    dataSource: {
+                                        transport: {
+                                            read: {
+                                                url: _basePath + '/sys/individuation/query/query/function?code=' + functionCode,
+                                                dataType: "json"
+                                            }
+                                        },
+                                        schema: {
+                                            data: 'rows'
+                                        }
+                                    }
+                                }).data("kendoDropDownList");
+                            </script>
+                        </span>
+                    </div>
+
+                    <div class="col-sm-1">
+                        <span>
+                            <input id="column15" style="width:100%" data-bind="value:model.column15"
+                                   data-role="maskedtextbox">
+                            <script>
+                                var column15= $("#column15").kendoDropDownList({
+                                    dataTextField: "meaning",
+                                    dataValueField: "value",
+                                    valuePrimitive: true,
+                                    dataSource: INDIVIDUATION_OPERATION
+                                }).data("kendoDropDownList");
+                            </script>
+                        </span>
+                    </div>
+
+                    <div id="div16" class="col-sm-2">
+                        <span id="span16">
+                            <input id="column16" type="text" class="k-textbox" autocomplete="off"
+                                   data-bind="value:model.column16">
+                        </span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="col-sm-1">
+                        <span>
+                            <input id="column21" style="width:100%" data-bind="value:model.column21"
+                                   data-role="maskedtextbox">
+                            <script>
+                                var column21=$("#column21").kendoDropDownList({
+                                    dataTextField: "meaning",
+                                    dataValueField: "value",
+                                    valuePrimitive: true,
+                                    dataSource: INDIVISUATION_SYMBOL,
+                                    index: 1
+                                }).data("kendoDropDownList");
+                            </script>
+                        </span>
+                    </div>
+
+                    <div class="col-sm-1">
+                        <span>
+                            <input id="column22" style="width:100%" data-bind="value:model.column22"
+                                   data-role="maskedtextbox">
+                            <script>
+                                var column22=$("#column22").kendoDropDownList({
+                                    dataTextField: "columnDesc",
+                                    dataValueField: "individuationId",
+                                    change:function(e){
+                                        onChange("column22","column23","column24","span24");
+                                    },
+                                    dataSource: {
+                                        transport: {
+                                            read: {
+                                                url: _basePath + '/sys/individuation/query/query/function?code=' + functionCode,
+                                                dataType: "json"
+                                            }
+                                        },
+                                        schema: {
+                                            data: 'rows'
+                                        }
+                                    }
+                                }).data("kendoDropDownList");
+                            </script>
+                        </span>
+                    </div>
+
+                    <div class="col-sm-1">
+                        <span>
+                            <input id="column23" style="width:100%" data-bind="value:model.column23"
+                                   data-role="maskedtextbox">
+                            <script>
+                                var column23=$("#column23").kendoDropDownList({
+                                    dataTextField: "meaning",
+                                    dataValueField: "value",
+                                    valuePrimitive: true,
+                                    dataSource: INDIVIDUATION_OPERATION
+                                }).data("kendoDropDownList");
+                            </script>
+                        </span>
+                    </div>
+
+                    <div id="div24" class="col-sm-2">
+                        <span id="span24">
+                            <input id="column24" type="text" class="k-textbox" autocomplete="off"
+                                   data-bind="value:model.column24">
+                        </span>
+                    </div>
+
+                    <div class="col-sm-2">
+                        <span>
+                            <input id="column25" style="width:50%" data-bind="value:model.column25"
+                                   data-role="maskedtextbox">
+                            <script>
+                                var column25=$("#column25").kendoDropDownList({
+                                    dataTextField: "meaning",
+                                    dataValueField: "value",
+                                    valuePrimitive: true,
+                                    dataSource: INDIVISUATION_SYMBOL,
+                                    index: 1
+                                }).data("kendoDropDownList");
+                            </script>
+                        </span>
+                    </div>
+
+                    <div class="col-sm-1">
+                        <span>
+                            <input id="column26" style="width:100%" data-bind="value:model.column26"
+                                   data-role="maskedtextbox">
+                            <script>
+                                var column26=$("#column26").kendoDropDownList({
+                                    dataTextField: "meaning",
+                                    dataValueField: "value",
+                                    valuePrimitive: true,
+                                    dataSource: INDIVISUATION_SYMBOL,
+                                    index: 1
+                                }).data("kendoDropDownList");
+                            </script>
+                        </span>
+                    </div>
+
+                    <div class="col-sm-1">
+                        <span>
+                            <input id="column27" style="width:100%" data-bind="value:model.column27"
+                                   data-role="maskedtextbox">
+                            <script>
+                                var column27=$("#column27").kendoDropDownList({
+                                    dataTextField: "columnDesc",
+                                    dataValueField: "individuationId",
+                                    change:function(e){
+                                        onChange("column27","column28","column29","span29");
+                                    },
+                                    dataSource: {
+                                        transport: {
+                                            read: {
+                                                url: _basePath + '/sys/individuation/query/query/function?code=' + functionCode,
+                                                dataType: "json"
+                                            }
+                                        },
+                                        schema: {
+                                            data: 'rows'
+                                        }
+                                    }
+                                }).data("kendoDropDownList");
+                            </script>
+                        </span>
+                    </div>
+
+                    <div class="col-sm-1">
+                        <span>
+                            <input id="column28" style="width:100%" data-bind="value:model.column28"
+                                   data-role="maskedtextbox">
+                            <script>
+                                var column28=$("#column28").kendoDropDownList({
+                                    dataTextField: "meaning",
+                                    dataValueField: "value",
+                                    valuePrimitive: true,
+                                    dataSource: INDIVIDUATION_OPERATION
+                                }).data("kendoDropDownList");
+                            </script>
+                        </span>
+                    </div>
+
+                    <div id="div29" class="col-sm-2">
+                        <span id="span29">
+                            <input id="column29" type="text" class="k-textbox" autocomplete="off"
+                                   data-bind="value:model.column29">
+                        </span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="col-sm-1">
+                        <span>
+                            <input id="column31" style="width:100%" data-bind="value:model.column31"
+                                   data-role="maskedtextbox">
+                            <script>
+                                var column31=$("#column31").kendoDropDownList({
+                                    dataTextField: "meaning",
+                                    dataValueField: "value",
+                                    valuePrimitive: true,
+                                    dataSource: INDIVISUATION_SYMBOL,
+                                    index: 1
+                                }).data("kendoDropDownList");
+                            </script>
+                        </span>
+                    </div>
+
+                    <div class="col-sm-1">
+                        <span>
+                            <input id="column32" style="width:100%" data-bind="value:model.column32"
+                                   data-role="maskedtextbox">
+                            <script>
+                                var column32=$("#column32").kendoDropDownList({
+                                    dataTextField: "columnDesc",
+                                    dataValueField: "individuationId",
+                                    change:function(e){
+                                        onChange("column32","column33","column34","span34");
+                                    },
+                                    dataSource: {
+                                        transport: {
+                                            read: {
+                                                url: _basePath + '/sys/individuation/query/query/function?code=' + functionCode,
+                                                dataType: "json"
+                                            }
+                                        },
+                                        schema: {
+                                            data: 'rows'
+                                        }
+                                    }
+                                }).data("kendoDropDownList");
+                            </script>
+                        </span>
+                    </div>
+
+                    <div class="col-sm-1">
+                        <span>
+                            <input id="column33" style="width:100%" data-bind="value:model.column33"
+                                   data-role="maskedtextbox">
+                            <script>
+                                var column33=$("#column33").kendoDropDownList({
+                                    dataTextField: "meaning",
+                                    dataValueField: "value",
+                                    valuePrimitive: true,
+                                    dataSource: INDIVIDUATION_OPERATION
+                                }).data("kendoDropDownList");
+                            </script>
+                        </span>
+                    </div>
+
+                    <div id="div34" class="col-sm-2">
+                        <span id="span34">
+                            <input id="column34" type="text" class="k-textbox" autocomplete="off"
+                                   data-bind="value:model.column34">
+                        </span>
+                    </div>
+
+                    <div class="col-sm-2">
+                    </div>
+
+                    <div class="col-sm-1">
+                        <span>
+                            <input id="column36" style="width:100%" data-bind="value:model.column36"
+                                   data-role="maskedtextbox">
+                            <script>
+                                var column36=$("#column36").kendoDropDownList({
+                                    dataTextField: "meaning",
+                                    dataValueField: "value",
+                                    valuePrimitive: true,
+                                    dataSource: INDIVISUATION_SYMBOL,
+                                    index: 1
+                                }).data("kendoDropDownList");
+                            </script>
+                        </span>
+                    </div>
+
+                    <div class="col-sm-1">
+                        <span>
+                            <input id="column37" style="width:100%" data-bind="value:model.column37"
+                                   data-role="maskedtextbox">
+                            <script>
+                                var column37=$("#column37").kendoDropDownList({
+                                    dataTextField: "columnDesc",
+                                    dataValueField: "individuationId",
+                                    change:function(e){
+                                        onChange("column37","column38","column39","span39");
+                                    },
+                                    dataSource: {
+                                        transport: {
+                                            read: {
+                                                url: _basePath + '/sys/individuation/query/query/function?code='+ functionCode,
+                                                dataType: "json"
+                                            }
+                                        },
+                                        schema: {
+                                            data: 'rows'
+                                        }
+                                    }
+                                }).data("kendoDropDownList");
+                            </script>
+                        </span>
+                    </div>
+
+                    <div class="col-sm-1">
+                        <span>
+                            <input id="column38" style="width:100%" data-bind="value:model.column38"
+                                   data-role="maskedtextbox">
+                            <script>
+                                var column38=$("#column38").kendoDropDownList({
+                                    dataTextField: "meaning",
+                                    dataValueField: "value",
+                                    valuePrimitive: true,
+                                    dataSource: INDIVIDUATION_OPERATION
+                                }).data("kendoDropDownList");
+                            </script>
+                        </span>
+                    </div>
+
+                    <div id="div39" class="col-sm-2">
+                        <span id="span39">
+                            <input id="column39" type="text" class="k-textbox" autocomplete="off"
+                                   data-bind="value:model.column39">
+                        </span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="col-sm-1">
+                        <span>
+                            <input id="column41" style="width:100%" data-bind="value:model.column41"
+                                   data-role="maskedtextbox">
+                            <script>
+                                var column41=$("#column41").kendoDropDownList({
+                                    dataTextField: "meaning",
+                                    dataValueField: "value",
+                                    valuePrimitive: true,
+                                    dataSource: INDIVISUATION_SYMBOL,
+                                    index:1
+                                }).data("kendoDropDownList");
+                            </script>
+                        </span>
+                    </div>
+
+                    <div class="col-sm-1">
+                        <span>
+                            <input id="column42" style="width:100%" data-bind="value:model.column42"
+                                   data-role="maskedtextbox">
+                            <script>
+                                var column42=$("#column42").kendoDropDownList({
+                                    dataTextField: "columnDesc",
+                                    dataValueField: "individuationId",
+                                    change:function(e){
+                                        onChange("column42","column43","column44","span44");
+                                    },
+                                    dataSource: {
+                                        transport: {
+                                            read: {
+                                                url: _basePath + '/sys/individuation/query/query/function?code='+ functionCode,
+                                                dataType: "json"
+                                            }
+                                        },
+                                        schema: {
+                                            data: 'rows'
+                                        }
+                                    }
+                                }).data("kendoDropDownList");
+                            </script>
+                        </span>
+                    </div>
+
+                    <div class="col-sm-1">
+                        <span>
+                            <input id="column43" style="width:100%" data-bind="value:model.column43"
+                                   data-role="maskedtextbox">
+                            <script>
+                                var column43=$("#column43").kendoDropDownList({
+                                    dataTextField: "meaning",
+                                    dataValueField: "value",
+                                    valuePrimitive: true,
+                                    dataSource: INDIVIDUATION_OPERATION
+                                }).data("kendoDropDownList");
+                            </script>
+                        </span>
+                    </div>
+
+                    <div id="div44" class="col-sm-2">
+                        <span id="span44">
+                            <input id="column44" type="text" class="k-textbox" autocomplete="off"
+                                   data-bind="value:model.column44">
+                        </span>
+                    </div>
+
+                    <div class="col-sm-2">
+                    </div>
+
+                    <div class="col-sm-1">
+                        <span>
+                            <input id="column46" style="width:100%" data-bind="value:model.column46"
+                                   data-role="maskedtextbox">
+                            <script>
+                                var column46=$("#column46").kendoDropDownList({
+                                    dataTextField: "meaning",
+                                    dataValueField: "value",
+                                    valuePrimitive: true,
+                                    dataSource: INDIVISUATION_SYMBOL,
+                                    index:1
+                                }).data("kendoDropDownList");
+                            </script>
+                        </span>
+                    </div>
+
+                    <div class="col-sm-1">
+                        <span>
+                            <input id="column47" style="width:100%" data-bind="value:model.column47"
+                                   data-role="maskedtextbox">
+                            <script>
+                                var column47=$("#column47").kendoDropDownList({
+                                    dataTextField: "columnDesc",
+                                    dataValueField: "individuationId",
+                                    change:function(e){
+                                        onChange("column47","column48","column49","span49");
+                                    },
+                                    dataSource: {
+                                        transport: {
+                                            read: {
+                                                url: _basePath + '/sys/individuation/query/query/function?code='+ functionCode,
+                                                dataType: "json"
+                                            }
+                                        },
+                                        schema: {
+                                            data: 'rows'
+                                        }
+                                    }
+                                }).data("kendoDropDownList");
+                            </script>
+                        </span>
+                    </div>
+
+                    <div class="col-sm-1">
+                        <span>
+                            <input id="column48" style="width:100%" data-bind="value:model.column48"
+                                   data-role="maskedtextbox">
+                            <script>
+                                var column48=$("#column48").kendoDropDownList({
+                                    dataTextField: "meaning",
+                                    dataValueField: "value",
+                                    valuePrimitive: true,
+                                    dataSource: INDIVIDUATION_OPERATION
+                                }).data("kendoDropDownList");
+                            </script>
+                        </span>
+                    </div>
+
+                    <div id="div49" class="col-sm-2">
+                        <span id="span49">
+                            <input id="column49" type="text" class="k-textbox" autocomplete="off"
+                                   data-bind="value:model.column49">
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<div id="mainBottom">
+    <div class="row" style="margin-top:10px;">
+
+        <div class="col-md-5 col-md-push-4" >
+            <span onclick="onQuery()" class="btn btn-success k-grid-search-changes"><@spring.message "hap.query"/></span>
+        </div>
+
+        <div class="col-md-2">
+            <span onclick="onSave()" class="btn btn-success k-grid-search-changes" style="float:left;margin-right:5px;"><@spring.message "hap.save"/></span>
+        </div>
+
+        <div class="col-md-5 col-md-pull-1">
+            <span onclick="onReset()" class="btn btn-success k-grid-undo-changes" style="float:left;margin-right:5px;"><@spring.message "hap.reset"/></span>
+        </div>
+    </div>
+</div>
+
+
+<!-- 确认框 -->
+<div id="confirmDialog" style="display: none;padding:0px"
+     class="modal-content k-dialog-confirm k-window-content k-content" data-role="draggable"
+     style="min-width: 90px; min-height: 50px; width: 400px; display: block; touch-action: none; left: 603px; top: 330.5px; z-index: 10003; opacity: 1; transform: scale(1);">
+    <div class="modal-content k-dialog-confirm k-window-content k-content" data-role="dialog" tabindex="0" style="">
+        <div class="modal-body" >
+            <table>
+                <tbody>
+                <tr>
+                    <td>
+                        <span id="confirmMsg">
+                            <input id="templateName" type="text" class="k-textbox" autocomplete="off"
+                                   style="width: 60%">
+                        </span>
+                        <span>
+                            <button class="btn btn-primary" onClick="confirmWin()"><span><@spring.message "hap.ok"/></span>
+                            </button>
+                        </span>
+                        <span>
+                            <button class="btn btn-default" onClick="closeWin()"><span><@spring.message "hap.cancel"/></span>
+                            </button>
+                        </span>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    kendo.bind($('#mainform'), viewModel);
+    kendo.bind($('#mainBottom'),viewModel);
+
+    <!-- 数据绑定 -->
+    function bindData(){
+        if(individuationValue !=null){
+            var conditionList =individuationValue.split(",");
+            if(conditionList.length>0){
+                $("#column11").val(conditionList[0]);
+                $("#column12").val(conditionList[1]);
+                $("#column13").val(conditionList[2]);
+                $("#column21").val(conditionList[3]);
+                $("#column22").val(conditionList[4]);
+                $("#column23").val(conditionList[5]);
+                $("#column24").val(conditionList[6]);
+                $("#column31").val(conditionList[7]);
+                $("#column32").val(conditionList[8]);
+                $("#column33").val(conditionList[9]);
+                $("#column34").val(conditionList[10]);
+                $("#column41").val(conditionList[11]);
+                $("#column42").val(conditionList[12]);
+                $("#column43").val(conditionList[13]);
+                $("#column44").val(conditionList[14]);
+
+                $("#column25").val(conditionList[15]);
+
+                $("#column14").val(conditionList[16]);
+                $("#column15").val(conditionList[17]);
+                $("#column16").val(conditionList[18]);
+                $("#column26").val(conditionList[19]);
+                $("#column27").val(conditionList[20]);
+                $("#column28").val(conditionList[21]);
+                $("#column29").val(conditionList[22]);
+                $("#column36").val(conditionList[23]);
+                $("#column37").val(conditionList[24]);
+                $("#column38").val(conditionList[25]);
+                $("#column39").val(conditionList[26]);
+                $("#column46").val(conditionList[27]);
+                $("#column47").val(conditionList[28]);
+                $("#column48").val(conditionList[29]);
+                $("#column49").val(conditionList[30]);
+            }
+        }
+    }
+
+    <!-- 初始化组件 -->
+    $(function () {
+        onChange("column11","column12","column13","span13");
+        onChange("column14","column15","column16","span16");
+        onChange("column22","column23","column24","span24");
+        onChange("column27","column28","column29","span29");
+        onChange("column32","column33","column34","span34");
+        onChange("column37","column38","column39","span39");
+        onChange("column42","column43","column44","span44");
+        onChange("column47","column48","column49","span49");
+        bindData();
+    });
+
+</script>
+
+</body>
+</html>

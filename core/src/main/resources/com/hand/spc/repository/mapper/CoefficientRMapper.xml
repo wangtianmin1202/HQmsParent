@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.spc.repository.mapper.CoefficientRMapper">
+	<resultMap id="BaseResultMap" type="com.hand.spc.repository.dto.CoefficientR">
+        <result column="COEFFICIENT_ID" property="coefficientId" jdbcType="DECIMAL" />
+        <result column="SUBGROUP_SIZE" property="subgroupSize" jdbcType="DECIMAL" />
+        <result column="A2" property="a2" jdbcType="DECIMAL" />
+        <result column="A3" property="a3" jdbcType="DECIMAL" />
+        <result column="A4" property="a4" jdbcType="DECIMAL" />
+        <result column="B3" property="b3" jdbcType="DECIMAL" />
+        <result column="B4" property="b4" jdbcType="DECIMAL" />
+        <result column="D3" property="d3" jdbcType="DECIMAL" />
+        <result column="D4" property="d4" jdbcType="DECIMAL" />
+        <result column="E2" property="e2" jdbcType="DECIMAL" />
+    </resultMap>
+</mapper>

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.spc.pspc_count_sample_data_wait.mapper.CountSampleDataWaitMapper">
+    <resultMap id="BaseResultMap" type="com.hand.spc.pspc_count_sample_data_wait.dto.CountSampleDataWait">
+        <result column="count_sample_data_wait_id" property="countSampleDataWaitId" jdbcType="DECIMAL" />
+        <result column="tenant_id" property="tenantId" jdbcType="DECIMAL" />
+        <result column="site_id" property="siteId" jdbcType="DECIMAL" />
+        <result column="attachment_group_id" property="attachmentGroupId" jdbcType="DECIMAL" />
+        <result column="ce_group_id" property="ceGroupId" jdbcType="DECIMAL" />
+        <result column="ce_parameter_id" property="ceParameterId" jdbcType="DECIMAL" />
+        <result column="sample_value_count" property="sampleValueCount" jdbcType="DECIMAL" />
+        <result column="sample_time" property="sampleTime" jdbcType="DATE" />
+        <result column="unqualified_quantity" property="unqualifiedQuantity" jdbcType="DECIMAL" />
+    </resultMap>
+
+
+</mapper>

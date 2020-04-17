@@ -1,0 +1,142 @@
+<#include "../include/header.html">
+
+<script src="${base.contextPath}/common/code?YES_NO=SYS.YES_NO" type="text/javascript"></script>
+<script src="${base.contextPath}/common/code?NPI_METERING_COUNT=NPI_METERING_COUNT"></script>
+<script src="${base.contextPath}/common/code?NPI_ROUTE_LINE=NPI_ROUTE_LINE"></script>
+
+<script type="text/javascript">
+	var BaseUrl = _basePath;
+    var viewModel = Hap.createGridViewModel(null,{
+    	model:{
+    		
+    	},
+    	closeWin:function(e) {
+    		window.parent.$("#newDataWindow").data("kendoWindow").close();
+    	},
+    	 save:function(){
+    		/* var data = viewModel.model.toJSON();
+    		data.__status = "add";
+    		
+    		var validator = $("#mainForm").data("kendoValidator");
+    		if(validator.validate()) {
+    			//Hap.blockUI();
+    			if(data.specRequirement!=null&&data.specRequirement!=''){
+	    			data.specRequirement = data.specRequirement.replace(/\r\n/g, '##').replace(/\n/g, '##').replace(/\s/g, '##');
+    			}
+    			Hap.request({
+    				url: BaseUrl + "/npi/technology/spec/add",
+    				data: kendo.stringify(data),
+    				success:function(data){
+    					if(data.success){
+    						//Hap.unblockUI();
+    						viewModel.closeWin();
+    					}
+    				}
+    			})
+    		} */
+    		var validator = $("#mainForm").data("kendoValidator");
+    		if(validator.validate()) {
+    			viewModel.model.__status = 'add';
+                Hap.submitForm({
+                    url: '${base.contextPath}/npi/technology/route/addData',
+                    formModel: viewModel.model,
+                    success: function (data) {
+                    	if(data.success){
+                        	viewModel.closeWin();
+                    	}else{
+                    		kendo.ui.showErrorDialog({message:data.message});
+                    	}
+                    }
+                });
+    		}
+    	}
+    });
+</script>
+
+<body>
+
+<div id="page-content">
+	<form id = "mainForm" style="paddiing-bottom:50px;padding-top:15px" class="form-horizontal" method="post" enctype="application/json;charset=UTF-8">
+		<div class="row">
+			<div class="col-sm-12">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-4 control-label">工艺路径编码</label>
+						<div class="col-sm-4">
+							<input style="width:100%" id="routeNumber"  data-role="maskedtextbox" class="k-textbox"
+								data-bind="value:model.routeNumber"   placeholder='-------------------auto-------------------'' disabled>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="col-sm-12">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-4 control-label">sku<span style="color:red;">*</span></label>
+						<div class="col-sm-4">
+							<input style="width:100%" id="skuId" name="skuId"
+								data-bind="value:model.skuId"  required >
+						</div>
+						<script>
+							$("#skuId").kendoLov($.extend(${lovProvider.getLov(base.contextPath, base.locale, "NPI_EBOM_HEAD_LOV")},
+                            {
+                                query: function (e) {
+                                	e.param['isLast'] = 'Y';
+                                },
+                                select :function(e) {
+                                    viewModel.model.set('skuId',e.item.itemId);
+                                    viewModel.model.set('eBomVersion',e.item.itemVersion);
+    	                        	/* options.model.set('materielNumber',e.item.partNumber);
+    	                        	options.model.set('materielNumberName',e.item.partDescription);
+    	                        	options.model.set('itemDetailVersion',e.item.itemVersion); */
+    	                        }
+                            }));
+                        //kendo.bind($('#positionName'), employeeViewModel);
+						</script>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="row" style="margin-top: 10px;">
+			<div class="col-sm-12">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-4 control-label">Line<span style="color:red;">*</span></label>
+						<div class="col-sm-4">
+							<input style="width:100%" id="line" name="line"
+								data-bind="value:model.line" required>
+						</div>
+						<script>
+							$("#line").kendoComboBox({
+	    				        dataTextField: "meaning",
+	    				        dataValueField: "value",
+	    				        valuePrimitive: true,
+	    				        dataSource: NPI_ROUTE_LINE,
+	    					});
+						</script>
+					</div>
+				</div>
+			</div>
+		</div>
+	</form>
+	<div id="mainBottom" class="text-right" style="bottom:15px;position:fixed;float:left;padding-top:15px;border-top:1px solid #e8e1eb;
+		width:100%;background:#fff;margin-right:30px">
+		<span class="btn btn-primary" data-bind="click:save" type="submit" style="margin-right:5px">保存</span>
+		<span class="btn btn-default" data-bind="click:closeWin" type="button" style="margin-right:25px">取消</span>
+	</div>
+	<script>
+		kendo.bind($('#mainForm'), viewModel);
+		kendo.bind($('#mainBottom'), viewModel);
+	</script>
+	<script>
+		$('#mainForm').kendoValidator({
+			messages:{
+				required:'<@spring.message "hap.validation.notempty"/>'
+			},
+			invalidMessageType:"tooltip"
+		});
+	</script>
+
+</div>
+</body>
+</html>

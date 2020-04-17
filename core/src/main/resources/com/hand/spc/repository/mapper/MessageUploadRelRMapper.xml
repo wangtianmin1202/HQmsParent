@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.spc.repository.mapper.MessageUploadRelRMapper">
+	<!-- 可根据自己的需求，是否要使用 -->
+    <resultMap id="BaseResultMap" type="com.hand.spc.repository.dto.MessageUploadRelR">
+        <result column="rel_id" property="relId" jdbcType="DECIMAL"/>
+        <result column="upload_config_id" property="uploadConfigId" jdbcType="DECIMAL"/>
+        <result column="message_id" property="messageId" jdbcType="VARCHAR"/>
+        <result column="tenant_id" property="tenantId" jdbcType="DECIMAL"/>
+        <result column="site_id" property="siteId" jdbcType="DECIMAL"/>
+        <result column="status" property="status" jdbcType="VARCHAR"/>
+        <result column="object_version_number" property="objectVersionNumber" jdbcType="DECIMAL"/>
+        <result column="creation_date" property="creationDate" jdbcType="DATE"/>
+        <result column="created_by" property="createdBy" jdbcType="DECIMAL"/>
+        <result column="last_updated_by" property="lastUpdatedBy" jdbcType="DECIMAL"/>
+        <result column="last_update_date" property="lastUpdateDate" jdbcType="DATE"/>
+    </resultMap>
+
+    <!-- <insert id="batchInsertRows" parameterType="java.util.List">
+        INSERT INTO pspc_message_upload_rel (
+        upload_config_id,
+        message_id,
+        tenant_id,
+        site_id,
+        status
+        )
+        VALUES
+        <foreach collection="list" item="item" index="index" separator=",">
+              (
+            #{item.uploadConfigId},
+            #{item.messageId},
+            #{item.tenantId},
+            #{item.siteId},
+            #{item.status}
+              )
+        </foreach>
+    </insert> -->
+    
+    <insert id="batchInsertRows" parameterType="java.util.List">
+    <foreach collection="list" item="item" index="index" open="begin" close=";end;" separator=";">
+        INSERT INTO pspc_message_upload_rel (
+        upload_config_id,
+        message_id,
+        tenant_id,
+        site_id,
+        status)VALUES(
+            #{item.uploadConfigId},
+            #{item.messageId},
+            #{item.tenantId},
+            #{item.siteId},
+            #{item.status})
+        </foreach>
+    </insert>
+</mapper>

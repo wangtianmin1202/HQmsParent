@@ -1,0 +1,207 @@
+<#include "../include/header.html">
+
+<script src="${base.contextPath}/common/code?YES_NO=SYS.YES_NO" type="text/javascript"></script>
+<script type="text/javascript">
+	var invalidCauseNumber = "${RequestParameters.invalidCauseNumber!'-1'}";
+	var causeId = "${RequestParameters.causeId!'-1'}";
+	var occ = "${RequestParameters.occ!'-1'}";
+	var sev = "${RequestParameters.sev!'-1'}";
+	var BaseUrl = _basePath;
+    var viewModel = Hap.createGridViewModel(null,{
+    	model:{
+    		
+    	},
+    	closeWin:function(e) {
+    		window.parent.$("#newPreventionMeasureWindow").data("kendoWindow").close();
+    	},
+    	 save:function(){
+    		var data = viewModel.model.toJSON();
+    		data.__status = "add";
+    		
+    		var validator = $("#mainForm").data("kendoValidator");
+    		if(validator.validate()) {
+    			
+    			Hap.request({
+    				url: BaseUrl + "/hqm/prevention/measure/add",
+    				data: kendo.stringify(data),
+    				success:function(data){
+    					if(data.success){
+    						viewModel.closeWin();
+    					}
+    				}
+    			})
+    		}
+    	}, 
+    });
+    
+	viewModel.model.invalidCauseNumber = invalidCauseNumber;
+    viewModel.model.occ = occ;
+    viewModel.model.sev = sev;
+</script>
+
+<script>
+	function jsRpn(){
+		var rpn = viewModel.model.occ * viewModel.model.sev * $("#det").val();
+		viewModel.model.set('rpn',rpn);
+	}
+	
+	function clearNoNum(obj) { 
+    	obj.value = obj.value.replace(/[^\d]/g,"");
+	}
+
+</script>
+
+<body>
+
+<div id="page-content">
+	<form id = "mainForm" style="paddiing-bottom:50px;padding-top:15px" class="form-horizontal" method="post" enctype="application/json;charset=UTF-8">
+		<div class="row">
+			<div class="col-sm-6">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<div class="col-sm-8">
+						预防措施编码
+							<input style="width:250px;margin-left:70px;" id="preventionMeasureNumber"  data-role="maskedtextbox" class="k-textbox"
+								data-bind="value:model.preventionMeasureNumber"   placeholder='-------------------auto-------------------'' disabled>
+							<input  id="invalidCauseNumber"  style="display:none;" data-role="maskedtextbox" class="k-textbox"
+								data-bind="value:model.invalidCauseNumber"    disabled>
+							<input  id="occ"  style="display:none;" data-role="maskedtextbox" class="k-textbox"
+								data-bind="value:model.occ"    disabled>
+							<input  id="sev" style="display:none;" data-role="maskedtextbox" class="k-textbox"
+								data-bind="value:model.sev"    disabled>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="row" style="margin-top: 10px;margin-right:6%;font-size:14px;font-style:initial">
+       
+    		 <div class="col-sm-3"style="padding-left:0px;">
+		    	<lable class="col-xs-5 control-lable" style="margin-left:12px;">预防性<span style="color:red;">*</span></lable>	
+		    	<div class="col-xs-7"style="padding-left:0px">
+		    	<textarea id="preventiveArea" name="textarea" style="width:250px;margin-top:-34px;margin-left:176px;height:60px;"data-bind="value:model.preventive"></textarea>
+    			</div>
+    			<script>
+                	$("#preventiveArea").kendoTextArea({
+                    });
+                </script>
+		    </div>
+    	</div>
+    	
+		<div class="row" style="margin-top: 10px;margin-right:6%;font-size:14px;font-style:initial">
+       
+    		 <div class="col-sm-3"style="padding-left:0px;">
+		    	<lable class="col-xs-5 control-lable" style="margin-left:12px;">可探测性<span style="color:red;">*</span></lable>	
+		    	<div class="col-xs-7"style="padding-left:0px">
+		    	<textarea id="detectabilityArea" name="textarea" style="width:250px;margin-top:-18px;margin-left:176px;height:60px;"data-bind="value:model.detectability"></textarea>
+    			</div>
+    			<script>
+                	$("#detectabilityArea").kendoTextArea({
+                    });
+                </script>
+		    </div>
+    	</div>
+    	
+    	
+		<div class="row">
+			<div class="col-sm-6">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<div class="col-sm-8">
+						DET<span style="color:red;">*</span>
+							<input style="width:250px;margin-left:113px;margin-top: 20px;" id="det"  
+								data-bind="value:model.det"  oninput="jsRpn()"  onkeyup="clearNoNum(this)" >
+						</div>
+						<div class="col-sm-8">
+							RPN
+							<input style="width:250px;margin-left:118px;margin-top: 14px;" id="rpn"  
+								data-bind="value:model.rpn"  >
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		
+		<div class="row">
+			<div class="col-sm-6">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<div class="col-sm-8">
+							控制容量
+							<input style="width:250px;margin-left:94px;margin-top: 20px;" id="controlCapacity"  
+								data-bind="value:model.controlCapacity"  >
+						</div>
+						<div class="col-sm-8">
+							控制频率
+							<input style="width:250px;margin-left:94px;margin-top: 20px;" id="controlFrequency"  
+								data-bind="value:model.controlFrequency"  >
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		
+		<div class="row">
+			<div class="col-sm-6">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<div class="col-sm-8">
+							控制方法
+							<input style="width:250px;margin-left:94px;margin-top: 20px;" id="controlMethod"  
+								data-bind="value:model.controlMethod"  >
+						</div>
+						<div class="col-sm-8">
+							反应计划
+							<textarea id="reactionPlanArea" name="textarea" style="width:250px;margin-left:94px;margin-top: 20px;" data-bind="value:model.reactionPlan"></textarea>
+							<script>
+			                	$("#reactionPlanArea").kendoTextArea({
+			                    });
+			                </script>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		
+		<!-- <div class="row">
+		</div>
+		<div class="row" style="font-style:initial">
+    		 <div class="col-sm-3">
+		    	<lable class="col-xs-5 control-lable">反应计划</lable>	
+		    	<div class="col-xs-7"style="padding-left:0px">
+		    	<textarea id="reactionPlanArea" name="textarea" style="width:250px;margin-left:152px;margin-top:-50px;height:100px;"data-bind="value:model.reactionPlan"></textarea>
+    			</div>
+    			<script>
+                	$("#reactionPlanArea").kendoTextArea({
+                    });
+                </script>
+		    		  		
+		    </div>
+		  
+    	</div> -->
+		
+		
+	</form>
+	<div style="clear:both">
+		<div id="grid"></div>
+	</div>
+	<div id="mainBottom" class="text-right" style="bottom:15px;position:fixed;float:left;padding-top:15px;border-top:1px solid #e8e1eb;
+		width:100%;background:#fff;margin-right:30px">
+		<span class="btn btn-primary" data-bind="click:save" type="submit" style="margin-right:5px">保存</span>
+		<span class="btn btn-default" data-bind="click:closeWin" type="button" style="margin-right:25px">取消</span>
+	</div>
+	<script>
+		kendo.bind($('#mainForm'), viewModel);
+		kendo.bind($('#mainBottom'), viewModel);
+	</script>
+	<script>
+		$('#mainForm').kendoValidator({
+			messages:{
+				required:'<@spring.message "hap.validation.notempty"/>'
+			},
+			invalidMessageType:"tooltip"
+		});
+	</script>
+</div>
+</body>
+</html>

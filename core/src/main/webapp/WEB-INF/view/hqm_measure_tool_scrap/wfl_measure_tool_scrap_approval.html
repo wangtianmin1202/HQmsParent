@@ -1,0 +1,230 @@
+<#include "../activiti/approve_header.html">
+<script src="${base.contextPath}/common/code?WORKFLOW_STATUS=SYS_WORKFLOW_STATUS" type="text/javascript"></script>
+<script type="text/javascript">
+	var BaseUrl = _basePath;
+    var busiViewModel = Hap.createGridViewModel("#busiGrid", {
+        model: {
+            processInstanceId: '${RequestParameters.processInstanceId!0}',
+            businessKey: '${RequestParameters.businessKey!}' || null,
+        },
+    	queryInfo:function(){
+    		if(${RequestParameters.processInstanceId!0} != 0){
+    			$.ajax({
+    				url:BaseUrl+"/hqm/measure/tool/scrap/queryByCondition?processInstanceId=${RequestParameters.processInstanceId!0}",
+    				success:function(data){
+    					var a0 = data.rows[0] || {};
+    					for(var k in a0){
+    						busiViewModel.model.set(k,a0[k]);
+    					}
+    				}
+    			})
+    		}
+    	},
+    });
+    busiViewModel.queryInfo();
+</script>
+<div class="approve-block">
+    <h3>审批表单</h3>
+    <!--<iframe id="includeFrame" style="width:100%" name="includeFrame" onLoad="onIncludeFrameLoad()"></iframe>-->
+
+    <form id = "mainForm" style="paddiing-bottom:50px;padding-top:15px" class="form-horizontal" method="post" enctype="application/json;charset=UTF-8">
+		<div class="row">
+			<div class="col-sm-12">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-2 control-label">报废单号</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="scrapNumber"  data-role="maskedtextbox" class="k-textbox"
+								data-bind="value:model.scrapNumber" disabled>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-sm-12">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-2 control-label">量具编号</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="measureToolId"  data-label="量具编号" disabled
+								data-bind="value:model.measureToolId,text:model.measureToolNum">
+						</div>
+						<script>
+							//选择量具
+							$("#measureToolId").kendoLov($.extend(<@lov "LOV_HQM_MEASURE_TOOL_SCRAP"/>,{
+								change:function(e){
+									//viewModel.model.set("measureToolId",e.sender._dataItem.measureToolId);
+									viewModel.model.set("descriptions",e.sender._dataItem.descriptions);
+									viewModel.model.set("measuringRange",e.sender._dataItem.measuringRange);
+									viewModel.model.set("measureToolType",e.sender._dataItem.measureToolType);
+								},
+							}));
+						</script>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-sm-12">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-2 control-label">量具名称</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="descriptions"  data-role="maskedtextbox" class="k-textbox"
+								data-bind="value:model.descriptions" disabled>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-sm-12">
+					<div class="form-group">
+						<div class="col-sm-12">
+							<label class="col-sm-2 control-label">规格</label>
+							<div class="col-sm-8">
+								<input style="width:100%" id="measuringRange"  data-role="maskedtextbox" class="k-textbox"
+									data-bind="value:model.measuringRange" disabled>
+							</div>
+						</div>
+					</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-sm-12">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-2 control-label">型号</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="measureToolType"  data-role="maskedtextbox" class="k-textbox"
+								data-bind="value:model.measureToolType" disabled>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-sm-12">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-2 control-label">申请日期</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="applicationDate"  data-role="datepicker" class="k-datepicker"
+								data-bind="value:model.applicationDate" disabled>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-sm-12">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-2 control-label">报废原因</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="reason"  data-role="maskedtextbox" class="k-textbox"
+								data-bind="value:model.reason" disabled>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</form>
+</div>
+<#include "../activiti/approve_footer.html">
+
+<script type="text/javascript">
+	kendo.bind($('#mainForm'), busiViewModel);
+
+    // 覆盖具体审批操作
+    function actionCallBack(p) {
+        p = p || {};
+        p.action = p.action || 'complete'
+        if ('pending' == currentTaskInfo.delegationState && 'delegate' != p.action) {
+            p.action = 'resolve'
+        }
+        var variables = [];
+        if (p.action != 'delegate') {
+            var formVars = {};
+            // if (includeFrame.getFormProperties) {
+            //     formVars = includeFrame.getFormProperties() || {};
+            // }
+
+            //TODO 必输内容校验；仅传递定义过的属性
+            formVars.approveResult = p.approveResult;
+            formVars.comment = $("#ta-comment").val();
+            $.each(formVars, function (k, v) {
+                variables.push({name: k, value: v});
+            })
+        }
+
+        var carbonCopyUsers = "";
+        var usersDate = dataSourceCC.data();
+        for (var i = 0; i < usersDate.length; i++) {
+            if (i == 0) {
+                carbonCopyUsers = usersDate[i].employeeCode;
+            } else {
+                carbonCopyUsers = carbonCopyUsers + "," + usersDate[i].employeeCode;
+            }
+        }
+
+        var param = {
+            assignee: p.targetUser || null,
+            action: p.action,
+            comment: $("#ta-comment").val(),
+            variables: variables,
+            jumpTarget: p.jumpTarget || null,
+            carbonCopyUsers: carbonCopyUsers,
+            currentTaskId: '${RequestParameters.taskId!0}',
+        };
+
+        var dtoData = busiViewModel.model.toJSON();
+        dtoData.__status = 'update';
+        
+        var data = {
+            actionRequest: param,
+            //list: $("#busiGrid").data("kendoGrid").dataSource.data()
+            dto:dtoData,
+        };
+        Hap.blockUI();
+        $.ajax({
+            // url: contextPath_ + '/wfl/runtime/<#if isAdmin!false>admin/</#if>tasks/' + currentTaskId,
+            url: contextPath_ + '/hqm/measure/tool/scrap/approveProcess?processInstanceId=${RequestParameters.processInstanceId!0}' + "&flowNum=${RequestParameters.flowNum!0}",
+            type: 'POST',
+            contentType: 'application/json',
+            data: kendo.stringify(data),
+            success: function (args) {
+                if (args.success === false) {
+                    kendo.ui.showErrorDialog({
+                        title: $l('hap.error'),
+                        message: args.message
+                    });
+                } else {
+                    if (p.callback) {
+                        p.callback(args);
+                    } else {
+                        closeCurrentWin()
+//                                kendo.ui.showInfoDialog({
+//                                    title: $l('hap.tip.info'),
+//                                    message: '操作完成!'
+//                                }).done(function () {
+//                                    closeCurrentWin()
+//                                });
+                    }
+                }
+            }, error: function (args) {
+                kendo.ui.showInfoDialog({
+                    title: $l('hap.error'),
+                    message: kendo.stringify(args)
+                });
+            },
+            complete: function () {
+                Hap.unblockUI();
+            }
+        })
+    }
+
+
+</script>
+</html>

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_platform_program.mapper.PlatformProgramMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_platform_program.dto.PlatformProgram">
+        <result column="PLATFORM_ID" property="platformId" jdbcType="DECIMAL" />
+        <result column="PLANT_ID" property="plantId" jdbcType="DECIMAL" />
+        <result column="PROGRAM_TYPE" property="programType" jdbcType="VARCHAR" />
+        <result column="SAMPLE_TYPE" property="sampleType" jdbcType="VARCHAR" />
+        <result column="ENABLE_FLAG" property="enableFlag" jdbcType="VARCHAR" />
+        <result column="PLATFORM_TYPE" property="platformType" jdbcType="VARCHAR" />
+        <result column="PLANT_CODE" property="plantCode" jdbcType="VARCHAR" />
+    </resultMap>
+
+<select id="reSelect" resultMap="BaseResultMap" parameterType="com.hand.hqm.hqm_platform_program.dto.PlatformProgram">
+SELECT t.platform_id,
+       t.plant_id,
+       t.program_type,
+       t.sample_type,
+       t.enable_flag,
+       t.platform_type,
+       t.object_version_number,
+       hp.plant_code
+  FROM hqm_platform_program t
+  JOIN hcm_plant hp
+    ON t.plant_id = hp.plant_id
+ WHERE 1 = 1
+<if test="programType != null">
+AND t.program_type = #{programType}
+</if>
+<if test="sampleType != null">
+AND t.sample_type = #{sampleType}
+</if>
+<if test="platformType != null">
+AND t.platform_type = #{platformType}
+</if>
+</select>
+</mapper>

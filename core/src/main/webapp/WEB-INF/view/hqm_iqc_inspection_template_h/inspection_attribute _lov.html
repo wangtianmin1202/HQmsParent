@@ -1,0 +1,259 @@
+<#include "../include/header.html">
+<!--
+ * @description: 检验项多选lov界面 hqm_inspection_attribute
+ * @author: tianmin.wang
+ * @date: 20190918
+ -->
+ <script src="${base.contextPath}/common/code?hqmAttributeCategory=HQM_IQC_ATTRIBUTE_CATEGORY"></script>
+ <script src="${base.contextPath}/common/code?hqmStandardType=HQM_IQC_STANDARD_TYPE"></script>
+<style>
+ span{
+ font-size:14px;
+ }
+</style>
+<script type="text/javascript">
+	var parentParameter = "${RequestParameters.parentParameter!'-1'}";
+    var viewModel = Hap.createGridViewModel("#grid");
+    var selectedDates = new Array();
+    viewModel.save = function(){
+    	var selected = selectedDates;
+    	if(selected.length == 0){
+    		window.parent.$("#childWindow1").data("kendoWindow").close();
+    		return;
+    	}
+    	$.each(selected,function(i,e){
+    		window.parent.grid.addRow();
+    		window.parent.grid.dataSource.data()[0].attributeId = e.attributeId;
+    		window.parent.grid.dataSource.data()[0].set('inspectionAttribute',e.inspectionAttribute);
+    		window.parent.grid.dataSource.data()[0].set('standardType',e.standardType);
+    		window.parent.grid.dataSource.data()[0].set('qualityCharacterGrade',e.qualityCharacterGrade);
+    		window.parent.grid.dataSource.data()[0].set('attributeType',e.attributeType);
+    		window.parent.grid.dataSource.data()[0].set('inspectionTool',e.inspectionTool);
+    		window.parent.grid.dataSource.data()[0].set('precision',e.precision);
+    		window.parent.grid.dataSource.data()[0].set('inspectionMethod',e.inspectionMethod);
+    		window.parent.grid.dataSource.data()[0].set('fillInType',e.fillInType);
+    		window.parent.grid.dataSource.data()[0].sampleWayId = window.parent.viewModel.model.sampleWayId;
+    		window.parent.grid.dataSource.data()[0].set('sampleWayCode', window.parent.viewModel.model.sampleWayCode);
+    		window.parent.grid.dataSource.data()[0].set('sampleProcedureType', window.parent.viewModel.model.sampleProcedureType);
+    		window.parent.grid.dataSource.data()[0].set('inspectionLevels', window.parent.viewModel.model.inspectionLevels);
+    		window.parent.grid.dataSource.data()[0].set('acceptanceQualityLimit', window.parent.viewModel.model.acceptanceQualityLimit);
+    	});
+    	window.parent.$("#childWindow1").data("kendoWindow").close();
+    }
+	viewModel.closeWin = function(){
+    	window.parent.$("#childWindow1").data("kendoWindow").close();
+    }
+</script>
+<body>
+<div id="page-content">
+    <div id="toolbar-btn" style="padding-bottom:10px;">
+    	<div class="row">
+    		<div class="col-xs-2">
+    		<span><@spring.message "inspectionattribute.inspectionattribute"/>:</span>
+    		</div>
+    		<div class="col-xs-8">
+    		<input id="inspectionAttribute" data-role="maskedtextbox" style="width:300px;margin-right:5px;"
+                   data-bind="value:model.inspectionAttribute">
+    		</div>
+    		<div class="col-xs-2">
+    		<span id="querySpan" class="btn btn-primary" style="float:left;margin-right:5px;" data-bind="click:query"><@spring.message "hap.query"/></span>
+    		</div>
+    	</div>
+    	<div class="row" style="margin-top:20px;">
+    		<div class="col-xs-2">
+    			<span><@spring.message "inspectionattribute.attributetype"/>:</span>
+    		</div>
+    		<div class="col-xs-8">
+    			<input id="attributeType" style="width:300px;margin-right:5px;"
+                   data-bind="value:model.attributeType">
+    		</div>
+    		<script>
+    		$("#attributeType").kendoComboBox({
+    		    dataTextField: "meaning",
+    		    dataValueField: "value",
+    		    valuePrimitive: true,
+    		    dataSource: hqmAttributeCategory
+    		});
+    		</script>
+    	</div>
+    	
+        
+    </div>
+    <div class="text-left" style="border: 2px solid #EEEEEE;border-radius:10px;">
+		<span>已选择检验项</span><br>
+		<div id="checkedUserPanel">
+        	
+        </div>
+	</div>
+    <script>kendo.bind($('#toolbar-btn'), viewModel);</script>
+    <div style="clear:both">
+        <div id="grid"></div>
+    </div>
+
+</div>
+<div id="mainBottom" style="margin-left:90%;bottom: 15px;position: fixed;  float: right;border-top:1px solid #ebebeb;width:10%; background: #fff;">
+        <span class="btn btn-primary" data-bind="click:save" type="submit" style="margin-right:5px"><@spring.message "hap.save"/></span>
+        <span class="btn btn-default" data-bind="click:closeWin" type="button" style="margin-right:25px;margin-top:5px"><@spring.message "hap.cancel"/></span>
+</div>
+
+
+<script type="text/javascript">
+	$(document).keydown(function(event){
+		if (event.keyCode == 13) {
+			viewModel.model.inspectionAttribute = $("#inspectionAttribute").val();
+			viewModel.model.attributeType = $("#attributeType").val();
+			viewModel.query();
+		}
+	});
+	kendo.bind($('#mainBottom'),viewModel);
+    Hap.initEnterQuery('#query-form', viewModel.query);
+    var BaseUrl = _basePath;
+    dataSource = new kendo.data.DataSource({
+        transport: {
+        	read: {
+                url: BaseUrl + "/hqm/inspection/group/h/select",
+                type: "POST",
+                dataType: "json"
+            },
+            update: {
+                url: BaseUrl + "/hqm/inspection/attribute/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            destroy: {
+                url: BaseUrl + "/hqm/inspection/attribute/remove",
+                type: "POST",
+                contentType: "application/json"
+            },
+            create: {
+                url: BaseUrl + "/hqm/inspection/attribute/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            parameterMap: function (options, type) {
+                if (type !== "read" && options.models) {
+                    var datas = Hap.prepareSubmitParameter(options, type)
+                    return kendo.stringify(datas);
+                } else if (type === "read") {
+                    return Hap.prepareQueryParameter(viewModel.model.toJSON(), options)
+                }
+            }
+        },
+        batch: true,
+        serverPaging: true,
+        pageSize: 5,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+                id: "attributeId",
+                fields: {},
+                editable:function(col){
+                	return false;
+                }
+            }
+        }
+    });
+
+    var grid = $("#grid").kendoGrid({
+        dataSource: dataSource,
+        resizable: true,
+        autoBind: true,
+        scrollable: true,
+        navigatable: false,
+        //selectable: 'multiple,rowbox',
+        dataBound: function () {
+            if (parent.autoResizeIframe) {
+                parent.autoResizeIframe('${RequestParameters.functionCode!}')
+            }
+        },
+        pageable: {
+            pageSizes: [5,10,20,50],
+            refresh: false,
+            buttonCount: 5
+        },
+        columns: [
+        	
+        	 {
+ 		        field: "plantId",
+ 		        title: '<@spring.message "inspectiongrouph.plantid"/>',
+ 		        width: 120,
+                 template: function (Item) {
+                     return Item['plantCode'] || ''
+                 },
+                 editor: function (container, options) {
+                     $('<input name="' + options.field + '"/>')
+                         .appendTo(container)
+                         .kendoLov($.extend(<@lov "LOV_PLANT"/>, {
+                         query: function (e) {
+                             e.param['enableFlag'] = 'Y'
+                         },
+                         textField: 'plantCode',
+                         model: options.model,
+                         change:function() {
+                             var v = this.value();
+                             if (v == undefined  || v == ""){
+                                 options.model.set('plantCode', "");
+                                 options.model.set('plantId','')
+                             }else{
+                                 options.model.plantCode =  this._dataItem.descriptions;
+                                 options.model.plantId = this._dataItem.plantId;
+                             }
+                         }
+                     }));
+                 }
+             },
+             {
+                 field: "groupCode",
+                 title: '<@spring.message "inspectiongrouph.groupcode"/>',
+                 width: 120
+             },
+                     {
+                 field: "description",
+                 title: '<@spring.message "inspectiongrouph.description"/>',
+                 width: 120
+             },   
+        ],
+        editable: true
+    }).data("kendoGrid");
+
+</script>
+<script>
+//var selection = $('#chooseGrid').data('kendoGrid').selectedDataItems();
+function judgeHave(userId){
+	var count = 0;
+	$.each(selectedDates,function(i,v){
+		if(v.attributeId == userId)count++;
+	});
+	if(count>0)return true;
+	return false;
+}
+function removeHaved(userId){
+	$.each(selectedDates,function(i,v){
+		if(v.attributeId == userId){
+			selectedDates.splice(selectedDates.indexOf(v),1);
+			return false;
+		}
+	});
+}
+$('#grid').on('click', 'td', function () {
+		var rowIndex = $(this).parent().index();
+        var data = grid.dataSource.data()[rowIndex];
+        if(!judgeHave(data.attributeId)){
+        	selectedDates.push(data);
+	        $("#checkedUserPanel").append('<span class="fa fa-user" style="margin-right:10px;background-color:#7AEBBE;border-radius:5px;">&nbsp'+data.inspectionAttribute+
+	        '<span user-id="'+data.attributeId+'" class="fa fa-trash" style="margin-left:5px;cursor:pointer;font-size:16px;"></span></span>');
+	        $('span[user-id="'+data.attributeId+'"]').on('click',function(){
+	        	removeHaved($(this).attr("user-id"));
+	        	$(this).parent().remove();
+	        });
+        }
+    });
+$(function(){
+	if(parentParameter!="-1"){
+		
+	}
+});
+</script>
+</body>
+</html>

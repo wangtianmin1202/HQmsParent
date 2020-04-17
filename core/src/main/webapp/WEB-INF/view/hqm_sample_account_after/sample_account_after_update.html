@@ -1,0 +1,193 @@
+<!--
+ * description: FQC检验单新建对话框 hqm_inspection_attribute
+ * author:tianmin.wang 
+ * date:20190730
+ -->
+<#include "../include/header.html">
+<script src="${base.contextPath}/common/code?yesNo=SYS.YES_NO"></script><!-- 是否 -->
+<script src="${base.contextPath}/common/code?HQM_H_SAMPLE_REVENIR_STATUS=HQM_H_SAMPLE_REVENIR_STATUS"></script><!-- 退回状态 -->
+<script src="${base.contextPath}/common/code?HQM_H_SAMPLE_POSITION_STATUS=HQM_H_SAMPLE_POSITION_STATUS"></script>
+<script src="${base.contextPath}/common/code?HQM_MACHINE_COMPONENT_TYPE=HQM_MACHINE_COMPONENT_TYPE"></script><!--是否有效 -->
+<script src="${base.contextPath}/common/code?HQM_RETURN_PRODUCT_TYPE=HQM_RETURN_PRODUCT_TYPE"></script><!--是否有效 -->
+<script src="${base.contextPath}/common/code?HQM_AFTERSALE_SAMPLE_SOLVE_WAY=HQM_AFTERSALE_SAMPLE_SOLVE_WAY"></script><!--是否有效 -->
+<script src="${base.contextPath}/common/code?HQM_AFTERSALE_COMPONENT_SOLVE=HQM_AFTERSALE_COMPONENT_SOLVE"></script><!--是否有效 -->
+
+
+<body>
+
+<script type="text/javascript">
+    var sampleId = "${RequestParameters.sampleId!'-1'}";
+	var inspectionType = "${RequestParameters.inspectionType!'FQC'}";
+	var machineComponent = "${RequestParameters.machineComponent}";
+	console.log("machineComponent" + machineComponent)
+	
+	var viewModel = kendo.observable({
+		model: {
+			
+		},
+  		save: function(e){
+  			viewModel.model.sampleId =sampleId;
+  		 	var data = viewModel.model.toJSON();
+  		 	console.log(data);		 
+  			  {
+  				  $.ajax({
+  			        url: '${base.contextPath}/hqm/sample/account/after/savefx',
+  			        type: 'POST',
+  			        data: data,
+  			        async: false,
+  			        dataType: "json",
+  			        success: function (response) {
+  			            if (response.success) {
+  			            	window.parent.grid.dataSource.fetch();
+  			            	window.parent.$("#childWindowitem").data("kendoWindow").close();
+  			            } else {
+  			            	kendo.ui.showErrorDialog({
+  			                    message: response.message
+  			                });
+  			            }
+  			        }
+  			    });  
+  			}
+        },
+        closeWin: function(){
+        	window.parent.$("#childWindowitem").data("kendoWindow").close();
+        }
+	});
+	 
+	checkL = function(){
+		viewModel.model.sampleId =sampleId;
+	 	var data = viewModel.model.toJSON();
+	 	console.log(data);		 
+		  {
+			/* $.ajax({
+		        url: '${base.contextPath}/hqm/sample/account/after/createsave',
+		        type: 'POST',
+		        data: data,
+		        async: false,
+		        dataType: "json",
+		        success: function (response) {
+		            if (response.success) {
+		            	window.parent.grid.dataSource.fetch();
+		            	window.parent.$("#createWindow").data("kendoWindow").close();
+		            } else {
+		            	kendo.ui.showErrorDialog({
+		                    message: response.message
+		                });
+		            }
+		        }
+		    }); */
+		}
+	}
+	
+	$(function(){
+		$('#badComponentDiv').hide();
+		if(machineComponent == '1') {
+			$('#badComponentDiv').show();
+		}
+	})
+</script>
+
+<div id="page-content">
+	<form id="mainform"  class="form-horizontal" method="post" enctype="application/json;charset=UTF-8">
+
+	<div class="row" style="margin-left: 5px;">
+	 	<div class="col-sm-12">
+
+		 <div class="form-group" style="margin-top:20px;">
+			    <div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message 'sampleaccount.testResult'/>:</label>
+					<div class="col-sm-9">
+                        <input  style="width:100%" name="<@spring.message 'sampleaccount.analysisResult'/>" 
+                               id="analysisResult"
+                               data-bind="value:model.analysisResult" data-role="maskedtextbox">
+						<span data-for="<@spring.message 'sampleaccount.analysisResult'/>" class=".k-invalid-msg"></span>
+					</div>
+				</div>	
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message 'sampleaccount.dealResult'/>:</label>
+					<div class="col-sm-9">
+                        <input  style="width:100%" name="<@spring.message 'sampleaccount.dealResult'/>" 
+                               id="dealResult"
+                               data-bind="value:model.processingMethod">
+                               
+						<span data-for="<@spring.message 'sampleaccount.dealResult'/>" class=".k-invalid-msg"></span>
+					</div>
+					<script type="text/javascript">
+						kendo.bind($("#dealResult"),viewModel)
+						if(machineComponent == '1') {
+							$("#dealResult").kendoComboBox({
+						        dataTextField: "meaning",
+						        dataValueField: "value",
+						        valuePrimitive: true,
+						        dataSource:HQM_AFTERSALE_SAMPLE_SOLVE_WAY
+							});
+						} else {
+							$("#dealResult").kendoComboBox({
+						        dataTextField: "meaning",
+						        dataValueField: "value",
+						        valuePrimitive: true,
+						        dataSource:HQM_AFTERSALE_COMPONENT_SOLVE
+							});
+						}
+					</script>
+				</div>	
+		</div>
+			<div class="form-group" style="margin-top:20px;">
+				<div class="col-sm-6" id = "badComponentDiv">
+					<label class="col-sm-3 control-label"><@spring.message 'sampleaccount.badComponent'/>:</label>
+					<div class="col-sm-9">
+                        <input  style="width:100%" name="<@spring.message 'sampleaccount.badComponent'/>" 
+                               id="badComponent"
+                               data-bind="value:model.badComponent" data-role="maskedtextbox">
+						<span data-for="<@spring.message 'sampleaccount.badComponent'/>" class=".k-invalid-msg"></span>
+					</div>
+				</div>	
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message 'sampleaccount.analystName'/>:</label>
+					<div class="col-sm-9">
+						<input id="sampleGiver" required style="width:100%" name="<@spring.message 'sampleaccount.analystName'/>" data-bind="value:model.analyst" >
+						<span data-for="<@spring.message 'sampleaccount.analystName'/>" class=".k-invalid-msg"></span>
+					</div>
+					<script>
+					$("#sampleGiver").kendoLov($.extend
+						    (<@lov"user_lov"/>, {
+						        textField: 'employeeName',
+						        valueField:'userId',
+						    }));
+					</script>
+				</div>
+		</div>
+		</div>
+	  </div>
+
+
+	</form>
+</div>
+<div id="mainBottom" class="text-right" style="bottom: 15px;position: fixed;  float: left;padding-top:15px;border-top:1px solid #ebebeb;width:100%; background: #fff;">
+        <span class="btn btn-primary" data-bind="click:save" type="submit" style="margin-right:5px"><@spring.message "hap.save"/></span>
+        <span class="btn btn-default" data-bind="click:closeWin" type="button" style="margin-right:25px;"><@spring.message "hap.cancel"/></span>
+</div>
+
+<script type="text/javascript">
+    kendo.bind($('#mainBottom'),viewModel);
+	kendo.bind($('#mainform'), viewModel);
+
+    function isNotEmpty(obj) {
+        if(obj != undefined && obj != null && obj != ""){
+            return true;
+        }else{
+            return false;
+        }
+    }
+    var initMinDate = new Date(1900, 0, 1);
+    var initMaxDate = new Date(2099, 11, 31);
+	//验证
+	$("#mainform").kendoValidator({
+    	messages: {
+            required: '<@spring.message "hap.validation.notempty"/>'
+    	},
+		invalidMessageType : "tooltip"
+    });
+</script>
+</body>
+</html>

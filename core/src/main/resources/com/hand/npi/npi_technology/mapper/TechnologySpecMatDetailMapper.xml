@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.npi.npi_technology.mapper.TechnologySpecMatDetailMapper">
+    <resultMap id="BaseResultMap" type="com.hand.npi.npi_technology.dto.TechnologySpecMatDetail">
+        <result column="SPEC_MAT_DETAIL_ID" property="specMatDetailId" jdbcType="DECIMAL" />
+        <result column="SPEC_ID" property="specId" jdbcType="DECIMAL" />
+        <result column="MATERIEL_ATTRIBUTE_NUMBER" property="materielAttributeNumber" jdbcType="VARCHAR" />
+        <result column="details_name" property="detailsName" jdbcType="VARCHAR" />
+        <result column="details_code" property="detailsCode" jdbcType="VARCHAR" />
+        <result column="SPEC_VERSION" property="specVersion" jdbcType="VARCHAR"/>
+    </resultMap>
+
+
+	<select id="dataQuery" resultMap="BaseResultMap" >
+		select t.SPEC_MAT_DETAIL_ID,t.SPEC_ID,t.MATERIEL_ATTRIBUTE_NUMBER,t.SPEC_VERSION,t1.description as details_name,t1.series_name as details_code from NPI_TECHNOLOGY_SPEC_MAT_detail t left join  plm_product_series t1
+		on t.materiel_attribute_number = t1.SERIES_ID
+		<where>
+			<if test="dto.specId != null ">
+				t.SPEC_ID= #{dto.specId}
+			</if>
+			<if test="dto.specVersion != null ">
+				and t.SPEC_VERSION= #{dto.specVersion}
+			</if>
+		</where>
+    </select>
+
+</mapper>

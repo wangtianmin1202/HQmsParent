@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.spc.message_type_maintenance.mapper.MessageTypeUploadRelMapper">
+    <resultMap id="BaseResultMap" type="com.hand.spc.message_type_maintenance.dto.MessageTypeUploadRel">
+        <result column="REL_ID" property="relId" jdbcType="DECIMAL" />
+        <result column="UPLOAD_CONFIG_ID" property="uploadConfigId" jdbcType="DECIMAL" />
+        <result column="MESSAGE_TYPE_ID" property="messageTypeId" jdbcType="DECIMAL" />
+        <result column="TENANT_ID" property="tenantId" jdbcType="DECIMAL" />
+        <result column="SITE_ID" property="siteId" jdbcType="DECIMAL" />
+        <result column="PROGRAM_APPLICATION_ID" property="programApplicationId" jdbcType="DECIMAL" />
+        <result column="PROGRAM_UPDATE_DATE" property="programUpdateDate" jdbcType="DATE" />
+
+        <!--业务字段-->
+        <result column="CONFIG_CODE" property="configCode" jdbcType="VARCHAR" />
+        <result column="CONFIG_TYPE" property="configType" jdbcType="VARCHAR" />
+        <result column="CONFIG_VALUE" property="configValue" jdbcType="VARCHAR" />
+        <result column="CONFIG_DESCRIPTION" property="configDescription" jdbcType="VARCHAR" />
+
+
+    </resultMap>
+    <select id="selectData" resultMap="BaseResultMap">
+        SELECT
+            pmtur.MESSAGE_TYPE_ID,
+            pmuc.UPLOAD_CONFIG_ID,
+            pmuc.CONFIG_CODE,
+            pmuc.CONFIG_TYPE,
+            pmuc.CONFIG_VALUE,
+            pmuc.DESCRIPTION as CONFIG_DESCRIPTION
+        FROM
+            PSPC_MESSAGE_TYPE_UPLOAD_REL pmtur
+        LEFT JOIN PSPC_MESSAGE_UPLOAD_CONFIG pmuc ON pmuc.UPLOAD_CONFIG_ID = pmtur.UPLOAD_CONFIG_ID
+        WHERE
+            1 = 1
+            and pmtur.MESSAGE_TYPE_ID = #{messageTypeId}
+    </select>
+
+
+</mapper>

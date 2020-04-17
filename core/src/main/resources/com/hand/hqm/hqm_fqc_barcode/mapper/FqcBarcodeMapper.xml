@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_fqc_barcode.mapper.FqcBarcodeMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_fqc_barcode.dto.FqcBarcode">
+        <result column="KID" property="kid" jdbcType="DECIMAL" />
+        <result column="ORDER_NUM" property="orderNum" jdbcType="VARCHAR" />
+        <result column="ITEM_ID" property="itemId" jdbcType="DECIMAL" />
+        <result column="SERIAL_NUMBER" property="serialNumber" jdbcType="VARCHAR" />
+        <result column="IS_SAMPLE" property="isSample" jdbcType="VARCHAR" />
+    </resultMap>
+
+
+</mapper>

@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_sample.mapper.SampleMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_sample.dto.Sample">
+        <result column="SAMPLE_ID" property="sampleId" jdbcType="DECIMAL" />
+        <result column="SAMPLE_NUMBER" property="sampleNumber" jdbcType="VARCHAR" />
+        <result column="SAMPLE_TYPE" property="sampleType" jdbcType="VARCHAR" />
+        <result column="SAMPLE_POSITION_STATUS" property="samplePositionStatus" jdbcType="VARCHAR" />
+        <result column="SAMPLE_STATUS" property="sampleStatus" jdbcType="VARCHAR" />
+        <result column="DESCRIPTION" property="description" jdbcType="VARCHAR" />
+        <result column="SAMPLE_PROPERTIES" property="sampleProperties" jdbcType="VARCHAR" />
+        <result column="SAMPLE_GIVER" property="sampleGiver" jdbcType="DECIMAL" />
+        <result column="SAMPLE_GIVE_DATE" property="sampleGiveDate" jdbcType="DATE" />
+        <result column="SAMPLE_USER" property="sampleUser" jdbcType="DECIMAL" />
+        <result column="SAMPLE_USE_DATE" property="sampleUseDate" jdbcType="DATE" />
+        <result column="SAMPLE_USE_DEPARTMENT" property="sampleUseDepartment" jdbcType="VARCHAR" />
+        <result column="SAMPLE_DISPOSAL_METHOD" property="sampleDisposalMethod" jdbcType="VARCHAR" />
+        <result column="SAMPLE_DISPOSAL_DATE" property="sampleDisposalDate" jdbcType="DATE" />
+        <result column="ASSOCIATED_DOCUMENT" property="associatedDocument" jdbcType="VARCHAR" />
+        <result column="ENABLE_FLAG" property="enableFlag" jdbcType="VARCHAR" />
+        <result column="PLANT_ID" property="plantId" jdbcType="DECIMAL" />
+  
+        <result column="PLANT_CODE" property="plantCode" jdbcType="VARCHAR" />
+        <result column="SAMPLE_USER_USER_NAME" property="sampleUserUserName" jdbcType="VARCHAR" />
+        <result column="SAMPLE_GIVE_DATE_START_TIME" property="sampleGiveDateStartTime" jdbcType="DATE" />
+        <result column="SAMPLE_GIVE_DATE_END_TIME" property="sampleGiveDateEndTime" jdbcType="DATE" />  
+        <result column="SAMPLE_USE_DATE_END_TIME" property="sampleUseDateEndTime" jdbcType="DATE" />  
+        <result column="SAMPLE_USE_DATE_START_TIME" property="sampleUseDateStartTime" jdbcType="DATE" />  
+        <result column="SAMPLE_DISPOSAL_DATE_START_TIME" property="sampleDisposalDateStartTime" jdbcType="DATE" />  
+        <result column="SAMPLE_DISPOSAL_DATE_END_TIME" property="sampleDisposalDateEndTime" jdbcType="DATE" />  
+        <result column="SAMPLE_GIVER_USER_NAME" property="sampleGiverUserName" jdbcType="VARCHAR" />         
+    </resultMap>
+
+<select id="myselect" resultMap="BaseResultMap"  parameterType="com.hand.hqm.hqm_sample.dto.Sample">
+  SELECT hs.sample_id
+			,hs.plant_id
+			,hp.plant_code
+			,hs.sample_number
+			,hs.sample_type
+			,hs.sample_position_status
+			,hs.sample_status
+			,hs.description
+			,hs.sample_properties
+			,hs.sample_giver
+			,(SELECT hu.user_name
+					FROM sys_user hu
+				 WHERE hu.user_id = hs.sample_giver) AS SAMPLE_GIVER_USER_NAME
+			,to_date(to_char(hs.sample_give_date,'yyyy-mm-dd'),'yyyy-mm-dd') as sample_give_date  
+			,hs.sample_user
+			,(SELECT hu.user_name
+					FROM sys_user hu
+				 WHERE hu.user_id = hs.sample_user) AS  SAMPLE_USER_USER_NAME
+			,trunc(hs.sample_use_date) as sample_use_date
+			,hs.sample_use_department
+			,hs.sample_disposal_method
+			,trunc(hs.sample_disposal_date) as sample_disposal_date   
+			,hs.associated_document  
+			,hs.enable_flag 
+	FROM hqm_sample hs, hcm_plant hp
+ WHERE hs.plant_id = hp.plant_id
+   <if test="plantId != null">
+     AND hs.plant_id = #{plantId}
+   </if>
+   
+   <if test="sampleType != null">
+     AND hs.sample_type LIKE concat(#{sampleType}, '%')
+   </if>
+   
+   <if test="sampleNumber != null">
+     AND hs.sample_number  LIKE concat(#{sampleNumber}, '%')
+   </if>
+   
+    <if test="sampleStatus != null">
+     AND hs.sample_status = #{sampleStatus}
+   </if>
+   
+    <if test="samplePositionStatus != null">
+     AND hs.sample_position_status = #{samplePositionStatus}
+   </if>
+   
+    <if test="sampleProperties != null">
+     AND hs.sample_properties = #{sampleProperties}
+   </if>
+   
+    <if test="sampleDisposalMethod != null">
+     AND hs.sample_disposal_method = #{sampleDisposalMethod}
+   </if>
+   
+   <if test="sampleGiveDateStartTime != null">
+     AND hs.sample_give_date &gt;= #{sampleGiveDateStartTime} 
+   </if>
+   
+   <if test="sampleGiveDateEndTime != null">
+     AND hs.sample_give_date &lt;= #{sampleGiveDateEndTime}
+   </if>
+   
+   <if test="sampleUseDateStartTime != null">
+     AND hs.sample_use_date &gt;= #{sampleUseDateStartTime}
+   </if>
+   
+   <if test="sampleUseDateEndTime != null">
+      AND hs.sample_use_date &lt;=#{sampleUseDateEndTime}
+   </if>
+   
+   <if test="sampleDisposalDateStartTime != null">
+     AND hs.sample_disposal_date &gt;= #{sampleDisposalDateStartTime}
+   </if>
+   
+   <if test="sampleDisposalDateEndTime != null">   
+     AND hs.sample_disposal_date &lt;=#{sampleDisposalDateStartTime}
+   </if>
+   
+   <if test="sampleUseDepartment != null"> 
+     AND hs.sample_use_department = #{sampleUseDepartment}
+   </if>
+    
+    <if test="enableFlag != null">
+     AND hs.enable_flag = #{enableFlag}
+   </if> 
+   order by hs.creation_date desc  
+</select>
+<select id="SampleLov" resultMap="BaseResultMap"  parameterType="com.hand.hqm.hqm_sample.dto.Sample">
+ SELECT DISTINCT hs.sample_type
+	FROM hqm_sample hs
+  WHERE hs.enable_flag = 'Y'
+  and hs.sample_status ='1'
+  and hs.sample_position_status='I'
+  <if test="plantId != null">
+     AND hs.plant_id = #{plantId}
+   </if> 
+</select>
+   
+<select id="selectforuse" resultMap="BaseResultMap"  parameterType="com.hand.hqm.hqm_sample.dto.Sample">
+  SELECT hs.sample_id
+			,hs.plant_id
+			,hp.plant_code
+			,hs.sample_number
+			,hs.sample_type
+			,hs.sample_position_status
+			,hs.sample_status
+			,hs.description
+			,hs.sample_properties
+			,hs.sample_giver
+			,(SELECT hu.user_name
+					FROM sys_user hu
+				 WHERE hu.user_id = hs.sample_giver) AS SAMPLE_GIVER_USER_NAME
+			,hs.sample_give_date
+			,hs.sample_user
+			,(SELECT hu.user_name
+					FROM sys_user hu
+				 WHERE hu.user_id = hs.sample_user) AS  SAMPLE_USER_USER_NAME
+			,hs.sample_use_date
+			,hs.sample_use_department
+			,hs.sample_disposal_method
+			,hs.sample_disposal_date
+			,hs.associated_document
+			,hs.enable_flag
+	FROM hqm_sample hs, hcm_plant hp
+ WHERE hs.plant_id = hp.plant_id
+  and  hs.associated_document is null 
+   <if test="plantId != null">
+     AND hs.plant_id = #{plantId}
+   </if>
+   
+   <if test="sampleType != null">
+     AND hs.sample_type LIKE concat(#{sampleType}, '%')
+   </if>
+   
+   <if test="sampleNumber != null">
+     AND hs.sample_number  LIKE concat(#{sampleNumber}, '%')
+   </if>
+   
+    <if test="sampleStatus != null">
+     AND hs.sample_status = #{sampleStatus}
+   </if>
+   
+    <if test="samplePositionStatus != null">
+     AND hs.sample_position_status = #{samplePositionStatus}
+   </if>
+   
+    <if test="sampleProperties != null">
+     AND hs.sample_properties = #{sampleProperties}
+   </if>
+   
+    <if test="sampleDisposalMethod != null">
+     AND hs.sample_disposal_method = #{sampleDisposalMethod}
+   </if>
+   
+   <if test="sampleGiveDateStartTime != null">
+     AND hs.sample_give_date &gt;= #{sampleGiveDateStartTime} 
+   </if>
+   
+   <if test="sampleGiveDateEndTime != null">
+     AND hs.sample_give_date &lt;= #{sampleGiveDateEndTime}
+   </if>
+   
+   <if test="sampleUseDateStartTime != null">
+     AND hs.sample_use_date &gt;= #{sampleUseDateStartTime}
+   </if>
+   
+   <if test="sampleUseDateEndTime != null">
+      AND hs.sample_use_date &lt;=#{sampleUseDateEndTime}
+   </if>
+   
+   <if test="sampleDisposalDateStartTime != null">
+     AND hs.sample_disposal_date &gt;= #{sampleDisposalDateStartTime}
+   </if>
+   
+   <if test="sampleDisposalDateEndTime != null">   
+     AND hs.sample_disposal_date &lt;=#{sampleDisposalDateStartTime}
+   </if>
+   
+   <if test="sampleUseDepartment != null"> 
+     AND hs.sample_use_department = #{sampleUseDepartment}
+   </if>
+    
+    <if test="enableFlag != null">
+     AND hs.enable_flag = #{enableFlag}
+   </if> 
+   
+</select> 
+</mapper>

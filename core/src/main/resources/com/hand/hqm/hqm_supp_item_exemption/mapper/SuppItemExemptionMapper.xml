@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_supp_item_exemption.mapper.SuppItemExemptionMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_supp_item_exemption.dto.SuppItemExemption">
+        <result column="EXEMPTION_ID" property="exemptionId" jdbcType="DECIMAL" />
+        <result column="PLANT_ID" property="plantId" jdbcType="DECIMAL" />
+        <result column="ITEM_ID" property="itemId" jdbcType="DECIMAL" />
+        <result column="SUPPLIER_ID" property="supplierId" jdbcType="DECIMAL" />
+        <result column="SUPPLIER_SITE_ID" property="supplierSiteId" jdbcType="DECIMAL" />
+        <result column="EXEMPTION_TIME_FROM" property="exemptionTimeFrom" jdbcType="DATE" />
+        <result column="EXEMPTION_TIME_TO" property="exemptionTimeTo" jdbcType="DATE" />
+        <result column="EXEMPTION_FLAG" property="exemptionFlag" jdbcType="VARCHAR" />
+        <result column="ENABLE_FLAG" property="enableFlag" jdbcType="VARCHAR" />
+        <result column="REMARK" property="remark" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE1" property="globalAttribute1" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE2" property="globalAttribute2" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE3" property="globalAttribute3" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE4" property="globalAttribute4" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE5" property="globalAttribute5" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE6" property="globalAttribute6" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE7" property="globalAttribute7" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE8" property="globalAttribute8" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE9" property="globalAttribute9" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE10" property="globalAttribute10" jdbcType="VARCHAR" />
+        
+        
+         <result column="ITEM_CODE" property="itemCode" jdbcType="VARCHAR" />
+        <result column="SUPPLIER_CODE" property="supplierCode" jdbcType="VARCHAR" />
+        <result column="SUPPLIER_NAME" property="supplierName" jdbcType="VARCHAR" />
+        <result column="SUPPLIER_SITE_CODE" property="supplierSiteCode" jdbcType="VARCHAR" />
+        <result column="SITE_DESCRIPTION" property="siteDescription" jdbcType="VARCHAR" />
+        <result column="ITEM_DESCRIPTION" property="itemDescription" jdbcType="VARCHAR" />
+        <result column="PLANT_CODE" property="plantCode" jdbcType="VARCHAR" />
+    </resultMap>
+
+<select id="myselect" resultMap="BaseResultMap"
+            parameterType="com.hand.hqm.hqm_supp_item_exemption.dto.SuppItemExemption">
+        SELECT
+        	
+             hp.plant_id,
+             hp.plant_code,
+			 hi.item_code,
+			 hi.descriptions as item_description,
+			 hs.supplier_id,
+			 hs.supplier_code,
+			 hs.supplier_name,
+			 hss.supplier_site_code,
+			 hss.description site_description,
+			 hse.exemption_id,
+			 hse.exemption_time_from,
+			 hse.exemption_time_to,
+			 hse.exemption_flag,
+			 hse.enable_flag,
+			 hse.remark
+	 FROM hqm_supp_item_exemption hse,
+			 hcm_plant hp,
+			 hcm_item hi,
+			 hcs_suppliers hs,
+			 hcs_supplier_site hss
+	WHERE hse.supplier_id = hs.supplier_id
+		AND hse.item_id = hi.item_id
+		AND hse.plant_id = hi.plant_id
+		AND hse.plant_id = hp.plant_id
+		AND hp.enable_flag = 'Y'
+		AND hse.supplier_site_id = hss.supplers_site_id
+    and hse.supplier_id = hss.supplier_id
+		   <if test="itemId!=null">
+		  and hse.item_id = #{itemId}
+		   </if>
+		   <if test="plantId!=null">
+		  and hse.plant_id = #{plantId}
+		   </if>
+		   <if test="supplierId!=null">
+		  and hse.supplier_id = #{supplierId}
+		   </if>	   
+		   <if test="exemptionFlag!=null">
+		  and hse.exemption_flag = #{exemptionFlag}
+		   </if>
+		   <if test="enableFlag!=null">
+		  and hse.enable_flag = #{enableFlag}
+		   </if>
+		  order by hse.plant_id, hse.item_id
+    </select>
+</mapper>

@@ -1,0 +1,282 @@
+<#if '${RequestParameters.processInstanceId}' == 'null'>
+	<#include "../include/header.html">
+</#if>
+<#if '${RequestParameters.processInstanceId}' != 'null' && '${RequestParameters.taskId}' != ''>
+	<#include "../activiti/approve_header.html">
+</#if>
+<#if '${RequestParameters.processInstanceId}' != 'null' && '${RequestParameters.taskId}' == ''>
+	<#include "../activiti/process_instance_detail_header.html">
+</#if>
+<script src="${base.contextPath}/common/code?WORKFLOW_STATUS=SYS_WORKFLOW_STATUS" type="text/javascript"></script>
+<script type="text/javascript">
+	var BaseUrl = _basePath;
+	var busiViewModel = Hap.createGridViewModel(null, {
+	    model: {
+	        processInstanceId: '${RequestParameters.processInstanceId!0}',
+	        businessKey: '${RequestParameters.businessKey!}' || null,
+	        isCanEditor:true
+	    },
+		queryInfo:function(){
+			debugger;
+			var url = BaseUrl+'/hqm/measure/tool/scrap/queryByCondition';
+			if(${RequestParameters.processInstanceId} != null){
+				url = url +'?processInstanceId=' + ${RequestParameters.processInstanceId};
+			} else {
+				url = url +'?measureToolScrapId=' + ${RequestParameters.businessId};
+			}
+			$.ajax({
+				url:url,
+				success:function(data){
+					var a0 = data.rows[0] || {};
+					for(var k in a0){
+						busiViewModel.model.set(k,a0[k]);
+					}
+				}
+			})
+		},
+		save:function(){
+    		var data = busiViewModel.model.toJSON();
+    		data.__status = "update";
+    		
+    		var validator = $("#mainForm").data("kendoValidator");
+    		if(validator.validate()) {
+    			Hap.blockUI();
+    			Hap.request({
+    				url: BaseUrl + "/hqm/measure/tool/scrap/add",
+    				data: kendo.stringify(data),
+    				success:function(data){
+    					if(data.success){
+    						Hap.unblockUI();
+    						//刷新待办页和业务数据页的数据
+    						reQueryTaskListTab();
+    						//busiViewModel.closeWin();
+    					}
+    				}
+    			})
+    		}
+    	},
+    	createProcessInstance:function(){
+    		var data = busiViewModel.model.toJSON();
+    		data.__status = "update";
+    		
+    		var validator = $("#mainForm").data("kendoValidator");
+    		if(validator.validate()) {
+    			Hap.blockUI();
+    			Hap.request({
+    				url: BaseUrl + "/hqm/measure/tool/scrap/createProcessInstance",
+    				data: kendo.stringify(data),
+    				success:function(data){
+    					if(data.success){
+    						Hap.unblockUI();
+    						closeCurrentWin();
+    					}
+    				}
+    			})
+    		}
+    	},
+	});
+	busiViewModel.queryInfo();
+	
+</script>
+<div class="approve-block" style="width: 1000px;">
+    <h3>审批表单</h3>
+    <!--<iframe id="includeFrame" style="width:100%" name="includeFrame" onLoad="onIncludeFrameLoad()"></iframe>-->
+
+    <form id = "mainForm" style="paddiing-bottom:50px;padding-top:15px" class="form-horizontal" method="post" enctype="application/json;charset=UTF-8">
+		<div class="row">
+			<div class="col-sm-12">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-2 control-label">报废单号</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="scrapNumber"  data-role="maskedtextbox" class="k-textbox"
+								data-bind="value:model.scrapNumber" disabled>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-sm-12">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-2 control-label">量具编号</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="measureToolId"  data-label="量具编号" required
+								data-bind="enabled:model.isCanEditor,value:model.measureToolId,text:model.measureToolNum">
+						</div>
+						<script>
+							//选择量具
+							$("#measureToolId").kendoLov($.extend(<@lov "LOV_HQM_MEASURE_TOOL_REPAIR"/>,{
+								change:function(e){
+									busiViewModel.model.set("descriptions",e.sender._dataItem.descriptions);
+									busiViewModel.model.set("measuringRange",e.sender._dataItem.measuringRange);
+									busiViewModel.model.set("measureToolType",e.sender._dataItem.measureToolType);
+								},
+							}));
+						</script>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-sm-12">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-2 control-label">量具名称</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="descriptions"  data-role="maskedtextbox" class="k-textbox"
+								data-bind="value:model.descriptions" disabled>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-sm-12">
+					<div class="form-group">
+						<div class="col-sm-12">
+							<label class="col-sm-2 control-label">规格</label>
+							<div class="col-sm-8">
+								<input style="width:100%" id="measuringRange"  data-role="maskedtextbox" class="k-textbox"
+									data-bind="value:model.measuringRange" disabled>
+							</div>
+						</div>
+					</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-sm-12">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-2 control-label">型号</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="measureToolType"  data-role="maskedtextbox" class="k-textbox"
+								data-bind="value:model.measureToolType" disabled>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-sm-12">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-2 control-label">申请日期</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="applicationDate"  data-role="datepicker" class="k-datepicker"
+								data-bind="value:model.applicationDate" disabled>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-sm-12">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-2 control-label">报废原因</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="reason"  data-role="maskedtextbox" class="k-textbox"
+								data-bind="enabled:model.isCanEditor,value:model.reason" required>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</form>
+	<span id="btn-save" class="btn btn-primary" data-bind="click:save" type="submit" style="margin-left:5px">保存</span>
+	<span id="btn-submit" class="btn btn-primary" data-bind="click:createProcessInstance" type="submit" style="margin-left:5px">提交审批</span>
+	
+	<script type="text/javascript">
+		kendo.bind($('#mainForm'), busiViewModel);
+		kendo.bind($('#btn-save'), busiViewModel);
+		kendo.bind($('#btn-submit'), busiViewModel);
+		debugger;
+		if('${RequestParameters.processInstanceId}' != 'null'){
+			//进了流程
+			$('#btn-submit').hide();
+			if(!(${RequestParameters.isMine} && '${RequestParameters.status}' == "单据修改")){
+				busiViewModel.model.set("isCanEditor",false);
+				$('#btn-save').hide();
+			}
+		} else {
+			//没进流程
+			if('${RequestParameters.createdBy}' != '${Session.userId}') {
+				//当前登录人不是订单创建人，不可以编辑
+				busiViewModel.model.set("isCanEditor",false);
+				$('#btn-save').hide();
+				$('#btn-submit').hide();
+			}
+		};
+		
+		/* if('${RequestParameters.status}' != "单据修改"){
+			busiViewModel.model.set("isCanEditor",false);
+			$('#btn-save').hide();
+		}; */
+		
+		$('#mainForm').kendoValidator({
+			messages:{
+				required:'<@spring.message "hap.validation.notempty"/>'
+			},
+			invalidMessageType:"tooltip"
+		});
+	</script>
+</div>
+
+<#if '${RequestParameters.processInstanceId}' != 'null' && '${RequestParameters.taskId}' != ''>
+	<#include "../activiti/approve_footer.html">
+</#if>
+<#if '${RequestParameters.processInstanceId}' != 'null' && '${RequestParameters.taskId}' == ''>
+	<#include "../activiti/process_instance_detail_footer.html">
+</#if>
+
+<script type="text/javascript">
+	
+	//覆盖具体的关闭tab页签操作
+	function closeCurrentWin() {
+		debugger;
+        if (window.top.closeTab) {
+            reQueryTaskListTab();
+            if('${RequestParameters.taskId}' != ''){
+            	window.top.closeTab('PROCESS_TASK_' +　'${RequestParameters.taskId}');
+            } else {
+            	window.top.closeTab('PROCESS_INSTANCE_' +　${RequestParameters.processInstanceId});
+            }
+            return;
+        }
+        window.close();
+    }
+		
+	//覆盖具体的刷新父tab页签数据的操作
+    function reQueryTaskListTab() {
+        var mainTab = window.top.$("#mainTab").data("kendoTabStrip");
+        //根据功能维护界面里的功能代码字段，刷新打开了的tab页签
+        var idx = jQuery.inArray('WFL_TASK', mainTab.tabids);
+        var WFL_TASK = mainTab.contentElements[idx];
+        if(WFL_TASK){
+            var iframe = $(WFL_TASK).find('iframe')[0];
+            iframe.contentWindow.doQuery();
+        }
+        idx = jQuery.inArray('WFL_MY_TASK', mainTab.tabids);
+        var WFL_MY_TASK = mainTab.contentElements[idx];
+        if(WFL_MY_TASK){
+            var iframe = $(WFL_MY_TASK).find('iframe')[0];
+            iframe.contentWindow.doQuery();
+        }
+        idx = jQuery.inArray('WFL_HISROTY', mainTab.tabids);
+        var WFL_HISROTY = mainTab.contentElements[idx];
+        if(WFL_HISROTY){
+            var iframe = $(WFL_HISROTY).find('iframe')[0];
+            iframe.contentWindow.doQuery();
+        }
+        idx = jQuery.inArray('HQM_MEASURE_TOOL_SCRAP', mainTab.tabids);
+        var HQM_MEASURE_TOOL_SCRAP = mainTab.contentElements[idx];
+        if(HQM_MEASURE_TOOL_SCRAP){
+            var iframe = $(HQM_MEASURE_TOOL_SCRAP).find('iframe')[0];
+            iframe.contentWindow.doQuery();
+        }
+    }
+
+</script>
+</html>

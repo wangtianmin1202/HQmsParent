@@ -1,0 +1,464 @@
+<!--
+ * description: 临时检验单新建对话框
+ * author:tianmin.wang
+ * date:20191210
+ -->
+<#include "../include/header.html">
+<script src="${base.contextPath}/common/code?yesNo=SYS.YES_NO"></script><!-- 是否 -->
+<script src="${base.contextPath}/common/code?hqmIqcInspectionType=HQM_INSPECTION_TYPE"></script><!-- 检验类型 -->
+<script src="${base.contextPath}/common/code?hqmIqcSourceType=HQM_IQC_SOURCE_TYPE"></script>
+<script src="${base.contextPath}/common/code?HQM_IQC_ATTRIBUTE_CATEGORY=HQM_IQC_ATTRIBUTE_CATEGORY"></script>
+<script src="${base.contextPath}/common/code?HQM_INSPECTION_METHOD=HQM_INSPECTION_METHOD"></script>
+<script src="${base.contextPath}/common/code?HQM_IQC_STANDARD_TYPE=HQM_IQC_STANDARD_TYPE"></script>
+<script src="/core/common/code?HQM_STANDARD_UOM=HQM_STANDARD_UOM"></script>
+<script src="${base.contextPath}/common/code?HQM_IQC_QUALITY_GRADE=HQM_IQC_QUALITY_GRADE"></script>
+
+
+<body>
+<script type="text/javascript">
+	var kid = "${RequestParameters.kid!'-1'}";
+	var viewModel = kendo.observable({
+		model: {
+			kid: kid,
+			inspectionType: window.parent.inspectionType,
+		},
+		save: function(e){
+		 	var data = viewModel.model.toJSON();
+			var validator = $("#mainform").data("kendoValidator");
+			if (validator.validate()) {
+				$.ajax({
+			        url: '${base.contextPath}/hqm/temporary/inspection/save',
+			        type: 'POST',
+			        data: data,
+			        async: false,
+			        dataType: "json",
+			        success: function (response) {
+			            if (response.success) {
+			            	window.parent.grid.dataSource.fetch();
+			            	window.parent.$("#createInspectionWindow").data("kendoWindow").close();
+			            } else {
+			            	kendo.ui.showWarningDialog({
+			                    message: response.message
+			                });
+			            }
+			        }
+			    });
+			}
+		},
+		closeWin: function(e){
+        	window.parent.$("#createInspectionWindow").data("kendoWindow").close();
+        }
+	});
+	function clearNoNumNoPrecision(value){
+		if(!isNotEmpty(value)){return value;}
+		value = value.replace(/[^\d.]/g,""); //清除"数字"和"."以外的字符  
+	    value = value.replace(/^\./g,""); //验证第一个字符是数字而不是  
+	    value = value.replace(/\.{2,}/g,"."); //只保留第一个. 清除多余的  
+	    value = value.replace(".","$#$").replace(/\./g,"").replace("$#$","."); 
+	    return value;
+	}
+	function getModel(){
+		if(window.parent.inspectionType == 'PQC'){
+			$('.pqc').show();
+		}else{
+			$('#standardOpId').attr('required',false);
+			$('#workstationId').attr('required',false);
+		}
+		
+		if(kid != '-1'){
+			$.ajax({
+		        url: '${base.contextPath}/hqm/temporary/inspection/query',
+		        type: 'POST',
+		        data: {
+		        	kid: kid,
+		        	inspectionType: window.parent.inspectionType,
+		        },
+		        async: false,
+		        dataType: "json",
+		        success: function (response) {
+		            if (response.success) {
+		            	viewModel.set('model',response.rows[0]);
+		            }
+		        }
+		    });
+			if(viewModel.model.status != 'P'){
+				$('#lovPlant').data('kendoLov').enable(false);
+				$('#categoryId').data('kendoLov').enable(false);
+				$('#inspectionAttribute').data('kendoMaskedTextBox').enable(false);
+				$('#attributeType').data('kendoComboBox').enable(false);
+				$('#standardOpId').data('kendoLov').enable(false);
+				$('#workstationId').data('kendoLov').enable(false);
+				$("#standardType").data('kendoComboBox').enable(false);
+				$('#sampleWayId').data('kendoLov').enable(false);
+				$('#inspectionRequest').data('kendoMaskedTextBox').enable(false);
+				$('#inspectionMethod').data('kendoMaskedTextBox').enable(false);
+				$('#standradFrom').data('kendoMaskedTextBox').enable(false);
+				$('#standradTo').data('kendoMaskedTextBox').enable(false);
+				$('#textStandrad').data('kendoMaskedTextBox').enable(false);
+				$('#qualityCharacterGrade').data('kendoComboBox').enable(false);
+				$('#standradUom').data('kendoComboBox').enable(false);
+			}
+		}
+		
+	}
+</script>
+
+<div id="page-content">
+	<form id="mainform"  class="form-horizontal" method="post" enctype="application/json;charset=UTF-8">
+
+	<div class="row" style="margin-left: 5px;">
+	 	<div class="col-sm-12">
+	 		<!-- 工厂+ 物料类别 -->
+	 	  	<div class="row" style="margin-top:15px">
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message "temporaryinspection.plantid"/>:</label>
+					<div class="col-sm-9">
+                        <input required id="lovPlant" style="width:100%" name="plantId"
+                               data-label="<@spring.message 'temporaryinspection.plantid'/>"
+								data-bind="value:model.plantId,text:model.plantCode">
+						<span data-for="plantId" class=".k-invalid-msg"></span>
+					</div>
+					<script>
+					$("#lovPlant").kendoLov($.extend
+				    	    (<@lov"LOV_PLANT"/>, {
+				    	        textField: 'plantCode',
+				    	        valueField:'plantId',
+				    	        change:function(e){
+				    	        	viewModel.model.plantCode=this._dataItem.plantCode;
+				    	        }
+				    	    }));
+					</script>
+				</div>
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message "temporaryinspection.categoryid"/>:</label>
+					<div class="col-sm-9">
+                        <input required id="categoryId" style="width:100%" name="categoryId"
+                               data-label="<@spring.message 'temporaryinspection.categoryid'/>"
+								data-bind="value:model.categoryId,text:model.categoryCode">
+						<span data-for="categoryId" class=".k-invalid-msg"></span>
+					</div>
+					<script>
+					$("#categoryId").kendoLov($.extend
+				    	    (<@lov"LOV_ITEM_CATEGORY"/>, {
+				    	        textField: 'categoryCode',
+				    	        valueField:'categoryId',
+				    	        change:function(e){
+				    	        	viewModel.model.categoryCode = this._dataItem.categoryCode;
+				    	        }
+				    	    }));
+					</script>
+				</div>
+            </div>
+			<!-- 检验项目 inspectionAttribute + 检验项类型 -->
+			<div class="row" style="margin-top:15px">
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message "temporaryinspection.attributeid"/>:</label>
+					<div class="col-sm-9">
+                        <input required style="width:100%" name="inspectionAttribute"
+                               data-label="<@spring.message 'temporaryinspection.attributeid'/>" id="inspectionAttribute"
+                               data-bind="value:model.inspectionAttribute" data-role="maskedtextbox">
+						<span data-for="inspectionAttribute" class=".k-invalid-msg"></span>
+					</div>
+				</div>
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message "temporaryinspection.attributetype"/>:</label>
+					<div class="col-sm-9">
+                        <input style="width:100%" required name="attributeType"
+                        		 id="attributeType"
+                        		 data-label="<@spring.message 'temporaryinspection.attributetype'/>"
+                               data-bind="value:model.attributeType">
+						<span data-for="attributeType" class=".k-invalid-msg"></span>
+						<script type="text/javascript">
+							$("#attributeType").kendoComboBox({
+						        dataTextField: "meaning",
+						        dataValueField: "value",
+						        valuePrimitive: true,
+						        dataSource: HQM_IQC_ATTRIBUTE_CATEGORY
+							});
+						</script>
+					</div>
+				</div>
+			</div>
+			
+			<!-- 工序产线 + 工位  为PQC时才展示这个div row-->
+	 	  	<div class="row pqc" style="margin-top:15px;display:none;">
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message "temporaryinspection.standardopcode"/>:</label>
+					<div class="col-sm-9">
+                        <input required id="standardOpId" style="width:100%" name="standardOpId"
+                               data-label="<@spring.message 'temporaryinspection.standardopcode'/>"
+								data-bind="value:model.standardOpId,text:model.standardOpCode">
+						<span data-for="standardOpId" class=".k-invalid-msg"></span>
+					</div>
+					<script>
+					$("#standardOpId").kendoLov($.extend
+				    	    (<@lov"STANDARD_OP_LOV"/>, {
+				    	        textField: 'standardOpCode',
+				    	        valueField:'standardOpId',
+				    	        
+				    	    }));
+					</script>
+				</div>
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message "temporaryinspection.workstations"/>:</label>
+					<div class="col-sm-9">
+                        <input required id="workstationId" style="width:100%" name="workstationId"
+                               data-label="<@spring.message 'temporaryinspection.workstations'/>"
+								data-bind="value:model.workstationId,text:model.workstationCode">
+						<span data-for="workstationId" class=".k-invalid-msg"></span>
+					</div>
+					<script>
+					$("#workstationId").kendoLov($.extend
+				    	    (<@lov"WORKSTATION_CELL_LOV"/>, {
+				    	        textField: 'workstationCode',
+				    	        valueField:'workstationId',
+				    	        query: function(e){
+				    	        	if(viewModel.model.standardOpId == null || viewModel.model.standardOpId == undefined){
+				    	        		e.param.standardOpId = -1;
+				    	        	}else{
+				    	        	e.param.standardOpId = viewModel.model.standardOpId;
+				    	        	}
+				    	        
+				    	        }
+				    	    }));
+					</script>
+				</div>
+            </div>
+			
+			
+			<!-- 规格类型+抽样方式 -->
+			<div class="row" style="margin-top:15px">
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message "temporaryinspection.standardtype"/>:</label>
+					<div class="col-sm-9">
+                        <input style="width:100%" required name="standardType"
+                        	id="standardType"
+                        	data-label="<@spring.message 'temporaryinspection.standardtype'/>"
+                            data-bind="value:model.standardType">
+						<span data-for="standardType" class=".k-invalid-msg"></span>
+						<script type="text/javascript">
+							$("#standardType").kendoComboBox({
+						        dataTextField: "meaning",
+						        dataValueField: "value",
+						        valuePrimitive: true,
+						        dataSource: HQM_IQC_STANDARD_TYPE,
+						        change: function(e){
+						        	if(e.sender._old == 'M'){
+						        		$('#standradFrom').attr('required',true);
+										$('#standradTo').attr('required',true);
+						        	}else{
+						        		$('#standradFrom').attr('required',false);
+										$('#standradTo').attr('required',false);
+						        	}
+						        }
+							});
+						</script>
+					</div>
+				</div>
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message "temporaryinspection.samplewayid"/>:</label>
+					<div class="col-sm-9">
+                        <input required id="sampleWayId" style="width:100%" name="sampleWayId"
+                               data-label="<@spring.message 'temporaryinspection.samplewayid'/>"
+								data-bind="value:model.sampleWayId,text:model.sampleWayCode">
+						<span data-for="sampleWayId" class=".k-invalid-msg"></span>
+					</div>
+					<script>
+					$("#sampleWayId").kendoLov($.extend
+				    	    (<@lov"LOV_SAMPLE_MANAGE"/>, {
+				    	        textField: 'description',
+				    	        valueField:'sampleWayId'
+				    	    }));
+					</script>
+				</div>
+			</div>
+			
+			<!-- 检验要求 + 检验方法 -->
+			<div class="row" style="margin-top:15px">
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message "temporaryinspection.inspectionrequest"/>:</label>
+					<div class="col-sm-9">
+                        <input style="width:100%" name="inspectionRequest"
+                               data-label="<@spring.message 'temporaryinspection.inspectionrequest'/>" id="inspectionRequest"
+                               data-bind="value:model.inspectionRequest" data-role="maskedtextbox">
+						<span data-for="inspectionRequest" class=".k-invalid-msg"></span>
+					</div>
+				</div>
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message "temporaryinspection.inspectionmethod"/>:</label>
+					<div class="col-sm-9">
+                        <input style="width:100%" required name="inspectionMethod"
+                        		 id="inspectionMethod"
+                        		 data-label="<@spring.message 'temporaryinspection.inspectionmethod'/>"
+                               data-bind="value:model.inspectionMethod">
+						<span data-for="inspectionMethod" class=".k-invalid-msg"></span>
+						<script type="text/javascript">
+							$("#inspectionMethod").kendoMaskedTextBox({
+// 						        dataTextField: "meaning",
+// 						        dataValueField: "value",
+// 						        valuePrimitive: true,
+// 						        dataSource: HQM_INSPECTION_METHOD
+							});
+						</script>
+					</div>
+				</div>
+			</div>
+			<!-- 规格值从 + 规格值至 -->
+			<div class="row" style="margin-top:15px">
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message "temporaryinspection.standradfrom"/>:</label>
+					<div class="col-sm-9">
+                        <input style="width:100%" name="standradFrom"
+                               data-label="<@spring.message 'temporaryinspection.standradfrom'/>" id="standradFrom"
+                               data-bind="value:model.standradFrom">
+                         
+						<span data-for="standradFrom" class=".k-invalid-msg"></span>
+						<script>
+						$('#standradFrom').kendoMaskedTextBox({
+	                    	change:function(){
+	                    		var value = clearNoNumNoPrecision(this.value() + '');
+	                    		viewModel.model.set('standradFrom', value);
+	                    	}
+	                    });
+						</script>
+					</div>
+				</div>
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message "temporaryinspection.standradto"/>:</label>
+					<div class="col-sm-9">
+                        <input style="width:100%" name="standradTo"
+                               data-label="<@spring.message 'temporaryinspection.standradto'/>" id="standradTo"
+                               data-bind="value:model.standradTo" data-role="maskedtextbox">
+						<span data-for="standradTo" class=".k-invalid-msg"></span>
+						<script>
+						$('#standradTo').kendoMaskedTextBox({
+	                    	change:function(){
+	                    		var value = clearNoNumNoPrecision(this.value() + '');
+	                    		viewModel.model.set('standradTo', value);
+	                    	}
+	                    });
+						</script>
+					</div>
+				</div>
+			</div>
+			<!-- 文本规格值 + 质量特性等级 -->
+			<div class="row" style="margin-top:15px">
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message "temporaryinspection.textstandrad"/>:</label>
+					<div class="col-sm-9">
+                        <input required style="width:100%" name="textStandrad"
+                               data-label="<@spring.message 'temporaryinspection.textstandrad'/>" id="textStandrad"
+                               data-bind="value:model.textStandrad" data-role="maskedtextbox">
+						<span data-for="textStandrad" class=".k-invalid-msg"></span>
+					</div>
+				</div>
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message "temporaryinspection.qualitycharactergrade"/>:</label>
+					<div class="col-sm-9">
+                        <input style="width:100%" required name="qualityCharacterGrade"
+                        		 id="qualityCharacterGrade"
+                        		 data-label="<@spring.message 'temporaryinspection.qualitycharactergrade'/>"
+                               data-bind="value:model.qualityCharacterGrade">
+						<span data-for="qualityCharacterGrade" class=".k-invalid-msg"></span>
+						<script type="text/javascript">
+							$("#qualityCharacterGrade").kendoComboBox({
+						        dataTextField: "meaning",
+						        dataValueField: "value",
+						        valuePrimitive: true,
+						        dataSource: HQM_IQC_QUALITY_GRADE
+							});
+						</script>
+					</div>
+				</div>
+			</div>
+			<!-- 备注 + 失效时间 -->
+			<div class="row" style="margin-top:15px">
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message "temporaryinspection.remark"/>:</label>
+					<div class="col-sm-9">
+                        <input style="width:100%" name="remark"
+                               data-label="<@spring.message 'temporaryinspection.remark'/>" id="remark"
+                               data-bind="value:model.remark" data-role="maskedtextbox">
+						<span data-for="remark" class=".k-invalid-msg"></span>
+					</div>
+				</div>
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message "temporaryinspection.disabletime"/>:</label>
+					<div class="col-sm-9">
+                        <input id="disableTime" style="width:100%" name="disableTime"
+                        		data-label="<@spring.message 'temporaryinspection.disabletime'/>"
+                        		data-bind="value:model.disableTime"
+                               >
+                               
+						<span data-for="disableTime" class=".k-invalid-msg"></span>
+					</div>
+					<script type="text/javascript">
+						$("#disableTime").kendoDateTimePicker({
+							//ARIATemplate: "Date: #=kendo.toString(data.current, 'G')#",
+							min: new Date(),
+							format: "yyyy-MM-dd HH:mm:ss",
+							change:function(){
+								viewModel.model.disableTime = this.value().format("yyyy-MM-dd HH:mm:ss");
+							}
+						});
+					</script>
+				</div>
+			</div>
+			<!-- 规格单位 -->
+			<div class="row" style="margin-top:15px">
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message "temporaryinspection.standraduom"/>:</label>
+					<div class="col-sm-9">
+                        <input style="width:100%" name="standradUom"
+                               data-label="<@spring.message 'temporaryinspection.remark'/>" id="standradUom"
+                               data-bind="value:model.standradUom" >
+						<span data-for="standradUom" class=".k-invalid-msg"></span>
+						<script type="text/javascript">
+							$("#standradUom").kendoComboBox({
+						        dataTextField: "meaning",
+						        dataValueField: "value",
+						        valuePrimitive: true,
+						        dataSource: HQM_STANDARD_UOM
+							});
+						</script>
+					</div>
+				</div>
+				
+			</div>
+		</div>
+	  </div>
+
+
+	</form>
+</div>
+<div id="mainBottom" class="text-right" style="bottom: 15px;position: fixed;  float: left;padding-top:15px;border-top:1px solid #ebebeb;width:100%; background: #fff;">
+        <span class="btn btn-primary" data-bind="click:save" type="submit" style="margin-right:5px"><@spring.message "hap.save"/></span>
+        <span class="btn btn-default" data-bind="click:closeWin" type="button" style="margin-right:25px;"><@spring.message "hap.cancel"/></span>
+</div>
+
+<script type="text/javascript">
+    kendo.bind($('#mainBottom'),viewModel);
+	kendo.bind($('#mainform'), viewModel);
+
+    function isNotEmpty(obj) {
+        if(obj != undefined && obj != null && obj != ""){
+            return true;
+        }else{
+            return false;
+        }
+    }
+    var initMinDate = new Date(1900, 0, 1);
+    var initMaxDate = new Date(2099, 11, 31);
+	//验证
+	$("#mainform").kendoValidator({
+    	messages: {
+            required: '<@spring.message "hap.validation.notempty"/>'
+    	},
+		invalidMessageType : "tooltip"
+    });
+	$(function(){
+		getModel();
+	});
+</script>
+</body>
+</html>

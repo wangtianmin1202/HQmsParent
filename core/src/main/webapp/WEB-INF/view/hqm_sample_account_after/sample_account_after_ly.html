@@ -1,0 +1,547 @@
+<#include "../include/header.html">
+<!--
+ * @description: 
+ * @author: tianmin.wang
+ * @date: 20191021
+ -->
+<script src="${base.contextPath}/common/code?yesNo=SYS.YES_NO"></script>
+<script src="${base.contextPath}/common/code?HQM_H_SAMPLE_REVENIR_STATUS=HQM_H_SAMPLE_REVENIR_STATUS"></script>
+<script src="${base.contextPath}/common/code?HQM_H_SAMPLE_POSITION_STATUS=HQM_H_SAMPLE_POSITION_STATUS"></script>
+<script src="${base.contextPath}/common/code?HQM_H_SAMPLE_REVENIR_STATUS=HQM_H_SAMPLE_REVENIR_STATUS"></script>
+<script src="${base.contextPath}/common/code?HQM_H_SAMPLE_STATUS=HQM_H_SAMPLE_STATUS"></script>
+<script src="${base.contextPath}/common/code?HQM_ANALYSIS_STATUS=HQM_ANALYSIS_STASTUS"></script>
+<script src="${base.contextPath}/common/code?HQM_AFTERSALE_SAMPLE_SOLVE_WAY=HQM_AFTERSALE_SAMPLE_SOLVE_WAY"></script>
+<script src="${base.contextPath}/common/code?HQM_AFTERSALE_COMPONENT_SOLVE=HQM_AFTERSALE_COMPONENT_SOLVE"></script>
+<script src="${base.contextPath}/common/code?HQM_AFTERSALE_SAMPLE_SCRAP=HQM_AFTERSALE_SAMPLE_SCRAP"></script>
+
+<script type="text/javascript">
+    var viewModel = Hap.createGridViewModel("#grid");
+</script>
+<body>
+<script type="text/javascript">
+var parentData;
+viewModel.create = function(){
+	var dialog = $("#createWindow").kendoWindow({
+		width: 1000,
+		height: 600,
+        title: '零件封样台账创建',
+        visible: false,
+        iframe: true,
+        modal: true,
+		close:function(){
+        	$("#grid").data("kendoGrid").dataSource.fetch();
+        },
+        content: './sample_account_after_edit.html'
+    }).data("kendoWindow");
+    dialog.center().open();
+}
+</script>
+<script type="text/javascript">
+viewModel.scrap = function(){//报废
+	var dialog = $("#scrapWindow").kendoWindow({
+		width: 1500,
+		height: 700,
+        title: '报废单创建',
+        visible: false,
+        iframe: true,
+        modal: true,
+		close:function(){
+        	$("#grid").data("kendoGrid").dataSource.fetch();
+        },
+        content: './sample_scrapped_after.html'
+    }).data("kendoWindow");
+    dialog.center().open();
+}
+function scrap(scrappedIds){
+	var dialog = $("#scrapWindow").kendoWindow({
+		width: 1500,
+		height: 700,
+        title: '报废单',
+        visible: false,
+        iframe: true,
+        modal: true,
+		close:function(){
+        	$("#grid").data("kendoGrid").dataSource.fetch();
+        },
+        content: './sample_scrapped_after.html?scrappedIds='+scrappedIds
+    }).data("kendoWindow");
+    dialog.center().open();
+}
+viewModel.use = function(){//领用
+	var grid = $("#grid").data("kendoGrid");
+	var checked = grid.selectedDataItems();
+	var len = checked.length;
+	if(len === 0){
+		kendo.ui.showInfoDialog({
+			title: "提示",
+			message: "请先选择数据"
+		})
+		return;
+	}
+	parentData = checked;
+	var dialog = $("#useWindow").kendoWindow({
+		width: 800,
+		height: 500,
+        title: '领用',
+        visible: false,
+        iframe: true,
+        modal: true,
+		close:function(){
+        	$("#grid").data("kendoGrid").dataSource.fetch();
+        },
+        content: 'use.html'
+    }).data("kendoWindow");
+    dialog.center().open();
+}
+function use(useIds){
+	var dialog = $("#useWindow").kendoWindow({
+		width: 1500,
+		height: 700,
+        title: '领用单',
+        visible: false,
+        iframe: true,
+        modal: true,
+		close:function(){
+        	$("#grid").data("kendoGrid").dataSource.fetch();
+        },
+        content: './sample_use_after.html?useIds='+useIds
+    }).data("kendoWindow");
+    dialog.center().open();
+}
+Dremove =function(sampleId){
+	
+ 	var data = {sampleId:sampleId}
+	 	console.log(data);		 
+		  {
+			  $.ajax({
+		        url: '${base.contextPath}/hqm/sample/account/delete/row',
+		        type: 'POST',
+		        data: data,
+		        async: false,
+		        dataType: "json",
+		        success: function (response) {
+		            if (response.success) {
+		            	$("#grid").data("kendoGrid").dataSource.fetch();         	 
+		            } else {
+		            	kendo.ui.showErrorDialog({
+		                    message: response.message
+		                });
+		            }
+		        }
+		    });  
+		}
+}
+</script>
+<div id="useWindow"></div>
+<div id="scrapWindow"></div>
+<div id="createWindow"></div>
+<div id="page-content">
+    <div class="pull-left" id="toolbar-btn" style="padding-bottom:10px;">
+<!--         <span class="btn btn-primary k-grid-add" style="float:left;margin-right:5px;" data-bind="click:create"><@spring.message "hap.new"/></span> -->
+        <span class="btn btn-success" style="float:left;margin-right:5px;" data-bind="click:use"><@spring.message "sampleaccount.bt.use"/></span>
+<!--         <span class="btn btn-success" style="float:left;margin-right:5px;" data-bind="click:use"><@spring.message "sampleaccount.bt.use"/></span>
+        <span  data-bind="click:remove" class="btn btn-danger" style="float:left;"><@spring.message "hap.delete"/></span> -->
+    </div>
+    <script>kendo.bind($('#toolbar-btn'), viewModel);</script>
+    <div id="queryPanel" class="pull-right" id="query-form" style="padding-bottom:10px;">
+    	<div class="k-query-simple" id="query-form">
+            <input type="text" data-role="maskedtextbox" style="width:150px;margin-right:5px;" 
+            		placeholder='<@spring.message "sampleaccount.samplemodel"/>' data-bind="value:model.sampleModel" class="k-textbox">
+             <input type="text" data-role="maskedtextbox" style="width:150px;margin-right:5px;" 
+            		placeholder='<@spring.message "sampleaccount.samplecode"/>' data-bind="value:model.sampleCode" class="k-textbox">
+             
+             
+            <input id="sealingSamplePositionStatus" style="width:150px;margin-right:5px;" 
+            		placeholder='<@spring.message "sampleaccount.sealingsamplepositionstatus"/>' data-bind="value:model.sealingSamplePositionStatus">
+            <input id="sealingSampleStatus" style="width:150px;margin-right:5px;" 
+            		placeholder='<@spring.message "sampleaccount.sealingsamplestatus"/>' data-bind="value:model.sealingSampleStatus">
+            <script>
+            $("#sealingSamplePositionStatus").kendoComboBox({
+				dataTextField : "meaning",
+				dataValueField : "value",
+				valuePrimitive : true,
+				dataSource : HQM_H_SAMPLE_POSITION_STATUS
+			});
+		　　 $("#sealingSampleStatus").kendoComboBox({
+				dataTextField : "meaning",
+				dataValueField : "value",
+				valuePrimitive : true,
+				dataSource : HQM_H_SAMPLE_STATUS
+			});
+            </script>
+        </div>
+        <script>kendo.bind($('#query-form'), viewModel);</script>
+        <div class="k-query-detail" id="query-form2">
+            <div class="rows" style="padding-bottom:10px;">
+            <input id="supplierId" style="margin-right: 5px;width:150px;" 
+            		placeholder="<@spring.message 'sampleaccount.supplierId'/>" data-bind="value:model.supplierId">
+            <input id="scrappedFlag" style="width:150px;margin-right:5px;" 
+            		placeholder='<@spring.message "sampleaccount.scrappedflag"/>' data-bind="value:model.scrappedFlag">
+            <input id="sampleGiver" style="width:150px;margin-right: 5px;" 
+            		placeholder="<@spring.message 'sampleaccount.samplegiver'/>" data-bind="value:model.sampleGiver">
+            </div>
+            <script>
+            $("#sampleGiver").kendoLov($.extend(<@lov"user_lov"/>, {
+				textField : 'userName',
+				valueField : 'userId',
+			}));
+            $("#scrappedFlag").kendoComboBox({
+				dataTextField : "meaning",
+				dataValueField : "value",
+				valuePrimitive : true,
+				dataSource : yesNo
+			});
+			$("#supplierId").kendoLov($.extend(<@lov"LOV_SUPPLIER"/>, {
+				textField : 'supplierName',
+				valueField : 'supplierId',
+			}));
+            </script>
+            <div class="rows" style="padding-bottom:10px;">
+            <input id="sampleGiveDateFrom" data-role="datetimepicker"data-bind="value:model.sampleGiveDateFrom"
+						placeholder="<@spring.message 'hqm.qc.dateofinspection'/>" style="width: 150px;margin-right:5px;" />
+			<input id="sampleGiveDateTo" data-role="datetimepicker"data-bind="value:model.sampleGiveDateTo"
+						placeholder="<@spring.message 'hqm.qc.datetobeinspected'/>" style="width: 150px;margin-right:5px;" />
+			
+            		 <input type="text" data-role="maskedtextbox" style="width:150px;margin-right:5px;" 
+            		placeholder='<@spring.message "sampleaccount.dealer"/>' data-bind="value:model.dealer" class="k-textbox">
+            </div>
+            <script>
+            $("#sampleGiveDateFrom").kendoDateTimePicker(
+					{
+						format : "yyyy-MM-dd HH:mm:ss",
+						change : function() {
+							viewModel.model.sampleGiveDateFrom = this.value().format("yyyy-MM-dd HH:mm:ss");
+						}
+					});
+			$("#sampleGiveDateTo").kendoDateTimePicker(
+					{
+						format : "yyyy-MM-dd HH:mm:ss",
+						change : function() {
+							viewModel.model.sampleGiveDateTo = this.value().format("yyyy-MM-dd HH:mm:ss");
+						}
+					});
+            </script>
+        </div>
+        <script>kendo.bind($('#query-form2'), viewModel);</script>
+    </div>
+    <script>
+    kendo.bind($('#query-form'), viewModel);
+    $('#queryPanel').kendoQueryPanel({
+        queryFunction: function () {
+            viewModel.query();
+        },
+        resetFunction: function () {
+            viewModel.reset();
+        }
+    });
+    </script>
+    <div style="clear:both">
+        <div id="grid"></div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    Hap.initEnterQuery('#query-form', viewModel.query);
+    var BaseUrl = _basePath;
+    dataSource = new kendo.data.DataSource({
+        transport: {
+            read: {
+                url: BaseUrl + "/hqm/sample/account/after/selectLy",
+                type: "POST",
+                dataType: "json"
+            },
+            update: {
+                url: BaseUrl + "/hqm/sample/account/after/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            destroy: {
+                url: BaseUrl + "/hqm/sample/account/after/remove",
+                type: "POST",
+                contentType: "application/json"
+            },
+            create: {
+                url: BaseUrl + "/hqm/sample/account/after/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            parameterMap: function (options, type) {
+                if (type !== "read" && options.models) {
+                    var datas = Hap.prepareSubmitParameter(options, type)
+                    return kendo.stringify(datas);
+                } else if (type === "read") {
+                	viewModel.model.sampleType = '2';
+                	viewModel.model.sealingSamplePositionStatus= '1';
+                    return Hap.prepareQueryParameter(viewModel.model.toJSON(), options)
+                }
+            }
+        },
+        batch: true,
+        serverPaging: true,
+        pageSize: 20,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+                id: "sampleId",
+                fields: {},
+            }
+        }
+    });
+
+  	var grid =  $("#grid").kendoGrid({
+        dataSource: dataSource,
+        resizable: true,
+        scrollable: true,
+        navigatable: false,
+        selectable: 'multiple, rowbox',
+        dataBound: function () {
+            if (parent.autoResizeIframe) {
+                parent.autoResizeIframe('${RequestParameters.functionCode!}')
+            }
+        },
+        pageable: {
+            pageSizes: [5, 10, 20, 50],
+            refresh: true,
+            buttonCount: 5
+        },
+        columns: [
+                    {
+                field: "plantDescriptions",
+                title: '<@spring.message "sampleaccount.plantid"/>',
+                width: 120
+            },
+                    {
+                field: "sampleModel",
+                title: '<@spring.message "sampleaccount.samplemodel"/>',//样品型号
+                width: 120
+            },
+           /*  {
+                field: "itemCode",
+                title: '<@spring.message "sampleaccount.itemid"/>',//物料号
+                width: 120
+            },
+            {
+                field: "itemType",
+                title: '<@spring.message "sampleaccount.itemtype"/>',//物料类别
+                width: 120
+            }, */
+            {
+                field: "sampleCode",
+                title: '<@spring.message "sampleaccount.samplecode"/>',
+                width: 120,
+                attributes: {style: "text-align:center"},
+                headerAttributes: {style: "text-align:center"},
+            },
+            {
+                field: "returnStatus",
+                title: '<@spring.message "sampleaccount.returnstatus"/>',//退回状态
+                width: 120,
+                template : function(dataItem) {
+					var v = dataItem.returnStatus ? dataItem.returnStatus : "";
+					$.each(HQM_H_SAMPLE_REVENIR_STATUS,function(i, n) {
+						if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+							v = n.meaning;
+							return v;
+						}
+					});
+					return v;
+				},
+            },
+            {
+                field: "sealingSamplePositionStatus",
+                title: '<@spring.message "sampleaccount.sealingsamplepositionstatus"/>',//在库状态
+                width: 120,
+                template : function(dataItem) {
+					var v = dataItem.sealingSamplePositionStatus ? dataItem.sealingSamplePositionStatus : "";
+					$.each(HQM_H_SAMPLE_POSITION_STATUS,function(i, n) {
+						if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+							v = n.meaning;
+							return v;
+						}
+					});
+					return v;
+				},
+            },
+            {
+                field: "analysisStatus",
+                title: '<@spring.message "分析状态"/>',//分析状态
+                width: 120,
+                template : function(dataItem) {
+					var v = dataItem.analysisStatus ? dataItem.analysisStatus : "";
+					$.each(HQM_ANALYSIS_STATUS,function(i, n) {
+						if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+							v = n.meaning;
+							return v;
+						}
+					});
+					return v;
+				},
+            },
+            {
+                field: "processingMethod",
+                title: '<@spring.message "处理方式"/>',//处理方式
+                width: 120,
+                template : function(dataItem) {
+					var v = dataItem.processingMethod ? dataItem.processingMethod : "";
+					if(dataItem.machineComponent == "1"){
+						$.each(HQM_AFTERSALE_SAMPLE_SOLVE_WAY,function(i, n) {
+							if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+								v = n.meaning;
+								return v;
+							}
+						});
+					} else {
+						$.each(HQM_AFTERSALE_COMPONENT_SOLVE,function(i, n) {
+							if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+								v = n.meaning;
+								return v;
+							}
+						});
+					}
+					return v;
+				},
+            },
+            {
+                field: "reworkStatus",
+                title: '<@spring.message "返修状态"/>',//返修状态
+                width: 120,
+            },
+            {
+                field: "returnSupplierStatus",
+                title: '<@spring.message "退供应商状态"/>',//退供应商状态
+                width: 120,
+            },
+            {
+                field: "scrapStatus",
+                title: '<@spring.message "报废状态"/>',//报废状态
+                width: 120,
+                template : function(dataItem) {
+					var v = dataItem.scrapStatus ? dataItem.scrapStatus : "";
+					$.each(HQM_AFTERSALE_SAMPLE_SCRAP,function(i, n) {
+						if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+							v = n.meaning;
+							return v;
+						}
+					});
+					return v;
+				},
+            },
+            {
+                field: "sealingSampleStatus",
+                title: '<@spring.message "sampleaccount.sealingsamplestatus"/>',//样品状态
+                width: 120,
+                template : function(dataItem) {
+					var v = dataItem.sealingSampleStatus ? dataItem.sealingSampleStatus : "";
+					$.each(HQM_H_SAMPLE_STATUS,function(i, n) {
+						if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+							v = n.meaning;
+							return v;
+						}
+					});
+					return v;
+				},
+            },
+            {
+                field: "createdName",
+                title: '<@spring.message "sampleaccount.createdname"/>',//登记人
+                width: 120
+            },
+            {
+                field: "dealer",
+                title: '<@spring.message "sampleaccount.dealer"/>',//经销商
+                width: 120
+            },
+            {
+                field: "supplierName",
+                title: '<@spring.message "sampleaccount.suppliername"/>',//供应商
+                width: 240
+            },
+            {
+                field: "sampleGiverName",
+                title: '<@spring.message "sampleaccount.samplegivername"/>',//接收人
+                width: 120
+            },
+            {
+                field: "sampleGiveDate",
+                title: '<@spring.message "sampleaccount.samplereturndate"/>',//接收时间/送样时间/退回时间
+                width: 180
+            },
+            
+            {
+                field: "productionDate",
+                title: '<@spring.message "sampleaccount.productiondate"/>',//生产时间
+                width: 180
+            },
+            {
+                field: "storageLocation",
+                title: '<@spring.message "sampleaccount.storagelocation"/>',//存储位置
+                width: 120
+            },
+            {
+                field: "scrappedFlag",
+                title: '<@spring.message "sampleaccount.scrappedflag"/>',//是否报废
+                width: 120,
+                template : function(dataItem) {
+					var v = dataItem.scrappedFlag ? dataItem.scrappedFlag : "";
+					$.each(yesNo,function(i, n) {
+						if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+							v = n.meaning;
+							return v;
+						}
+					});
+					return v;
+				},
+            },
+            {
+                field: "scrappedDate",
+                title: '<@spring.message "sampleaccount.scrappeddate"/>',//报废日期
+                width: 120
+            },
+            {
+                field: "applicantDocumentCode",
+                title: '<@spring.message "sampleaccount.applicantdocumentcode"/>',//报废单据
+                width: 120,
+                template : function(item){
+                	return '<a href="#" style="color:blue;text-decoration:underline;" onclick="scrap(\''+(item.scrappedIds?item.scrappedIds:'')+'\')">'+ (item.applicantDocumentCode?item.applicantDocumentCode:'') +'</a>';
+                }
+            },
+            {
+                field: "sampleUserName",
+                title: '<@spring.message "sampleaccount.sampleusername"/>',//领用人
+                width: 120
+            },
+            {
+                field: "sampleUseDate",
+                title: '<@spring.message "sampleaccount.sampleusedate"/>',//领用日期
+                width: 120
+            },
+                    {
+                field: "sampleUseDepartment",
+                title: '<@spring.message "sampleaccount.sampleusedepartment"/>',//领用部门
+                width: 120
+            },
+            {
+                field: "useDocumentCode",
+                title: '<@spring.message "sampleaccount.usedocumentcode"/>',//领用单据
+                width: 120,
+                template : function(item){
+                	return '<a href="#" style="color:blue;text-decoration:underline;" onclick="use(\''+(item.useIds?item.useIds:'')+'\')">'+ (item.useDocumentCode?item.useDocumentCode:'') +'</a>';
+                }
+            },
+            {
+          	  title: '<@spring.message "操作"/>',
+                width: 120,
+                attributes: {style: "text-align:center"},
+                headerAttributes: {style: "text-align:center"},    
+                template : function (rowdata) {          	
+                   return '<a href="#"  onclick="Dremove(\''+rowdata.sampleId+'\')"><@spring.message "删除"/></a>'                 		
+               	   }
+            }
+                 
+        ],
+        editable: false
+    }).data('kendoGrid');
+</script>
+</body>
+</html>

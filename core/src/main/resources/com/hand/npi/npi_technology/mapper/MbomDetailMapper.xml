@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.npi.npi_technology.mapper.MbomDetailMapper">
+    <resultMap id="BaseResultMap" type="com.hand.npi.npi_technology.dto.MbomDetail">
+        <result column="ID" property="id" jdbcType="DECIMAL" />
+        <result column="ITEM_LEVEL" property="itemLevel" jdbcType="DECIMAL" />
+        <result column="ITEM_ID" property="itemId" jdbcType="VARCHAR" />
+        <result column="ITEM_NO" property="itemNo" jdbcType="DECIMAL" />
+        <result column="PART_NUMBER" property="partNumber" jdbcType="VARCHAR" />
+        <result column="PART_DESCRIPTION" property="partDescription" jdbcType="VARCHAR" />
+        <result column="PARENT_PARTNUMBER" property="parentPartnumber" jdbcType="VARCHAR" />
+        <result column="QUANTITY" property="quantity" jdbcType="DECIMAL" />
+        <result column="UNIT" property="unit" jdbcType="VARCHAR" />
+        <result column="EXPIRATION_FROM" property="expirationFrom" jdbcType="DATE" />
+        <result column="EXPIRATION_TO" property="expirationTo" jdbcType="DATE" />
+        <result column="CHANGE_NUMBER" property="changeNumber" jdbcType="VARCHAR" />
+        <result column="VERSION" property="version" jdbcType="VARCHAR" />
+        <result column="CREATE_DATE" property="createDate" jdbcType="DATE" />
+        <result column="PROCUREMENT" property="procurement" jdbcType="VARCHAR" />
+        <result column="SKU_ID" property="skuId" jdbcType="DECIMAL" />
+    </resultMap>
+
+
+</mapper>

@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hcs.hcs_delivery_ticket.mapper.DeliveryTicketHMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hcs.hcs_delivery_ticket.dto.DeliveryTicketH">
+        <result column="TICKET_ID" property="ticketId" jdbcType="DECIMAL" />
+        <result column="TICKET_NUMBER" property="ticketNumber" jdbcType="VARCHAR" />
+        <result column="TICKET_TYPE" property="ticketType" jdbcType="VARCHAR" />
+        <result column="STATUS" property="status" jdbcType="VARCHAR" />
+        <result column="SUPPLIER_ID" property="supplierId" jdbcType="DECIMAL" />
+        <result column="SUPPLIER_SITE_ID" property="supplierSiteId" jdbcType="DECIMAL" />
+        <result column="PLANT_ID" property="plantId" jdbcType="DECIMAL" />
+        <result column="ORG_ID" property="orgId" jdbcType="DECIMAL" />
+        <result column="SHIP_DATE" property="shipDate" jdbcType="DATE" />
+        <result column="EXPECTED_DATE" property="expectedDate" jdbcType="TIMESTAMP" />
+        <result column="REMARKS" property="remarks" jdbcType="VARCHAR" />
+        <result column="CID" property="cid" jdbcType="DECIMAL" />
+        <result column="PRINT_TIME" property="printTime" jdbcType="DECIMAL" />
+        
+        <!-- 业务字段 -->
+        <result column="BUSINESS_UNIT_ID" property="businessUnitId" jdbcType="DECIMAL" />
+        <result column="BUSINESS_UNIT_NAME" property="businessUnitName" jdbcType="VARCHAR" />
+        <result column="PLANT_NAME" property="plantName" jdbcType="VARCHAR" />
+        <result column="PLANT_CODE" property="plantCode" jdbcType="VARCHAR" />        
+        <result column="SUPPLIER_CODE" property="supplierCode" jdbcType="VARCHAR" />
+        <result column="SUPPLIER_NAME" property="supplierName" jdbcType="VARCHAR" />
+        <result column="SUPPLIER_SITE_NAME" property="supplierSiteName" jdbcType="VARCHAR" />
+        <result column="CREATION_DATE" property="creationDate" jdbcType="TIMESTAMP" />
+        <result column="START_TIME" property="startTime" jdbcType="VARCHAR" />
+        <result column="END_TIME" property="endTime" jdbcType="VARCHAR" />
+        <result column="USER_TYPE" property="userType" jdbcType="VARCHAR" />
+        <result column="EXPECTED_START_TIME" property="expectedStartTime" jdbcType="VARCHAR" />
+        <result column="EXPECTED_END_TIME" property="expectedEndTime" jdbcType="VARCHAR" />
+        <result column="SHIP_START_DATE" property="shipStartDate" jdbcType="VARCHAR" />
+        <result column="SHIP_END_DATE" property="shipEndDate" jdbcType="VARCHAR" />
+        <result column="SHIP_END_DATE" property="shipEndDate" jdbcType="VARCHAR" />
+        <result column="purchase_group" property="purchaseGroup" jdbcType="VARCHAR" />
+    </resultMap>
+	<!-- 查询供应商当天最大流水号 -->
+	<select id="queryMaxNum" resultType="java.lang.Integer" parameterType="com.hand.hcs.hcs_delivery_ticket.dto.DeliveryTicketH">
+		select nvl(max(substr(hdth.ticket_number,-3)),0)
+		from hcs_delivery_ticket_h hdth 
+		where 1 = 1
+		and trunc(hdth.creation_date)=trunc(sysdate)
+		and hdth.SUPPLIER_ID = #{supplierId}
+	</select>
+	<!-- 已有送货单页面 -->
+	<select id="query" resultMap="BaseResultMap" parameterType="com.hand.hcs.hcs_delivery_ticket.dto.DeliveryTicketH">
+		select hdth.ticket_id,
+			   hdth.ticket_number,
+		       hdth.ticket_type,
+		       hdth.org_id,
+		       hdth.plant_id,
+		       hp.descriptions PLANT_NAME,
+		       hdth.ship_date,
+		       hdth.expected_date,
+		       hdth.supplier_id,
+		       hs.supplier_code,
+		       hs.supplier_name,
+		       hdth.supplier_site_id,
+		       hdth.remarks,
+		       hdth.creation_date
+		  from HCS_DELIVERY_TICKET_H hdth
+		  join hcm_plant hp
+		    on hdth.plant_id = hp.plant_id
+		  join hcs_suppliers hs
+		    on hdth.supplier_id = hs.supplier_id
+		 where hdth.plant_id = #{plantId}
+		   and hdth.supplier_id = #{supplierId}
+		   and hdth.status = 'N'
+		   order by hdth.ticket_id desc
+	</select>
+	<!-- 送货单编辑主页面查询 -->
+	<select id="queryData" resultMap="BaseResultMap" parameterType="com.hand.hcs.hcs_delivery_ticket.dto.DeliveryTicketH">
+			select distinct hdth.ticket_id,
+			       hdth.ticket_number,
+			       hdth.status,
+			       hdth.ticket_type,
+			       hdth.org_id,
+			       hdth.plant_id,
+			       hp.descriptions   PLANT_NAME,
+			       to_date(to_char(hdth.ship_date ,'yyyy-mm-dd'),'yyyy-mm-dd') ship_date,
+			       hdth.expected_date,
+			       hdth.supplier_id,
+			       hs.supplier_code,
+			       hs.supplier_name,
+			       hdth.supplier_site_id,
+			       hss.description        SUPPLIER_SITE_NAME,
+			       hdth.remarks,
+			       hdth.creation_date,
+			       hdth.print_time
+			  from sys_user su 
+			  join hcs_delivery_ticket_h hdth on decode(su.user_type,'S',su.supplier_id,hdth.supplier_id) = hdth.supplier_id
+			  join hcm_plant hp on hdth.plant_id = hp.plant_id
+			  join hcs_suppliers hs on hdth.supplier_id = hs.supplier_id
+			  left join HCS_SUPPLIER_SITE hss on hdth.supplier_site_id = hss.supplers_site_id
+			  <if test="purchaseGroup != null">
+	          	left join hcs_asl_control hac on hac.purchase_group = #{purchaseGroup}
+	          	left join hcs_asl ha on hac.asl_id = ha.asl_id and ha.enable_flag = 'Y'
+	          </if>
+			where 1=1
+			<if test="purchaseGroup!=null">
+				and hdth.plant_id = ha.plant_id
+				and hdth.supplier_id = ha.supplier_id
+			</if>
+			<if test = "status == null and queryFlag == 'E'.toString()">
+		    	and hdth.status in('P','N')
+		    </if>
+		    and su.user_id = #{request.userId}
+			<if test = "ticketNumber != null">
+				and hdth.ticket_number LIKE concat('%',concat(#{ticketNumber,jdbcType=VARCHAR},'%'))
+			</if>   
+			<if test = "ticketType != null">
+				and hdth.ticket_type = #{ticketType}
+			</if> 	
+			<if test = "status != null">
+				and hdth.status = #{status}
+			</if> 	
+			<if test = "startTime != null">
+				and hdth.creation_date &gt;= to_date(#{startTime}, 'yyyy-mm-dd hh24:mi:ss')
+			</if>
+			<if test = "endTime != null">
+				and hdth.creation_date &lt;= to_date(#{endTime}, 'yyyy-mm-dd hh24:mi:ss')
+			</if>
+			<if test = "expectedStartTime != null">
+				and hdth.expected_date &gt;= to_date(#{expectedStartTime}, 'yyyy-mm-dd hh24:mi:ss')
+			</if>
+			<if test = "expectedEndTime != null">
+				and hdth.expected_date &lt;= to_date(#{expectedEndTime}, 'yyyy-mm-dd hh24:mi:ss')
+			</if>
+			<if test = "shipStartDate != null">
+				and to_date(to_char(hdth.ship_date ,'yyyy-mm-dd'),'yyyy-mm-dd') &gt;= to_date(#{shipStartDate}, 'yyyy-mm-dd hh24:mi:ss')
+			</if>
+			<if test = "shipEndDate != null">
+				and to_date(to_char(hdth.ship_date,'yyyy-mm-dd'),'yyyy-mm-dd') &lt;= to_date(#{shipEndDate}, 'yyyy-mm-dd hh24:mi:ss')
+			</if>	
+			<if test = "plantId != null">
+				and hdth.plant_id = #{plantId}
+			</if>
+			<if test = "supplierSiteId != null">
+				and hss.SUPPLIER_SITE_ID = #{supplierSiteId}
+			</if>
+			<if test = "supplierId != null">
+				and hdth.supplier_id= #{supplierId}
+			</if>
+			order by hdth.creation_date desc
+	</select>
+	<!-- 打印查询 -->
+	<select id="printQuery" resultMap="BaseResultMap" parameterType="com.hand.hcs.hcs_delivery_ticket.dto.DeliveryTicketH">
+		select hdth.ticket_number,
+		       hdth.ship_date,
+		       hdth.supplier_id,
+		       hs.supplier_name,
+		       hs.supplier_code,
+		       hdth.supplier_site_id,
+		       hss.description SUPPLIER_SITE_NAME,
+		       hdth.plant_id,
+		       hp.descriptions PLANT_NAME,
+		       hp.plant_code,
+		       hdth.remarks
+		from HCS_DELIVERY_TICKET_H hdth
+		join hcs_suppliers hs on hdth.supplier_id = hs.supplier_id
+		left join hcs_supplier_site hss on hdth.supplier_site_id = hss.supplers_site_id
+		join hcm_plant hp on hdth.plant_id = hp.plant_id
+		where hdth.ticket_id = #{ticketId}
+
+	</select>
+<!-- 	查询送货单头 -->
+	<select id="queryByTicketId" resultMap="BaseResultMap" parameterType="com.hand.hcs.hcs_delivery_ticket.dto.DeliveryTicketH">
+		select hdth.ticket_number,
+		       hdth.ship_date,
+		       hdth.supplier_id,
+		       hs.supplier_name,
+		       hs.supplier_code,
+		       hdth.supplier_site_id,
+		       hss.description SUPPLIER_SITE_NAME,
+		       hdth.plant_id,
+		       hp.descriptions PLANT_NAME,
+		       hp.plant_code,
+		       hdth.remarks,
+		       hdth.org_id,
+		       hdth.ticket_type,
+		       hdth.ship_date,
+			   hdth.expected_date,
+			   hdth.status
+		from HCS_DELIVERY_TICKET_H hdth
+		join hcs_suppliers hs on hdth.supplier_id = hs.supplier_id
+		left join hcs_supplier_site hss on hdth.supplier_site_id = hss.supplers_site_id
+		join hcm_plant hp on hdth.plant_id = hp.plant_id
+		where hdth.ticket_id = #{ticketId}
+	</select>
+
+	<select id="countCRQSelect" resultType="java.lang.Integer">
+		SELECT COUNT(1)
+  FROM hcs_delivery_ticket_h h, hcs_delivery_ticket_l l
+ WHERE h.ticket_id = l.ticket_id
+   AND l.line_status NOT IN ('C', 'R', 'Q')
+   AND h.ticket_id = #{0}
+	</select>
+	
+</mapper>

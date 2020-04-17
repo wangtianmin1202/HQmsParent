@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.npi.npi_technology.mapper.TechnologyAuxiliaryActionMapper">
+    <resultMap id="BaseResultMap" type="com.hand.npi.npi_technology.dto.TechnologyAuxiliaryAction">
+        <result column="AUXILIARY_ACTION_ID" property="auxiliaryActionId" jdbcType="DECIMAL" />
+        <result column="ACTION_NAME" property="actionName" jdbcType="VARCHAR" />
+        <result column="STANDARD_WORKING_HOURS" property="standardWorkingHours" jdbcType="DECIMAL" />
+        <result column="AUXILIARY_ACTION_NUMBER" property="auxiliaryActionNumber" jdbcType="VARCHAR" />
+    </resultMap>
+
+	<select id="selectMaxNumber" resultMap="BaseResultMap"
+		parameterType="com.hand.npi.npi_technology.dto.TechnologyAuxiliaryAction">
+		select s.auxiliary_action_number from npi_technology_auxiliary_action s 
+		where s.auxiliary_action_number like  concat(#{auxiliaryActionNumber}, '%') 
+		order by s.auxiliary_action_number desc
+	</select>
+
+</mapper>

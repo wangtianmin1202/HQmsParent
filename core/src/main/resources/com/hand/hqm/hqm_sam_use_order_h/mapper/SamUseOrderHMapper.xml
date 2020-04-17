@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_sam_use_order_h.mapper.SamUseOrderHMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_sam_use_order_h.dto.SamUseOrderH">
+        <result column="USE_ORDER_NUMBER" property="useOrderNumber" jdbcType="VARCHAR" />
+        <result column="KID" property="kid" jdbcType="DECIMAL" />
+        <result column="USE_ORDER_STATUS" property="useOrderStatus" jdbcType="VARCHAR" />
+        <result column="USE_DEPARTMENT" property="useDepartment" jdbcType="VARCHAR" />
+        <result column="USE_REASON" property="useReason" jdbcType="VARCHAR" />
+        <result column="PLANT_ID" property="plantId" jdbcType="DECIMAL" />
+        <result column="APPLICANT" property="applicant" jdbcType="DECIMAL" />
+        <result column="APPLICATION_DATE" property="applicationDate" jdbcType="DATE" />
+        <result column="APPROVER" property="approver" jdbcType="DECIMAL" />
+        <result column="APPROVAL_DATE" property="approvalDate" jdbcType="DATE" />
+        <result column="REMARK" property="remark" jdbcType="VARCHAR" />
+        <result column="PRINT_FLAG" property="printFlag" jdbcType="VARCHAR" />
+        
+        <result column="PLANT_CODE" property="plantCode" jdbcType="VARCHAR" />
+        <result column="APPROVER_USER_NAME" property="approverUserName" jdbcType="VARCHAR" />
+        <result column="APPROVAL_DATE_START_TIME" property="approvalDateStartTime" jdbcType="DATE" /> 
+        <result column="APPROVAL_DATE_END_TIME" property="approvalDateEndTime" jdbcType="VARCHAR" />
+        <result column="APPLICATION_DATE_START_TIME" property="applicationDateStartTime" jdbcType="DATE" />
+        <result column="APPLICATION_DATE_END_TIME" property="applicationDateEndTime" jdbcType="DATE" />
+        <result column="APPLICANT_USER_NAME" property="applicantUserName" jdbcType="VARCHAR" />     
+    </resultMap>
+    <select id="myselect" resultMap="BaseResultMap"  parameterType="com.hand.hqm.hqm_sam_use_order_h.dto.SamUseOrderH">
+    SELECT   h.kid, 
+             h.plant_id
+			,hp.plant_code
+			,h.use_order_number
+			,h.use_department
+			,h.use_reason
+			,h.applicant
+			,(SELECT hu.user_name
+				 FROM sys_user hu
+				WHERE hu.user_id = h.applicant)as APPLICANT_USER_NAME
+			,h.application_date
+			,h.approver
+			,(SELECT hu.user_name
+				 FROM sys_user hu
+				WHERE hu.user_id = h.approver) as APPROVER_USER_NAME
+			,h.approval_date
+			,h.use_order_status
+			,h.remark
+			,h.print_flag
+	FROM hqm_sam_use_order_h h, hcm_plant hp
+ WHERE hp.plant_id = h.plant_id
+   <if test="plantId != null">
+     AND hs.plant_id = #{plantId}
+   </if>
+   <if test="useOrderNumber != null">
+     AND h.use_order_number = #{useOrderNumber}
+   </if>
+   <if test="useDepartment != null">
+     AND h.use_department = #{useDepartment}
+   </if>
+    <if test="applicationDateStartTime != null">
+     and h.application_date &gt;= to_date(#{applicationDateStartTime}, 'yyyy-mm-dd hh24:mi:ss')
+   </if>
+    <if test="applicationDateEndTime != null">
+    and h.application_date &lt;= to_date(#{applicationDateEndTime}, 'yyyy-mm-dd hh24:mi:ss')
+   </if>
+    <if test="approvalDateStartTime != null">
+     and h.approval_date &gt;= to_date(#{approvalDateStartTime}, 'yyyy-mm-dd hh24:mi:ss')
+   </if>
+    <if test="approvalDateEndTime != null">
+    and h.approval_date &lt;= to_date(#{approvalDateEndTime}, 'yyyy-mm-dd hh24:mi:ss')
+   </if>
+    <if test="useReason != null">
+     AND h.use_reason = #{useReason}
+   </if>
+   <if test="useOrderStatus != null">
+     AND h.use_order_status = #{useOrderStatus}
+   </if>  
+    order by  h.creation_date desc 
+</select>
+        
+   <select id="queryByTicketId" resultMap="BaseResultMap"  parameterType="com.hand.hqm.hqm_sam_use_order_h.dto.SamUseOrderH">
+    SELECT   h.kid, 
+             h.plant_id
+			,hp.plant_code
+			,h.use_order_number
+			,h.use_department
+			,h.use_reason
+			,h.applicant
+			,(SELECT hu.user_name
+				 FROM sys_user hu
+				WHERE hu.user_id = h.applicant)as APPLICANT_USER_NAME
+			,h.application_date
+			,h.approver
+			,(SELECT hu.user_name
+				 FROM sys_user hu
+				WHERE hu.user_id = h.approver) as APPROVER_USER_NAME
+			,h.approval_date
+			,h.use_order_status
+			,h.remark
+			,h.print_flag
+	FROM hqm_sam_use_order_h h, hcm_plant hp
+ WHERE hp.plant_id = h.plant_id
+ and  h.use_order_number = #{useOrderNumber} 
+</select>
+<select id="selectMaxNumber" resultMap="BaseResultMap" parameterType="com.hand.hqm.hqm_sam_use_order_h.dto.SamUseOrderH">
+SELECT t.use_order_number  
+  FROM hqm_sam_use_order_h t
+ WHERE 1 = 1
+   AND t.use_order_number LIKE concat(#{useOrderNumber}, '%')
+ ORDER BY t.use_order_number 
+  DESC 
+</select> 
+</mapper>

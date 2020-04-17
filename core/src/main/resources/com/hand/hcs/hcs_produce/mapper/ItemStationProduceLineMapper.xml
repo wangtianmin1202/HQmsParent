@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hcs.hcs_produce.mapper.ItemStationProduceLineMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hcs.hcs_produce.dto.ItemStationProduceLine">
+        <result column="PRODUCE_ID" property="produceId" jdbcType="DECIMAL" />
+        <result column="PRODUCE_LINE_ID" property="produceLineId" jdbcType="DECIMAL" />
+        <result column="LINE_NUMBER" property="lineNumber" jdbcType="DECIMAL" />
+        <result column="NG_PROJECT" property="ngProject" jdbcType="VARCHAR" />
+        <result column="NG_QTY" property="ngQty" jdbcType="DECIMAL" />
+        <result column="REASON" property="reason" jdbcType="VARCHAR" />
+        <result column="SOLUTION" property="solution" jdbcType="VARCHAR" />
+        <result column="ATTACHMENT" property="attachment" jdbcType="VARCHAR" />
+        <result column="FINISHED_DATE" property="finishedDate" jdbcType="DATE" />
+        <result column="STATUS" property="status" jdbcType="VARCHAR" />
+        <result column="status_meaning" property="statusMeaning" jdbcType="VARCHAR" />
+    </resultMap>
+
+    <select id="listQuery" parameterType="com.hand.hcs.hcs_produce.dto.ItemStationProduceLine" resultMap="BaseResultMap">
+        select hispl.produce_id,
+       hispl.produce_line_id,
+       hispl.line_number,
+       hispl.ng_project,
+       hispl.ng_qty,
+       hispl.reason,
+       hispl.solution,
+       hispl.attachment,
+       hispl.finished_date,
+       hispl.status,
+        a1.meaning status_meaning
+  from hcs_item_station_produce_line hispl
+  left join (select scvb.value, scvb.meaning
+        from sys_code_b scb, sys_code_value_b scvb
+        where scb.code_id = scvb.code_id
+        and scb.code = 'HQM_PRODUCT_NG_STATUS') a1
+        on hispl.status = a1.value
+        <where>
+            <if test="produceId != null">
+                hispl.produce_id =#{produceId}
+            </if>
+            <if test="produceLineId != null">
+                hispl.produce_line_id =#{produceLineId}
+            </if>
+        </where>
+    </select>
+
+    <select id="maxLineNum" resultType="java.lang.Long">
+         SELECT MAX(hispl.line_number) FROM hcs_item_station_produce_line HISPL
+    </select>
+
+</mapper>

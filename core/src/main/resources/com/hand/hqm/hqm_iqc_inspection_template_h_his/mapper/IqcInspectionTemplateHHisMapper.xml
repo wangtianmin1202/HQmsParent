@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_iqc_inspection_template_h_his.mapper.IqcInspectionTemplateHHisMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_iqc_inspection_template_h_his.dto.IqcInspectionTemplateHHis">
+        <result column="EVENT_ID" property="eventId" jdbcType="DECIMAL" />
+        <result column="EVENT_BY" property="eventBy" jdbcType="DECIMAL" />
+        <result column="EVENT_TIME" property="eventTime" jdbcType="DATE" />
+        <result column="HEADER_ID" property="headerId" jdbcType="DECIMAL" />
+        <result column="PLANT_ID" property="plantId" jdbcType="DECIMAL" />
+        <result column="ITEM_ID" property="itemId" jdbcType="DECIMAL" />
+        <result column="ITEM_CATEGORY" property="itemCategory" jdbcType="VARCHAR" />
+        <result column="VERSION_NUM" property="versionNum" jdbcType="VARCHAR" />
+        <result column="DRAWING_NUMBER" property="drawingNumber" jdbcType="VARCHAR" />
+        <result column="ENABLE_FLAG" property="enableFlag" jdbcType="VARCHAR" />
+        <result column="HISTORY_NUM" property="historyNum" jdbcType="DECIMAL" />
+        <result column="STATUS" property="status" jdbcType="VARCHAR" />
+        <result column="SOURCE_TYPE" property="sourceType" jdbcType="VARCHAR" />
+        <result column="TIME_LIMIT" property="timeLimit" jdbcType="DECIMAL" />
+        <result column="MAIN_TYPE" property="mainType" jdbcType="VARCHAR" />
+        <result column="ITEM_EDITION" property="itemEdition" jdbcType="VARCHAR" />
+        <result column="SAMPLE_WAY_ID" property="sampleWayId" jdbcType="DECIMAL" />
+        <result column="ECR_NUMBER" property="ecrNumber" jdbcType="VARCHAR" />
+        <result column="VTP_NUMEBR" property="vtpNumebr" jdbcType="VARCHAR" />
+    </resultMap>
+
+	<!-- 查询离流程发起时间最近的一条数据 -->
+	<select id="selectbyheadIdTime" resultMap="BaseResultMap" parameterType="com.hand.hqm.hqm_iqc_inspection_template_h_his.dto.IqcInspectionTemplateHHis">
+		SELECT *
+			FROM hqm_iqc_inspection_template_h_his t
+			WHERE 1=1
+				<if test="headerId != null">
+					AND t.header_id = #{headerId}
+				</if>
+				<if test="startDateString != null">
+				   AND t.event_time &lt;= to_date(#{startDateString},'yyyy-mm-dd hh24:mi:ss')
+				 </if>
+				ORDER BY t.event_time desc
+	</select>
+
+</mapper>

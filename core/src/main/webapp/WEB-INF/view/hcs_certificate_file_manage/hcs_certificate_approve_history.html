@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<!--
+  description 证书我发起的流程
+  @author KOCE3G3 2020/03/30 11:10 AM
+-->
+<#if '${RequestParameters.processInstanceId}' == 'null'>
+<#include "../include/header.html">
+</#if>
+<#if '${RequestParameters.processInstanceId}' != 'null' && '${RequestParameters.taskId}' != ''>
+<#include "../activiti/approve_header.html">
+</#if>
+<#if '${RequestParameters.processInstanceId}' != 'null' && '${RequestParameters.taskId}' == ''>
+<#include "../activiti/process_instance_detail_header.html">
+</#if>
+<style>
+    button.btn{
+        width: 140px;
+        height: 66px;
+        text-align: center;
+    }
+    td{
+        border: #aaaaaa solid 2px;
+    }
+
+</style>
+<script src="${base.contextPath}/common/code?WORKFLOW_STATUS=SYS_WORKFLOW_STATUS" type="text/javascript"></script>
+<script type="text/javascript">
+    var BaseUrl = _basePath;
+
+    var businessKey = '${RequestParameters.businessKey}';
+
+    if(businessKey != null){
+        var certificateId = businessKey.toString().split(":")[0].toString();
+        var certificateType = businessKey.toString().split(":")[1].toString();
+    }
+
+    $.ajax({
+        url: BaseUrl + '/hcs/certificate/currentQuery?certificateId='+certificateId,
+        success: function (result) {
+            if (result.success === false) {
+                kendo.ui.showErrorDialog({
+                    title: $l('hap.error'),
+                    message: result.message
+                })
+                return;
+            }
+            if(result.rows.length>0){
+                if(certificateType == 'CER'){
+                    $("#cerSupplierCode").text(result.rows[0].supplierCode || '');
+                    $("#cerSupplierName").text(result.rows[0].supplierName ||'');
+                    $("#cerFirstCategory").text(result.rows[0].firstCategory || '');
+                    $("#cerSecondCategory").text(result.rows[0].secondCategory || '');
+                    $("#cerItemCode").text(result.rows[0].itemCode || '');
+                    $("#cerItemName").text(result.rows[0].itemName || '');
+                }else if(certificateType == 'PER'){
+                    $("#perSupplierCode").text(result.rows[0].supplierCode || '');
+                    $("#perSupplierName").text(result.rows[0].supplierCode || '');
+                    $("#perItemCode").text(result.rows[0].itemCode || '');
+                    $("#perItemName").text(result.rows[0].itemName || '');
+                    $("#perTypeValue").text(result.rows[0].typeValue || '');
+
+                }else if(certificateType == 'PPAP') {
+                    $("#ppapSupplierCode").text(result.rows[0].supplierCode || '');
+                    $("#ppapSupplierName").text(result.rows[0].supplierName || '');
+                    $("#ppapTypeValue").text(result.rows[0].typeValue || '');
+                    $("#ppapLevels").text(result.rows[0].levels || '');
+                    $("#ppapItemCode").text(result.rows[0].itemCode || '');
+                    $("#ppapItemDescription").text(result.rows[0].itemDescription || '');
+                }
+
+            }
+        }
+    })
+
+
+</script>
+<div class="approve-block" style="width: 1000px;">
+    <h3>审批表单</h3>
+    <!--<iframe id="includeFrame" style="width:100%" name="includeFrame" onLoad="onIncludeFrameLoad()"></iframe>-->
+
+    <form id = "mainForm" style="paddiing-bottom:50px;padding-top:15px" class="form-horizontal" method="post" enctype="application/json;charset=UTF-8">
+        <!--ppap-->
+        <div id="panel-ppap" class="col-lg-8" style="width: 85%;display: none" >
+            <table style="width: 100%; font-size: 16px; font-color: #000;text-align: center;">
+                <tr>
+                    <td style="width: 20%;">供应商</td>
+                    <td id="ppapSupplierCode"  style="width: 40%;"></td>
+                    <td id="ppapSupplierName"  style="width: 40%;"></td>
+                </tr>
+                <tr>
+                    <td>版本</td>
+                    <td id="ppapTypeValue" colspan="2"></td>
+                </tr>
+                <tr>
+                    <td>级别</td>
+                    <td id="ppapLevels" colspan="2"></td>
+                </tr>
+                <tr>
+                    <td style="width: 20%;">物料</td>
+                    <td id="ppapItemCode"  style="width: 40%;"></td>
+                    <td id="ppapItemDescription"  style="width: 40%;"></td>
+                </tr>
+            </table>
+        </div>
+        <!--证书-->
+        <div id="panel-cer" class="col-lg-8" style="width: 85%;display: none" >
+            <table style="width: 100%; font-size: 16px; font-color: #000;text-align: center;" >
+                <tr>
+                    <td style="width: 20%;">供应商</td>
+                    <td id="cerSupplierCode" style="width: 40%;"></td>
+                    <td id="cerSupplierName" style="width: 40%;"></td>
+                </tr>
+                <tr>
+                    <td rowspan="2">类型</td>
+                    <td id="cerFirstCategory"  colspan="2">111</td>
+                </tr>
+                <tr>
+                    <td id="cerSecondCategory"  colspan="2">111</td>
+                </tr>
+                <tr>
+                    <td style="width: 20%;">物料</td>
+                    <td id="cerItemCode" style="width: 40%;"></td>
+                    <td id="cerItemName" style="width: 40%;"></td>
+                </tr>
+            </table>
+        </div>
+        <!--人员认证-->
+        <div id="panel-per" class="col-lg-8" style="width: 85%;display: none" >
+            <table style="width: 100%; font-size: 16px; font-color: #000;text-align: center;" >
+                <tr>
+                    <td  style="width: 20%;">供应商</td>
+                    <td  id="perSupplierCode" style="width: 40%;"></td>
+                    <td  id="perSupplierName" style="width: 40%;"></td>
+                </tr>
+                <tr>
+                    <td>类型</td>
+                    <td id="perTypeValue" colspan="2"></td>
+                </tr>
+                <tr>
+                    <td style="width: 20%;">物料</td>
+                    <td id="perItemCode" style="width: 40%;"></td>
+                    <td id="perItemName" style="width: 40%;"></td>
+                </tr>
+            </table>
+        </div>
+    </form>
+
+    <script type="text/javascript">
+        //根据类型不同显示三种表单
+        if(certificateType == 'CER'){
+            $("#panel-cer").show()
+        }else if(certificateType == 'PER'){
+            $("#panel-per").show()
+        }else if(certificateType == 'PPAP') {
+            $("#panel-ppap").show()
+        }
+        $('#mainForm').kendoValidator({
+            messages:{
+                required:'<@spring.message "hap.validation.notempty"/>'
+            },
+            invalidMessageType:"tooltip"
+        });
+    </script>
+</div>
+
+<#if '${RequestParameters.processInstanceId}' != 'null' && '${RequestParameters.taskId}' != ''>
+<#include "../activiti/approve_footer.html">
+</#if>
+<#if '${RequestParameters.processInstanceId}' != 'null' && '${RequestParameters.taskId}' == ''>
+<#include "../activiti/process_instance_detail_footer.html">
+</#if>
+
+</html>

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_msa_linear_value.mapper.MsaLinearValueMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_msa_linear_value.dto.MsaLinearValue">
+        <result column="MSA_LINEAR_VALUE_ID" property="msaLinearValueId" jdbcType="DECIMAL" />
+        <result column="MSA_PLAN_ID" property="msaPlanId" jdbcType="DECIMAL" />
+        <result column="SAMPLE_NUM" property="sampleNum" jdbcType="VARCHAR" />
+        <result column="MEASURE_NUM" property="measureNum" jdbcType="DECIMAL" />
+        <result column="MEASURE_VALUE" property="measureValue" jdbcType="DECIMAL" />
+        <result column="STANDARD_VALUE" property="standardValue" jdbcType="DECIMAL" />
+        <result column="BIAS" property="bias" jdbcType="DECIMAL" />
+    </resultMap>
+
+
+</mapper>

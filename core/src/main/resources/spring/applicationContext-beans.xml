@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.2.xsd">
+       
+<!-- <bean id="multipartResolver"   class="org.springframework.web.multipart.commons.CommonsMultipartResolver">   -->
+<!-- 	    <property name="maxUploadSize">   -->
+<!-- 	        <value>1048576000</value>   -->
+<!-- 	    </property>   -->
+<!-- 	    	<property name="maxInMemorySize"> -->
+<!-- 			<value>1024</value> -->
+<!-- 		</property> -->
+<!-- </bean> -->
+
+<!-- 为适配spc 此项配置会需要所有使用到文件上传的路径必须以 /upload 结尾 -->
+<bean id="multipartResolver" class="com.hand.utils.uploads.MyMultipartResolver">
+    <property name="excludeUrls" >
+        <list>
+            <value>/upload</value>
+        </list>
+    </property>
+    <property name="maxUploadSize" value="5242880000" />
+    <property name="maxInMemorySize" value="4096" />
+    <property name="defaultEncoding" value="UTF-8"></property>
+</bean>
+<!-- 	<bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource" > -->
+<!-- 		<property name="driverClassName"> -->
+<!-- 			<value>oracle.jdbc.driver.OracleDrive</value> -->
+<!-- 		</property> -->
+<!-- 		<property name="url"> -->
+<!-- 			<value>jdbc:oracle:thin:@10.12.189.167:1522:SBIMPD</value> -->
+<!-- 		</property> -->
+<!-- 		<property name="username"> -->
+<!-- 			<value>hcms</value> -->
+<!-- 		</property> -->
+<!-- 		<property name="password"> -->
+<!-- 			<value>hcmstst</value> -->
+<!-- 		</property> -->
+<!-- 	</bean> -->
+<!--   <bean id="jdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate" > -->
+<!-- 		<property name="dataSource" ref="dataSource"></property> -->
+<!-- 	</bean> -->
+
+
+
+</beans>

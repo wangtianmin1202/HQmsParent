@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_pqc_calendar_a.mapper.PqcCalendarAMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_pqc_calendar_a.dto.PqcCalendarA">
+        <result column="CALENDAR_ID" property="calendarId" jdbcType="DECIMAL" />
+        <result column="CALENDAR_A_ID" property="calendarAId" jdbcType="DECIMAL" />
+        <result column="LAYERED_PERSON" property="layeredPerson" jdbcType="DECIMAL" />
+        <result column="LAYERED_STATUS" property="layeredStatus" jdbcType="VARCHAR" />
+    </resultMap>
+
+
+</mapper>

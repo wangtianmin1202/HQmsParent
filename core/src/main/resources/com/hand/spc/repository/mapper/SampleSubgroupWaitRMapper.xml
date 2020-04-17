@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.spc.repository.mapper.SampleSubgroupWaitRMapper">
+
+ <insert id="insertOldSubgroupWaitData">
+        INSERT INTO pspc_sample_subgroup_wait (
+        tenant_id,
+        site_id,
+        sample_data_id,
+        sample_value,
+        sample_time,
+        entity_code,
+        entity_version,
+        subgroup_size
+        ) SELECT
+        pe.tenant_id,
+        pe.site_id,
+        psdm.sample_data_id,
+        psdm.sample_value,
+        psdm.sample_time,
+        pe.entity_code,
+        pe.entity_version,
+        pc.subgroup_size
+        FROM
+        pspc_sample_data psdm,
+        pspc_entity pe,
+        pspc_chart pc
+        WHERE
+        1 = 1
+        AND pc.chart_id = pe.chart_id
+        AND pc.tenant_id = pe.tenant_id
+        AND pc.site_id = pe.site_id
+        AND psdm.tenant_id = pe.tenant_id
+        AND psdm.site_id = pe.site_id
+        AND psdm.attachment_group_id = pe.attachment_group_id
+        AND psdm.ce_group_id = pe.ce_group_id
+        AND psdm.ce_parameter_id = pe.ce_parameter_id
+        AND pe.entity_status = 'ACTIVE'
+        AND pe.entity_new = 'Y'
+        AND psdm.sample_time &gt;= pe.control_date
+        AND pe.tenant_id = #{tenantId}
+        AND pe.site_id = #{siteId}
+        AND pe.entity_id IN
+        <foreach collection="entityIdList" item="id" index="index" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+    </insert>
+
+    <insert id="insertSubgroupWaitData">
+        INSERT INTO pspc_sample_subgroup_wait (
+        tenant_id,
+        site_id,
+        sample_data_id,
+        sample_value,
+        sample_time,
+        entity_code,
+        entity_version,
+        subgroup_size
+        ) SELECT
+        pe.tenant_id,
+        pe.site_id,
+        sdw.sample_data_wait_id,
+        sdw.sample_value,
+        sdw.sample_time,
+        pe.entity_code,
+        pe.entity_version,
+        pc.subgroup_size
+        FROM
+        pspc_sample_data_wait sdw,
+        pspc_entity pe,
+        pspc_chart pc
+        WHERE
+        1 = 1
+        AND pc.chart_id = pe.chart_id
+        AND pc.tenant_id = pe.tenant_id
+        AND pc.site_id = pe.site_id
+        AND sdw.tenant_id = pe.tenant_id
+        AND sdw.site_id = pe.site_id
+        AND sdw.attachment_group_id = pe.attachment_group_id
+        AND sdw.ce_group_id = pe.ce_group_id
+        AND sdw.ce_parameter_id = pe.ce_parameter_id
+        AND pe.entity_status = 'ACTIVE'
+        AND pe.tenant_id = #{tenantId}
+        AND pe.site_id = #{siteId}
+        AND sdw.sample_data_wait_id IN
+        <foreach collection="sampleDataWaitIdList" item="id" index="index" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+    </insert>
+
+    <delete id="deleteSubgroupWaitDataByIdList">
+        DELETE
+        FROM
+        pspc_sample_subgroup_wait
+        WHERE
+         tenant_id = #{tenantId}
+        AND site_id = #{siteId}
+        AND sample_subgroup_wait_id IN
+        <foreach collection="sampleSubgroupWaitIdList" item="id" index="index" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+    </delete>
+
+	<resultMap id="SampSubgroupResultMap" type="com.hand.spc.repository.dto.SampleSubgroupWaitR">
+        <result column="SAMPLE_SUBGROUP_WAIT_ID" property="sampleSubgroupWaitId" jdbcType="DECIMAL" />
+        <result column="TENANT_ID" property="tenantId" jdbcType="DECIMAL" />
+        <result column="SITE_ID" property="siteId" jdbcType="DECIMAL" />
+        <result column="SAMPLE_DATA_ID" property="sampleDataId" jdbcType="DECIMAL" />
+        <result column="SAMPLE_VALUE" property="sampleValue" jdbcType="VARCHAR" />
+        <result column="SAMPLE_TIME" property="sampleTime" jdbcType="DATE" />
+        <result column="ENTITY_CODE" property="entityCode" jdbcType="VARCHAR" />
+        <result column="ENTITY_VERSION" property="entityVersion" jdbcType="VARCHAR" />
+        <result column="SUBGROUP_SIZE" property="subgroupSize" jdbcType="DECIMAL" />
+    </resultMap>
+    <select id="selectSubgroupWaitData" parameterType="com.hand.spc.repository.dto.SampleDataWaitR" resultMap="SampSubgroupResultMap" ><!--与mapper里面方法参数类型不一致  暂无影响  -->  <!-- resultType="com.hand.spc.repository.dto.SampleSubgroupWaitR -->
+
+        SELECT
+        pe.tenant_id,
+        pe.site_id,
+        sdw.sample_data_wait_id as sample_data_id,
+        sdw.sample_value,
+        sdw.sample_time,
+        pe.entity_code,
+        pe.entity_version,
+        pc.subgroup_size
+        FROM
+        pspc_sample_data_wait sdw,
+        pspc_entity pe,
+        pspc_chart pc
+        WHERE
+        1 = 1
+        AND pc.chart_id = pe.chart_id
+        AND pc.tenant_id = pe.tenant_id
+        AND pc.site_id = pe.site_id
+        AND sdw.tenant_id = pe.tenant_id
+        AND sdw.site_id = pe.site_id
+        AND sdw.attachment_group_id = pe.attachment_group_id
+        AND sdw.ce_group_id = pe.ce_group_id
+        AND sdw.ce_parameter_id = pe.ce_parameter_id
+        AND pe.entity_status = 'ACTIVE'
+        AND pe.tenant_id = #{tenantId}
+        AND pe.site_id = #{siteId}
+        AND sdw.sample_data_wait_id IN
+        <foreach collection="sampleDataWaitIdList" item="id" index="index" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+
+    </select>
+    
+    
+    <select id="selectSubgroupWaitDataModified" parameterType="com.hand.spc.repository.dto.SampleDataWaitR" resultMap="SampSubgroupResultMap" >
+        SELECT
+        pe.tenant_id,
+        pe.site_id,
+        sdw.sample_data_wait_id as sample_data_id,
+        sdw.sample_value,
+        sdw.sample_time,
+        pe.entity_code,
+        pe.entity_version,
+        pc.subgroup_size
+        FROM
+        pspc_sample_data_wait sdw,
+        pspc_entity pe,
+        pspc_chart pc
+        WHERE 1 = 1
+        AND pc.chart_id = pe.chart_id
+        AND pc.tenant_id = pe.tenant_id
+        AND pc.site_id = pe.site_id
+        AND sdw.tenant_id = pe.tenant_id
+        AND sdw.site_id = pe.site_id
+        AND sdw.attachment_group_id = pe.attachment_group_id
+        AND sdw.ce_group_id = pe.ce_group_id
+        AND sdw.ce_parameter_id = pe.ce_parameter_id
+        AND pe.entity_status = 'ACTIVE'
+        AND pe.tenant_id = -1
+        AND pe.site_id = -1
+        <if test="whereInSql != null and whereInSql != ''">
+                and ${whereInSql}
+        </if> 
+    </select>
+    
+<!--     <insert id="batchInsertSampleSubgroupWait" parameterType="java.util.List"> -->
+<!--         INSERT INTO pspc_sample_subgroup_wait -->
+<!--         (tenant_id, -->
+<!--         site_id, -->
+<!--         sample_data_id, -->
+<!--         sample_value, -->
+<!--         sample_time, -->
+<!--         entity_code, -->
+<!--         entity_version, -->
+<!--         subgroup_size) -->
+<!--         VALUES -->
+<!--         <foreach collection="sampleSubgroupWaitList" item="item" index="index" separator=","> -->
+<!--             (#{item.tenantId}, -->
+<!--             #{item.siteId}, -->
+<!--             #{item.sampleDataId}, -->
+<!--             #{item.sampleValue}, -->
+<!--             #{item.sampleTime}, -->
+<!--             #{item.entityCode}, -->
+<!--             #{item.entityVersion}, -->
+<!--             #{item.subgroupSize}) -->
+<!--         </foreach> -->
+<!--     </insert> -->
+    
+    <insert id="batchInsertSampleSubgroupWait" parameterType="java.util.List">
+    <foreach collection="sampleSubgroupWaitList" item="item" index="index" open="begin" close=";end;" separator=";">
+        INSERT INTO pspc_sample_subgroup_wait
+        (tenant_id,
+        site_id,
+        sample_data_id,
+        sample_value,
+        sample_time,
+        entity_code,
+        entity_version,
+        subgroup_size)
+        VALUES(
+            #{item.tenantId},
+            #{item.siteId},
+            #{item.sampleDataId},
+            #{item.sampleValue},
+            #{item.sampleTime},
+            #{item.entityCode},
+            #{item.entityVersion},
+            #{item.subgroupSize})
+        </foreach>
+    </insert>
+
+</mapper>

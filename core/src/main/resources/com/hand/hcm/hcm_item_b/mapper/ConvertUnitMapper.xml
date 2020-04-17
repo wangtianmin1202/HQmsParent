@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hcm.hcm_item_b.mapper.ConvertUnitMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hcm.hcm_item_b.dto.ConvertUnit">
+        <result column="ITEM_ID" property="itemId" jdbcType="DECIMAL" />
+        <result column="PLANT_ID" property="plantId" jdbcType="DECIMAL" />
+        <result column="UOM_QTY" property="uomQty" jdbcType="DECIMAL" />
+        <result column="UOM" property="uom" jdbcType="VARCHAR" />
+        <result column="CONVERT_UOM_QTY" property="convertUomQty" jdbcType="DECIMAL" />
+        <result column="CONVERT_UOM" property="convertUom" jdbcType="VARCHAR" />
+    </resultMap>
+
+<delete id="deleteByItemPlantId" parameterType="com.hand.hcm.hcm_item_b.dto.ConvertUnit">
+
+DELETE FROM hcm_convert_unit t
+ WHERE t.item_id = #{itemId}
+   AND t.plant_id = #{plantId}
+
+</delete>
+
+<insert id="reInsert" parameterType="com.hand.hcm.hcm_item_b.dto.ConvertUnit">
+
+INSERT INTO hcm_convert_unit
+  (item_id, plant_id, uom_qty, uom, convert_uom_qty, convert_uom)
+VALUES
+  (#{itemId}, #{plantId}, #{uomQty}, #{uom}, #{convertUomQty}, #{convertUom})
+
+</insert>
+
+</mapper>

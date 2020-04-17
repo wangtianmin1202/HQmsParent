@@ -1,0 +1,128 @@
+<#include "../include/header.html">
+    <script src="${base.contextPath}/lib/prints/doc_print.js" type="text/javascript" charset="UTF-8"></script>
+    <script src="${base.contextPath}/common/code?SRM_OUT_BACODE_TYPE=SRM_OUT_BACODE_TYPE"></script>
+    <script src="${base.contextPath}/lib/prints/JsBarcode.all.min.js" type="text/javascript"></script>
+    <script src="${base.contextPath}/lib/prints/jquery-barcode.js" type="text/javascript"></script>
+    <script src="${base.contextPath}/lib/prints/jquery-qrcode.min.js" type="text/javascript"></script>
+    <script src="${base.contextPath}/lib/prints/qrcode.js" type="text/javascript"></script>
+    <script type="text/javascript">
+        var dataList = window.parent.dataList;
+
+        $(function() {
+            if (dataList[0].obarcodeType == 'TP') {
+                //条码
+                $('html').css('width', "425px");
+                $('html').css('height', "236px");
+                var array = [];
+                var list = [];
+                var codeList = [];
+                $.ajax({
+                    url: "${base.contextPath}/hcs/out/barcode/updatePrintTime",
+                    type: "POST",
+                    data: JSON.stringify(dataList),
+                    contentType: "application/json",
+                    success: function() {}
+                })
+                for (var i = 0; i < dataList.length; i++) {
+                    var code = dataList[i].obarcode;
+                    var str1 = "jsBrcode" + i;
+                    list.push(str1);
+                    codeList.push(code)
+                    var v = dataList[i].obarcodeType ? dataList[i].obarcodeType : "";
+                    $.each(SRM_OUT_BACODE_TYPE, function(i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                        }
+                    });
+                    array.push("<div style='page-break-after:always'>");
+                    array.push("<div class='rows' style='margin-top: 5px;text-align: center;width: 100%;font-size: 13px;'>NO:");
+                    array.push(dataList[i].obarcodeNum);
+                    array.push("</div>");
+                    array.push("<div class='rows' id='");
+                    array.push("'style='margin-top: 5px;text-align: center;width: 100%;font-size: 13px;padding-left:10px'>");
+                    array.push("<img  id='");
+                    array.push(str1);
+                    array.push("'></img>");
+                    array.push("</div>");
+                    array.push("<div class='rows col-sm-12' style='margin-top: 5px;text-align: center;width: 100%;font-size: 13px;font-family:宋体'><span class='col-sm-6' style='width:20%;'><span class='col-sm-6'><@spring.message 'print.obarcodeType'/>:</span><span class='col-sm-6' style='padding:0px'>");
+                    array.push(v);
+                    array.push("</span><span class='col-sm-6' style='width:70%;'><span class='col-sm-6'>");
+                    array.push("<@spring.message 'print.suppliername'/>:</span><span class='col-sm-6' style='padding:0px'>");
+                    array.push(dataList[i].supplierCode);
+                    array.push("</span></div>");
+                    array.push("</div>");
+                }
+                $('#printWindow').append(array.join(''));
+
+                for (var k = 0; k < list.length; k++) {
+                    $("#" + list[k]).JsBarcode(codeList[k])
+                }
+            } else {
+                //二维码
+                $('html').css('width', "236px");
+                $('html').css('height', "236px");
+                var array = [];
+                var list = [];
+                var codeList = [];
+                for (var i = 0; i < dataList.length; i++) {
+                    var code = dataList[i].obarcode;
+                    var str1 = "qrcode" + i;
+                    list.push(str1);
+                    codeList.push(code);
+                    var v = dataList[i].obarcodeType ? dataList[i].obarcodeType : "";
+                    $.each(SRM_OUT_BACODE_TYPE, function(i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                        }
+                    });
+                    array.push("<div style='page-break-after:always;'>");
+                    array.push("<div class='rows' style='text-align: center;width: 100%;font-size: 13px;'>NO:");
+                    array.push(dataList[i].obarcodeNum);
+                    array.push("</div>");
+                    array.push("<div class='rows' style='text-align: center;width: 100%;font-size: 13px;margin-top:1%;font-family:宋体'><@spring.message 'print.supplierName'/>:");
+                    array.push(dataList[i].supplierCode);
+                    array.push("</div>");
+                    array.push("<div class='rows' id='");
+                    array.push("'style='text-align: center;width: 100%;font-size: 13px;padding-left:20%;margin-top:1%'>");
+                    array.push("<span  id='");
+                    array.push(str1);
+                    array.push("'></span>");
+                    array.push("</div>");
+                    array.push("<div class='rows' style='text-align: center;width: 100%;font-size: 13px;margin-top:1%'>");
+                    array.push(dataList[i].obarcode);
+                    array.push("</div>");
+                    array.push("<div class='rows' style='text-align: center;width: 100%;font-size: 13px;margin-top:1%;font-family:宋体'><@spring.message 'print.obarcodeType'/>:");
+                    array.push(v);
+                    array.push("</div>");
+                    array.push("</div>");
+                }
+                $('#printWindow').append(array.join(''));
+                for (var k = 0; k < list.length; k++) {
+                    var qrcode = new QRCode(list[k], {
+                        text: codeList[k],
+                        width: 143,
+                        height: 143,
+                        colorDark: '#000000',
+                        colorLight: '#ffffff',
+                        correctLevel: QRCode.CorrectLevel.H
+                    });
+                }
+            }
+            setTimeout(function() {
+                var barcode = $("#printWindow").html();
+
+                window.document.body.innerHTML = barcode;
+                window.print();
+                window.parent.viewModel.refresh();
+                window.parent.$('#printWindow').data('kendoWindow').close();
+                parent.location.reload();
+            }, 0.1 * 1000);
+        })
+    </script>
+
+    <body>
+        <div id="printWindow">
+        </div>
+    </body>
+
+    </html>

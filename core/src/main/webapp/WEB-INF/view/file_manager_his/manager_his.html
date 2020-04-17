@@ -1,0 +1,448 @@
+<#include "../include/header.html">
+<script src="${base.contextPath}/common/code?yesNo=HQM_FILE_STATUS"></script><!-- 是否 -->
+<script type="text/javascript">
+    var viewModel = Hap.createGridViewModel("#grid");
+    var fileId = "${RequestParameters.fileId}";
+    var classifyId = "${RequestParameters.classifyId}";
+</script>
+<script type="text/javascript">
+viewModel.check= function()
+{
+	var dialog = $("#childWindow1").kendoWindow({
+        width: window.parent.innerWidth * 0.55,
+        height: window.parent.innerHeight *0.5,
+        title: '权限管理',
+        visible: false,
+        iframe: true,
+        modal: true,
+        close: function(){	
+            $("#grid").data("kendoGrid").dataSource.page(1);
+           },
+        content: '../file_permission/permission.html?fileId='+fileId
+    }).data("kendoWindow");   
+    dialog.center().open(); 
+
+	}
+
+</script>
+<script type="text/javascript">
+$(function(){	
+		//头查询
+		console.log(fileId);
+		console.log(classifyId);
+		
+		
+		
+		var ticketIdData = {
+				"fileId" : fileId
+		}
+		$.ajax({
+	        url: '${base.contextPath}/file/manager/his/select',
+	        type: 'POST',
+	        data: ticketIdData,
+	        async: false,
+	        dataType: "json",
+	        success: function (response) {
+	            if (response.success) {
+	            	if(response.rows!=undefined&&response.rows.length!=0){
+      		
+    		     viewModel.model.set('fileNum',response.rows[0].fileNum) ;
+    		     viewModel.model.set('fileTitle',response.rows[0].fileTitle) ;       
+                 viewModel.model.set('classifyIds',response.rows[0].classifyIds);		
+                 viewModel.model.set('supplierCode',response.rows[0].supplierCode);	
+                 viewModel.model.set('SupplierName',response.rows[0].supplierName);
+                 viewModel.model.set('edition',response.rows[0].edition);
+                 viewModel.model.set('enableFlag',response.rows[0].enableFlag);
+                 viewModel.model.set('remark',response.rows[0].remark);
+                 viewModel.model.set('uploadDate',response.rows[0].uploadDate);
+               
+                 
+            	}else{
+	            		kendo.ui.showWarningDialog({
+	                        message: "无数据"
+	                    });
+	            	}
+	            } else {
+	            	kendo.ui.showWarningDialog({
+	                    message: "获取失败"
+	                });
+	            }
+	        }
+	    });
+		});
+
+viewModel.save = function(){
+	 console.log("获取的备注是："+$('#remark').val())
+	 console.log("size()："+$("#files1").length)
+	 if(classifyId == '143') {
+			if($('#expirationDate').val()==null||$('#expirationDate').val()==undefined||$('#expirationDate').val()=='')
+			{
+				 kendo.ui.showWarningDialog({
+		            message: "有效期必输！"
+		         });
+				 return;
+			}
+  	  }
+	  $("#files1").data("kendoUpload").upload();
+	  $("#grid").data("kendoGrid")._data
+	  
+}	 
+
+$(function() {
+	$("#expirationDateDiv").hide();
+	if(classifyId == '143') {
+		console.log(classifyId == '143')
+		$("#expirationDateDiv").show();
+	}
+})
+
+function fileDownLoadHaved(fileUrl){
+	$("#fileDownLoadD2").html('');
+	window.open(fileUrl);
+} 
+</script>
+<body>
+<div id="childWindow1"></div>
+<div id="childWindowe"></div>
+<div id="childWindowd"></div>
+<div id="childWindowr"></div>
+<div id="page-content">
+    <div class="pull-left" id="toolbar-btn" style="padding-bottom:10px;">
+        <span class="btn btn-success k-grid-save-changes" data-bind="click:save" style="float:left;margin-right:5px;"><@spring.message "hap.save"/></span>
+        <span class="btn btn-success k-grid-save-changes" data-bind="click:check" style="float:left;margin-right:5px;">权限管理</span>
+    </div>
+    <script>kendo.bind($('#toolbar-btn'), viewModel);</script>
+     <div  id="row-line">
+ <div class="row">
+<span></span>
+</div>
+<div class="row"style="margin-left:10%">
+<span><@spring.message "iso.file.upload"/></span>
+</div>
+
+<div class="row">
+			<div class="row" id="import">																				
+					<form id="mainform" class="form-horizontal">
+					<div class="row" style="width:80%;margin-left:10%">
+						<div class="form-group">
+							
+							<div class="col-sm-12">
+							<div class="demo-section k-content">
+								<input name="files" id="files1" type="file" accept=".xlsx,.pdf,.docx,.pptx,.gif,.jpg,.png,.jpeg,.xls,.docm,.xlsm,.ppt,.pptm,.doc" />
+							</div>	
+							</div>
+							</div>	
+							</div>
+							</form>		
+							<script>							
+								$("#files1").kendoUpload({
+									async: {
+				                    	saveUrl: "${base.contextPath}/file/manager/his/fileupload/upload?${_csrf.parameterName}=${_csrf.token}",//
+										autoUpload: false
+									},
+									multiple: false,//只能单选
+									showFileList:true, 
+									upload: function(e){
+										e.data = {
+												fileId : fileId,
+									  			remark : $('#remark').val(),
+									  			expirationDate : $('#expirationDate').val(),
+									        }
+									},
+				                    success: function(e){
+				                        var response = e.response;
+				                        if(response.success){
+				                        	kendo.ui.showInfoDialog({message: "导入成功"});
+				                        	 $("#grid").data("kendoGrid").dataSource.page(1);
+				                        	 var ticketIdData = {
+				                     				"fileId" : fileId
+				                     		}
+				                     	 $.ajax({
+				                     	        url: '${base.contextPath}/file/manager/his/select',
+				                     	        type: 'POST',
+				                     	        data: ticketIdData,
+				                     	        async: false,
+				                     	        dataType: "json",
+				                     	        success: function (response) {
+				                     	            if (response.success) {
+				                     	          if(response.rows!=undefined&&response.rows.length!=0){
+				                        		       console.log(response);
+				                      		      viewModel.model.set('fileNum',response.rows[0].fileNum) ;
+				                      		      viewModel.model.set('fileTitle',response.rows[0].fileTitle) ;       
+				                                   viewModel.model.set('classifyIds',response.rows[0].classifyIds);		
+				                                   viewModel.model.set('supplierCode',response.rows[0].supplierCode);	
+				                                   viewModel.model.set('SupplierName',response.rows[0].supplierName);
+				                                   viewModel.model.set('edition',response.rows[0].edition);
+				                                   viewModel.model.set('enableFlag',response.rows[0].enableFlag);
+				                                   viewModel.model.set('remark',response.rows[0].remark);
+				                                   viewModel.model.set('uploadDate',response.rows[0].uploadDate);
+				                                 
+				                                   
+				                              	}else{
+				                     	            		kendo.ui.showWarningDialog({
+				                     	                        message: "无数据"
+				                     	                    });
+				                     	            	}
+				                     	            } else {
+				                     	            	kendo.ui.showWarningDialog({
+				                     	                    message: "获取失败"
+				                     	                });
+				                     	            }
+				                     	        }
+				                     	    }); 
+				                        	}else{
+				                        	kendo.ui.showErrorDialog({message: response.message});
+				                        	}
+				                     },
+										
+								});								
+				 </script>
+							
+</div>
+</div>
+    	<div class="row">		
+				<div class="col-sm-12"style="margin-top: 20px;">
+				  <div class="col-sm-4">
+					<label class="col-sm-4 control-label"style=" padding-top:6px;"><@spring.message "iso.manager.filecode"/>:</label>
+					<div class="col-sm-8">
+                        <input id="code" style="width:100%" required  disabled data-role="maskedtextbox" data-bind="value:model.fileNum"type="text">
+                   </div>                   
+					</div>	
+					<div class="col-sm-4">
+					<label class="col-sm-4 control-label"style=" padding-top:6px;"><@spring.message "iso.manager.filetitle"/>:</label>
+					<div class="col-sm-8">
+						<input required name="samplenumber" disabled style="width:100%" id="title" data-bind="value:model.fileTitle"type="text"data-role="maskedtextbox" >
+                    
+					</div>					
+				  </div>
+				  <div class="col-sm-4">
+					<label class="col-sm-4 control-label"style=" padding-top:6px;"><@spring.message "iso.manager.version"/>:</label>
+					<div class="col-sm-8">
+                        <input  style="width:100%" id="edition" disabled  data-bind="value:model.edition"type="text"data-role="maskedtextbox">				
+					</div>		
+			    </div>		
+							
+				</div>
+		</div>
+				
+		<div class="row">			
+			    <div class="col-sm-12"style="margin-top: 20px;">
+			    
+			       	<div class="col-sm-4">
+					<label class="col-sm-4 control-label"style=" padding-top:6px;"><@spring.message "iso.manager.status"/>:</label>
+					<div class="col-sm-8">
+                        <input  style="width:100%" id="nosourcetypeComBox"  disabled data-bind="value:model.enableFlag">				
+					</div>	
+					<script>
+	    				$("#nosourcetypeComBox").kendoComboBox({
+					        dataTextField: "meaning",
+					        dataValueField: "value",
+					        valuePrimitive: true,
+					        dataSource: yesNo
+						});
+	    				
+    				</script>	
+			    </div>	
+			       <div class="col-sm-8">
+					<label class="col-sm-2 control-label" style=" padding-top:6px;"><@spring.message "iso.manager.fileclassify"/>:</label>
+					<div class="col-sm-10">
+						<input required name="sampleProperties" disabled style="width:100%" id="type"  data-bind="value:model.classifyIds"type="text"data-role="maskedtextbox">
+                    </div>
+				 </div>	
+				 
+				 
+				 			 
+				</div>		
+		</div>
+		
+		<div class="row" id = "expirationDateDiv">
+			<div class="col-sm-12"style="margin-top: 20px;">
+			<div class="col-sm-4">
+				<label class="col-sm-4 control-label"><@spring.message "employee.effectiveenddate"/>:</label>
+				<div class="col-sm-8">
+					<!-- 有效期至 -->
+           			<input type="text" id = "expirationDate" data-role="datepicker" style="width:100%">
+           		
+           			<script type="text/javascript">
+   					$("#expirationDate").kendoDatePicker({
+   						format: "yyyy-MM-dd",
+   						change:function(){
+   							
+   						}
+   					});
+   				</script>
+				</div>
+			</div>
+				
+			</div>
+		</div>
+				 		                         
+        <div class="row">		
+				<div class="col-sm-12"style="margin-top: 20px;margin-bottom: 20px;">
+					<div class="col-sm-4">
+					<label class="col-sm-4 control-label" style="padding-left: 30px;padding-top:6px;"><@spring.message "iso.manager.remark"/>:</label>
+					
+					<div class="col-sm-8">	
+					
+                        <input  style="width:492%" id="remark"   class="k-textbox"data-bind="value:model.remark"type="text">				
+					</div>	
+					</div>			
+			</div>					
+		</div>
+		</div>
+		<script>kendo.bind($('#row-line'), viewModel);</script>
+    <div class="row">
+		<span><@spring.message "iso.manager.history"/></span>
+	</div>
+	<div class="row">
+				<div id="fileDownLoadD2" style="display:none;">
+				
+				</div>
+				</div>
+    <div style="clear:both width:80%;margin-left:5% ">
+        <div id="grid" ></div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    Hap.initEnterQuery('#query-form', viewModel.query);
+    var BaseUrl = _basePath;
+    dataSource = new kendo.data.DataSource({
+        transport: {
+            read: {
+                url: BaseUrl + "/file/manager/his/select",
+                type: "POST",
+                dataType: "json"
+            },
+            update: {
+                url: BaseUrl + "/file/manager/his/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            destroy: {
+                url: BaseUrl + "/file/manager/his/remove",
+                type: "POST",
+                contentType: "application/json"
+            },
+            create: {
+                url: BaseUrl + "/file/manager/his/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            parameterMap: function (options, type) {
+                if (type !== "read" && options.models) {
+                    var datas = Hap.prepareSubmitParameter(options, type)
+                    return kendo.stringify(datas);
+                } else if (type === "read") {
+                	viewModel.model.fileId =fileId;
+                    return Hap.prepareQueryParameter(viewModel.model.toJSON(), options)
+                }
+            }
+        },
+        batch: true,
+        serverPaging: true,
+        pageSize: 5,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+                id: "fileId",
+                fields: {}
+            }
+        }
+    });
+
+    $("#grid").kendoGrid({
+        dataSource: dataSource,
+        resizable: true,
+        scrollable: true,
+        navigatable: false,
+        selectable: false,
+        dataBound: function () {
+            if (parent.autoResizeIframe) {
+                parent.autoResizeIframe('${RequestParameters.functionCode!}')
+            }
+        },
+        pageable: {
+            pageSizes: [5, 10, 20, 50],
+            refresh: true,
+            buttonCount: 5
+        },
+        columns: [
+         
+                    {
+                field: "fileNum",
+                title: '<@spring.message "iso.manager.filecode"/>',
+                width: 120
+            },
+                    {
+                field: "fileTitle",
+                title: '<@spring.message "iso.manager.filetitle"/>',
+                width: 120,
+                headerAttributes: {
+                    style  : "text-align: center"
+                },
+                attributes: {style: "text-align:center"},
+                template : function (rowdata) {           	
+                    return '<a href="#" style="color:blue;" onclick="fileDownLoadHaved(\''+rowdata.fileUrl+'\')">'+rowdata.fileTitle+'</a>'   
+                         
+                },
+                sortable: false
+            },
+            /* {
+                field: "fileUrl",
+                title: '链接',
+                width: 120,
+                headerAttributes: {
+                    style  : "text-align: center"
+                },
+                attributes: {style: "text-align:center"},
+                template : function (rowdata) {           	
+                    return '<a href="#" style="color:blue;" onclick="fileDownLoadHaved(\''+rowdata.fileUrl+'\')">'+rowdata.fileUrl+'</a>'   
+                         
+                },
+                sortable: false
+            },       */
+                    {
+                field: "edition",
+                title: '<@spring.message "iso.manager.version"/>',
+                width: 120
+            },
+
+                    {
+                field: "enableFlag",
+                title: '<@spring.message "iso.manager.status"/>',
+                width: 90,
+                template: function (dataItem) {
+                    var v = dataItem.enableFlag ? dataItem.enableFlag : "";
+                    $.each(yesNo, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return v;
+                        }
+                    })
+                    return v;
+                },
+                editor: function (container, options) {
+                    $('<input name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            dataTextField: "meaning",
+                            dataValueField: "value",
+                            valuePrimitive: true,
+                            dataSource: yesNo
+                        });
+                }
+            },     
+            {
+                field: "uploadDate",
+                title: '<@spring.message "iso.manager.uploadtime"/>',
+                width: 150
+            },
+        ],
+        editable: false
+    });
+
+</script>
+</body>
+</html>

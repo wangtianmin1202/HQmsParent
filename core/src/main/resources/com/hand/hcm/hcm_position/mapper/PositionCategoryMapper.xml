@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hcm.hcm_position.mapper.PositionCategoryMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hcm.hcm_position.dto.PositionCategory">
+        <result column="KID" property="kid" jdbcType="DECIMAL" />
+        <result column="POSITION_ID" property="positionId" jdbcType="DECIMAL" />
+        <result column="CATEGORY_FIRST_ID" property="categoryFirstId" jdbcType="DECIMAL" />
+        <result column="CATEGORY_SECOND_ID" property="categorySecondId" jdbcType="DECIMAL" />
+        <result column="CATEGORY_THIRD_ID" property="categoryThirdId" jdbcType="DECIMAL" />
+    </resultMap>
+
+
+    <select id="query"  resultMap="BaseResultMap">
+        select ntsp.spare_part_id CATEGORY_THIRD_ID, ntsp.parent_id CATEGORY_SECOND_ID, ntsp1.parent_id CATEGORY_FIRST_ID
+  from npi_technology_spare_part ntsp
+ inner join npi_technology_spare_part ntsp1
+    on ntsp.parent_id = ntsp1.spare_part_id
+    <where>
+        <if test="sparePartId != null">
+            ntsp.spare_part_id =#{sparePartId}
+        </if>
+    </where>
+    </select>
+    <delete id="deleteByPositionId">
+        DELETE FROM
+        hcm_position_category hpc
+        where hpc.POSITION_ID =#{positionId}
+    </delete>
+</mapper>

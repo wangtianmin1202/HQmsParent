@@ -1,0 +1,165 @@
+<!--
+审批界面详情
+-->
+<script src="${base.contextPath}/common/code?WORKFLOW_STATUS=SYS_WORKFLOW_STATUS" type="text/javascript"></script>
+<script type="text/javascript">
+	var BaseUrl = _basePath;
+    // 业务数据model
+    var busiViewModel = Hap.createGridViewModel("#busiGrid",{
+        model: {
+            processInstanceId: '${RequestParameters.processInstanceId!0}',
+            businessKey: '${RequestParameters.businessKey!}' || null,
+        },
+    	queryInfo:function(){
+    		if(${RequestParameters.processInstanceId!0} != 0){
+    			$.ajax({
+    				url:BaseUrl+"/hqm/measure/tool/use/queryByCondition?processInstanceId=${RequestParameters.processInstanceId!0}",
+    				success:function(data){
+    					var a0 = data.rows[0] || {};
+    					for(var k in a0){
+    						busiViewModel.model.set(k,a0[k]);
+    					}
+    				}
+    			})
+    		}
+    	},
+    });
+    busiViewModel.queryInfo();
+</script>
+
+<div class="approve-block">
+    <h3>审批表单—${RequestParameters.businessKey!}</h3>
+    <!-- <iframe id="includeFrame" style="width:100%" name="includeFrame" onLoad="onIncludeFrameLoad()"></iframe> -->
+
+    <form id = "mainForm" style="paddiing-bottom:50px;padding-top:15px" class="form-horizontal" method="post" enctype="application/json;charset=UTF-8">
+		<div class="row">
+			<div class="col-sm-12">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-2 control-label">领用单号</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="useNumber"  data-role="maskedtextbox" class="k-textbox"
+								data-bind="value:model.useNumber" disabled>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-sm-12">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-2 control-label">量具编号</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="measureToolId"  data-label="量具编号" disabled
+								data-bind="value:model.measureToolId,text:model.measureToolNum">
+						</div>
+						<script>
+							//选择量具
+							$("#measureToolId").kendoLov($.extend(<@lov "LOV_HQM_MEASURE_TOOL_USE"/>,{
+								change:function(e){
+									//viewModel.model.set("measureToolId",e.sender._dataItem.measureToolId);
+									viewModel.model.set("descriptions",e.sender._dataItem.descriptions);
+									viewModel.model.set("measuringRange",e.sender._dataItem.measuringRange);
+									viewModel.model.set("measureToolType",e.sender._dataItem.measureToolType);
+								},
+							}));
+						</script>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-sm-12">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-2 control-label">量具名称</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="descriptions"  data-role="maskedtextbox" class="k-textbox"
+								data-bind="value:model.descriptions" disabled>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-sm-12">
+					<div class="form-group">
+						<div class="col-sm-12">
+							<label class="col-sm-2 control-label">规格</label>
+							<div class="col-sm-8">
+								<input style="width:100%" id="measuringRange"  data-role="maskedtextbox" class="k-textbox"
+									data-bind="value:model.measuringRange" disabled>
+							</div>
+						</div>
+					</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-sm-12">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-2 control-label">型号</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="measureToolType"  data-role="maskedtextbox" class="k-textbox"
+								data-bind="value:model.measureToolType" disabled>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-sm-12">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-2 control-label">外借供应商</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="borrowedSupplier"  data-label="外借供应商" disabled
+								data-bind="value:model.borrowedSupplier,text:model.borrowedSupplierName" >
+						</div>
+						<script>
+		                	$("#borrowedSupplier").kendoLov($.extend
+		                	    (<@lov"LOV_SUPPLIER_SRM"/>, {
+		                	        /* textField: 'supplierName',
+		                	        valueField:'supplierId',
+		                	        query: function(e){
+		                	        	//e.param['supplierId'] = supplierId;
+		                	        } */
+		                	}));
+				        </script> 
+					</div>
+				</div>
+			</div> 
+		</div>
+		<div class="row">
+			<div class="col-sm-12">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-2 control-label">申请日期</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="applicationDate"  data-role="datepicker" class="k-datepicker"
+								data-bind="value:model.applicationDate" disabled>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-sm-12">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-2 control-label">归还日期</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="returnDate"  data-role="datepicker" class="k-datepicker"
+								data-bind="value:model.returnDate" disabled>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</form>
+</div>
+<script type="text/javascript">
+	kendo.bind($('#mainForm'), busiViewModel);
+
+</script>

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.spc.ecr_main.mapper.EcrVtpMapper">
+
+
+    <resultMap id="baseResult" type="com.hand.spc.ecr_main.dto.EcrVtp">
+        <result column="ecrno" property="ecrno" jdbcType="VARCHAR" />
+        <result column="sku_code" property="skuCode" jdbcType="VARCHAR" />
+        <result column="vtp_num" property="vtpNum" jdbcType="VARCHAR" />
+        <result column="vtp_seq" property="vtpSeq" jdbcType="DECIMAL" />
+        <result column="conclution" property="conclution" jdbcType="VARCHAR" />
+        <result column="status" property="status" jdbcType="VARCHAR" />
+        <result column="dutyby" property="dutyby" jdbcType="VARCHAR" />
+        <result column="finished_date" property="finishedDate" jdbcType="DATE" />
+        <result column="plan_finished_date" property="planFinishedDate" jdbcType="DATE" />
+        <result column="actually_finished_date" property="actuallyFinishedDate" jdbcType="DATE" />
+        <result column="descriptions" property="skuDesc" jdbcType="VARCHAR" />
+        <result column="is_need" property="isNeed" jdbcType="VARCHAR" />
+    </resultMap>
+
+    <select id="vtpQuery" parameterType="com.hand.spc.ecr_main.view.EcrVtpVO"
+            resultMap="baseResult">
+      select hev.ecrno,
+               hev.sku_code,
+               hev.vtp_num,
+               hev.vtp_seq,
+               hev.conclution,
+               hev.status,
+               hev.dutyby,
+               hev.finished_date,
+               hev.plan_finished_date,
+               hev.actually_finished_date,
+               hi.descriptions
+          from HPM_ECR_VTP hev,hcm_item hi
+          where hev.sku_code=hi.ITEM_CODE(+)
+        
+              <if test="ecrno != null">
+               AND   hev.ecrno = #{ecrno}
+              </if> 
+    </select>
+</mapper>

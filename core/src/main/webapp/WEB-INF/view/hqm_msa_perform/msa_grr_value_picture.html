@@ -1,0 +1,711 @@
+<#include "../include/header.html">
+<script src="${base.contextPath}/lib/prints/doc_print.js" type="text/javascript" charset="UTF-8"></script>
+<script src="${base.contextPath}/common/code?HQM_CONTROL_CHART_TYPE=HQM_CONTROL_CHART_TYPE"></script>
+<script src="${base.contextPath}/lib/js/echarts.common.min.js?_v_=1553896255267" type="text/javascript" charset="UTF-8"></script>
+<script type="text/javascript" src="https://www.echartsjs.com/examples/vendors/echarts/echarts.min.js?_v_=1553896255267"></script> 
+<script type="text/javascript" src="https://www.echartsjs.com/examples/vendors/echarts-stat/ecStat.min.js?_v_=1553896255267"></script>
+
+<script type="text/javascript">
+    var parentData = window.parent.parentData;
+    //列
+    var sampleNumList;
+	//行
+	var map;
+	//均值
+	var averageData = new Array();
+	//极差
+	var jcList = new Array();
+	//标准差
+	var bzcList = new Array();
+	//测量值集合
+	var measureValueList = new Array();
+	//平均极差
+	var averageJc;
+	//平均标准差
+	var averageBzc;
+	//s图能否查看标识
+	var sFlag;
+	//测量值均值
+	var cl
+	
+	//重复性EV
+	var EV = window.parent.EV;
+	//再线性AV
+	var AV = window.parent.AV;
+	//零件间变差PV
+	var PV = window.parent.PV;
+	//GRR
+	var GRR = window.parent.GRR;
+	//总变差TV
+	var TV = window.parent.TV;
+	var userLjList;
+	//每个测量人的极差
+	var jzByUserList = window.parent.jzByUserList;
+	
+    var viewModel = kendo.observable({
+		model: {
+		},
+		//返回
+		closeWin: function(e){
+        	window.parent.$("#"+window.parent.windowName).data("kendoWindow").close();
+        },
+        //刷新
+        refresh: function(){
+        	initTable();
+        },
+        //去打印
+        toPrint: function(){
+        	var dialog = $("#printWindow").kendoWindow({
+    				actions: ["Close"],
+    				width: 1400,
+    				height: 650,
+    				title: '<@spring.message "打印msa"/>',
+    				visible: false,
+    				iframe: true,
+    				modal: true,
+    				content: 'msa_grr_value_print.html'
+    			}).data("kendoWindow");
+    			dialog.center().open();
+        }	
+	});
+    var ljValueList = window.parent.ljValueList;
+	var avgByLjList =window.parent.avgByLjList
+	var userList;
+	var userljList;
+	var avgByUserList = window.parent.avgByUserList;
+	var message;
+    $(function(){
+		//获取父页面参数
+		//均值
+    	averageData = window.parent.averageData;
+    	//列
+    	sampleNumList = window.parent.sampleNumList;
+    	//行
+    	map = window.parent.map;
+    	//平均极差
+    	averageJc = window.parent.averageJc;
+    	//极差
+		jcList = window.parent.jcList;
+    	//测量值集合
+    	measureValueList = window.parent.measureValueList;
+    	//测量人分组
+    	userLjList = window.parent.userLjList;
+    	$("#EV").html(EV.toFixed(3));
+    	$("#AV").html(AV.toFixed(3));
+    	$("#TV").html(TV.toFixed(3));
+    	$("#PV").html(PV.toFixed(3));
+    	$("#GRR").html(GRR.toFixed(3));
+    	$("#EVPercentage").html((EV/TV*100).toFixed(1)+'%');
+    	$("#AVPercentage").html((AV/TV*100).toFixed(1)+'%');
+    	$("#PVPercentage").html((PV/TV*100).toFixed(1)+'%');
+    	$("#GRRPercentage").html((GRR/TV*100).toFixed(1)+'%');
+    	$("#FSJ").html((1.41*(PV/GRR)).toFixed(0));
+    	var returnMsg;
+    	var msgEn;
+    	var returnMsgAll = showXbar();
+    	msgEn = returnMsgAll.split('_')[1];
+    	returnMsg = returnMsgAll.split('_')[0];
+    	bar();
+    	
+    	line('<@spring.message "msaplan.analysis.grr.sample"/>',sampleNumList,ljValueList,avgByLjList,'picture2','<@spring.message "msaplan.sample.value"/>','<@spring.message "msaplan.sample.average"/>');
+    	//测量人
+    	userList = [];
+    	//测量人零件汇总
+    	var userLjListCount = [];
+    	for(var key in map){
+    		userList.push(key)
+    		var ljList = [];
+    		for(var keyChild in map[key]){
+    			for(var j=0;j<map[key][keyChild].length;j++){
+    				ljList.push(map[key][keyChild][j].measureValue);
+    			}
+    		}
+    		userLjListCount.push(ljList)
+    		var userLjListLen = userLjListCount[0].length;
+    		var ljListLen = ljList.length;
+    		if(userLjListCount!=null && userLjListCount[0].length>ljList.length ){
+    			for(var j=0;j<(userLjListLen - ljListLen);j++){
+    				ljList.push('');
+    			}
+    		}else if(userLjListCount!=null && userLjListCount[0].length<ljList.length ){
+    			for(var j=0;j<(ljListLen - userLjListLen);j++){
+    				ljList.push('');
+    			}
+    		}
+    	}
+    	//测量人零件
+    	userljList = [];
+    	
+    	for(var i=0;i<userLjListCount[0].length;i++){
+    		var ljList = [];
+    		for(var j=0;j<userLjListCount.length;j++){
+    			ljList.push(userLjListCount[j][i])
+        	}
+    		userljList.push(ljList)
+    	}
+    	
+    	line('<@spring.message "msaplan.analysis.grr.person"/>',userList,userljList,avgByUserList,'picture5','<@spring.message "msaplan.person.value"/>','<@spring.message "msaplan.person.average"/>');
+    	line2();
+    	if((GRR/TV).toFixed(2) < 0.10){
+    		returnMsg += 'GRR%<10%能接受；';
+    		msgEn += '<@spring.message "msaplan.grr.conclusion5"/>';
+    	}else if((GRR/TV).toFixed(2) >= 0.10 && (GRR/TV).toFixed(2) <= 0.30){
+    		returnMsg += '10%<= GRR% <=30% 有条件接受；';
+    		msgEn += '<@spring.message "msaplan.grr.conclusion6"/>';
+    	}else if((GRR/TV).toFixed(2) > 0.30){
+    		returnMsg += 'GRR%>30%不能接受；';
+    		msgEn += '<@spring.message "msaplan.grr.conclusion7"/>';
+    	}
+    	if((1.41*(PV/GRR)).toFixed(2)>=5){
+    		returnMsg += '分级数大于等于5，分辨力可接受';
+    		msgEn += '<@spring.message "msaplan.grr.conclusion8"/>';
+    	}else{
+    		returnMsg += '分级数不大于等于5，分辨力不可接受';
+    		msgEn += '<@spring.message "msaplan.grr.conclusion9"/>';
+    	}
+    	message = msgEn;
+    	$("#result").html(msgEn);
+    	
+		if(parentData.measurePlanStatus != '3'){
+	    	//MSA结论
+	    	var msaResult = '';
+			if((GRR/TV).toFixed(2) <= parseFloat(parentData.judgementStandard)*0.01){
+				msaResult = 'OK';
+			}else{
+				msaResult = 'NG';
+			}
+			var msaPlanLine = {
+	    			"measurePlanId" : parentData.msaPlanId,
+	    			"msaContent" : '4',
+	    			"msaResult":msaResult,
+	    			"msaConclusion":returnMsg,
+	    			"measurePlanLineId": parentData.measurePlanLineId
+	    	}
+			$.ajax({
+	    		url: "${base.contextPath}/hqm/msa/plan/line/updateResult",
+	    		data: msaPlanLine,
+	    		type: "POST",
+	    		dataType: "json",
+	    		success: function(data){
+	    			if(data.success){
+	    				window.parent.viewModel.query();
+	    			}
+	    		}
+	    	})
+		}
+		
+// 		var msaPlanLine = {
+// 	  			"measurePlanLineId": parentData.measurePlanLineId
+// 	  	}
+// 		$.ajax({
+// 			url: "${base.contextPath}/hqm/msa/plan/line/updateAnalyzeData",
+// 			data: msaPlanLine,
+// 			type: "POST",
+// 			dataType: "json",
+// 			success: function(data){
+// 			}
+// 		})
+    })
+    //求临界值
+    function tinvs(averageBias,avgBzc,v,a,tStatistics){
+    	var jsonData = {
+    			"v": v,
+    			"a": a
+    	}
+    	$.ajax({
+    		url:"${base.contextPath}/hqm/d2/v/value/getTinvs",
+    		type:"POST",
+    		data:jsonData,
+    		jsonType:"json",
+    		success: function(resultData){
+    			if(resultData != -1){
+    				resultData = resultData.toFixed(3);
+					//临界值
+					$("#criticalValue").html(resultData);
+					//置信区间
+					var min = (parseFloat(averageBias)-parseFloat(avgBzc*resultData)).toFixed(3);
+					var max = (parseFloat(averageBias)+parseFloat(avgBzc*resultData)).toFixed(3);
+					$("#interval").html('['+ min +'，'+ max +']');
+    				if(tStatistics < resultData && min <= 0 && max >= 0){
+    					$("#result").html("本测量系统无偏倚");
+    				}else if(tStatistics > resultData){
+    					$("#result").html("t统计量大于临界值，该测量系统存在偏倚");
+    				}else if(min <= 0 || max >= 0){
+    					$("#result").html("0不在置信区间内，该测量系统存在偏倚");
+    				}
+    			}else{
+    				//获取失败
+    			}
+    		}
+    	})
+    }
+    function checkStr(str){
+		if(str == null || str === '' ||typeof(str) == "undefined"){
+    		return false;
+    	}
+		return true;
+    }
+</script>
+<body>
+<div style="display:none">
+	<iframe id="iframePrint" ></iframe>
+</div>
+<div id="printWindow"></div>
+<div id="page-content" style="heigth:100%">
+		<div class="row" style=";height:10%">
+			<div class="pull-left" id="toolbar-btn" style="padding-bottom:10px;">
+		    	<span type="button" class="btn btn-primary" style="float:left;margin-right:5px" data-bind="click:closeWin"><i class="fa fa-undo" style="margin-right:3px;"></i><@spring.message "hap.back"/></span>
+		    	<span class="btn btn-success k-grid-save-changes" data-bind="click:toPrint"  style="float:left;margin-right:5px;"><i class="fa fa-print" style="margin-right:3px;"></i><@spring.message "hap.print"/></span>
+		    </div>
+		    <script>kendo.bind($('#toolbar-btn'), viewModel);</script>
+	    </div>
+	    <div class="row" style="margin:0px;padding:0px">
+	    	<div id="picture" class="form-group col-sm-6" style="height:250px;">
+
+	    	</div>
+	    	<div id="picture2" class="form-group col-sm-6" style="height:250px">
+
+	    	</div>
+	    </div>
+	    <div class="row" style="margin-top:0px;padding:0px">
+	    	<div id="picture3" class="form-group col-sm-6" style="height:250px;">
+
+	    	</div>
+	    	<div id="picture4" class="form-group col-sm-6" style="height:250px">
+
+	    	</div>
+	    </div>
+	     <div class="row" style="margin-top:0px;padding:0px">
+	    	<div id="picture5" class="form-group col-sm-6" style="height:250px;">
+
+	    	</div>
+	    	<div id="picture6" class="form-group col-sm-6" style="height:250px">
+
+	    	</div>
+	    </div>
+	    <div class="row" style="margin-top:0px;padding:0px">
+	    	<div id="dataInfo" class="form-group col-sm-6" style="height:250px;font-size:18px">
+	    		<div class="row">
+		    		<div class="col-sm-6" style="padding:0px">
+				    	    <lable class="col-xs-5 control-lable" style="text-align:right;padding:0px;"><@spring.message "msaplan.grr.repeatability.ev"/>:</lable>
+				    	    <span id="EV" class="col-xs-7"  style="padding:0px"></span>
+				    </div>
+				    <div class="col-sm-6" style="padding:0px">
+				    	    <lable class="col-xs-5 control-lable" style="text-align:right;padding:0px;"><@spring.message "msaplan.grr.repeatability.per"/>:</lable>
+				    	    <span id="EVPercentage" class="col-xs-7"  style="padding:0px"></span>
+				    </div>
+	    		</div>
+	    		<div class="row">
+		    		<div class="col-sm-6" style="padding:0px">
+				    	    <lable class="col-xs-5 control-lable" style="text-align:right;padding:0px;"><@spring.message "msaplan.grr.reproducibility.av"/>:</lable>
+				    	    <span id="AV" class="col-xs-7"  style="padding:0px"></span>
+				    </div>
+				    <div class="col-sm-6" style="padding:0px">
+				    	    <lable class="col-xs-5 control-lable" style="text-align:right;padding:0px;"><@spring.message "msaplan.grr.reproducibility.per"/>:</lable>
+				    	    <span id="AVPercentage" class="col-xs-7"  style="padding:0px"></span>
+				    </div>
+	    		</div>
+	    		<div class="row">
+		    		<div class="col-sm-6" style="padding:0px">
+				    	    <lable class="col-xs-5 control-lable" style="text-align:right;padding:0px;"><@spring.message "msaplan.grr"/>:</lable>
+				    	    <span id="GRR" class="col-xs-7"  style="padding:0px"></span>
+				    </div>
+				    <div class="col-sm-6" style="padding:0px">
+				    	    <lable class="col-xs-5 control-lable" style="text-align:right;padding:0px;"><@spring.message "msaplan.grr.per"/>:</lable>
+				    	    <span id="GRRPercentage" class="col-xs-7"  style="padding:0px"></span>
+				    </div>
+	    		</div>
+	    		<div class="row">
+		    		<div class="col-sm-6" style="padding:0px">
+				    	    <lable class="col-xs-5 control-lable" style="text-align:right;padding:0px;"><@spring.message "msaplan.grr.partsvariance.pv"/>:</lable>
+				    	    <span id="PV" class="col-xs-7"  style="padding:0px"></span>
+				    </div>
+				    <div class="col-sm-6" style="padding:0px">
+				    	    <lable class="col-xs-5 control-lable" style="text-align:right;padding:0px;"><@spring.message "msaplan.grr.partsvariance.per"/>:</lable>
+				    	    <span id="PVPercentage" class="col-xs-7"  style="padding:0px"></span>
+				    </div>
+	    		</div>
+	    		<div class="row">
+		    		<div class="col-sm-6" style="padding:0px">
+				    	    <lable class="col-xs-5 control-lable" style="text-align:right;padding:0px;"><@spring.message "msaplan.grr.totalvariance"/>:</lable>
+				    	    <span id="TV" class="col-xs-7"  style="padding:0px"></span>
+				    </div>
+				    <div class="col-sm-6" style="padding:0px">
+				    	    <lable class="col-xs-5 control-lable" style="text-align:right;padding:0px;"><@spring.message "msaplan.distinguishablecategorynum"/>:</lable>
+				    	    <span id="FSJ" class="col-xs-7"  style="padding:0px"></span>
+				    </div>
+	    		</div>
+	    	</div>
+	    	<div id="analyzeResult" class="form-group col-sm-6" style="padding:0px">
+				<span class="col-sm-2" style="font-size:20px;"><@spring.message "msaplan.analysisconclusion"/></span>
+				<textarea class="col-sm-10" id="result" rows="5" cols="40" style="resize:none;font-size:15px"></textarea>
+	    	</div>
+	    </div>
+</div>
+<script type="text/javascript">
+	//展示Xbar图
+	function showXbar(type){
+		var xData = [];
+		for(var i=0; i<sampleNumList.length; i++){
+			xData.push(i+1)
+		}
+		var averageDataSum = 0;
+		for(var i=0; i<averageData.length; i++){
+			averageDataSum += averageData[i]
+		}
+		//所有测量值均值
+		cl = averageDataSum/averageData.length;
+		var n;
+		for(var key in map){
+			n = Object.keys(map[key]).length
+			break;
+		}
+		var jsonData = {
+				"n" : n
+		}
+		//各组标准差的平均值
+		/* var averageSum = 0;	
+		for(var i=0; i<bzcList.length; i++){
+			averageSum += Number(bzcList[i]);
+		}
+		averageBzc = averageSum/bzcList.length; */
+		var returnMsg = '';
+		var msgEn = '';
+		//获取控制图系数
+		$.ajax({
+    		url:"${base.contextPath}/hqm/control/chart/value/query",
+    		type: "POST",
+    		data: jsonData,
+    		async: false,
+    		jsonType: "json",
+    		success: function(resultData){
+    			if(resultData.success){
+    				data = resultData.rows[0]
+    				
+    				
+    				/* Xbar图 */
+    				//UCL
+    				var UCL = (cl + data.a2*averageJc).toFixed(3);
+    				//LCL
+    				var LCL = (cl - data.a2*averageJc).toFixed(3);
+    				XbarR(averageData,UCL,LCL,cl,xData,'<@spring.message "msaplan.xbar.chart"/>','<@spring.message "msaplan.sample.average"/>','picture3',userLjList);
+    				/* R图 */
+    				var R_UCL = (averageJc*data.d4).toFixed(3);
+       				var R_LCL = (averageJc*data.d3).toFixed(3);
+       				XbarR(jcList,R_UCL,R_LCL,averageJc,xData,'<@spring.message "msaplan.Range.chart"/>','<@spring.message "msaplan.sample.range"/>','picture4',jzByUserList);
+       				
+       				//Xbar分析
+       				var flagCount = 0;
+       				for(var i=0;i<userLjList.length;i++){
+       					for(var j=0;j<userLjList[i].length;j++){       						
+	       					if(userLjList[i][j]>UCL || userLjList[i][j]<LCL){
+	       						flagCount++;
+	       					}
+       					}
+       				}
+       				if(flagCount/averageData.length > 0.5){
+       					returnMsg = 'Xbar图有超出百分之五十的点在控制限外，零件间变差可识别；';
+       					msgEn = '<@spring.message "msaplan.grr.conclusion1"/>';
+       				}else{
+       					returnMsg = 'Xbar图没有超出百分之五十的点在控制限外，零件间变差不可识别；';
+       					msgEn = '<@spring.message "msaplan.grr.conclusion2"/>';
+       				}
+       				//R图分析
+       				var rFlagCount = 0;
+       				for(var i=0;i<jzByUserList.length;i++){
+       					for(var j=0;j<jzByUserList[i];j++){       						
+	       					if(jzByUserList[i][j]>UCL || jzByUserList[i][j]<LCL){
+	       						rFlagCount++;
+	       					}
+       					}
+       				}
+       				if(rFlagCount>0){
+       					returnMsg += 'R图有点在控制限外；';
+       					msgEn += '<@spring.message "msaplan.grr.conclusion3"/>';
+       				}else{
+       					returnMsg += 'R图是所有点均在控制限内；';
+       					msgEn += '<@spring.message "msaplan.grr.conclusion4"/>';
+       				}
+    			}
+    		}
+    	})
+    	returnMsg = returnMsg + '_' + msgEn;
+		return returnMsg;
+		
+	}
+function getRandomColor(){    
+  return  '#' +    
+    (function(color){    
+    return (color +=  '0123456789abcdef'[Math.floor(Math.random()*16)])    
+      && (color.length == 6) ?  color : arguments.callee(color);    
+  })('');    
+} 
+//R图
+/*  
+ * dataList: 数据体
+ * UCL：不同图的UCL
+ * LCL：不同图的LCL
+ * CL：数据平均值
+ * LCL：x轴：测量次数的总个数
+ * title： 标题
+ * name: 数据描述
+ * id: div id
+ */
+function XbarR(dataList,UCL,LCL,CL,xData,title,name,id,userList){
+	dataList.push(UCL);
+	dataList.push(LCL);
+	userList[0].push(UCL)
+	userList[0].push(LCL)
+	option = {
+		    title: {
+		        text: title,
+		        //subtext: '纯属虚构'
+		    },
+		    tooltip: {
+		        trigger: 'axis'
+		    },
+		    legend: {
+		        data:[name]
+		    },
+		    toolbox: {
+		        show: true,
+		        feature: {
+		            /* dataZoom: {
+		                yAxisIndex: 'none'
+		            }, */
+		            dataView: {readOnly: false},
+		            magicType: {type: ['line', 'bar']},
+		            restore: {},
+		            saveAsImage: {}
+		        }
+		    },
+		    xAxis:  {
+		        type: 'category',
+		        boundaryGap: false,
+		        data: xData
+		    },
+		    yAxis: {
+		    	name: name,
+		        type: 'value',
+		        axisLabel: {
+		            formatter: '{value}'
+		        },
+		        min:'dataMin'
+		    },
+		    series: [
+		        {
+		            name:name,
+		            type:'line',
+		            lineStyle:{
+		            	color: 'black'
+		            },
+		            data:userList[0],
+		            markPoint: {
+		                data: [
+		                    {type: 'max', name: '最大值'},
+		                    {type: 'min', name: '最小值'}
+		                ]
+		            },
+		            markLine: {
+		                data: [
+		                    {
+		                    	yAxis: CL, 
+		                    	name: '<@spring.message "msaplan.measure.average"/>',
+		                    	label:{
+		                    			normal: {formatter: '<@spring.message "msaplan.measure.average"/>('+ CL +')'}
+		                    	},
+		                    	lineStyle:{
+		                    		color: 'green'
+		                    	}
+		                    },
+		                    {
+		                    	yAxis: UCL,  
+		                    	name: 'UCL',
+		                    	label:{
+		                    		normal: {formatter: 'UCL('+ UCL +')'}
+		                    	},
+		                    	lineStyle:{
+		                    		color: 'red',
+		                    		type: 'solid'
+		                    	}
+		                    },
+		                    {
+		                    	yAxis: LCL,  
+		                    	name: 'LCL',
+		                    	label:{
+		                    		normal: {formatter: 'LCL('+ LCL +')'}
+		                    	},
+		                    	lineStyle:{
+		                    		color: 'red',
+		                    		type: 'solid'
+		                    	}
+		                    }
+		                ]
+		            }
+		        },
+		    ]
+		};
+	for(var i=1;i<userList.length;i++){
+ 		var seriesData = {
+ 				
+		            name:name,
+		            type:'line',
+		            lineStyle:{
+		            	color:getRandomColor()
+		            },
+		            data:userList[i],
+		            markPoint: {
+		                data: [
+		                    {type: 'max', name: '最大值'},
+		                    {type: 'min', name: '最小值'}
+		                ]
+		            },
+		        
+ 		}
+ 		option.series.push(seriesData);
+ 	}
+	$("#"+ id +"").empty();
+	$("#"+ id +"").append('<div id="'+ id +'a" style="height:100%;width:100%;"></div>')
+	var myChart = echarts.init(document.getElementById(id+'a'));
+	myChart.setOption(option);
+	dataList.splice(dataList.length-2,2);
+}
+
+//条形图
+function bar(){
+	
+	option = {
+		    legend: {},
+		    tooltip: {},
+		    dataset: {
+		        source: [
+		            ['product', '<@spring.message "msaplan.grr.contribution.rate"/>', '<@spring.message "msaplan.grr.variance.rate"/>', '<@spring.message "msaplan.grr.tolerance.rate"/>'],
+		            ['<@spring.message "msaplan.grr.repeatability"/>',  (Math.pow(EV,2)/Math.pow(TV,2)).toFixed(3), (EV/TV).toFixed(3), (6*EV/parentData.tolerance).toFixed(3)],
+		            ['<@spring.message "msaplan.grr.reproducibility"/>',  (Math.pow(AV,2)/Math.pow(TV,2)).toFixed(3), (AV/TV).toFixed(3), (6*AV/parentData.tolerance).toFixed(3)],
+		            ['<@spring.message "msaplan.grr.partsvariance"/>',(Math.pow(PV,2)/Math.pow(TV,2)).toFixed(3), (PV/TV).toFixed(3), (6*PV/parentData.tolerance).toFixed(3)]
+		        ]
+		    },
+		    xAxis: {type: 'category'},
+		    yAxis: {},
+		    series: [
+		        {type: 'bar'},
+		        {type: 'bar'},
+		        {type: 'bar'}
+		    ]
+		};
+	var id = 'picture';
+	$("#"+ id +"").empty();
+	$("#"+ id +"").append('<div id="'+ id +'c" style="height:100%;width:100%;"></div>')
+	var myChart = echarts.init(document.getElementById(id+'c'));
+	myChart.setOption(option);
+}
+//折线
+function line(title,XData,pointList,lineDataList,idStr,name1,name2){
+	
+ 	option = {
+		    title: {
+		        text: title
+		    },
+		    /* tooltip: {
+		        trigger: 'axis'
+		    }, */
+		    legend: {
+		        data:[name1,name2]
+		    },
+		    grid: {
+		        left: '3%',
+		        right: '4%',
+		        bottom: '3%',
+		        containLabel: true
+		    },
+		    toolbox: {
+		        feature: {
+		            saveAsImage: {}
+		        }
+		    },
+		    xAxis: {
+		        type: 'category',
+		        boundaryGap: false,
+		        data: XData
+		    },
+		    yAxis: {
+		        type: 'value',
+		        min:'dataMin'
+		    },
+		    series: [
+		        {
+		            name:name2,
+		            type:'line',
+		            data:lineDataList
+		        },
+		    ]
+		}; 
+ 	for(var i=0;i<pointList.length;i++){
+ 		var seriesData = {
+ 				name:name1,
+ 				type:'line',
+ 				lineStyle:{opacity:0},
+ 				data:pointList[i]
+ 		}
+ 		option.series.push(seriesData);
+ 	}
+	var id = idStr;
+	$("#"+ id +"").empty();
+	$("#"+ id +"").append('<div id="'+ id +'c" style="height:100%;width:100%;"></div>')
+	var myChart = echarts.init(document.getElementById(id+'c'));
+	myChart.setOption(option);
+}
+
+//折线
+var avgByUserLjList = window.parent.avgByUserLjList;
+function line2(){
+ 	option = {
+		    title: {
+		        text: '<@spring.message "msaplan.analysis.grr.sampleperson"/>'
+		    },
+		    /* tooltip: {
+		        trigger: 'axis'
+		    }, */
+		    legend: {
+		       // data:['<@spring.message "msaplan.sample.value"/>','<@spring.message "msaplan.sample.average"/>']
+		    },
+		    grid: {
+		        left: '3%',
+		        right: '4%',
+		        bottom: '3%',
+		        containLabel: true
+		    },
+		    toolbox: {
+		        feature: {
+		            saveAsImage: {}
+		        }
+		    },
+		    xAxis: {
+		        type: 'category',
+		        boundaryGap: false,
+		        data: sampleNumList
+		    },
+		    yAxis: {
+		        type: 'value',
+		        min:'dataMin'
+		    },
+		    series: [
+		    ]
+		}; 
+ 	for(var i=0;i<avgByUserLjList.length;i++){
+ 		var seriesData = {
+ 				name:'<@spring.message "msaplan.measure.average"/>',
+ 				type:'line',
+ 				data:avgByUserLjList[i]
+ 		}
+ 		option.series.push(seriesData);
+ 	}
+	var id = 'picture6';
+	$("#"+ id +"").empty();
+	$("#"+ id +"").append('<div id="'+ id +'c" style="height:100%;width:100%;"></div>')
+	var myChart = echarts.init(document.getElementById(id+'c'));
+	myChart.setOption(option);
+}
+</script>
+</body>
+</html>

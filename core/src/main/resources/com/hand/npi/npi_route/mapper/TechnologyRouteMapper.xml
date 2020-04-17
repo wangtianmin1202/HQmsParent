@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.npi.npi_route.mapper.TechnologyRouteMapper">
+    <resultMap id="BaseResultMap" type="com.hand.npi.npi_route.dto.TechnologyRoute">
+        <result column="ROUTE_ID" property="routeId" jdbcType="DECIMAL" />
+        <result column="ROUTE_NUMBER" property="routeNumber" jdbcType="VARCHAR" />
+        <result column="SKU_ID" property="skuId" jdbcType="DECIMAL" />
+        <result column="STANDARD_WORKING_HOURS_TOTAL" property="standardWorkingHoursTotal" jdbcType="DECIMAL" />
+        <result column="LINE" property="line" jdbcType="VARCHAR" />
+        <result column="ROUTE_VERSION" property="routeVersion" jdbcType="VARCHAR" />
+        <result column="PROJECT_ID" property="projectId" jdbcType="VARCHAR" />
+        <result column="STATUS" property="status" jdbcType="VARCHAR" />
+        <result column="E_BOM_VERSION" property="eBomVersion" jdbcType="VARCHAR" />
+        <result column="COPY_FROM_RN" property="copyFromRn" jdbcType="VARCHAR" />
+        <result column="COPY_FROM_RV" property="copyFromRv" jdbcType="VARCHAR" />
+    </resultMap>
+    
+    <resultMap id="EbomResultMap" type="com.hand.npi.npi_technology.dto.EbomDetail">
+    	<result column="ID" property="id" jdbcType="DECIMAL" />
+        <result column="PART_NUMBER" property="partNumber" jdbcType="VARCHAR" />
+        <result column="PART_DESCRIPTION" property="partDescription" jdbcType="VARCHAR" />
+        <result column="QUANTITY" property="quantity" jdbcType="DECIMAL" />
+        <result column="RED" property="allLineRed" jdbcType="DECIMAL" />
+    </resultMap>
+
+	<select id="queryOldSku" resultType="com.hand.wfl.util.DropDownListDto">
+		select t.SKU_ID as text,t.SKU_ID as value from NPI_TECHNOLOGY_ROUTE t 
+		union
+		select t1.SKU_ID as text,t1.SKU_ID as value from Npi_Technology_Route_His t1
+	</select>
+	<select id="queryRouteVersion" resultType="com.hand.wfl.util.DropDownListDto">
+		select t.ROUTE_VERSION as text,t.ROUTE_VERSION as value from NPI_TECHNOLOGY_ROUTE t 
+			where t.sku_id = #{dto.oldSku}
+		union
+		select t1.OLD_ROUTE_VERSION as text,t1.OLD_ROUTE_VERSION as value from Npi_Technology_Route_His t1
+			where t1.sku_id = #{dto.oldSku}
+	</select>
+	<select id="queryNewSku" resultType="com.hand.wfl.util.DropDownListDto">
+		select h1.PROJECT_LINE_ID  as text,h1.PROJECT_LINE_ID as value  from hpm_project_line h1
+		where h1.project_id in (
+		   select h2.project_id from hpm_project_line h2 
+		   where h2.PROJECT_LINE_ID = #{dto.oldSku}
+		)
+	</select>
+	
+	<select id="queryOldEbom" resultMap="EbomResultMap">
+		select n2.part_number,n2.part_description,n2.quantity,n2.id from NPI_EBOM_MAIN n1 
+			join NPI_EBOM_DETAIL n2 on n1.sku_id = n2.sku_id 
+		where n1.item_version in (
+			select t.e_bom_version from NPI_TECHNOLOGY_ROUTE t 
+				where t.SKU_ID=#{dto.oldSku}  and t.line = #{dto.oldLine}  and t.ROUTE_VERSION = #{dto.routeVersion} 
+			union
+			select t1.e_bom_version from Npi_Technology_Route_His t1
+				where t1.SKU_ID = #{dto.oldSku}  and t1.line = #{dto.oldLine}  and t1.old_ROUTE_VERSION = #{dto.routeVersion} 
+		)
+		and n1.item_id = #{dto.oldSku}
+	</select>
+	<select id="queryNewEbom" resultMap="EbomResultMap">
+		select n2.part_number,n2.part_description,n2.quantity,n2.id from NPI_EBOM_MAIN n1 
+			join NPI_EBOM_DETAIL n2 on n1.sku_id = n2.sku_id
+		where n1.item_id = #{dto.newSku}
+	</select>
+	
+	
+	<select id="getOldMinusNew" resultMap="EbomResultMap">
+		select b.*,a.red from (
+			select n2.part_number,n2.part_description,n2.quantity,n2.id from NPI_EBOM_MAIN n1 
+				join NPI_EBOM_DETAIL n2 on n1.sku_id = n2.sku_id 
+			where n1.item_version in (
+				select t.e_bom_version from NPI_TECHNOLOGY_ROUTE t 
+					where t.SKU_ID=#{dto.oldSku}  and t.line = #{dto.oldLine}  and t.ROUTE_VERSION = #{dto.routeVersion} 
+				union
+				select t1.e_bom_version from Npi_Technology_Route_His t1
+					where t1.SKU_ID = #{dto.oldSku}  and t1.line = #{dto.oldLine}  and t1.old_ROUTE_VERSION = #{dto.routeVersion} 
+			)
+			and n1.item_id = #{dto.oldSku}
+			minus
+			select n2.part_number,n2.part_description,n2.quantity,n2.id from NPI_EBOM_MAIN n1 
+				join NPI_EBOM_DETAIL n2 on n1.sku_id = n2.sku_id
+			where n1.item_id = #{dto.newSku}
+		) b
+		left join 
+		(
+			select n2.part_number,'Y' as red from NPI_EBOM_MAIN n1 
+				join NPI_EBOM_DETAIL n2 on n1.sku_id = n2.sku_id 
+			where n1.item_version in (
+				select t.e_bom_version from NPI_TECHNOLOGY_ROUTE t 
+					where t.SKU_ID=#{dto.oldSku}  and t.line = #{dto.oldLine}  and t.ROUTE_VERSION = #{dto.routeVersion} 
+				union
+				select t1.e_bom_version from Npi_Technology_Route_His t1
+					where t1.SKU_ID = #{dto.oldSku}  and t1.line = #{dto.oldLine}  and t1.old_ROUTE_VERSION = #{dto.routeVersion} 
+			)
+			and n1.item_id = #{dto.oldSku}
+			minus
+			select n2.part_number,'Y' as red from NPI_EBOM_MAIN n1 
+				join NPI_EBOM_DETAIL n2 on n1.sku_id = n2.sku_id
+			where n1.item_id = #{dto.newSku}
+		) a on b.part_number = a.part_number
+	</select>
+	<select id="getNewMinOld" resultMap="EbomResultMap">
+		select b.*,a.red from (
+			select n2.part_number,n2.part_description,n2.quantity,n2.id from NPI_EBOM_MAIN n1 
+				join NPI_EBOM_DETAIL n2 on n1.sku_id = n2.sku_id
+			where n1.item_id = #{dto.newSku}
+			minus
+			select n2.part_number,n2.part_description,n2.quantity,n2.id from NPI_EBOM_MAIN n1 
+				join NPI_EBOM_DETAIL n2 on n1.sku_id = n2.sku_id 
+			where n1.item_version in (
+				select t.e_bom_version from NPI_TECHNOLOGY_ROUTE t 
+					where t.SKU_ID=#{dto.oldSku}  and t.line = #{dto.oldLine}  and t.ROUTE_VERSION = #{dto.routeVersion} 
+				union
+				select t1.e_bom_version from Npi_Technology_Route_His t1
+					where t1.SKU_ID = #{dto.oldSku}  and t1.line = #{dto.oldLine}  and t1.old_ROUTE_VERSION = #{dto.routeVersion} 
+			)
+			and n1.item_id = #{dto.oldSku}
+		) b
+		left join 
+		(
+			select n2.part_number,'Y' as red from NPI_EBOM_MAIN n1 
+				join NPI_EBOM_DETAIL n2 on n1.sku_id = n2.sku_id
+			where n1.item_id = #{dto.newSku}
+			minus
+			select n2.part_number,'Y' as red from NPI_EBOM_MAIN n1 
+				join NPI_EBOM_DETAIL n2 on n1.sku_id = n2.sku_id 
+			where n1.item_version in (
+				select t.e_bom_version from NPI_TECHNOLOGY_ROUTE t 
+					where t.SKU_ID=#{dto.oldSku}  and t.line = #{dto.oldLine}  and t.ROUTE_VERSION = #{dto.routeVersion} 
+				union
+				select t1.e_bom_version from Npi_Technology_Route_His t1
+					where t1.SKU_ID = #{dto.oldSku}  and t1.line = #{dto.oldLine}  and t1.old_ROUTE_VERSION = #{dto.routeVersion} 
+			)
+			and n1.item_id = #{dto.oldSku}
+		) a on b.part_number = a.part_number
+	</select>
+	
+	<select id="getNewEbomVersion" resultType="string">
+		select * from NPI_EBOM_MAIN t where t.is_latest_version = 'Y' and t.ITEM_ID = #{value}
+	</select>
+	
+	
+</mapper>

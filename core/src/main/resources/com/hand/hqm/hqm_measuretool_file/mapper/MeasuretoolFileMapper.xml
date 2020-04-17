@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_measuretool_file.mapper.MeasuretoolFileMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_measuretool_file.dto.MeasuretoolFile">
+        <result column="MSA_FILE_ID" property="msaFileId" jdbcType="DECIMAL" />
+        <result column="MEASURETOOL_ID" property="measuretoolId" jdbcType="DECIMAL" />
+        <result column="FILE_ADDRESS" property="fileAddress" jdbcType="VARCHAR" />
+    	<result column="MEASURE_TOOL_FILE_TYPE" property="measureToolFileType" jdbcType="VARCHAR" />
+    	<result column="LAST_UPDATE_DATE" property="lastUpdateDate" jdbcType="DATE" />
+        
+        <!-- 业务字段 -->
+        <result column="FILE_NAME" property="fileName" jdbcType="VARCHAR" />
+        <result column="USER_NAME" property="userName" jdbcType="VARCHAR" />
+    </resultMap>
+	<!-- 文件查询 -->
+	<select id="query" resultMap="BaseResultMap" parameterType="com.hand.hqm.hqm_measuretool_file.dto.MeasuretoolFile">
+		select substr(hmf.file_address,instr(hmf.file_address,'/',-1)+1) file_name,
+           hmf.measure_tool_file_type,
+           hmf.msa_file_id,
+           hmf.file_address,
+           hmf.last_update_date,
+           hmf.last_updated_by ,
+           hmf.measuretool_id,
+           su.user_name
+	    from  HQM_MEASURETOOL_FILE hmf 
+	    left join sys_user su on hmf.last_updated_by = su.user_id
+	    where 1=1
+	    and hmf.measuretool_id= #{measuretoolId}
+	    and hmf.measure_tool_file_type = #{measureToolFileType} 
+	</select>
+</mapper>

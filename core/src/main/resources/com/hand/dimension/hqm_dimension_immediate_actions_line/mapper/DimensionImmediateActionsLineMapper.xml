@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.dimension.hqm_dimension_immediate_actions_line.mapper.DimensionImmediateActionsLineMapper">
+    <resultMap id="BaseResultMap" type="com.hand.dimension.hqm_dimension_immediate_actions_line.dto.DimensionImmediateActionsLine">
+        <result column="LINE_ACTION_ID" property="lineActionId" jdbcType="DECIMAL" />
+        <result column="HEAD_ACTION_ID" property="headActionId" jdbcType="DECIMAL" />
+        <result column="EXECUTE_IMMEDIATE_ACTION" property="executeImmediateAction" jdbcType="VARCHAR" />
+        <result column="ACTION_DESCRIPTION" property="actionDescription" jdbcType="VARCHAR" />
+        <result column="USER_ID" property="userId" jdbcType="DECIMAL" />
+        <result column="PLAN_TIME" property="planTime" jdbcType="DATE" />
+        <result column="ACTUAL_TIME" property="actualTime" jdbcType="DATE" />
+        <result column="ACTION_STATUS" property="actionStatus" jdbcType="VARCHAR" />
+        <result column="REMARK" property="remark" jdbcType="VARCHAR" />
+        <result column="USER_NAME" property="userName" jdbcType="VARCHAR" />
+    </resultMap>
+<!-- 基础查询 -->
+<select id="reSelect" resultMap="BaseResultMap" 
+parameterType="com.hand.dimension.hqm_dimension_immediate_actions_line.dto.DimensionImmediateActionsLine">
+SELECT t.*, su.user_name
+  FROM hqm_8d_immediate_actions_line t
+  JOIN sys_user su
+    ON t.user_id = su.user_id
+ WHERE 1 = 1
+ <if test="headActionId != null">
+   AND t.head_action_id = #{headActionId}
+  </if>
+  <if test="headActionId == null">
+   AND t.head_action_id = -1
+  </if>
+</select>
+</mapper>

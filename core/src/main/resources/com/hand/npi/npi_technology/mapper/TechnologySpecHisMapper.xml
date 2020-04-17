@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.npi.npi_technology.mapper.TechnologySpecHisMapper">
+    <resultMap id="BaseResultMap" type="com.hand.npi.npi_technology.dto.TechnologySpecHis">
+        <result column="HIS_SPEC_ID" property="hisSpecId" jdbcType="DECIMAL" />
+        <result column="SPEC_VERSION" property="specVersion" jdbcType="VARCHAR" />
+        <result column="SPEC_ACTION_TYPE" property="specActionType" jdbcType="VARCHAR" />
+        <result column="SPEC_REMARK" property="specRemark" jdbcType="VARCHAR" />
+        <result column="SPEC_ID" property="specId" jdbcType="DECIMAL" />
+        <result column="STAND_ACTION_ID" property="standActionId" jdbcType="VARCHAR" />
+        <result column="STANDARD_WORKING_HOURS" property="standardWorkingHours" jdbcType="DECIMAL" />
+    </resultMap>
+
+	<!-- 查询变更历史数据 -->
+	<select id="selectByLastUpdateDate" resultMap="BaseResultMap"
+		parameterType="com.hand.npi.npi_technology.dto.TechnologySpecHis">
+		SELECT t.*,t1.action_name FROM  NPI_TECHNOLOGY_SPEC_HIS t 
+     	left join npi_technology_standard_action t1 on 
+		t.stand_action_id = t1.standard_action_id
+		<where>
+			<if test="specId != null and specId != ''">
+				and t.SPEC_ID =#{specId}
+			</if>
+			<if test="specVersion != null and specVersion != ''">
+				and t.SPEC_VERSION =#{specVersion}
+			</if>
+			<if test="specActionType != null and specActionType != ''">
+				and t.SPEC_ACTION_TYPE =#{specActionType}
+			</if>
+			<if test="actionName != null and actionName != ''">
+				and t1.action_name  LIKE concat('%',concat(#{actionName},'%'))
+			</if>
+		</where>
+		ORDER BY t.LAST_UPDATE_DATE DESC
+	</select>
+	
+</mapper>

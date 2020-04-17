@@ -1,0 +1,92 @@
+<#include "../include/header.html">
+<script type="text/javascript">
+    var viewModel = Hap.createGridViewModel("#grid");
+    var viewModelLine = Hap.createGridViewModel("#gridLine");
+</script>
+
+<script type="text/javascript">
+ function show_r()
+  {	  
+	  var dialog = window.parent.$("#childWindowr").kendoWindow({
+          width: window.parent.innerWidth ,
+          height: window.parent.innerHeight *0.7,
+          title: '可阅读者选择',
+          visible: false,
+          iframe: true,
+          modal: true,
+          close: function(){	
+             },
+          content: '../file_permission/permission.html'
+      }).data("kendoWindow");   
+	    dialog.center().open();   
+  }
+ 
+ function show_e()
+ {	  
+	  var dialog = window.parent.$("#childWindowe").kendoWindow({
+         width: window.parent.innerWidth ,
+         height: window.parent.innerHeight *0.7,
+         title: '可编辑者选择',
+         visible: false,
+         iframe: true,
+         modal: true,
+         close: function(){	
+            },
+         content: '../file_permission/permission.html'
+     }).data("kendoWindow");   
+	    dialog.center().open();   
+ }
+ 
+ function show_d()
+ {	  
+	  var dialog = window.parent.$("#childWindowd").kendoWindow({
+         width: window.parent.innerWidth  ,
+         height: window.parent.innerHeight *0.7,
+         title: '可下载者选择',
+         visible: false,
+         iframe: true,
+         modal: true,
+         close: function(){	
+            },
+         content: '../file_permission/permission.html'
+     }).data("kendoWindow");   
+	    dialog.center().open();   
+ }
+ </script>
+<body>
+<div id="page-content">
+<div  id="row-line">
+        <div class="row">		
+				<div class="col-sm-12"style="margin-top: 20px;">
+					<label class="col-sm-3 control-label">可阅读者:</label>
+					<div class="col-sm-9">
+                        <input id="code" style="width:100%" required  class="k-textbox" data-role="maskedtextbox" data-bind="value:model.fileNum"onclick="show_r()">
+
+					</div>					
+				</div>
+		</div>
+				
+		<div class="row">			
+				<div class="col-sm-12"style="margin-top: 20px;">
+					<label class="col-sm-3 control-label">可编辑者:</label>
+					<div class="col-sm-9">
+						<input required name="samplenumber" disabled style="width:100%" id="title" class="k-textbox"data-bind="value:model.fileTitle"onclick="show_e()" >
+
+					</div>					
+				</div>
+		</div>
+				
+		<div class="row">				
+				<div class="col-sm-12"style="margin-top: 20px;">
+					<label class="col-sm-3 control-label">可下载者:</label>
+					<div class="col-sm-9">
+						<input required name="sampleProperties" disabled style="width:100%" id="type" class="k-textbox" data-bind="value:model.classifyIds"onclick="show_d()">
+
+					</div>
+				</div>	
+		</div>		
+</div>
+<script>kendo.bind($('#row-line'), viewModel);</script>
+</div>
+</body>
+</html>

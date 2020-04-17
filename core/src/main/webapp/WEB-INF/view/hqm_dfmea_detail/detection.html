@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+</head>
+<body>
+<table border="1" width="80%" bgcolor="#e9faff" cellpadding="2" align="center" valign="center">
+        <caption>探测度打分标准</caption>
+        <tr align="center">
+            <td>探测机会</td>
+            <td>评价准则：被设计控制发现的可能性-DFMEA</td>
+            <td>等级</td>
+            <td>探测可能性</td>
+        </tr>
+
+        <tr align="center">
+        	<td>没有机会探测</td>
+            <td>没有现行控制：无法探测或并未分析。</td>
+            <td>10</td>
+            <td>几乎不可能</td>
+        </tr>
+
+        <tr align="center">
+        	<td>在任何阶段都不容易探测</td>
+            <td>设计分析/探测控制的探测能力很弱：虚拟分析（例如：CAE，FEA等等）与预期的实际操作条件没有关联。</td>
+            <td>9</td>
+            <td>很微小</td>
+        </tr>
+
+        <tr align="center">
+            <td rowspan="3">在设计冻结后，投产之前</td>
+            <td>在设计冻结后，投产之前使用通过/不通过试验对产品进行确认（用接受标准来测试系统/子系统）。</td>
+            <td>8</td>
+            <td>微小</td>
+        </tr>
+
+        <tr align="center">
+            <td>在设计冻结后，投产之前通过试验直到失效对产品进行确认（对系统或子系统进行测试直到故障发生；进行系统相互作用试验等）。</td>
+            <td>7</td>
+            <td>很低</td>
+        </tr>
+        
+        <tr align="center">
+            <td>在设计冻结后，投产之前通过老化试验对产品进行确认（在耐久性试验之后进行系统或子系统测试，如功能检查）。</td>
+            <td>6</td>
+            <td>低</td>
+        </tr>
+        
+        <tr align="center">
+            <td rowspan="3">在设计冻结前</td>
+            <td>在设计冻结前进行产品确认（可靠性试验，开发/确认试验），使用通过/不通过试验来确认（例如：性能接受标准，功能检查等）</td>
+            <td>5</td>
+            <td>中等</td>
+        </tr>
+
+        <tr align="center">
+            <td>在设计冻结前进行产品确认（可靠性试验，开发/确认试验），使用试验直到失效试验来确认（例如：持续试验直到有泄漏、弯曲、破裂等现象）。</td>
+            <td>4</td>
+            <td>中等偏高</td>
+        </tr>
+        
+        <tr align="center">
+            <td>在设计冻结前进行产品确认（可靠性试验，开发/确认试验），使用老化试验来确认（例如：数据趋势，前/后数值，等等）。</td>
+            <td>3</td>
+            <td>高</td>
+        </tr>
+        
+        <tr align="center">
+        	<td>虚拟分析相关</td>
+            <td>设计分析/探测控制的探测能力很强，虚拟分析（例如：CAE,FEA等等）再设计定稿前，与实际或预期的操作条件关联性很高。</td>
+            <td>2</td>
+            <td>很高</td>
+        </tr>
+        
+        <tr align="center">
+        	<td>探测不适用：失效已被预防</td>
+            <td>由于有了设计方案（例如：已证实的设计标准、最佳实践或常用材料等）的充分预防，失效原因或失效模式无法发生。</td>
+            <td>1</td>
+            <td>几乎可以确定</td>
+        </tr>
+
+    </table>
+</body>
+</html>

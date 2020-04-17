@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.spc.his.mapper.OocHisMapper">
+    <resultMap id="BaseResultMap" type="com.hand.spc.his.dto.OocHis">
+        <result column="OOC_HIS_ID" property="oocHisId" jdbcType="DECIMAL" />
+        <result column="OOC_ID" property="oocId" jdbcType="DECIMAL" />
+        <result column="TENANT_ID" property="tenantId" jdbcType="DECIMAL" />
+        <result column="SITE_ID" property="siteId" jdbcType="DECIMAL" />
+        <result column="OOC_STATUS" property="oocStatus" jdbcType="VARCHAR" />
+        <result column="SAMPLE_SUBGROUP_ID" property="sampleSubgroupId" jdbcType="DECIMAL" />
+        <result column="ENTITY_CODE" property="entityCode" jdbcType="VARCHAR" />
+        <result column="ENTITY_VERSION" property="entityVersion" jdbcType="VARCHAR" />
+        <result column="MAX_PLOT_POINTS" property="maxPlotPoints" jdbcType="DECIMAL" />
+        <result column="TICK_LABEL_X" property="tickLabelX" jdbcType="VARCHAR" />
+        <result column="AXIS_LABEL_X" property="axisLabelX" jdbcType="VARCHAR" />
+        <result column="AXIS_LABEL_Y" property="axisLabelY" jdbcType="VARCHAR" />
+        <result column="CHART_DETAIL_TYPE" property="chartDetailType" jdbcType="VARCHAR" />
+        <result column="UPPER_CONTROL_LIMIT" property="upperControlLimit" jdbcType="DECIMAL" />
+        <result column="CENTER_LINE" property="centerLine" jdbcType="DECIMAL" />
+        <result column="LOWER_CONTROL_LIMIT" property="lowerControlLimit" jdbcType="DECIMAL" />
+        <result column="UPPER_SPEC_LIMIT" property="upperSpecLimit" jdbcType="DECIMAL" />
+        <result column="SPEC_TARGET" property="specTarget" jdbcType="DECIMAL" />
+        <result column="LOWER_SPEC_LIMIT" property="lowerSpecLimit" jdbcType="DECIMAL" />
+        <result column="JUDGEMENT_ID" property="judgementId" jdbcType="DECIMAL" />
+        <result column="FIRST_SUBGROUP_NUM" property="firstSubgroupNum" jdbcType="DECIMAL" />
+        <result column="LAST_SUBGROUP_NUM" property="lastSubgroupNum" jdbcType="DECIMAL" />
+        <result column="CLASSIFY_GROUP_ID" property="classifyGroupId" jdbcType="DECIMAL" />
+        <result column="CLASSIFY_ID" property="classifyId" jdbcType="DECIMAL" />
+        <result column="REMARK" property="remark" jdbcType="VARCHAR" />
+    </resultMap>
+
+
+</mapper>

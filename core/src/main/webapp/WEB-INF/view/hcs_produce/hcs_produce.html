@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<!--
+  description  制程监控主界面
+  @author KOCDZX0 2020/03/19 1:31 PM 
+-->
+<#include "../include/header.html">
+<script src="${base.contextPath}/common/code?statuss=HQM_PRODUCT_MONITOR_STATUS"></script>
+<script src="${base.contextPath}/common/code?ngstatus=HQM_PRODUCT_NG_STATUS"></script>
+
+<script type="text/javascript">
+    var viewModelHead =Hap.createGridViewModel("#gridHead");
+
+    //下载文件
+    function fileDownloadFunction(attachment){
+        window.open(attachment);
+    }
+    //测试审批
+    function submit(){
+debugger
+        viewModelHead.model.produceId = 21;
+        viewModelHead.model.produceNumber = 20200401;
+        var data = viewModelHead.model.toJSON();
+        Hap.request({
+            url: '${base.contextPath}/hcs/produce/approve',
+            data: kendo.stringify(data),
+            success: function (data) {
+                kendo.ui.showInfoDialog({
+                    title:$l('hap.tip.info'),
+                    message:'<@spring.message "hap.tip.success"/>'
+                })
+                viewModelHead.closeWin();
+            },
+            // error: function (data) {
+            //     kendo.ui.showInfoDialog({
+            //         title: $l('hap.error'),
+            //         message: kendo.stringify(data.message)
+            //     });
+            // },
+            complete:function () {
+                Hap.unblockUI();
+            }
+        });
+
+
+    }
+
+</script>
+<body>
+<div id="page-content">
+
+    <div class="pull-left"  style="padding-bottom:10px;padding-top: 10px;">
+        <span id="add-btn" class="btn btn-primary k-grid-add" style="float:left;margin-right:15px;" onclick="openWindow1()">制程数据录入</span>
+        <span id="import-btn" class="btn btn-primary k-grid-add" style="float:left;margin-right:15px;">EXCEL导入</span>
+        <span id="import-btn" onclick="submit()" class="btn btn-primary k-grid-add" style="float:left;margin-right:15px;">测试审批</span>
+    </div>
+    <div id="queryPanel" class="pull-right" style="padding-bottom:10px;">
+
+        <div class="k-query-simple" id="query-form">
+            <input id="supplierId" style="margin-right: 5px;width:150px;"
+                   placeholder="<@spring.message 'asl.suppliercode'/>" data-bind="value:model.supplierId">
+            <input id="itemId" style="margin-right: 5px;width:150px;"
+                   placeholder="<@spring.message 'asl.itemcode'/>" data-bind="value:model.itemId">
+            <input id="productDateFrom" style="margin-right: 5px;width:150px;" onfocus="setDateFrom()"
+                   placeholder="<@spring.message 'smallbarcode.productionstarttime'/>" data-bind="value:model.productDateFrom">
+            <input id="productDateTo" style="margin-right: 5px;width:150px;" onfocus="setDateTo()"
+                   placeholder="<@spring.message 'smallbarcode.productionendtime'/>" data-bind="value:model.productDateTo">
+            <script>
+                $("#supplierId").kendoLov(<@lov"HCS_CERTIFICATE_SUPPLIER"/>);
+                $("#itemId").kendoLov(<@lov"HCS_CERTIFICATE_ITEM"/>);
+                $("#productDateFrom").kendoDateTimePicker({
+                    format: "yyyy-MM-dd",
+                });
+                $("#productDateTo").kendoDateTimePicker({
+                    format: "yyyy-MM-dd",
+                });
+
+                var setDateFrom = function () {
+                    var end = viewModelHead.model.productDateTo;
+                    if(end){
+                        var signData = $("#productDateFrom").data("kendoDateTimePicker");
+                        signData.setOptions({
+                            max:end
+                        })
+                    }
+                }
+                var setDateTo = function () {
+                    var start = viewModelHead.model.productDateFrom;
+                    if(start){
+                        var signData = $("#productDateTo").data("kendoDateTimePicker");
+                        signData.setOptions({
+                            min:start
+                        })
+                    }
+                }
+            </script>
+        </div>
+        <script>kendo.bind($('#query-form'), viewModelHead);</script>
+
+    </div>
+    <script>
+        $('#queryPanel').kendoQueryPanel({
+            queryFunction: function () {
+                viewModelHead.query();
+            },
+            resetFunction: function () {
+                viewModelHead.reset();
+            }
+        });
+    </script>
+    <div style="clear: both;">
+        <div  id="gridHead"></div>
+    </div>
+
+</div>
+<!--制程数据录入-->
+<div id="div1"></div>
+<div id="div2"></div>
+<div id="div3"></div>
+
+<script type="text/javascript">
+    //进入制程数据录入界面
+    function openWindow1(){
+        var url='hcs_produce_new.html';
+        var div1 = $("#div1").kendoWindow({
+            actions:["close"],
+            width:840,
+            height:600,
+            title:'新建要求',
+            content:url,
+            iframe:true,
+            visible:false,
+            resizable:true,
+            modal:true,
+            close:function(){
+                $("#gridHead").data('kendoGrid').dataSource.read();
+            }
+        }).data("kendoWindow");
+        div1.center().open();
+    }
+
+    //新增NG项
+    function openWindow2(produceId){
+        var url='hcs_produce_ng_new.html?produceId='+produceId;
+        var div2 = $("#div2").kendoWindow({
+            actions:["close"],
+            width:840,
+            height:200,
+            title:'新增NG项',
+            content:url,
+            iframe:true,
+            visible:false,
+            resizable:true,
+            modal:true,
+            close:function(){
+                $("#gridHead").data('kendoGrid').dataSource.read();
+            }
+        }).data("kendoWindow");
+        div2.center().open();
+    }
+
+    //不合格处置
+    function openWindow3(produceLineId,attachment){
+        var url='hcs_produce_ng_handle.html?produceLineId='+produceLineId+'&attachment='+attachment;
+        var div3 = $("#div3").kendoWindow({
+            actions:["close"],
+            width:840,
+            height:600,
+            title:'不合格处置',
+            content:url,
+            iframe:true,
+            visible:false,
+            resizable:true,
+            modal:true,
+            close:function(){
+                $("#gridHead").data('kendoGrid').dataSource.read();
+            }
+        }).data("kendoWindow");
+        div3.center().open();
+    }
+
+    var BaseUrl = _basePath
+    var dataSource = new kendo.data.DataSource({
+        transport: {
+            read: {
+                url: BaseUrl + "/hcs/item/station/produce/listQuery",
+                type: "POST",
+                dataType: "json"
+            },
+            parameterMap: function (options, type) {
+                if (type !== "read" && options.models) {
+                    var datas = Hap.prepareSubmitParameter(options, type)
+                    return kendo.stringify(datas);
+                } else if (type === "read") {
+                    return Hap.prepareQueryParameter(viewModelHead.model.toJSON(), options)
+                }
+            }
+        },
+        batch: true,
+        serverPaging: true,
+        pageSize: 10,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+                id: "produceId",
+                fields: {
+
+                }
+            }
+        }
+    });
+
+    //制程监控主数据展示
+    var gridHead = $("#gridHead").kendoGrid({
+        dataSource: dataSource,
+        resizable: true,
+        scrollable: true,
+        navigatable: false,
+        sortable:true,
+        // selectable: 'multiple, rowbox',
+        detailInit: detailInit,
+        dataBound: function () {
+            if (parent.autoResizeIframe) {
+                parent.autoResizeIframe('${RequestParameters.functionCode!}')
+            }
+        },
+
+        columns: [
+            {
+                field: "supplierCode",
+                title: '<@spring.message "asl.suppliercode"/>',
+                width: 120
+            },
+            {
+                field: "supplierName",
+                title: '<@spring.message "asl.suppliername"/>',
+                width: 120
+            },
+            {
+                field: "itemCode",
+                title: '<@spring.message "asl.itemcode"/>',
+                width: 120
+            },
+            {
+                field: "itemDescription",
+                title: '<@spring.message "settlement.itemname"/>',
+                width: 120
+            },
+            {
+                field: "stationName",
+                title: '<@spring.message "hcs.station.name"/>',
+                width: 120
+            },
+            {
+                field: "produceNumber",
+                title: '<@spring.message "hcs.produce.producenumber"/>',
+                width: 120
+            },
+            {
+                field: "productDate",
+                title: '<@spring.message "hcs.produce.productdate"/>',
+                width: 120
+            },
+            {
+                field: "productLots",
+                title: '<@spring.message "hcs.produce.productlots"/>',
+                width: 120
+            },
+            {
+                field: "productVersion",
+                title: '<@spring.message "hcs.produce.productversion"/>',
+                width: 120
+            },
+            {
+                field: "productQty",
+                title: '<@spring.message "hcs.produce.productqty"/>',
+                width: 120
+            },
+            {
+                field: "ngQty",
+                title: '<@spring.message "hcs.produce.ngqty"/>',
+                width: 120
+            },
+            {
+                field: "rty",
+                title: '<@spring.message "hcs.produce.rty"/>',
+                width: 120,
+                template:function (dataItem) {
+                    var v = dataItem.rty;
+                    if(v != null){
+                        return v+"%";
+                    }else{
+                        return '';
+                    }
+                }
+            },
+            {
+                field: "status",
+                title: '<@spring.message "hcs.produce.status"/>',
+                width: 120,
+                template:function (rowdata) {
+                    var v = rowdata.status;
+                    $.each(statuss,function (i,n) {
+                        if(n.value == v){
+                            v = n.meaning;
+                        }
+                    })
+                    return v || '';
+                }
+            },
+            {
+                field: "",
+                title: '<@spring.message "hap.action"/>',
+                width: 70,
+                template:function (rowdata) {
+                    if(rowdata.status == 'R' || rowdata.status == 'N'){
+                        return '<a href="#" onclick="openWindow2(\'' + rowdata.produceId + '\')">新增NG项</a>';
+                    }else {
+                        return '';
+                    }
+                }
+            },
+        ],
+    }).data("kendoGrid");
+
+    //制程监控行数据展示
+    function detailInit(e) {
+        if (!e.data.produceId) {
+            e.masterRow.find('.k-icon').removeClass('k-icon').removeClass('k-i-collapse')
+            e.detailRow.remove()
+            return false;
+        }
+        $("<div/>").appendTo(e.detailCell).kendoGrid({
+            dataSource: {
+                transport: {
+                    read: {
+                        url: BaseUrl + "/hcs/item/station/produce/line/listQuery?produceId="+e.data.produceId,
+                        type: "POST",
+                        dataType: "json"
+                    },
+                    parameterMap: function (options, type) {
+                        return Hap.prepareQueryParameter(viewModelHead.model.toJSON(), options)
+                    }
+                },
+                batch: true,
+                serverPaging: true,
+                schema: {
+                    data: 'rows',
+                    total: 'total',
+                    model: {
+                        id: "produceLineId",
+                        fields: {},
+                    }
+                }
+            },
+            sortable: true,
+            pageable: false,
+            columns: [
+                {
+                    field: "lineNumber",
+                    title: '<@spring.message "hcs.produce.linenumber"/>',
+                    width: 60,
+                    headerAttributes: {style: "text-align:center"},
+                    attributes: {style: "text-align:center;white-space:nowrap;text-overflow:ellipsis;text-align:center;"},
+
+                },
+                {
+                    field: "ngProject",
+                    title: '<@spring.message "hcs.produce.ngproject"/>',
+                    headerAttributes: {style: "text-align:center"},
+                    attributes: {style: "text-align:center;white-space:nowrap;text-overflow:ellipsis;text-align:center;"},
+                    width: 80,
+                },
+                {
+                    field: "ngQty",
+                    title: '<@spring.message "hcs.produce.ngqty"/>',
+                    headerAttributes: {style: "text-align:center"},
+                    attributes: {style: "text-align:center;white-space:nowrap;text-overflow:ellipsis;text-align:center;"},
+                    width: 60,
+                },
+                {
+                    field: "reason",
+                    title: '<@spring.message "hcs.produce.reason"/>',
+                    headerAttributes: {style: "text-align:center"},
+                    attributes: {style: "text-align:center;white-space:nowrap;text-overflow:ellipsis;text-align:center;"},
+                    width: 60,
+                },
+                {
+                    field: "solution",
+                    title: '<@spring.message "hcs.produce.solution"/>',
+                    headerAttributes: {style: "text-align:center"},
+                    attributes: {style: "text-align:center;white-space:nowrap;text-overflow:ellipsis;text-align:center;"},
+                    width: 60,
+                },
+                {
+                    field: "attachment",
+                    title: '<@spring.message "hcs.produce.attachment"/>',
+                    headerAttributes: {style: "text-align:center"},
+                    attributes: {style: "text-align:center;white-space:nowrap;text-overflow:ellipsis;text-align:center;"},
+                    width: 60,
+                    template:function (rowdata) {
+                        if(rowdata.attachment != null){
+                            return  '<a href="javascript:void(0)" style="font-size:14px;margin-left:5px;" onclick="fileDownloadFunction(\''+
+                                (rowdata.attachment?rowdata.attachment:-1)+'\')"><span class="fa fa-download">'+ rowdata.attachment.split('/')[rowdata.attachment.split('/').length-1] +'</span></a>'
+                        }else {
+                            return '';
+                        }
+                    }
+                },
+                {
+                    field: "finishedDate",
+                    title: '<@spring.message "hcs.produce.finisheddate"/>',
+                    headerAttributes: {style: "text-align:center"},
+                    attributes: {style: "text-align:center;white-space:nowrap;text-overflow:ellipsis;text-align:center;"},
+                    width: 60,
+                },
+                {
+                    field: "status",
+                    title: '<@spring.message "hcs.produce.status"/>',
+                    headerAttributes: {style: "text-align:center"},
+                    attributes: {style: "text-align:center;white-space:nowrap;text-overflow:ellipsis;text-align:center;"},
+                    width: 60,
+                    template:function (rowdata) {
+                        var v = rowdata.status;
+                        $.each(ngstatus,function (i,n) {
+                            if(n.value == v){
+                                v = n.meaning;
+                            }
+                        })
+                        return v || '';
+                    }
+                },
+                {
+                    field: "",
+                    title: '<@spring.message "hap.action"/>',
+                    headerAttributes: {style: "text-align:center"},
+                    attributes: {style: "text-align:center;white-space:nowrap;text-overflow:ellipsis;text-align:center;"},
+                    width: 60,
+                    template:function (rowdata) {
+                        var attachment = "";
+                        if(rowdata.attachment != null){
+                            attachment= rowdata.attachment.split('/')[rowdata.attachment.split('/').length-1];
+                        }
+                        if(rowdata.status == 'PENDING'){
+                            return '<a href="#" onclick="openWindow3(\'' + rowdata.produceLineId + '\',\'' + attachment + '\')">处置</a>';
+                        }else {
+                            return '';
+                        }
+                    }
+                }
+            ]
+        });
+    }
+
+</script>
+</body>
+</html>

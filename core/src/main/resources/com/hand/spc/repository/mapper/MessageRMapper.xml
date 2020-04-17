@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.spc.repository.mapper.MessageRMapper">
+
+
+    <resultMap id="BaseResultMap" type="com.hand.spc.repository.dto.MessageUploadDTO">
+        <result column="message_id" property="messageId" jdbcType="VARCHAR"/>
+        <result column="upload_config_id" property="uploadConfigId" jdbcType="DECIMAL"/>
+        <result column="tenant_id" property="tenantId" jdbcType="DECIMAL"/>
+        <result column="site_id" property="siteId" jdbcType="DECIMAL"/>
+        <result column="message_text" property="messageText" jdbcType="VARCHAR"/>
+        <result column="message_status" property="messageStatus" jdbcType="VARCHAR"/>
+        <result column="message_ids" property="messageIds" jdbcType="VARCHAR"/>
+        <result column="start_time" property="startTime" jdbcType="DATE"/>
+        <result column="end_time" property="endTime" jdbcType="DATE"/>
+        <result column="config_type" property="configType" jdbcType="VARCHAR"/>
+        <result column="ooc_id" property="oocId" jdbcType="DECIMAL"/>
+        <result column="config_value" property="configValue" jdbcType="VARCHAR"/>
+        <result column="config_command" property="configCommand" jdbcType="VARCHAR"/>
+        <result column="group_code" property="groupCode" jdbcType="VARCHAR"/>
+        <result column="object_version_number" property="objectVersionNumber" jdbcType="DECIMAL"/>
+        <result column="creation_date" property="creationDate" jdbcType="DATE"/>
+        <result column="created_by" property="createdBy" jdbcType="DECIMAL"/>
+        <result column="last_updated_by" property="lastUpdatedBy" jdbcType="DECIMAL"/>
+        <result column="last_update_date" property="lastUpdateDate" jdbcType="DATE"/>
+        
+       
+    </resultMap>
+
+
+    <!-- <insert id="batchInsertRows" parameterType="java.util.List">
+        INSERT INTO pspc_message (
+        message_id,
+        tenant_id,
+        site_id,
+        ooc_id,
+        entity_code,
+        entity_version,
+        message_status,
+        group_code
+        )
+        VALUES
+        <foreach collection="list" item="item" index="index" separator=",">
+              (
+            #{item.messageId},
+            #{item.tenantId},
+            #{item.siteId},
+            #{item.oocId},
+            #{item.entityCode},
+            #{item.entityVersion},
+            #{item.messageStatus},
+            #{item.groupCode}
+              )
+        </foreach>
+    </insert> -->
+    
+    <insert id="batchInsertRows" parameterType="java.util.List">
+    <foreach collection="list" item="item" index="index" open="begin" close=";end;" separator=";">
+        INSERT INTO pspc_message
+        (message_id,
+        tenant_id,
+        site_id,
+        ooc_id,
+        entity_code,
+        entity_version,
+        message_status,
+        group_code,
+        creation_date)
+        VALUES(
+            #{item.messageId},
+            #{item.tenantId},
+            #{item.siteId},
+            #{item.oocId},
+            #{item.entityCode},
+            #{item.entityVersion},
+            #{item.messageStatus},
+            #{item.groupCode},
+            DATE_FORMAT(#{item.creationDate},'%Y-%m-%d %H:%i:%S')
+            )
+        </foreach>
+    </insert>
+
+
+
+    <select id="queryUploadMessage"  parameterType="com.hand.spc.repository.dto.MessageR" resultMap="BaseResultMap">
+        SELECT
+        GROUP_CONCAT(
+        (
+        SELECT
+        GROUP_CONCAT( CONCAT( d.element_description, ': ', d.element_value_description ) SEPARATOR ';' )
+        FROM
+        pspc_message_detail d
+        WHERE
+        d.message_id = t.message_id
+        ) SEPARATOR '|'
+        ) message_text,
+        GROUP_CONCAT( t.message_id SEPARATOR '|' ) message_ids,
+        (
+        SELECT
+        GROUP_CONCAT( CASE d.element_code WHEN 'SAMPLE_START_TIME' THEN d.element_value_code ELSE '' END )
+        FROM
+        pspc_message_detail d
+        WHERE
+        d.message_id = t.message_id
+        LIMIT 1
+        ) start_time,
+        (
+        SELECT
+        GROUP_CONCAT( CASE d.element_code WHEN 'SAMPLE_END_TIME' THEN d.element_value_code ELSE '' END )
+        FROM
+        pspc_message_detail d
+        WHERE
+        d.message_id = t.message_id
+        LIMIT 1
+        ) end_time,
+        t.group_code,
+        c.upload_config_id,
+        c.config_type,
+        c.config_value,
+        c.config_command
+        FROM
+        pspc_message t,
+        pspc_message_upload_rel r,
+        pspc_message_upload_config c
+        WHERE
+        r.STATUS = 'N'
+        AND t.message_id = r.message_id
+        AND c.upload_config_id = r.upload_config_id
+        AND #{creationDate}>=t.creation_date
+        AND t.tenant_id = #{tenantId,jdbcType=DECIMAL}
+        AND t.site_id = #{siteId,jdbcType=DECIMAL}
+        <if test = "groupCode !=null and groupCode !=''" >
+            AND t.group_code = #{groupCode}
+        </if> 
+        GROUP BY
+        t.group_code,
+        c.upload_config_id
+    </select>
+    <!--原mysql语法  hzero  -->
+	<!-- <select id="queryBatchUploadMessage" parameterType="com.hand.spc.repository.dto.MessageR" resultType="com.hand.spc.repository.dto.MessageUploadDTO">
+		    SELECT
+		    GROUP_CONCAT(
+		    (
+		    SELECT
+		    GROUP_CONCAT(
+		    CONCAT(
+		    d.element_description,
+		    ': ',
+		    d.element_value_description
+		    ) SEPARATOR ';'
+		    )
+		    FROM
+		    pspc_message_detail d
+		    WHERE
+		    d.message_id = t.message_id
+		    ) SEPARATOR '|'
+		    ) message_text,
+		    GROUP_CONCAT(t.message_id SEPARATOR  '|') message_ids,
+		    t.group_code,
+		    t.ooc_id,
+		    c.upload_config_id,
+		    c.config_type,
+		    c.config_value,
+		    c.config_command
+		    FROM
+		    pspc_message t,
+		    pspc_message_upload_rel r,
+		    pspc_message_upload_config c
+		    WHERE
+		    r.status = 'N'
+		    AND t.message_id = r.message_id
+		    AND c.upload_config_id = r.upload_config_id
+		    <if test="messageList!=null">
+		        AND t.message_id IN
+		        <foreach collection="messageList" item="message" index="index" open="(" close=")" separator=",">
+		            #{message.messageId}
+		        </foreach>
+		    </if>
+	 </select> -->
+	 
+	 <!--oracle语法 modified by jy 20191024 20191029 -->
+	 <select id="queryBatchUploadMessage" parameterType="com.hand.spc.repository.dto.MessageR" resultMap="BaseResultMap">
+		     select  xmlagg(xmlparse(content
+ 									(SELECT xmlagg(xmlparse(content(d.element_description || ': ' || d.element_value_description)||';' wellformed) order by d.entity_code).getclobval() FROM pspc_message_detail d WHERE d.message_id = t.message_id )
+ 									||'|' wellformed)order by t.group_code).getclobval() message_text,
+		       listagg(t.message_id, '|') within group(order by t.message_id) message_ids,
+		       t.group_code,
+		       t.ooc_id,
+		       c.upload_config_id,
+		       c.config_type,
+		       c.config_value,
+		       c.config_command
+		  FROM pspc_message               t,
+		       pspc_message_upload_rel    r,
+		       pspc_message_upload_config c
+		 WHERE r.status = 'N'
+		   AND t.message_id = r.message_id
+		   AND c.upload_config_id = r.upload_config_id
+		   AND t.tenant_id = -1
+           AND t.site_id = -1  
+           
+           <if test="messageList!=null">
+         	    AND t.creation_date &lt;=#{message.creationDate}
+		        AND t.group_code IN
+		        <foreach collection="messageList" item="message" index="index" open="(" close=")" separator=",">
+		            #{message.groupCode}
+		        </foreach>
+		    </if>
+
+          group by t.group_code,t.ooc_id,c.upload_config_id, c.config_type,c.config_value,c.config_command
+	 </select>
+	 <!--AND t.message_id IN ('-1,-1,41501,10015,M,KOIL-CPK-TEMP,1')  -->
+
+    <update id="updateByConfig">
+        update  pspc_message_upload_rel set status='Y'
+        where upload_config_id = #{configId}
+        and message_id in(
+        <foreach collection="ids" index="index" item="id" separator=",">
+            #{id}
+        </foreach>
+        )
+    </update>
+</mapper>

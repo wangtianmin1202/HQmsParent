@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hcs.hcs_refund_order.mapper.RefundOrderLMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hcs.hcs_refund_order.dto.RefundOrderL">
+        <result column="RO_LINE_ID" property="roLineId" jdbcType="DECIMAL" />
+        <result column="RO_HEADER_ID" property="roHeaderId" jdbcType="DECIMAL" />
+        <result column="RO_LINE_NUM" property="roLineNum" jdbcType="DECIMAL" />
+        <!-- tianmin.wang 20191114 ro_line_type字段名修改为 plant_id -->
+        <result column="PLANT_ID" property="plantId" jdbcType="DECIMAL" />
+        <result column="ITEM_ID" property="itemId" jdbcType="DECIMAL" />
+        <result column="ITEM_VERSION" property="itemVersion" jdbcType="VARCHAR" />
+        <result column="UNIT_CODE" property="unitCode" jdbcType="VARCHAR" />
+        <result column="QUANTITY" property="quantity" jdbcType="DECIMAL" />
+        <result column="RO_LINE_STATUS" property="roLineStatus" jdbcType="VARCHAR" />
+        <result column="LINE_REMARKS" property="lineRemarks" jdbcType="VARCHAR" />
+        <result column="REFUNDED_DATE" property="refundedDate" jdbcType="DATE" />
+        <result column="REFUNDED_BY" property="refundedBy" jdbcType="DECIMAL" />
+        <result column="REFUNDED_FULL_NAME" property="refundedFullName" jdbcType="VARCHAR" />
+        <result column="QUANTITY_REFUNDED" property="quantityRefunded" jdbcType="DECIMAL" />
+        <result column="PO_HEADER_ID" property="poHeaderId" jdbcType="DECIMAL" />
+        <result column="PO_LINE_ID" property="poLineId" jdbcType="DECIMAL" />
+        <result column="UNIT_PRICE" property="unitPrice" jdbcType="DECIMAL" />
+        <result column="CURRENCY" property="currency" jdbcType="VARCHAR" />
+        <result column="TAX_RATE" property="taxRate" jdbcType="VARCHAR" />
+        <result column="CREATION_DATE" property="creationDate" jdbcType="DATE" />
+        <result column="LINE_TOTAL_PRICE" property="lineTotalPrice" jdbcType="DECIMAL" />
+        <result column="PRICE_UNIT" property="priceUnit" jdbcType="VARCHAR" />
+        <result column="SETTLEMENT_FLAG" property="settlementFlag" jdbcType="VARCHAR" />
+        <!-- add by wtm 20191223 -->
+        <result column="NEED_BY_DATE" property="needByDate" jdbcType="DATE" />
+        
+        <!-- 业务字段 -->
+        <result column="REFUND_ORDER_NUM" property="refundOrderNum" jdbcType="VARCHAR" />
+        <result column="REFUND_ORDER_TYPE" property="refundOrderType" jdbcType="VARCHAR" />
+        <result column="REFUND_ORDER_STATUS" property="refundOrderStatus" jdbcType="VARCHAR" />
+        <result column="SUPPLIER_ID" property="supplierId" jdbcType="DECIMAL" />
+        <result column="SUPPLIER_SITE_ID" property="supplierSiteId" jdbcType="DECIMAL" />
+        <result column="PO_AGENT_ID" property="poAgentId" jdbcType="DECIMAL" />
+        <result column="AGENT_FULL_NAME" property="agentFullName" jdbcType="VARCHAR" />
+        <result column="PLANT_ID" property="plantId" jdbcType="DECIMAL" />
+        <result column="CONFIRM_BY" property="confirmBy" jdbcType="DECIMAL" />
+        <result column="CONFIRM_FULL_NAME" property="confirmFullName" jdbcType="VARCHAR" />
+        <result column="CONFIRM_DATE" property="confirmDate" jdbcType="DATE" />
+        <result column="REMARKS" property="remarks" jdbcType="VARCHAR" />       
+        <result column="CREATION_NAME" property="creationName" jdbcType="VARCHAR" />
+        <result column="SUPPLIER_SITE_NAME" property="supplierSiteName" jdbcType="VARCHAR" />
+        <result column="PLANT_NAME" property="plantName" jdbcType="VARCHAR" />
+        <result column="CREATTION_START_DATE" property="creationStartDate" jdbcType="VARCHAR" />
+        <result column="CREATTION_END_DATE" property="creationEndDate" jdbcType="VARCHAR" />
+        <result column="CONFIRM_START_DATE" property="confirmStartDate" jdbcType="VARCHAR" />
+        <result column="CONFIRM_END_DATE" property="confirmEndDate" jdbcType="VARCHAR" />
+        <result column="SUPPLIER_NAME" property="supplierName" jdbcType="VARCHAR" />
+        <result column="SUPPLIER_CODE" property="supplierCode" jdbcType="VARCHAR" />
+        <result column="ITEM_CODE" property="itemCode" jdbcType="VARCHAR" />
+        <result column="ITEM_NAME" property="itemName" jdbcType="VARCHAR" />
+        <result column="PO_NUMBER" property="poNumber" jdbcType="VARCHAR" />
+        <result column="LINE_NUM" property="lineNum" jdbcType="VARCHAR" />
+        <result column="REFUNDED_Start_DATE" property="refundedStartDate" jdbcType="VARCHAR" />
+        <result column="REFUNDED_END_DATE" property="refundedEndDate" jdbcType="VARCHAR" />
+        <result column="actual_amount" property="actualAmount" jdbcType="DECIMAL" />
+        <result column="purchase_group" property="purchaseGroup" jdbcType="VARCHAR" />
+    </resultMap>
+
+	<!-- 退货单查询 按明细行查询 -->
+	<select id="query" resultMap="BaseResultMap" parameterType="com.hand.hcs.hcs_refund_order.dto.RefundOrderL">
+		select     hroh.ro_header_id,
+		           hroh.refund_order_num,
+		           hroh.refund_order_type,
+		           hroh.refund_order_status,
+		           hroh.plant_id,
+		           hp.descriptions PLANT_NAME,
+		           hroh.supplier_id,
+		           hs.supplier_code,
+		           hs.supplier_name,
+		           hroh.supplier_site_id,
+		           hss.description SUPPLIER_SITE_NAME,
+		           hroh.agent_full_name,
+		           hroh.remarks,
+		           hroh.created_by,
+		           sus.user_name CREATION_NAME,
+		           hroh.creation_date,
+		           hroh.confirm_full_name,
+		           hroh.confirm_date,
+		           hrol.item_id,
+		           hi.ITEM_CODE,
+		           hi.descriptions ITEM_NAME,
+		           hrol.item_version,
+		           hrol.unit_code,
+		           hrol.quantity,
+		           hrol.quantity_refunded,
+		           hrol.unit_price,
+		           hrol.currency,
+		           hrol.tax_rate,
+		           hrol.ro_line_num,
+		           hrol.ro_line_id,
+		           hrol.ro_line_status,
+		           hrol.line_remarks,
+		           hrol.refunded_full_name,
+		           hrol.refunded_date,
+		           hpl.line_num,
+		           hph.po_number,
+                   hrol.LINE_TOTAL_PRICE,
+                   hrol.PRICE_UNIT,
+                   hrol.settlement_flag
+		    from sys_user su
+		    join hcs_refund_order_h hroh on decode(su.user_type,'S',su.supplier_id,hroh.supplier_id) = hroh.supplier_id 
+		    join hcs_refund_order_l hrol on hroh.ro_header_id = hrol.ro_header_id
+		    join hcm_plant hp on hroh.plant_id = hp.plant_id
+		    join hcs_suppliers hs on hroh.supplier_id = hs.supplier_id
+		    left join hcs_supplier_site hss on hroh.supplier_site_id = hss.supplers_site_id
+		    join hcm_item hi on hrol.item_id = hi.ITEM_ID and hi.PLANT_ID = hroh.plant_id
+		    left join sys_user sus on hroh.created_by = sus.user_id
+		    left join hcs_po_lines hpl on hrol.po_line_id = hpl.po_line_id
+		    left join hcs_po_headers hph on hpl.po_header_id = hph.po_header_id
+		    <if test="purchaseGroup != null">
+	         	left join hcs_asl_control hac on hac.purchase_group = #{purchaseGroup}
+	         	left join hcs_asl ha on hac.asl_id = ha.asl_id and ha.enable_flag = 'Y'
+	        </if>
+		    where 1=1
+		    and su.user_id = #{request.userId}
+		    <if test="purchaseGroup!=null">
+				and ha.plant_id = hroh.plant_id
+				and ha.supplier_id = hroh.supplier_id
+				and ha.item_id = hrol.item_id
+			</if>
+		    <if test="refundOrderNum != null">
+				and  hroh.refund_order_num like concat('%',concat(#{refundOrderNum},'%'))
+			</if>
+			<if test="poNumber != null">
+				and  hph.po_number like concat('%',concat(#{poNumber},'%'))
+			</if>
+			<if test = "creationStartDate != null">
+				and hroh.creation_date &gt;= to_date(#{creationStartDate}, 'yyyy-mm-dd hh24:mi:ss')
+			</if>
+			<if test = "creationEndDate != null">
+				and hroh.creation_date &lt;= to_date(#{creationEndDate}, 'yyyy-mm-dd hh24:mi:ss')
+			</if>
+			<if test = "confirmStartDate != null">
+				and to_date(to_char(hroh.confirm_date ,'yyyy-mm-dd'),'yyyy-mm-dd') &gt;= to_date(#{confirmStartDate}, 'yyyy-mm-dd hh24:mi:ss')
+			</if>
+			<if test = "confirmEndDate != null">
+				and to_date(to_char(hroh.confirm_date ,'yyyy-mm-dd'),'yyyy-mm-dd') &lt;= to_date(#{confirmEndDate}, 'yyyy-mm-dd hh24:mi:ss')
+			</if>
+			<if test = "refundedStartDate != null">
+				and to_date(to_char(hrol.refunded_date ,'yyyy-mm-dd'),'yyyy-mm-dd') &gt;= to_date(#{refundedStartDate}, 'yyyy-mm-dd hh24:mi:ss')
+			</if>
+			<if test = "refundedEndDate != null">
+				and to_date(to_char(hrol.refunded_date ,'yyyy-mm-dd'),'yyyy-mm-dd') &lt;= to_date(#{refundedEndDate}, 'yyyy-mm-dd hh24:mi:ss')
+			</if>
+			<if test="settlementFlag != null">
+				and hrol.settlement_flag = #{settlementFlag}
+			</if>
+			<if test="refundOrderType != null">
+				and hroh.refund_order_type = #{refundOrderType}
+			</if>
+			<if test="refundOrderStatus != null">
+				and hroh.refund_order_status = #{refundOrderStatus}
+			</if>
+			<if test="plantId != null">
+				and hroh.plant_id = #{plantId}
+			</if>
+			<if test="supplierId != null">
+				and hroh.supplier_id = #{supplierId}
+			</if>
+			<if test="itemId != null">
+				and hrol.item_id = #{itemId}
+			</if>
+			<if test="roLineStatus != null">
+				and hrol.ro_line_status = #{roLineStatus}
+			</if>
+			order by hroh.refund_order_num desc ,hrol.ro_line_num asc
+	</select>
+	<!-- 退货单查询明细 -->
+	<select id="queryLine" resultMap="BaseResultMap" parameterType="com.hand.hcs.hcs_refund_order.dto.RefundOrderL">
+			select hrol.ro_header_id,
+	               hrol.item_version,
+	               hrol.unit_code,
+	               hrol.quantity,
+	               hrol.quantity_refunded,
+	               hrol.unit_price,
+	               hrol.currency,
+	               hrol.tax_rate,
+	               hrol.ro_line_num,
+	               hrol.ro_line_id,
+	               hrol.ro_line_status,
+	               hrol.line_remarks,
+	               hrol.refunded_full_name,
+	               hrol.refunded_date,
+	               hpl.line_num,
+	               hrol.item_id,
+		           hi.ITEM_CODE,
+		           hi.descriptions ITEM_NAME,
+	               hph.po_number,
+                   hrol.LINE_TOTAL_PRICE,
+                   hrol.PRICE_UNIT,
+       			   hrol.settlement_flag
+	        from hcs_refund_order_l hrol
+	        join hcm_item hi on hrol.item_id = hi.ITEM_ID
+	        left join hcs_po_lines hpl on hrol.po_line_id = hpl.po_line_id
+	        left join hcs_po_headers hph on hpl.po_header_id = hph.po_header_id
+	        join hcs_refund_order_h hroh on hrol.ro_header_id = hroh.ro_header_id
+	        where hi.PLANT_ID = hroh.plant_id
+	        and hrol.ro_header_id = #{roHeaderId}
+	        order by hrol.ro_line_num
+	</select>
+	<!-- 退货单结算Job(获取数据源) -->
+	<select id="refundOrderJobQuery" resultMap="BaseResultMap" parameterType="com.hand.hcs.hcs_refund_order.dto.RefundOrderL">
+		select hrol.refunded_date,
+		       hrol.item_id,
+		       hroh.plant_id,
+		       hrol.item_version,
+		       hrol.quantity_refunded,
+		       hrol.unit_code,
+		       hroh.refund_order_num,
+		       hrol.ro_line_num,
+		       hroh.supplier_id,
+		       hs.supplier_code,
+		       hrol.unit_price,
+		       hrol.price_unit,
+		       nvl(round(hrol.unit_price * hrol.quantity_refunded /hrol.price_unit,2),
+		           0) actual_amount,
+		       hac.purchase_group,
+		       hrol.tax_rate,
+		       hrol.currency,
+		       hrol.ro_line_id,
+		       hrol.ro_header_id
+		  from hcs_refund_order_l hrol
+		  left join hcs_refund_order_h hroh on hrol.ro_header_id = hroh.ro_header_id
+		  left join hcs_suppliers hs on hroh.supplier_id = hs.supplier_id
+		  left join hcs_asl ha on hrol.item_id = ha.item_id and hroh.plant_id = ha.plant_id and hroh.supplier_id = ha.supplier_id
+		  left join hcs_asl_control hac on ha.asl_id = hac.asl_id
+		where hrol.settlement_flag = 'N'
+  		and hrol.ro_line_status = 'I'
+	</select>
+</mapper>

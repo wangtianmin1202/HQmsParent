@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_sample_size_code_letter.mapper.SampleSizeCodeLetterMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_sample_size_code_letter.dto.SampleSizeCodeLetter">
+        <result column="LETTER_ID" property="letterId" jdbcType="DECIMAL" />
+        <result column="SAMPLE_PROCEDURE_TYPE" property="sampleProcedureType" jdbcType="VARCHAR" />
+        <result column="LOT_SIZE_FROM" property="lotSizeFrom" jdbcType="DECIMAL" />
+        <result column="LOT_SIZE_TO" property="lotSizeTo" jdbcType="DECIMAL" />
+        <result column="INSPECTION_LEVELS" property="inspectionLevels" jdbcType="VARCHAR" />
+        <result column="INSPECTION_LEVELS_ONE" property="inspectionLevelsOne" jdbcType="VARCHAR" />
+        <result column="INSPECTION_LEVELS_TWO" property="inspectionLevelsTwo" jdbcType="VARCHAR" />
+        <result column="INSPECTION_LEVELS_THREE" property="inspectionLevelsThree" jdbcType="VARCHAR" />
+        <result column="INSPECTION_LEVELS_FOUR" property="inspectionLevelsFour" jdbcType="VARCHAR" />
+        <result column="INSPECTION_LEVELS_FIVE" property="inspectionLevelsFive" jdbcType="VARCHAR" />
+        <result column="INSPECTION_LEVELS_SIX" property="inspectionLevelsSix" jdbcType="VARCHAR" />
+        <result column="INSPECTION_LEVELS_SEVEN" property="inspectionLevelsSeven" jdbcType="VARCHAR" />
+        <result column="SIZE_CODE_LETTER" property="sizeCodeLetter" jdbcType="VARCHAR" />
+        <result column="ENABLE_FLAG" property="enableFlag" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE1" property="globalAttribute1" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE2" property="globalAttribute2" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE3" property="globalAttribute3" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE4" property="globalAttribute4" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE5" property="globalAttribute5" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE6" property="globalAttribute6" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE7" property="globalAttribute7" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE8" property="globalAttribute8" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE9" property="globalAttribute9" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE10" property="globalAttribute10" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE11" property="globalAttribute11" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE12" property="globalAttribute12" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE13" property="globalAttribute13" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE14" property="globalAttribute14" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE15" property="globalAttribute15" jdbcType="VARCHAR" />
+        <result column="VALUE" property="value" jdbcType="VARCHAR" />
+        <result column="MEANING" property="meaning" jdbcType="VARCHAR" />
+    </resultMap>
+
+    <select id="myselect" resultMap="BaseResultMap" parameterType="com.hand.hqm.hqm_sample_size_code_letter.dto.SampleSizeCodeLetter">
+
+        SELECT gt.letter_id,
+        gt.lot_size_from,
+       gt.lot_size_to,
+       gt.enable_flag,
+       gt.sample_procedure_type,
+       (SELECT it.size_code_letter
+          FROM hqm_sample_size_code_letter it
+         WHERE 1 = 1
+           AND it.inspection_levels = 0
+           AND it.lot_size_from = gt.lot_size_from
+           AND it.lot_size_to = gt.lot_size_to) AS inspection_levels_one,
+       (SELECT it.size_code_letter
+          FROM hqm_sample_size_code_letter it
+         WHERE 1 = 1
+           AND it.inspection_levels = 1
+           AND it.lot_size_from = gt.lot_size_from
+           AND it.lot_size_to = gt.lot_size_to) AS inspection_levels_two,
+       (SELECT it.size_code_letter
+          FROM hqm_sample_size_code_letter it
+         WHERE 1 = 1
+           AND it.inspection_levels = 2
+           AND it.lot_size_from = gt.lot_size_from
+           AND it.lot_size_to = gt.lot_size_to) AS inspection_levels_three,
+       (SELECT it.size_code_letter
+          FROM hqm_sample_size_code_letter it
+         WHERE 1 = 1
+           AND it.inspection_levels = 3
+           AND it.lot_size_from = gt.lot_size_from
+           AND it.lot_size_to = gt.lot_size_to) AS inspection_levels_four,
+       (SELECT it.size_code_letter
+          FROM hqm_sample_size_code_letter it
+         WHERE 1 = 1
+           AND it.inspection_levels = 4
+           AND it.lot_size_from = gt.lot_size_from
+           AND it.lot_size_to = gt.lot_size_to) AS inspection_levels_five,
+       (SELECT it.size_code_letter
+          FROM hqm_sample_size_code_letter it
+         WHERE 1 = 1
+           AND it.inspection_levels = 5
+           AND it.lot_size_from = gt.lot_size_from
+           AND it.lot_size_to = gt.lot_size_to) AS inspection_levels_six,
+       (SELECT it.size_code_letter
+          FROM hqm_sample_size_code_letter it
+         WHERE 1 = 1
+           AND it.inspection_levels = 6
+           AND it.lot_size_from = gt.lot_size_from
+           AND it.lot_size_to = gt.lot_size_to) AS inspection_levels_seven
+  FROM (SELECT t.lot_size_from, t.lot_size_to, t.enable_flag, t.sample_procedure_type,MIN(t.letter_id) AS letter_id
+          FROM hqm_sample_size_code_letter t
+         WHERE 1 = 1
+         GROUP BY t.lot_size_from, t.lot_size_to, t.enable_flag, t.sample_procedure_type) gt
+ WHERE 1 = 1
+        <if test="lotSizeFrom!=null">
+            AND gt.lot_size_from=#{lotSizeFrom}
+        </if>
+        <if test="lotSizeTo!=null">
+            AND gt.lot_size_to=#{lotSizeTo}
+        </if>
+        <if test="sampleProcedureType!=null">
+            AND gt.sample_procedure_type=#{sampleProcedureType}
+        </if>
+        <if test="enableFlag!=null">
+            AND gt.enable_flag=#{enableFlag}
+        </if>
+    </select>
+	<select id="selectSandardCode" resultMap="BaseResultMap" parameterType="com.hand.hqm.hqm_sample_size_code_letter.dto.SampleSizeCodeLetter">
+		SELECT scvb.value, scvb.meaning
+		  FROM hqm_sample_size_code_letter hs, sys_code_b scb, sys_code_value_b scvb
+		 WHERE 1 = 1
+		   AND scb.code_id = scvb.code_id
+		   AND scb.code = 'HQM_IQC_SAMPLE_STANDARD_TYPE'
+		   AND hs.sample_procedure_type = scvb.value
+		   AND hs.enable_flag = 'Y'
+		 GROUP BY scvb.value, scvb.meaning
+
+	</select>
+	<select id="selectCodeLevel" resultMap="BaseResultMap" parameterType="com.hand.hqm.hqm_sample_size_code_letter.dto.SampleSizeCodeLetter">
+	SELECT scvb.value, scvb.meaning
+		  FROM hqm_sample_size_code_letter hs, sys_code_b scb, sys_code_value_b scvb
+		 WHERE 1 = 1
+		   AND scb.code_id = scvb.code_id
+		   AND scb.code = 'HQM_IQC_SAMPLE_SIZE_CODE_LEVEL'
+		   AND hs.size_code_letter = scvb.value
+		   AND hs.enable_flag = 'Y'
+		   <if test="value!=null">
+		      AND hs.sample_procedure_type=#{value}
+		   </if>
+		   
+		 GROUP BY scvb.value, scvb.meaning
+	</select>
+	<select id="selectCodeSizeLetter" resultMap="BaseResultMap" parameterType="com.hand.hqm.hqm_sample_size_code_letter.dto.SampleSizeCodeLetter">
+	SELECT hs.size_code_letter
+  FROM hqm_sample_size_code_letter hs
+ WHERE 1 = 1
+   AND hs.enable_flag = 'Y'
+   AND hs.inspection_levels = #{inspectionLevels}
+   AND hs.lot_size_from &lt;= #{lotSizeFrom}
+   AND hs.lot_size_to &gt;= #{lotSizeTo}
+	</select>
+</mapper>

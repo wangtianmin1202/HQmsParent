@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_item_type_tests.mapper.ProjectLineMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_item_type_tests.dto.ProjectLine">
+        <result column="PROJECT_ID" property="projectId" jdbcType="DECIMAL" />
+        <result column="PROJECT_LINE_ID" property="projectLineId" jdbcType="VARCHAR" />
+        <result column="ENABLE_FLAG" property="enableFlag" jdbcType="VARCHAR" />
+        <result column="sku_code" property="skuCode" jdbcType="VARCHAR" />
+        <result column="sku_description" property="skuDescription" jdbcType="VARCHAR" />
+        <result column="subcode" property="subcode" jdbcType="VARCHAR" />
+        <result column="stage" property="stage" jdbcType="VARCHAR" />
+
+
+        <result column="flag_meaning" property="flagMeaning" jdbcType="VARCHAR" />
+    </resultMap>
+
+    <select id="plQuery" parameterType="com.hand.hqm.hqm_item_type_tests.dto.ProjectLine" resultMap="BaseResultMap">
+        select hpl.project_id,
+        hpl.project_line_id,
+        hpl.subcode,
+        hpl.stage,
+        hpl.enable_flag,
+        a1.meaning flag_meaning,
+        hpl.sku_code,
+        hpl.sku_description
+        from hpm_project_line hpl
+        LEFT JOIN (select scvb.value, scvb.meaning
+        from sys_code_b scb, sys_code_value_b scvb
+        where scb.code_id = scvb.code_id
+        and scb.code = 'SYS.YES_NO') a1
+        on hpl.enable_flag = a1.value
+    <where>
+        <if test="projectLineId != null">
+            hpl.project_line_id =#{projectLineId}
+        </if>
+        <if test="projectId != null">
+            hpl.project_id =#{projectId}
+        </if>
+    </where>
+    </select>
+
+
+</mapper>

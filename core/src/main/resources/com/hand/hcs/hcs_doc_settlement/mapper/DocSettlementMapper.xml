@@ -1,0 +1,305 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hcs.hcs_doc_settlement.mapper.DocSettlementMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hcs.hcs_doc_settlement.dto.DocSettlement">
+        <result column="DOC_SETTLEMENT_ID" property="docSettlementId" jdbcType="DECIMAL" />
+        <result column="DOC_SETTLEMENT_NUM" property="docSettlementNum" jdbcType="VARCHAR" />
+        <result column="DOC_TYPE" property="docType" jdbcType="VARCHAR" />
+        <result column="ACCOUNT_DATE" property="accountDate" jdbcType="DATE" />
+        <result column="SETTLEMENT_TYPE" property="settlementType" jdbcType="VARCHAR" />
+        <result column="SETTLEMENT_STATUS" property="settlementStatus" jdbcType="VARCHAR" />
+        <result column="ITEM_ID" property="itemId" jdbcType="DECIMAL" />
+        <result column="PLANT_ID" property="plantId" jdbcType="DECIMAL" />
+        <result column="ITEM_VERSION" property="itemVersion" jdbcType="VARCHAR" />
+        <result column="DOC_QTY" property="docQty" jdbcType="DECIMAL" />
+        <result column="ITEM_UOM" property="itemUom" jdbcType="VARCHAR" />
+        <result column="PO_LINE_ID" property="poLineId" jdbcType="DECIMAL" />
+        <result column="SUPPLIER_ID" property="supplierId" jdbcType="DECIMAL" />
+        <result column="SUPPLIER_SITE_ID" property="supplierSiteId" jdbcType="DECIMAL" />
+        <result column="UNIT_PRICE" property="unitPrice" jdbcType="DECIMAL" />
+        <result column="ACTUAL_AMOUNT" property="actualAmount" jdbcType="DECIMAL" />
+        <result column="PO_AGENT_ID" property="poAgentId" jdbcType="DECIMAL" />
+        <result column="AGENT_FULL_NAME" property="agentFullName" jdbcType="VARCHAR" />
+        <result column="TAX_CODE" property="taxCode" jdbcType="VARCHAR" />
+        <result column="CURRENCY" property="currency" jdbcType="VARCHAR" />
+        <result column="DOC_STATEMENT_ID" property="docStatementId" jdbcType="DECIMAL" />
+        <result column="WEB_INVOICE_ID" property="webInvoiceId" jdbcType="DECIMAL" />
+        <result column="REMARKS" property="remarks" jdbcType="VARCHAR" />
+        <result column="REL_DOC_NUM_H" property="relDocNumH" jdbcType="VARCHAR" />
+        <result column="REL_DOC_NUM_L" property="relDocNumL" jdbcType="VARCHAR" />
+        <result column="REL_PO_NUM_H" property="relPoNumH" jdbcType="VARCHAR" />
+        <result column="REL_PO_NUM_L" property="relPoNumL" jdbcType="VARCHAR" />
+        <result column="PRICE_UNIT" property="priceUnit" jdbcType="VARCHAR" />
+        
+        <!-- 业务字段 -->
+        <result column="PLANT_NAME" property="plantName" jdbcType="VARCHAR" />
+        <result column="ITEM_CODE" property="itemCode" jdbcType="VARCHAR" />
+        <result column="ITEM_NAME" property="itemName" jdbcType="VARCHAR" />
+        <result column="SUPPLIER_CODE" property="supplierCode" jdbcType="VARCHAR" />
+        <result column="SUPPLIER_NAME" property="supplierName" jdbcType="VARCHAR" />
+        <result column="SUPPLIER_SITE_NAME" property="supplierSiteName" jdbcType="VARCHAR" />
+        <result column="TICKET_NUMBER" property="ticketNumber" jdbcType="VARCHAR" />
+        <result column="TICKER_ID" property="ticketId" jdbcType="DECIMAL" />
+        <result column="TICKET_LINE_NUM" property="ticketLineNum" jdbcType="DECIMAL" />
+        <result column="PO_HEADER_ID" property="poHeaderId" jdbcType="DECIMAL" />
+        <result column="LINE_NUM" property="lineNum" jdbcType="DECIMAL" />
+        <result column="PO_NUMBER" property="poNumber" jdbcType="VARCHAR" />
+        <result column="SHIPMENT_NUM" property="shipmentNum" jdbcType="DECIMAL" />
+        <result column="START_TIME" property="startTime" jdbcType="VARCHAR" />
+        <result column="END_TIME" property="endTime" jdbcType="VARCHAR" />
+        <result column="DOC_STATEMENT_NUM" property="docStatementNum" jdbcType="VARCHAR" />
+        <result column="WEB_INVOICE_NUM" property="webInvoiceNum" jdbcType="VARCHAR" />
+        <result column="TAX_INVOICE_NUM" property="taxInvoiceNum" jdbcType="VARCHAR" />
+        <result column="purchase_group" property="purchaseGroup" jdbcType="VARCHAR" /> 
+        <result column="compare_flag" property="compareFlag" jdbcType="VARCHAR" /> 
+        <result column="tax" property="tax" jdbcType="DECIMAL" />
+        <result column="total_tax" property="totalTax" jdbcType="DECIMAL" />
+        <result column="doc_adjustment_num" property="docAdjustmentNum" jdbcType="VARCHAR" /> 
+        <result column="adjust_amount" property="adjustAmount" jdbcType="DECIMAL" />
+        <result column="submited_date" property="submitedDate" jdbcType="DATE" />
+    </resultMap>
+	<!-- 对账单创建  查询 -->
+	<select id="query" resultMap="BaseResultMap" parameterType="com.hand.hcs.hcs_doc_settlement.dto.DocSettlement">
+		select hds.doc_settlement_id,
+	           hds.doc_settlement_num,
+	           hds.settlement_status,
+	           hds.plant_id,
+	           hp.descriptions PLANT_NAME,
+	           hds.item_id,
+	           hi.ITEM_CODE,
+	           hi.descriptions ITEM_NAME,
+	           hds.item_version,
+	           hds.doc_qty,
+	           hds.item_uom,
+	           hds.doc_type,
+	           hds.account_date,
+	           hds.unit_price,
+	           hds.actual_amount,
+	           hds.tax_code,
+	           hds.currency,
+	           hds.agent_full_name,
+	           hds.remarks,
+	           hds.supplier_id,
+	           hs.supplier_code,
+	           hs.supplier_name,
+	           hds.supplier_site_id,
+	           hss.description SUPPLIER_SITE_NAME,
+	           hds.web_invoice_id,
+	           hdsa.doc_statement_num,
+	           hti.web_invoice_num,
+	           hti.tax_invoice_num，
+	           hds.rel_doc_num_h,
+	           hds.rel_doc_num_l,
+	           hds.rel_po_num_h,
+	           hds.rel_po_num_l,
+               hds.price_unit,
+               hti.submited_date
+		from sys_user su
+		join hcs_doc_settlement hds on decode(su.user_type,'S',su.supplier_id,hds.supplier_id) = hds.supplier_id
+		left join hcm_plant hp on hds.plant_id = hp.plant_id
+		left join hcm_item hi on hds.item_id = hi.ITEM_ID and hi.PLANT_ID = hds.plant_id
+		left join hcs_suppliers hs on hds.supplier_id = hs.supplier_id
+		left join hcs_supplier_site hss on hds.supplier_site_id = hss.supplers_site_id
+		left join hcs_doc_statement hdsa on hds.doc_statement_id =hdsa.doc_statement_id
+    	left join hcs_tax_invoice hti on hds.web_invoice_id = hti.web_invoice_id
+    	<if test="purchaseGroup != null">
+         	left join hcs_asl_control hac on hac.purchase_group = #{purchaseGroup}
+         	left join hcs_asl ha on hac.asl_id = ha.asl_id and ha.enable_flag = 'Y'
+        </if>
+		where 1=1
+		<if test="purchaseGroup!=null">
+			and ha.plant_id = hds.plant_id
+			and ha.supplier_id = hds.supplier_id
+			and ha.item_id = hds.item_id
+		</if>
+		<if test = "settlementStatus != null">
+			and hds.settlement_status = #{settlementStatus}
+		</if>
+		and su.user_id = #{request.userId}
+		<if test = "docSettlementNum != null">
+			and hds.doc_settlement_num LIKE concat('%',concat(#{docSettlementNum,jdbcType=VARCHAR},'%'))
+		</if> 
+		<if test = "startTime != null">
+			and to_date(to_char(hds.account_date ,'yyyy-mm-dd'),'yyyy-mm-dd') &gt;= to_date(#{startTime}, 'yyyy-mm-dd hh24:mi:ss')
+		</if>
+		<if test = "endTime != null">
+			and to_date(to_char(hds.account_date ,'yyyy-mm-dd'),'yyyy-mm-dd') &lt;= to_date(#{endTime}, 'yyyy-mm-dd hh24:mi:ss')
+		</if>
+		<if test = "docType != null">
+			and hds.doc_type = #{docType}
+		</if>
+		<if test = "relDocNumH != null">
+			and hds.rel_doc_num_h LIKE concat('%',concat(#{relDocNumH,jdbcType=VARCHAR},'%'))
+		</if>
+		<if test = "relDocNumL != null">
+			and hds.rel_doc_num_l LIKE concat('%',concat(#{relDocNumL,jdbcType=VARCHAR},'%'))
+		</if>
+		<if test = "plantId != null">
+			and hds.plant_id = #{plantId}
+		</if> 
+		<if test = "itemId != null">
+			and hds.item_id = #{itemId}
+		</if> 
+		<if test = "relPoNumH != null">
+			and hds.rel_po_num_h LIKE concat('%',concat(#{relPoNumH,jdbcType=VARCHAR},'%'))
+		</if>
+		<if test = "relPoNumL != null">
+			and hds.rel_po_num_l LIKE concat('%',concat(#{relPoNumL,jdbcType=VARCHAR},'%'))
+		</if>
+		<if test = "docStatementNum != null">
+			and hdsa.doc_statement_num LIKE concat('%',concat(#{docStatementNum,jdbcType=VARCHAR},'%'))
+		</if>
+		<if test = "webInvoiceNum != null">
+			and hti.web_invoice_num LIKE concat('%',concat(#{webInvoiceNum,jdbcType=VARCHAR},'%'))
+		</if>
+		<if test = "taxInvoiceNum != null">
+			and hti.tax_invoice_num LIKE concat('%',concat(#{taxInvoiceNum,jdbcType=VARCHAR},'%'))
+		</if>
+		<if test = "supplierId != null">
+			and hds.supplier_id = #{supplierId}
+		</if> 
+		<if test = "supplierSiteId != null">
+			and hds.supplier_site_id = #{supplierSiteId}
+		</if> 
+		<if test = "webInvoiceId != null">
+			and hds.web_invoice_id = #{webInvoiceId}
+		</if> 
+		<if test = "docSettlementIdList != null and docSettlementIdList.size()>0">
+			and hds.doc_settlement_id in
+			<foreach collection="docSettlementIdList" item="item" index="index" open="(" separator="," close=")">
+					       	#{item}
+			</foreach>
+		</if> 
+		order by hds.account_date desc,hds.doc_settlement_num desc
+	</select>
+	<!-- 对账单明细 -->
+	<select id="queryDetail" resultMap="BaseResultMap" parameterType="com.hand.hcs.hcs_doc_settlement.dto.DocSettlement">
+		select hds.doc_settlement_id,
+			   hds.doc_settlement_num,
+	           hds.plant_id, 
+	           hp.descriptions PLANT_NAME,
+	           hds.item_id,
+	           hi.ITEM_CODE,
+	           hi.descriptions ITEM_NAME,
+	           hds.item_version,
+	           hds.doc_qty,
+	           hds.item_uom,
+	           hds.doc_type,
+	           hds.account_date,
+	           hds.unit_price,
+	           hds.actual_amount,
+	           hds.tax_code,
+	           hds.currency,
+	           hds.agent_full_name,
+	           hds.remarks,
+	           hds.doc_statement_id,
+	           hds.rel_doc_num_h,
+	           hds.rel_doc_num_l,
+	           hds.rel_po_num_h,
+	           hds.rel_po_num_l,
+               hds.price_unit
+		from hcs_doc_settlement hds
+		left join hcm_plant hp on hds.plant_id = hp.plant_id
+		left join hcm_item hi on hds.item_id = hi.ITEM_ID and hi.PLANT_ID = hds.plant_id
+		where 1=1
+		and hds.doc_statement_id = #{docStatementId}
+		order by hds.doc_type desc
+	</select>
+	<!-- 清空对账单id -->
+	<update id="updateDocStatementId" parameterType="com.hand.hcs.hcs_doc_settlement.dto.DocSettlement">
+		update HCS_DOC_SETTLEMENT set DOC_STATEMENT_ID = null,SETTLEMENT_STATUS = #{settlementStatus},LAST_UPDATED_BY = #{request.userId},REQUEST_ID  = -1,
+       PROGRAM_ID = -1, OBJECT_VERSION_NUMBER = OBJECT_VERSION_NUMBER + 1, LAST_UPDATE_DATE  = CURRENT_TIMESTAMP where DOC_SETTLEMENT_ID = #{docSettlementId} 
+	</update>
+	<!-- 清空网上发票id -->
+	<update id="updateWebInvoiceId" parameterType="com.hand.hcs.hcs_doc_settlement.dto.DocSettlement">
+		update HCS_DOC_SETTLEMENT set WEB_INVOICE_ID = null,SETTLEMENT_STATUS = #{settlementStatus},LAST_UPDATED_BY = #{request.userId},REQUEST_ID  = -1,
+       PROGRAM_ID = -1, OBJECT_VERSION_NUMBER = OBJECT_VERSION_NUMBER + 1, LAST_UPDATE_DATE  = CURRENT_TIMESTAMP where DOC_SETTLEMENT_ID = #{docSettlementId} 
+	</update>
+	<!-- 获取最大流水号 -->
+	<select id="queryMaxNum" resultType="java.lang.Integer" parameterType="com.hand.hcs.hcs_doc_settlement.dto.DocSettlement">
+		select nvl(max(substr(hds.doc_settlement_num,-4)),0)
+		from hcs_doc_settlement hds
+		where extract(year from hds.creation_date) = extract(year from sysdate)
+		and extract(month from hds.creation_date) = extract(month from sysdate)
+		and hds.supplier_id = #{supplierId}
+	</select>
+	<!-- 发票明细预览：获取结算单据类型D、R -->
+	<select id="printQueryDR" resultMap="BaseResultMap" parameterType="com.hand.hcs.hcs_doc_settlement.dto.DocSettlement">
+		select hds.rel_po_num_h,
+		       hds.rel_po_num_l,
+		       hds.item_id,
+		       hi.ITEM_CODE,
+		       hi.descriptions ITEM_NAME,
+		       hds.unit_price,
+		       hds.price_unit,
+		       hds.tax_code,
+		       sum(hds.doc_qty) doc_qty,
+		       round(sum(hds.actual_amount),2) actual_amount,
+		       round(round(sum(hds.actual_amount),2)*substr(hds.tax_code,0,length(hds.tax_code)-1)*0.01,2) tax,
+		       round(sum(hds.actual_amount),2) + round(round(sum(hds.actual_amount),2)
+		       		*substr(hds.tax_code,0,length(hds.tax_code)-1)*0.01,2) total_tax
+		from hcs_doc_settlement hds
+		left join hcm_item hi on hds.item_id = hi.ITEM_ID
+		where hds.web_invoice_id = #{webInvoiceId}
+		<choose>
+			<when test="compareFlag != null">
+				and hds.actual_amount &gt;= 0
+			</when>
+			<otherwise>
+				and hds.actual_amount &lt; 0
+			</otherwise>
+		</choose>
+		and hds.doc_type in ('D','R')
+		group by hds.rel_po_num_h,
+		         hds.rel_po_num_l,
+		         hds.item_id,
+		         hi.item_code,
+		         hi.descriptions,
+		         hds.unit_price,
+		         hds.price_unit,
+		         hds.tax_code
+		order by hds.rel_po_num_h,         
+		         hds.rel_po_num_l
+	</select>
+	<!-- 发票明细预览：获取结算单据类型Q -->
+	<select id="printQueryQ" resultMap="BaseResultMap" parameterType="com.hand.hcs.hcs_doc_settlement.dto.DocSettlement">
+		select hds.rel_doc_num_h,
+	           hds.actual_amount,
+	           hds.tax_code,
+	           round(hds.actual_amount*substr(hds.tax_code,0,length(hds.tax_code)-1)*0.01,2) tax,
+	           round(hds.actual_amount*substr(hds.tax_code,0,length(hds.tax_code)-1)*0.01+hds.actual_amount,2) total_tax
+	    from hcs_doc_settlement hds
+	    where hds.web_invoice_id = #{webInvoiceId}
+	    and hds.doc_type = 'Q'
+	    <choose>
+			<when test="compareFlag != null">
+				and hds.actual_amount &gt;= 0
+			</when>
+			<otherwise>
+				and hds.actual_amount &lt; 0
+			</otherwise>
+		</choose>
+		order by hds.rel_doc_num_h
+	</select>
+	<!-- 发票明细预览：获取调整行 -->
+	<select id="printQueryAdjustment" resultMap="BaseResultMap" parameterType="com.hand.hcs.hcs_doc_settlement.dto.DocSettlement">
+		select hda.doc_adjustment_num,
+		       hda.remarks,
+		       hda.adjust_amount,
+		       hda.tax_code,
+		       round(hda.adjust_amount * substr(hda.tax_code,0,length(hda.tax_code)-1)*0.01,2) tax,
+		       round(hda.adjust_amount * substr(hda.tax_code,0,length(hda.tax_code)-1)*0.01 + hda.adjust_amount,2) total_tax
+		from hcs_doc_adjustment hda 
+		where hda.web_invoice_id = #{webInvoiceId}
+		<choose>
+			<when test="compareFlag != null">
+				and hda.adjust_amount &gt;= 0
+			</when>
+			<otherwise>
+				and hda.adjust_amount &lt; 0
+			</otherwise>
+		</choose>
+		order by hda.doc_adjustment_num
+	</select>
+</mapper>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.spc.pspc_sample_data.mapper.SampleDataExtendWaitMapper">
+    <resultMap id="BaseResultMap" type="com.hand.spc.pspc_sample_data.dto.SampleDataExtendWait">
+        <result column="SAMPLE_DATA_EXTEND_WAIT_ID" property="sampleDataExtendWaitId" jdbcType="DECIMAL" />
+        <result column="TENANT_ID" property="tenantId" jdbcType="DECIMAL" />
+        <result column="SITE_ID" property="siteId" jdbcType="DECIMAL" />
+        <result column="SAMPLE_DATA_WAIT_ID" property="sampleDataWaitId" jdbcType="DECIMAL" />
+        <result column="EXTEND_ATTRIBUTE" property="extendAttribute" jdbcType="VARCHAR" />
+        <result column="EXTEND_VALUE" property="extendValue" jdbcType="VARCHAR" />
+    </resultMap>
+
+
+</mapper>

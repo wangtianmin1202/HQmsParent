@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_fqc_inspection_template_h.mapper.FqcInspectionTemplateHMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_fqc_inspection_template_h.dto.FqcInspectionTemplateH">
+        <result column="HEADER_ID" property="headerId" jdbcType="DECIMAL" />
+        <result column="PLANT_ID" property="plantId" jdbcType="DECIMAL" />
+        <result column="ITEM_ID" property="itemId" jdbcType="DECIMAL" />
+        <result column="ITEM_CODE" property="itemCode" jdbcType="VARCHAR" />
+        <result column="PLANT_CODE" property="plantCode" jdbcType="VARCHAR" />
+        <result column="ITEM_DESCRIPTIONS" property="itemDescriptions" jdbcType="VARCHAR" />
+        <result column="CREATION_DATE" property="creationDate" jdbcType="DATE" />
+        <result column="COLUMN_CREATION_DATE" property="columnCreationDate" jdbcType="DATE" />
+        <result column="ITEM_CATEGORY" property="itemCategory" jdbcType="VARCHAR" />
+        <result column="VERSION_NUM" property="versionNum" jdbcType="VARCHAR" />
+        <result column="DRAWING_NUMBER" property="drawingNumber" jdbcType="VARCHAR" />
+        <result column="ENABLE_FLAG" property="enableFlag" jdbcType="VARCHAR" />
+        <result column="HISTORY_NUM" property="historyNum" jdbcType="DECIMAL" />
+        <result column="STATUS" property="status" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE1" property="globalAttribute1" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE2" property="globalAttribute2" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE3" property="globalAttribute3" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE4" property="globalAttribute4" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE5" property="globalAttribute5" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE6" property="globalAttribute6" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE7" property="globalAttribute7" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE8" property="globalAttribute8" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE9" property="globalAttribute9" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE10" property="globalAttribute10" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE11" property="globalAttribute11" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE12" property="globalAttribute12" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE13" property="globalAttribute13" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE14" property="globalAttribute14" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE15" property="globalAttribute15" jdbcType="VARCHAR" />
+        <result column="SOURCE_TYPE" property="sourceType" jdbcType="VARCHAR" />
+        <result column="ITEM_CODE" property="itemCode" jdbcType="VARCHAR" />
+        <result column="PLANT_CODE" property="plantCode" jdbcType="VARCHAR" />
+        <result column="ITEM_DESCRIPTIONS" property="itemDescriptions" jdbcType="VARCHAR" />
+        <result column="CREATION_DATE" property="creationDate" jdbcType="DATE" />
+        <result column="COLUMN_CREATION_DATE" property="columnCreationDate" jdbcType="DATE" />
+        
+        <result column="ITEM_CATEGORY_CODE" property="itemCategoryCode" jdbcType="VARCHAR" />
+    </resultMap>
+<select id="myselect" resultMap="BaseResultMap"
+            parameterType="com.hand.hqm.hqm_fqc_inspection_template_h.dto.FqcInspectionTemplateH">
+        SELECT t.item_id,
+		       t.plant_id,
+		       hi.item_code,
+		       hp.plant_code,
+		       hi.descriptions AS item_descriptions,
+		       t.creation_date AS column_creation_date,
+		       t.header_id,
+		       t.item_category,
+		       t.version_num,
+		       t.drawing_number,
+		       t.history_num,
+		       t.status,
+		       t.enable_flag,
+		       t.source_type,
+		       hic.category_code AS item_category_code
+		  FROM hqm_fqc_inspection_template_h t, hcm_item hi, hcm_plant hp,hcm_item_category hic
+		 WHERE 1 = 1
+		   AND t.item_category = hic.category_id
+		   AND t.item_id = hi.item_id
+		   AND t.plant_id = hi.plant_id
+		   AND t.plant_id = hp.plant_id
+		   <if test="itemId!=null">
+		   AND t.item_id = #{itemId}
+		   </if>
+		   <if test="plantId!=null">
+		   AND t.plant_id = #{plantId}
+		   </if>
+		   <if test="itemCategory!=null">
+		   AND t.item_category = #{itemCategory}
+		   </if>
+		   <if test="status!=null">
+		   AND t.status = #{status}
+		   </if>
+		   <if test="enableFlag!=null">
+		   AND t.enable_flag = #{enableFlag}
+		   </if>
+		   <if test="sourceType!=null">
+	       AND t.source_type = #{sourceType}
+	       </if>
+		   ORDER BY t.enable_flag DESC,t.plant_id,t.item_id
+    </select>
+
+
+</mapper>

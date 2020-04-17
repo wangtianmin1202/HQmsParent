@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<!--
+  description  物料类别属性维护界面
+  @author KOCDZX0 2020/03/20 11:32 AM 
+-->
+<#include "../include/header.html">
+<script src="${base.contextPath}/common/code?PCI_STATUS=ECR_PCI_STATUS"></script>
+
+<script type="text/javascript">
+    var viewModel = Hap.createGridViewModel("#grid",{
+        model:{
+        }
+    });
+
+</script>
+<body>
+<div id="page-content">
+    <div class="pull-left" id="toolbar-btn" style="padding-bottom:10px;">
+        <span id="add" type="button" class="btn btn-primary" style="float:left;margin-right:5px" data-bind=""><i class="fa fa-plus-square" style="margin-right:3px;"></i><@spring.message "hap.new"/></span>
+        <span id="save" class="btn btn-success k-grid-save-changes" style="float:left;margin-right:5px;" onclick="openWindow1()" ><i class="fa fa-save" style="margin-right:3px;"></i><@spring.message "hcm.item.edit"/></span>
+    </div>
+    <script>kendo.bind($('#toolbar-btn'), viewModel);</script>
+
+    <div id="query-form" class="pull-right" style="padding-bottom:10px;padding-top: 10px;">
+        <input  id="itemId" data-role="maskedtextbox"
+                style="width:150px;margin-right:5px;" placeholder="物料号" data-bind="value:model.itemId">
+        <script>
+            $("#itemId").kendoLov($.extend(<@lov"LOV_ITEM"/>, {
+                textField: 'itemCode',
+                valueField:'itemId'
+            }));
+        </script>
+        <span class="btn btn-primary" style="width:70px;margin-right:5px;" data-bind="click:query" type="submit">查询</span>
+        <span class="btn btn-default" type="button" data-bind="click:reset" style="margin-right:40px;"><i class="fa fa-eraser"></i>重置</span>
+    </div>
+    <script>kendo.bind($('#query-form'), viewModel);</script>
+
+
+    <div style="clear:both;margin-top:20px;" >
+        <div id="grid"></div>
+    </div>
+</div>
+<div id="div1"></div>
+
+<script type="text/javascript">
+
+    //修改物料分类属性
+    function openWindow1(){
+        var grid = $("#grid").data("kendoGrid"),
+            selections = grid.selectedDataItems();
+        if(selections.length>1||selections.length<1){
+            kendo.ui.showWarningDialog({
+                message: "请选择一行数据！"
+            });
+            return;
+        }
+        var itemId = selections[0].itemId;
+        if(itemId != null){
+            var url='category_settings_view.html?itemId='+itemId;
+            var div1 = $("#div1").kendoWindow({
+                actions:["close"],
+                width:840,
+                height:600,
+                title:'修改物料分类',
+                content:url,
+                iframe:true,
+                visible:false,
+                resizable:true,
+                modal:true,
+                close:function(){
+                    $("#grid").data('kendoGrid').dataSource.read();
+                }
+            }).data("kendoWindow");
+            div1.center().open();
+        }
+    }
+
+    Hap.initEnterQuery('#query-form', viewModel.query);
+    var BaseUrl = _basePath;
+    dataSource = new kendo.data.DataSource({
+        transport: {
+            read: {
+                url: BaseUrl + "/hcm/item/category/settings/listQuery",
+                type: "POST",
+                dataType: "json"
+            },
+            parameterMap: function (options, type) {
+                if (type !== "read" && options.models) {
+                    var datas = Hap.prepareSubmitParameter(options, type)
+                    return kendo.stringify(datas);
+                } else if (type === "read") {
+                    return Hap.prepareQueryParameter(viewModel.model.toJSON(), options)
+                }
+            }
+        },
+        batch: true,
+        serverPaging: true,
+        pageSize: 20,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+                id:"",
+                fields: {},
+            }
+        }
+    });
+
+    var grid =  $("#grid").kendoGrid({
+        dataSource: dataSource,
+        resizable: true,
+        scrollable: true,
+        navigatable: false,
+        selectable: 'single, rowbox',
+        dataBound: function () {
+            if (parent.autoResizeIframe) {
+                parent.autoResizeIframe('${RequestParameters.functionCode!}')
+            }
+        },
+        pageable: {
+            pageSizes: [5, 10, 20, 50],
+            refresh: true,
+            buttonCount: 5
+        },
+        columns: [
+
+            {
+                field: "itemCode",
+                title: '<@spring.message "asl.itemcode"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"}
+            },
+            {
+                field: "itemDescription",
+                title: '<@spring.message "asl.itemname"/>',
+                width: 300,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"}
+            },
+            {
+                field: "itemEdition",
+                title: '<@spring.message "codedetail.itemversion"/>',
+                width: 300,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"}
+            },
+            {
+                field: "cost",
+                title: '<@spring.message "ecrprojecttracking.stdprimecost"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"}
+            },
+            {
+                field: "itemType",
+                title: '<@spring.message "hcm.item.itemtype"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+            {
+                field: "makeBuyCode",
+                title: '<@spring.message "asl.purchasetype"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+            {
+                field: "itemCategory",
+                title: '<@spring.message "hcm.item.itemcategory"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+
+            },
+            {
+                field: "priceUnit",
+                title: '<@spring.message "settlement.priceunit"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+        ],
+    }).data("kendoGrid");
+
+</script>
+</body>
+</html>

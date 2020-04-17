@@ -1,0 +1,457 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hcs.hcs_supply_plan.mapper.SupplyPlanMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hcs.hcs_supply_plan.dto.SupplyPlan">
+        <result column="SUPPLY_PLAN_ID" property="supplyPlanId" jdbcType="DECIMAL" />
+        <result column="SUPPLY_PLAN_NUM" property="supplyPlanNum" jdbcType="VARCHAR" />
+        <result column="SUPPLY_PLAN_LINE_NUM" property="supplyPlanLineNum" jdbcType="DECIMAL" />
+        <result column="ITEM_ID" property="itemId" jdbcType="DECIMAL" />
+        <result column="PLANT_ID" property="plantId" jdbcType="DECIMAL" />
+        <result column="PURCHASE_TYPE" property="purchaseType" jdbcType="VARCHAR" />
+        <result column="PURCHASE_TYPE_ITEM" property="purchaseTypeItem" jdbcType="VARCHAR" />
+        <result column="SUPPLIER_ID" property="supplierId" jdbcType="DECIMAL" />
+        <result column="SUPPLIER_SITE_ID" property="supplierSiteId" jdbcType="DECIMAL" />
+        <result column="REQUIRE_TIME" property="requireTime" jdbcType="DATE" />
+        <result column="REQUIRE_QTY" property="requireQty" jdbcType="DECIMAL" />
+        <result column="REMARKS" property="remarks" jdbcType="VARCHAR" />
+        <result column="STATUS" property="status" jdbcType="VARCHAR" />
+        <result column="SUPPLIER_DELIVERY_TIME" property="supplierDeliveryTime" jdbcType="DATE" />
+        <result column="SUPPLIER_DELIVERY_QTY" property="supplierDeliveryQty" jdbcType="DECIMAL" />
+        <result column="SUPPLIER_REMARKS" property="supplierRemarks" jdbcType="VARCHAR" />
+        <result column="SHIP_PLAN_FLAG" property="shipPlanFlag" jdbcType="VARCHAR" />
+        <result column="SOURCE_TYPE" property="sourceType" jdbcType="VARCHAR" />
+        <result column="OTHER_FACTOR_FLAG" property="otherFactorFlag" jdbcType="VARCHAR" />
+        
+        <result column="SAFETY_STOCK_VALUE" property="safetyStockValue" jdbcType="DECIMAL" />
+        <result column="PRESENT_DELIVERY" property="presentDelivery" jdbcType="DECIMAL" />
+        <result column="PRESENT_QA" property="presentQa" jdbcType="DECIMAL" />
+        <result column="REALITY_SHIP_QTY" property="realityShipQty" jdbcType="DECIMAL" />
+        <result column="SHIP_QUANTITY" property="shipQuantity" jdbcType="DECIMAL" />
+        
+        <result column="ITEM_CODE" property="itemCode" jdbcType="VARCHAR" />
+        <result column="ITEM_DESCRIPTIONS" property="itemDescriptions" jdbcType="VARCHAR" />
+        <result column="PRIMARY_UOM" property="primaryUom" jdbcType="VARCHAR" />
+        <result column="PLANT_DESCRIPTIONS" property="plantDescriptions" jdbcType="VARCHAR" />
+        <result column="SUPPLIER_CODE" property="supplierCode" jdbcType="VARCHAR" />
+        <result column="SUPPLIER_NAME" property="supplierName" jdbcType="VARCHAR" />
+        
+        <result column="CAN_SHIP" property="canShip" jdbcType="VARCHAR" />
+        <result column="NEED_CONFIRM" property="needConfirm" jdbcType="VARCHAR" />
+        
+        <result column="MONDAY" property="monday" jdbcType="VARCHAR" />
+        <result column="PURCHASE_GROUP" property="purchaseGroup" jdbcType="VARCHAR" />
+        
+        <result column="FORECAST_SUPPLIER_DELIVERY_TIME" property="forecastSupplierDeliveryTime" jdbcType="DATE" />
+        <result column="CREATION_DATE_COLUMN" property="creationDateColumn" jdbcType="DATE" />
+        <result column="SPLIT_FLAG" property="splitFlag" jdbcType="VARCHAR" />
+        <result column="PURCHASE_UOM" property="purchaseUom" jdbcType="VARCHAR" />
+        
+        <result column="PACK_QTY" property="packQty" jdbcType="DECIMAL" />
+        
+    </resultMap>
+
+<!-- 获取最大的批次号 -->
+<select id="selectMaxSupplyPlanNum" resultMap="BaseResultMap" parameterType="com.hand.hcs.hcs_supply_plan.dto.SupplyPlan">
+SELECT t.supply_plan_num
+  FROM hcs_supply_plan t
+ WHERE 1 = 1
+   AND t.supply_plan_num LIKE concat(#{supplyPlanNum}, '%')
+ ORDER BY t.supply_plan_num DESC
+</select>
+
+<!-- 基础查询 -->
+<select id="reSelect" resultMap="BaseResultMap" parameterType="com.hand.hcs.hcs_supply_plan.dto.SupplyPlan">
+SELECT a.* FROM (SELECT t.*,
+       t.creation_date AS creation_date_column,
+	   'WK'||substr(to_char(TRUNC(t.require_time-1,'D'),'yyyy'),3,2)||to_char(TRUNC(t.require_time-1,'D')+1 ,'MMdd') AS monday,
+       hi.item_code,
+       hi.purchase_type AS purchase_type_item,
+       hi.descriptions AS item_descriptions,
+       hi.primary_uom,
+       hi.purchase_uom,
+       hp.descriptions AS plant_descriptions,
+       hs.supplier_code,
+       hs.supplier_name,
+       CASE
+         WHEN trunc(SYSDATE, 'D') + 14 &gt; t.require_time AND t.status = 'N' THEN
+          'Y'
+         ELSE
+          'N'
+       END AS need_confirm,
+       CASE
+         WHEN t.status = 'N' OR t.status = 'A' THEN
+          CASE
+            WHEN t.purchase_type = 'OTHERS' THEN
+             CASE
+               WHEN to_char(t.supplier_delivery_time, 'YYYYIW') &lt; to_char(SYSDATE, 'YYYYIW') + 2 THEN
+                'Y'
+               ELSE
+                'N'
+             END
+            ELSE
+             CASE
+               WHEN 
+                    t.supplier_delivery_time &lt;=
+                    (SYSDATE + decode(t.purchase_type, 'JIT', jit.jit, 'LARGE', large.large, '0') / 24) THEN
+                'Y'
+               ELSE
+                'N'
+             END
+          END
+         ELSE
+          'N'
+       END AS can_ship,
+       hac.purchase_group,
+       t.supplier_delivery_time - (CASE
+               WHEN hac.lead_time IS NULL THEN
+                (CASE t.purchase_type
+                  WHEN 'JIT' THEN
+                   jit.jit
+                  WHEN 'LARGE' THEN
+                   large.large
+                  ELSE
+                   other.other
+                END)
+               ELSE
+                to_char(hac.lead_time)
+             END)/24 AS forecast_supplier_delivery_time,
+       hi.pack_qty
+  FROM hcs_supply_plan t
+  LEFT JOIN hcs_asl ha
+    ON t.plant_id = ha.plant_id
+   AND t.item_id = ha.item_id
+   AND t.supplier_id = ha.supplier_id
+  LEFT JOIN hcs_asl_control hac
+    ON hac.asl_id = ha.asl_id, hcm_item hi, hcm_plant hp, hcs_suppliers hs,
+ 			(SELECT scvb.meaning AS jit
+          FROM sys_code_b scb, sys_code_value_b scvb
+         WHERE scb.code_id = scvb.code_id
+           AND scb.code = 'SRM_SUPPLIER_LEAD_TIME'
+           AND scvb.value = 'JIT') jit, 
+           (SELECT scvb.meaning AS large
+          FROM sys_code_b scb, sys_code_value_b scvb
+         WHERE scb.code_id = scvb.code_id
+           AND scb.code = 'SRM_SUPPLIER_LEAD_TIME'
+           AND scvb.value = 'LARGE') large,
+            (SELECT scvb.meaning AS other
+          FROM sys_code_b scb, sys_code_value_b scvb
+         WHERE scb.code_id = scvb.code_id
+           AND scb.code = 'SRM_SUPPLIER_LEAD_TIME'
+           AND scvb.value = 'OTHERS') other
+ WHERE 1 = 1
+   AND t.item_id = hi.item_id
+   AND t.plant_id = hi.plant_id
+   AND t.plant_id = hp.plant_id
+   AND t.supplier_id = hs.supplier_id
+   AND t.status != 'C'
+   <if test="supplyPlanId != null">
+   AND t.supply_plan_id = #{supplyPlanId}
+   </if>
+   <if test="requireTimeFrom != null"> 
+   AND t.require_time &gt;= to_date(#{requireTimeFrom},'yyyy-mm-dd hh24:mi:ss')
+   </if>
+   <if test="requireTimeTo != null">
+   AND t.require_time &lt;= to_date(#{requireTimeTo},'yyyy-mm-dd hh24:mi:ss')
+   </if>
+   <if test="supplierId != null">
+   AND t.supplier_id = #{supplierId}
+   </if>
+   <if test="plantId != null">
+   AND t.plant_id = #{plantId}
+   </if>
+   <if test="shipPlanFlag != null">
+   AND t.ship_plan_flag = #{shipPlanFlag}
+   </if>
+   <if test="sourceType != null">
+   AND t.source_type = #{sourceType}
+   </if>
+   <if test="requireWeeks != null">
+   AND to_char(t.require_time,'YYYYIW') = #{requireWeeks}
+   </if>
+   <if test="requireWeeks != null">
+   AND to_char(t.require_time,'YYYYIW') = #{requireWeeks}
+   </if>
+   <if test="supplyPlanNum != null">
+   AND t.supply_plan_num LIKE concat('%',concat(#{supplyPlanNum},'%'))
+   </if>
+   <if test="itemId != null">
+   AND t.item_id = #{itemId}
+   </if>
+   <if test="purchaseType != null">
+   AND t.purchase_type = #{purchaseType}
+   </if>
+   <if test="status != null">
+   AND t.status = #{status}
+   </if>
+   <if test="purchaseGroup != null">
+   AND EXISTS (SELECT 1
+          FROM hcs_asl haa, hcs_asl_control hacc
+         WHERE haa.asl_id = hacc.asl_id
+           AND t.item_id = haa.item_id
+           AND t.plant_id = haa.plant_id
+           AND t.supplier_id = haa.supplier_id
+           AND hacc.purchase_group = #{purchaseGroup})
+   </if>
+   <if test="needConfirm != null">
+   AND (CASE
+         WHEN trunc(SYSDATE, 'D') + 14 &gt; t.require_time AND t.status = 'N' THEN
+          'Y'
+         ELSE
+          'N'
+       END) = #{needConfirm}
+   </if>
+   <if test="canShip != null">
+   AND (CASE
+         WHEN t.status = 'N' OR t.status = 'A' THEN
+          CASE
+            WHEN t.purchase_type = 'OTHERS' THEN
+             CASE
+               WHEN to_char(t.supplier_delivery_time, 'YYYYIW') &lt; to_char(SYSDATE, 'YYYYIW') + 2 THEN
+                'Y'
+               ELSE
+                'N'
+             END
+            ELSE
+             CASE
+               WHEN 
+                    t.supplier_delivery_time &lt;=
+                    (SYSDATE + decode(t.purchase_type, 'JIT', jit.jit, 'LARGE', large.large, '0') / 24) THEN
+                'Y'
+               ELSE
+                'N'
+             END
+          END
+         ELSE
+          'N'
+       END) = #{canShip}
+   </if>
+   <if test="monday != null">
+   AND 'WK'||substr(to_char(TRUNC(t.require_time-1,'D'),'yyyy'),3,2)||to_char(TRUNC(t.require_time-1,'D') +1 ,'MMdd') LIKE concat('%',concat(#{monday},'%'))
+   </if>
+    ORDER BY t.supply_plan_num DESC,hi.item_id,t.require_time) a
+    <if test="sortname != null">
+    ORDER BY a.${sortname} ${sortorder}
+    </if>
+    
+</select>
+<select id="selectNeedConfirm" resultType="java.lang.Float">
+SELECT count(1)
+  FROM hcs_supply_plan t
+ WHERE 1 = 1
+   AND t.supplier_id = #{0}
+   AND (CASE
+         WHEN trunc(SYSDATE, 'D') + 14 &gt; t.require_time AND t.status = 'N' THEN
+          'Y'
+         ELSE
+          'N'
+       END) = 'Y'
+</select>
+
+<select id="existsSelect" resultMap="BaseResultMap" parameterType="com.hand.hcs.hcs_supply_plan.dto.SupplyPlan">
+SELECT t.supply_plan_id,
+	   t.status,
+	   t.supplier_id
+  FROM hcs_supply_plan t, hcm_item hi, hcm_plant hp, hcs_suppliers hs
+ WHERE 1 = 1
+   AND substr(t.SUPPLY_PLAN_NUM,1,2) = 'ST'
+   AND t.item_id = hi.item_id
+   AND t.plant_id = hi.plant_id
+   AND t.plant_id = hp.plant_id
+   AND t.supplier_id = hs.supplier_id
+   <if test="supplierId != null">
+   AND t.supplier_id = #{supplierId}
+   </if>
+   <if test="requireWeeks != null">
+   AND to_char(t.require_time,'YYYYIW') = #{requireWeeks}
+   </if>
+   <if test="plantId != null">
+   AND t.plant_id = #{plantId}
+   </if>
+   <if test="itemId != null">
+   AND t.item_id = #{itemId}
+   </if>
+   
+</select>
+
+
+<select id="selectLeadTime" resultMap="BaseResultMap" parameterType="com.hand.hcs.hcs_supply_plan.dto.SupplyPlan">
+SELECT hsd.supply_plan_id
+  FROM hcs_supply_plan hsd
+  LEFT JOIN hcs_asl ha
+    ON hsd.item_id = ha.item_id
+   AND hsd.plant_id = ha.plant_id
+   AND hsd.supplier_id = ha.supplier_id
+  LEFT JOIN hcs_asl_control hac
+    ON ha.asl_id = hac.asl_id, hcm_item_b hib, (SELECT scvb.meaning AS jit
+          FROM sys_code_b scb, sys_code_value_b scvb
+         WHERE scb.code_id = scvb.code_id
+           AND scb.code = 'SRM_SUPPLIER_LEAD_TIME'
+           AND scvb.value = 'JIT') jit, (SELECT scvb.meaning AS large
+          FROM sys_code_b scb, sys_code_value_b scvb
+         WHERE scb.code_id = scvb.code_id
+           AND scb.code = 'SRM_SUPPLIER_LEAD_TIME'
+           AND scvb.value = 'LARGE') large
+ WHERE 1 = 1
+   AND hsd.plant_id = hib.plant_id
+   AND hsd.item_id = hib.item_id
+   AND substr(hsd.supply_plan_num,1,3) = 'JIT'
+   AND hsd.status IN ('A', 'N')
+   AND decode(hsd.status, 'A', hsd.supplier_delivery_time, 'N', hsd.require_time, to_date('19500101','yyyyMMdd')) >
+       SYSDATE + (decode(hac.lead_time,
+                         NULL,
+                         (decode(hib.purchase_type, 'JIT', jit.jit, 'LARGE', large.large, '0')),
+                         hac.lead_time)) / 24
+
+</select>
+
+<select id="maxLineNumSelect" resultMap="BaseResultMap" parameterType="com.hand.hcs.hcs_supply_plan.dto.SupplyPlan">
+SELECT t.supply_plan_line_num
+  FROM hcs_supply_plan t
+ WHERE 1 = 1
+   AND (CASE
+         WHEN instr(t.supply_plan_line_num, '-') = 0 THEN
+          t.supply_plan_line_num
+         ELSE
+          substr(t.supply_plan_line_num, 1, instr(t.supply_plan_line_num, '-') - 1)
+       END) = (CASE
+         WHEN instr(#{supplyPlanLineNum}, '-') = 0 THEN
+          #{supplyPlanLineNum}
+         ELSE
+          substr(#{supplyPlanLineNum}, 1, instr(#{supplyPlanLineNum}, '-') - 1)
+       END)
+   
+   AND t.supply_plan_num = #{supplyPlanNum}
+</select>
+
+<select id="otherFactorFlagSelect" resultMap="BaseResultMap" parameterType="com.hand.hcs.hcs_supply_plan.dto.SupplyPlan">
+SELECT t.other_factor_flag
+  FROM hcs_supply_plan t
+ WHERE 1 = 1
+   AND t.item_id = #{itemId}
+   AND t.plant_id = #{plantId}
+   AND t.supplier_id = #{supplierId}
+   AND t.supply_plan_num = #{supplyPlanNum}
+   AND t.other_factor_flag = 'Y'
+</select>
+
+<!-- 求供应商数量之和A -->
+<select id="selectSumSupplierDeliveryQty" resultMap="BaseResultMap" parameterType="com.hand.hcs.hcs_supply_plan.dto.SupplyPlan">
+SELECT SUM(nvl(t.supplier_delivery_qty, 0)) AS supplier_delivery_qty,
+       MAX(nvl(t.require_qty, 0)) AS require_qty,
+       MAX(nvl(t.reality_ship_qty, 0)) AS reality_ship_qty
+  FROM hcs_supply_plan t
+ WHERE 1 = 1
+ AND t.status != 'C'
+ 
+ AND (CASE
+         WHEN instr(t.supply_plan_line_num, '-') = 0 THEN
+          t.supply_plan_line_num
+         ELSE
+          substr(t.supply_plan_line_num, 1, instr(t.supply_plan_line_num, '-') - 1)
+       END) = (CASE
+         WHEN instr(#{supplyPlanLineNum}, '-') = 0 THEN
+          #{supplyPlanLineNum}
+         ELSE
+          substr(#{supplyPlanLineNum}, 1, instr(#{supplyPlanLineNum}, '-') - 1)
+       END)
+   AND t.supply_plan_num = #{supplyPlanNum}
+</select>
+
+
+<select id="selectForecastDelivery" resultMap="BaseResultMap" parameterType="com.hand.hcs.hcs_supply_plan.dto.SupplyPlan">
+SELECT t.supply_plan_num,
+       t.supply_plan_line_num,
+       hib.item_code,
+       hib.descriptions AS item_descriptions,
+       t.purchase_type,
+       t.require_time,
+       t.require_qty,
+       t.supplier_delivery_time,
+       t.supplier_delivery_qty,
+       hs.supplier_code,
+       hs.supplier_name,
+       t.supplier_id
+  FROM hcs_supply_plan t
+  LEFT JOIN hcs_suppliers hs
+    ON t.supplier_id = hs.supplier_id
+  LEFT JOIN hcm_item hib
+    ON t.item_id = hib.item_id
+   AND t.plant_id = hib.plant_id
+  LEFT JOIN hcs_asl ha
+    ON t.item_id = ha.item_id
+   AND t.plant_id = ha.plant_id
+   AND t.supplier_id = ha.supplier_id
+   AND ha.enable_flag = 'Y'
+  LEFT JOIN hcs_asl_control hac
+    ON ha.asl_id = hac.asl_id, (SELECT scvb.meaning AS jit
+          FROM sys_code_b scb, sys_code_value_b scvb
+         WHERE scb.code_id = scvb.code_id
+           AND scb.code = 'SRM_SUPPLIER_LEAD_TIME'
+           AND scvb.value = 'JIT') jit, (SELECT scvb.meaning AS large
+          FROM sys_code_b scb, sys_code_value_b scvb
+         WHERE scb.code_id = scvb.code_id
+           AND scb.code = 'SRM_SUPPLIER_LEAD_TIME'
+           AND scvb.value = 'LARGE') large, (SELECT scvb.meaning AS other
+          FROM sys_code_b scb, sys_code_value_b scvb
+         WHERE scb.code_id = scvb.code_id
+           AND scb.code = 'SRM_SUPPLIER_LEAD_TIME'
+           AND scvb.value = 'OTHERS') other
+ WHERE (t.status &lt;&gt; 'S'
+    OR (EXISTS (SELECT 1
+                  FROM hcs_po_line_locations loc, hcs_delivery_ticket_l del
+                 WHERE del.line_location_id = loc.line_location_id
+                   AND loc.supply_plan_id = t.supply_plan_id) AND t.status &lt;&gt; 'C'))
+   AND trunc(t.supplier_delivery_time - (CASE
+               WHEN hac.lead_time IS NULL THEN
+                (CASE t.purchase_type
+                  WHEN 'JIT' THEN
+                   jit.jit
+                  WHEN 'LARGE' THEN
+                   large.large
+                  ELSE
+                   other.other
+                END)
+               ELSE
+                to_char(hac.lead_time)
+             END)) = trunc(to_date(#{forecastDeliveryTime}, 'yyyyMMdd'))
+
+</select>
+
+<select id="getSupplierDeliveryQtyHaveSplit" resultType="java.lang.Float" parameterType="com.hand.hcs.hcs_supply_plan.dto.SupplyPlan">
+SELECT nvl(SUM(t.supplier_delivery_qty), 0)
+  FROM hcs_supply_plan t
+ WHERE t.supply_plan_num = #{supplyPlanNum}
+   
+   AND (CASE
+         WHEN instr(t.supply_plan_line_num, '-') = 0 THEN
+          t.supply_plan_line_num
+         ELSE
+          substr(t.supply_plan_line_num, 1, instr(t.supply_plan_line_num, '-') - 1)
+       END) = (CASE
+         WHEN instr(#{supplyPlanLineNum}, '-') = 0 THEN
+          #{supplyPlanLineNum}
+         ELSE
+          substr(#{supplyPlanLineNum}, 1, instr(#{supplyPlanLineNum}, '-') - 1)
+       END)
+   AND t.status = 'A'
+</select>
+
+<select id="getSumSupplierdeliveryQty" resultType="java.lang.Integer">
+SELECT nvl(SUM(t.supplier_delivery_qty), 0)
+  FROM hcs_supply_plan t
+ WHERE t.supply_plan_num = #{0}
+    AND (CASE
+         WHEN instr(t.supply_plan_line_num, '-') = 0 THEN
+          t.supply_plan_line_num
+         ELSE
+          substr(t.supply_plan_line_num, 1, instr(t.supply_plan_line_num, '-') - 1)
+       END) = (CASE
+         WHEN instr(#{1}, '-') = 0 THEN
+          #{1}
+         ELSE
+          substr(#{1}, 1, instr(#{1}, '-') - 1)
+       END)
+   AND t.status != 'C'
+</select>
+</mapper>

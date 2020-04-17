@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper
+	namespace="com.hand.plm.plm_product_design_standard.mapper.ProductDesignStandardMapper">
+	<resultMap id="BaseResultMap"
+		type="com.hand.plm.plm_product_design_standard.dto.ProductDesignStandard">
+		<result column="KID" property="kid" jdbcType="VARCHAR" />
+		<result column="LEVEL_NUM" property="levelNum"	jdbcType="VARCHAR" />
+		<result column="PARENT_ID" property="parentId"	jdbcType="VARCHAR" />
+		<result column="NAME" property="name" jdbcType="VARCHAR" />
+		<result column="DESCRIPTION" property="description"	jdbcType="VARCHAR" />
+		<result column="PRODUCT_ID" property="productId"	jdbcType="VARCHAR" />
+	</resultMap>
+
+
+
+
+	<resultMap id="TreeResultMap"
+		type="com.hand.plm.product_func_attr_basic.view.TreeVO">
+		<result column="kid" property="id" jdbcType="VARCHAR" />
+		<result column="level_num" property="level" jdbcType="VARCHAR" />
+		<result column="parent_id" property="pId" jdbcType="VARCHAR" />
+		<result column="name" property="name" jdbcType="VARCHAR" />
+	</resultMap>
+
+
+
+
+	<select id="selectTreeDatas" resultMap="TreeResultMap">
+		SELECT t.kid,
+		t.parent_id,
+		t.level_num,
+		CASE
+		WHEN t.level_num = '1' THEN
+		ppb.product_name
+		ELSE
+		t.name
+		END name
+		FROM plm_product_design_standard t
+		LEFT JOIN plm_product_basic_data ppb
+		ON t.product_id = ppb.product_id
+		WHERE 1 = 1
+
+	</select>
+
+	<!-- 通过父节点查找它下边所有的子节点（包含父节点本身） -->
+	<select id="getAllTreeByPid" resultMap="BaseResultMap">
+		SELECT t.*
+	  FROM plm_product_design_standard t
+	 WHERE 1 = 1
+	 START WITH t.kid = #{kid}
+	CONNECT BY PRIOR t.kid = t.parent_id
+	</select>
+
+	<select id="getAllTreeByLevelNum" resultMap="BaseResultMap">
+		SELECT t.*
+	  FROM plm_product_design_standard t
+	 WHERE 1 = 1
+	 START WITH t.level_num=#{levelNum}
+	CONNECT BY PRIOR t.kid = t.parent_id
+	</select>
+</mapper>

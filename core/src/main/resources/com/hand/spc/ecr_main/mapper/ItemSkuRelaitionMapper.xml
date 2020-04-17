@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.spc.ecr_main.mapper.ItemSkuRelaitionMapper">
+    <resultMap id="BaseResultMap" type="com.hand.spc.ecr_main.dto.ItemSkuRelaition">
+        <result column="RELATION_ID" property="relationId" jdbcType="DECIMAL" />
+        <result column="ITEM_SKU_ID" property="itemSkuId" jdbcType="DECIMAL" />
+        <result column="ITEM_ECR_ID" property="itemEcrId" jdbcType="DECIMAL" />
+        <result column="BOM_USE" property="bomUse" jdbcType="DECIMAL" />
+        <result column="ECR_USE" property="ecrUse" jdbcType="DECIMAL" />
+        <result column="SUB_ITEM_FLAG" property="subItemFlag" jdbcType="VARCHAR" />
+        <result column="SUB_ITEM" property="subItem" jdbcType="VARCHAR" />
+        <result column="INSTEAD_ITEM_ID" property="insteadItemId" jdbcType="VARCHAR" />
+        <result column="ECR_PRICE" property="ecrPrice" jdbcType="VARCHAR" />
+    </resultMap>
+</mapper>

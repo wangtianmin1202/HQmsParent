@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.itf.itf_function_info.mapper.FunctionInfoMapper">
+    <resultMap id="BaseResultMap" type="com.hand.itf.itf_function_info.dto.FunctionInfo">
+        <result column="CONF_ID" property="confId" jdbcType="DECIMAL" />
+        <result column="SYSTEM_CODE" property="systemCode" jdbcType="VARCHAR" />
+        <result column="TRANSACTION_TYPE" property="transactionType" jdbcType="VARCHAR" />
+        <result column="ITF_CODE" property="itfCode" jdbcType="VARCHAR" />
+        <result column="FUNCTION_NAME" property="functionName" jdbcType="VARCHAR" />
+    </resultMap>
+
+    <select id="individuationQuery" resultMap="BaseResultMap">
+        SELECT t.conf_id
+              ,t.system_code
+              ,t.transaction_type
+              ,t.itf_code
+              ,t.function_name
+        FROM   itf_function_info t
+        WHERE  1 = 1
+        <if test="individuationSql!=null">
+            ${individuationSql}
+        </if>
+    </select>
+
+</mapper>

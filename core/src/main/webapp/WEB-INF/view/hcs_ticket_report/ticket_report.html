@@ -1,0 +1,262 @@
+<#include "../include/header.html">
+<script src="${base.contextPath}/common/code?HCS_SUPPLY_STATISTICS_TYPE=HCS_SUPPLY_STATISTICS_TYPE"></script>
+<script src="${base.contextPath}/common/code?HCS_SUPPLY_STATISTICS_FACTOR=HCS_SUPPLY_STATISTICS_FACTOR"></script>
+<script type="text/javascript">
+    var viewModel = Hap.createGridViewModel("#grid");
+    var supplierId;
+    /* 页面初始化查询供应商id */
+    $(document).ready(function(){
+    	$.ajax({
+    		url:"${base.contextPath}/hcs/supplier/onhand/quantities/querySupplier",
+    		type: "POST",
+    		contentType: "application/json",
+    		success: function(data){
+    			if(data.success){
+    				if(data.rows[0] != null){
+    					supplierId = data.rows[0].supplierId;
+    				}
+    			}
+    		}
+    	})
+    	for(var i=0; i<HCS_SUPPLY_STATISTICS_FACTOR.length; i++){    		
+	    	$("th")[i+2].innerText = HCS_SUPPLY_STATISTICS_FACTOR[i].description
+	    	$("th")[i+2].title = HCS_SUPPLY_STATISTICS_FACTOR[i].description
+	    	$("th")[i+2].dataset.title = HCS_SUPPLY_STATISTICS_FACTOR[i].description
+    	}
+    })
+</script>
+<body>
+<div id="page-content">
+    <div class="pull-left" id="toolbar-btn" style="padding-bottom:10px;">
+        <span class="btn btn-primary k-grid-excel" style="float:left;margin-right:5px;" data-bind="click:exportExcel">
+			    	<i class="fa fa-file-excel-o" style="margin-right:3px"></i><@spring.message "srm.exportexcel"/></span>
+    </div>
+    <script>kendo.bind($('#toolbar-btn'), viewModel);</script>
+    <div id="queryPanel" class="pull-right" style="padding-bottom:10px;">
+    
+    	<div class="k-query-simple" id="query-form">
+            <!-- 供应商名称 -->
+            <input  id="supplierLov" style="margin-right:5px" placeholder="<@spring.message 'polinelocations.supplierId'/>" data-bind="value:model.supplierId" >
+            <script>
+                	$("#supplierLov").kendoLov($.extend
+                	    (<@lov"LOV_SUPPLIER_SRM"/>, {
+                	        textField: 'supplierCode',
+                	        valueField:'supplierId',
+                	        query: function(e){
+                	        	e.param['supplierId'] = supplierId;
+                	        }
+                	}));
+            </script>
+            <!-- 年月 -->
+            <input id="dateFlag" required style="margin-right:5px;" 
+                		placeholder='<@spring.message "ticketReport.dateFlag"/>' data-bind="value:model.dateFlag" />
+            <script>
+	            $("#dateFlag").kendoDatePicker({
+	            	format: "yyyy-MM",
+	            	depth: "year",
+	                start: "year",
+	                change: function(e){
+	                	viewModel.model.dateFlag = e.sender._oldText;
+	                }
+				});
+            </script>   
+            <!-- 类型 -->
+            <input id="statisticsType" required type="text" data-role="maskedtextbox" style="margin-right:5px;" placeholder='<@spring.message "ticketReport.statisticsType"/>'
+            data-bind="value:model.statisticsType">
+            <script>
+                   $("#statisticsType").kendoComboBox({
+	               	    dataTextField: "meaning",
+	               	    dataValueField: "value",
+	               	    valuePrimitive: true,
+	               	    dataSource: HCS_SUPPLY_STATISTICS_TYPE
+	               	});
+            </script> 		
+        </div>
+        <script>kendo.bind($('#query-form'), viewModel);</script>
+<!--         <div class="k-query-detail" id="query-form2"> -->
+<!--             <div class="rows" style="margin-top:5px"> -->
+
+<!--             </div> -->
+<!--         </div> -->
+<!--         <script>kendo.bind($('#query-form2'), viewModel);</script> -->
+    
+        
+        <div style="clear:both"></div>
+    </div>
+    <script>
+    kendo.bind($('#query-form'), viewModel);
+    $('#queryPanel').kendoQueryPanel({
+        queryFunction: function () {
+        	 if(supplierId != null){
+        		 viewModel.model.set("supplierId",supplierId)
+        	 }
+        	 if(!isNotEmpty(viewModel.model.dateFlag)){        		 
+        		kendo.ui.showInfoDialog({
+ 					title: '<@spring.message "hap.tip.info"/>',
+ 	    			message: '<@spring.message "error.ticketreport_dateflag"/>'
+ 	    		})
+ 	    		return;
+        	 }else if(!isNotEmpty(viewModel.model.statisticsType)){
+        		 kendo.ui.showInfoDialog({
+  					title: '<@spring.message "hap.tip.info"/>',
+  	    			message: '<@spring.message "error.ticketreport_statisticstype"/>'
+  	    		})
+  	    		return;
+        	 }else{        		 
+	        	viewModel.query();
+        	 }			 		
+        },
+//         resetFunction: function () {
+//             viewModel.reset();
+//         }
+    });
+    </script>
+    <div style="clear:both">
+        <div id="grid"></div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    Hap.initEnterQuery('#query-form', viewModel.query);
+    var BaseUrl = _basePath;
+    dataSource = new kendo.data.DataSource({
+        transport: {
+            read: {
+                url: BaseUrl + "/hcs/delivery/ticket/l/planReport",
+                type: "POST",
+                dataType: "json"
+            },
+            parameterMap: function (options, type) {
+                if (type !== "read" && options.models) {
+                    var datas = Hap.prepareSubmitParameter(options, type)
+                    return kendo.stringify(datas);
+                } else if (type === "read") {
+                    return Hap.prepareQueryParameter(viewModel.model.toJSON(), options)
+                }
+            }
+        },
+        batch: true,
+        serverPaging: true,
+        pageSize: 20,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+                id: "",
+                fields: {}
+            }
+        }
+    });
+
+    $("#grid").kendoGrid({
+    	excel: {
+    		fileName:'<@spring.message "excel.ticket_report"/>.xlsx',
+    		filterable: true,
+    	},
+    	excelExport: function(e){
+    		var rows = e.workbook.sheets[0].rows;
+    		var datas = e.data;
+    		
+    		for(var i=0; i<HCS_SUPPLY_STATISTICS_FACTOR.length; i++){    		
+    	    	rows[0].cells[i+2].value = HCS_SUPPLY_STATISTICS_FACTOR[i].description;
+        	}
+    		
+    		for(var i=1;i<rows.length; i++){
+    			rows[i].cells[0].value = datas[i-1].userName;
+    			rows[i].cells[1].value = datas[i-1].supplierCode;
+    		}
+    	},
+        dataSource: dataSource,
+        resizable: true,
+        scrollable: true,
+        navigatable: false,
+        sortable:true,
+        autoBind: false,
+        selectable: '',
+        dataBound: function () {
+            if (parent.autoResizeIframe) {
+                parent.autoResizeIframe('${RequestParameters.functionCode!}')
+            }
+        },
+        pageable: false,
+        columns: [
+            {
+                field: "supplierCode",
+                title: '<@spring.message "ticketReport.supplierCode"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"}
+            },
+                    {
+                field: "supplierName",
+                title: '<@spring.message "ticketReport.supplierName"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"}
+            },
+                    {
+                field: "column1",
+                //title: '<@spring.message "ticketReport.column1"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"}
+            },
+                    {
+                field: "column2",
+                //title: '<@spring.message "ticketReport.column2"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"}
+            },
+                    {
+                field: "column3",
+                //title: '<@spring.message "ticketReport.column3"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"}
+            },
+                    {
+                field: "column4",
+                //title: '<@spring.message "ticketReport.column4"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"}
+            },
+                    {
+                field: "column5",
+                //title: '<@spring.message "ticketReport.column5"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"}
+            },
+                    {
+                field: "qualifiedCount",
+                title: '<@spring.message "ticketReport.qualifiedCount"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"}
+            },
+            {
+                field: "count",
+                title: '<@spring.message "ticketReport.count"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"}
+            },
+            {
+                field: "molecular",
+                title: '<@spring.message "ticketReport.molecular"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+                template: function(item){
+                	return (item.qualifiedCount/item.count).toFixed(2);	
+                }
+            },
+        ],
+        editable: false
+    });
+    Hap.autoResizeGrid('#grid');
+</script>
+</body>
+</html>

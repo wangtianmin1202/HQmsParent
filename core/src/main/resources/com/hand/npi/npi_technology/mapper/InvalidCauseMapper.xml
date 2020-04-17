@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.npi.npi_technology.mapper.InvalidCauseMapper">
+    <resultMap id="BaseResultMap" type="com.hand.npi.npi_technology.dto.InvalidCause">
+        <result column="INVALID_CAUSE_ID" property="invalidCauseId" jdbcType="DECIMAL" />
+        <result column="INVALID_CAUSE_NUMBER" property="invalidCauseNumber" jdbcType="VARCHAR" />
+        <result column="INVALID_PATTERN_ID" property="invalidPatternId" jdbcType="DECIMAL" />
+        <result column="INVALID_CAUSE" property="invalidCause" jdbcType="VARCHAR" />
+        <result column="OCC" property="occ" jdbcType="VARCHAR" />
+        <result column="invalidCauseId" property="invalidCauseId" jdbcType="DECIMAL" />
+        <result column="preventionMeasureId" property="preventionMeasureId" jdbcType="DECIMAL" />
+        <result column="SEV" property="sev" jdbcType="VARCHAR" />
+    </resultMap>
+
+	<select id="selectMaxNumber" resultMap="BaseResultMap"
+		parameterType="com.hand.npi.npi_technology.dto.InvalidCause">
+		select s.invalid_cause_number from npi_invalid_cause s where s.invalid_cause_number like  concat(#{invalidCauseNumber}, '%') 
+		order by s.invalid_cause_number desc
+	</select>
+
+
+	<select id="selectInvalidCauseChild" resultMap="BaseResultMap"
+		parameterType="com.hand.npi.npi_technology.dto.InvalidCause">
+		select c.invalid_cause_id invalidCauseId,m.prevention_id preventionMeasureId 
+		from npi_invalid_cause c left join npi_prevention_measure m 
+		on c.invalid_cause_number = m.invalid_cause_number
+		<where>
+            <if test="invalidCauseId!=null">
+                AND c.invalid_cause_id=#{invalidCauseId}
+            </if>
+        </where>
+	</select>
+	<select id="queryInvalidCauseList" resultMap="BaseResultMap"
+		parameterType="com.hand.npi.npi_technology.dto.InvalidCause">
+		select c.occ,p.sev from npi_invalid_cause c 
+		left join npi_invalid_pattern p 
+		on c.INVALID_PATTERN_ID = p.invalid_pattern_id
+		<where>
+            <if test="invalidCauseId!=null">
+                AND c.invalid_cause_id=#{invalidCauseId}
+            </if>
+        </where>
+	</select>
+</mapper>

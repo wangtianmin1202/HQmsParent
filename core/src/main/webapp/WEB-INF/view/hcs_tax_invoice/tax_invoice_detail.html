@@ -1,0 +1,553 @@
+<#include "../include/header.html">
+<script src="${base.contextPath}/lib/prints/doc_print.js" type="text/javascript" charset="UTF-8"></script>
+<script src="${base.contextPath}/common/code?SRM_WEB_INVOICE_STATUS=SRM_WEB_INVOICE_STATUS"></script>
+<script src="${base.contextPath}/common/code?SRM_DOC_SETTLEMENT_STATUS=SRM_DOC_SETTLEMENT_STATUS"></script>
+<script src="${base.contextPath}/common/code?SRM_DOC_SETTLEMENT_TYPE=SRM_DOC_SETTLEMENT_TYPE"></script>
+<script src="${base.contextPath}/lib/bootstrap-3.3.7/js/bootstrap.min.js"></script>
+<script type="text/javascript">
+    var viewModel = Hap.createGridViewModel("#grid");
+    var parentData = window.parent.parentData;
+    var webInvoiceId;
+    viewModel.closeWindow = function(){
+    	window.parent.$('#lineWindow').data('kendoWindow').close();
+    }
+    $(function(){
+		if(parentData[0].changeFlag === 'E'){
+    		//网上发票号
+			document.getElementById("webInvoiceNum").value = parentData[0].webInvoiceNum
+			viewModel.model.webInvoiceNum = webInvoiceNum;
+
+    		var v = parentData[0].webInvoiceStatus ? parentData[0].webInvoiceStatus : "";
+            $.each(SRM_WEB_INVOICE_STATUS, function (i, n) {
+                if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                    v = n.meaning;
+                }
+            });
+          	//状态
+    		document.getElementById("webInvoiceStatus").value = v
+    		//不含税总额(系统)
+    		viewModel.model.set("noTaxAmountS",parentData[0].noTaxAmountS)
+    		//税额(系统)
+    		viewModel.model.set("invoiceTaxAmountS",parentData[0].invoiceTaxAmountS)
+    		//含税总额(系统)
+    		viewModel.model.set("invoiceAmountS",parentData[0].invoiceAmountS)
+    		//不含税总额(实际)
+    		viewModel.model.set("noTaxAmount",parentData[0].noTaxAmount)
+    		//税额(实际)
+    		viewModel.model.set("invoiceTaxAmount",parentData[0].invoiceTaxAmount)
+    		//含税总额(实际)
+    		viewModel.model.set("invoiceAmount",parentData[0].invoiceAmount)
+    		//备注
+    		viewModel.model.set("supplierRemarks",parentData[0].supplierRemarks)
+    		//税务发票号
+    		viewModel.model.set("taxInvoiceNum",parentData[0].taxInvoiceNum)
+    		//税务发票张数
+    		viewModel.model.set("taxInvoiceQty",parentData[0].taxInvoiceQty)
+    		//审批备注
+    		viewModel.model.set("approvedRemarks",parentData[0].approvedRemarks)
+    		
+    		//工厂
+    		document.getElementById("plantId").value = nvl(parentData[0].plantName,"")
+    		viewModel.model.plantId = parentData[0].plantId
+    		//币种
+    		viewModel.model.set("currency",parentData[0].currency)
+    		//供应商编码
+    		document.getElementById("supplierCode").value = nvl(parentData[0].supplierCode,"")
+    		viewModel.model.supplierId = parentData[0].supplierId
+    		//供应商名称
+    		/* document.getElementById("supplierName").value = nvl(parentData[0].supplierName,"") */
+    		viewModel.model.set("supplierName",parentData[0].supplierName)
+    		//供应商地点
+    		document.getElementById("supplierSiteName").value = nvl(parentData[0].supplierSiteName,"")
+    		viewModel.model.supplierSiteId = parentData[0].supplierSiteId
+    	}
+    })
+
+    
+    $(function(){
+    	//发票明细
+    	$("#tab-create-settlement").on("click",function(){
+    		window.location.reload()
+    		//viewModel.query();
+    	});
+    	//调整行明细
+    	$("#iframe-confirm-settlement").on("load",function(){
+    		$(this).show();
+    	});
+    	$("#tab-confirm-settlement").on("click",function(){
+    		$("#iframe-confirm-settlement").hide();
+    		$("#iframe-confirm-settlement").attr("src","${base.contextPath}/hcs_tax_invoice/doc_ajustment_query.html");
+    	})
+    	
+    }); 
+    //校验字符串是否为空
+    function checkStr(str){
+		if(str == null || str === '' ||typeof(str) == "undefined"){
+    		return false;
+    	}
+		return true;
+    }
+</script>
+<body>
+<div id="page-content">
+    <div id="head">
+		<form class="form-horizontal">
+			<div id="form">
+					<div class="row">
+					    <div class="pull-left" id="toolbar-btn" style="padding-bottom:10px;">
+							<span type="button" class="btn btn-primary"
+                         	style="float:left;margin-right:5px" data-bind="click:closeWindow"><i class="fa fa-undo" style="margin-right:3px;"></i><@spring.message "hap.back"/></span>
+					  	</div>
+					    <script>kendo.bind($('#toolbar-btn'), viewModel);</script>
+					    <div class="pull-right" id="query-form" style="padding-bottom:10px;">
+					           
+					        <div style="clear:both"></div>
+					    </div>
+					    <script>kendo.bind($('#query-form'), viewModel);</script>
+				    </div>
+				    <div class="row" style="margin-top: 5px;font-size:14px">
+				    		<table style="border-collapse:separate; border-spacing:40px 5px;font-size:14px">
+						<tr>
+							<td>
+									<!-- 网上发票号 -->
+						    	    <lable class="col-xs-6 control-lable" style="text-align:right;padding:0px;margin-top:1%"><@spring.message "taxinvoice.webinvoicenum"/>：</lable>
+						    	    <div class="col-xs-6"  style="padding:0px">
+							    	    <input id="webInvoiceNum" disabled="disabled"    data-role="maskedtextbox" type="text" data-bind="value:model.webInvoiceNum" />
+							    	    <script>kendo.bind($("#webInvoiceNum"),viewModel);</script>
+						    	    </div>
+							</td>
+							<td>
+									<!-- 状态 -->
+						    	    <lable class="col-xs-6 control-lable" style="text-align:right;padding:0px;margin-top:1%"><@spring.message "taxinvoice.webinvoicestatus"/>：</lable>
+						    	    <div class="col-xs-6"  style="padding:0px">
+							    	    <input id="webInvoiceStatus" disabled="disabled"    data-role="maskedtextbox" type="text" data-bind="value:model.webInvoiceStatus" data-lable="<@spring.message "taxinvoice.webinvoicestatus"/>"/>
+							    	    <script>
+								    	    kendo.bind($("#webInvoiceStatus"),viewModel);
+							    	    </script>
+						    	    </div>
+						    </td>
+							<td>
+									<!-- 工厂 -->
+						    	    <lable class="col-xs-6 control-lable" style="text-align:right;padding:0px;margin-top:1%"><@spring.message "taxinvoice.plantname"/>：</lable>
+						    	    <div class="col-xs-6"  style="padding:0px">
+							    	    <input id="plantId" disabled="disabled"    data-role="maskedtextbox" type="text" data-bind="value:model.plantId" data-lable="<@spring.message "taxinvoice.plantname"/>"/>
+							    	    <script>kendo.bind($("#plantId"),viewModel);</script>
+						    	    </div>
+						   </td>
+						    <td>
+						    		<!-- 币种 -->
+						    	    <lable class="col-xs-6 control-lable" style="text-align:right;padding:0px;margin-top:1%"><@spring.message "taxinvoice.currency"/>：</lable>
+						    	    <div class="col-xs-6"  style="padding:0px">
+							    	    <input id="currency" disabled="disabled"    data-role="maskedtextbox" type="text" data-bind="value:model.currency"/>
+							    	    <script>kendo.bind($("#currency"),viewModel);</script>
+						    	    </div>
+						    </td>
+						</tr>
+						<tr >
+							<td>
+									 <!-- 供应商编码 -->
+									 <lable class="col-xs-6 control-lable" style="text-align:right;padding:0px;margin-top:1%"><@spring.message "taxinvoice.suppliercode"/>：</lable>
+						    	    <div class="col-xs-6"  style="padding:0px">
+							    	    <input id="supplierCode" disabled="disabled"    data-role="maskedtextbox" type="text" data-bind="value:model.supplierCode"/>
+							    	    <script>kendo.bind($("#supplierCode"),viewModel);</script>
+						    	    </div>
+							</td>
+							<td>
+									<!-- 供应商名称 -->
+						    	    <lable class="col-xs-6 control-lable" style="text-align:right;padding:0px;margin-top:1%"><@spring.message "taxinvoice.suppliername"/>：</lable>
+						    	    <div class="col-xs-6"  style="padding:0px">
+							    	    <input id="supplierName" disabled="disabled"    data-role="maskedtextbox" type="text" data-bind="value:model.supplierName" />
+							    	    <script>kendo.bind($("#supplierName"),viewModel);</script>
+						    	    </div>
+						    </td>
+							<td>
+									<!-- 供应商地点 -->
+						    	    <lable class="col-xs-6 control-lable" style="text-align:right;padding:0px;margin-top:1%"><@spring.message "taxinvoice.suppliersitename"/>：</lable>
+						    	    <div class="col-xs-6"  style="padding:0px">
+							    	    <input id="supplierSiteName" disabled="disabled"    data-role="maskedtextbox" type="text" data-bind="value:model.supplierSiteName"/>
+							    	    <script>kendo.bind($("#supplierSiteName"),viewModel);</script>
+						    	    </div>
+						   </td>
+						    <td rowspan="2" style="padding:0px">
+						    		<!-- 备注 -->
+						    	    <lable class="col-xs-6 control-lable" style="text-align:right;padding:0px;margin-top:1%"><@spring.message "taxinvoice.supplierremarks"/>：</lable>
+						    	    <div class="col-xs-6" style="padding:0px">
+							    	    <textarea id="supplierRemarks" disabled style="margin:0px"  data-role="maskedtextbox" type="" data-bind="value:model.supplierRemarks"></textarea>
+							    	    <script>kendo.bind($("#supplierRemarks"),viewModel);</script>
+						    	    </div>
+						    </td>
+						</tr>
+						<tr>
+							<td>
+									<!-- 不含税总额（系统） -->
+						    	    <lable class="col-xs-6 control-lable" style="text-align:right;padding:0px;margin-top:1%"><@spring.message "taxinvoice.notaxinvoiceamounts"/>：</lable>
+						    	    <div class="col-xs-6"  style="padding:0px">
+							    	    <input id="noTaxAmountS" disabled="disabled"    data-role="maskedtextbox" type="text" data-bind="value:model.noTaxAmountS" />
+							    	    <script>kendo.bind($("#noTaxAmountS"),viewModel);</script>
+						    	    </div>						    
+							</td>
+							<td>
+									<!-- 税额（系统） -->
+						    	    <lable class="col-xs-6 control-lable" style="text-align:right;padding:0px;margin-top:1%"><@spring.message "taxinvoice.invoicetaxamounts"/>：</lable>
+						    	    <div class="col-xs-6"  style="padding:0px">
+							    	    <input id="invoiceTaxAmountS" disabled="disabled"    data-role="maskedtextbox" type="text" data-bind="value:model.invoiceTaxAmountS"/>
+							    	    <script>kendo.bind($("#invoiceTaxAmountS"),viewModel);</script>
+						    	    </div>
+						    </td>
+							<td>
+									<!-- 含税总额（系统） -->
+						    	    <lable class="col-xs-6 control-lable" style="text-align:right;padding:0px;margin-top:1%"><@spring.message "taxinvoice.invoiceamounts"/>：</lable>
+						    	    <div class="col-xs-6"  style="padding:0px">
+							    	    <input id="invoiceAmountS" disabled="disabled"    data-role="maskedtextbox" type="text" data-bind="value:model.invoiceAmountS"/>
+							    	    <script>kendo.bind($("#invoiceAmountS"),viewModel);</script>
+						    	    </div>
+						   </td>
+						    <td>
+						    </td>
+						</tr>
+						<tr>
+							<td>
+									<!-- 不含税总额（实际） -->
+						    	    <lable class="col-xs-6 control-lable" style="text-align:right;padding:0px;margin-top:1%"><@spring.message "taxinvoice.notaxinvoiceamount"/>：</lable>
+						    	    <div class="col-xs-6"  style="padding:0px">
+							    	    <input id="noTaxAmount"  disabled   data-role="maskedtextbox" type="text" data-bind="value:model.noTaxAmount" data-lable="<@spring.message 'taxinvoice.notaxinvoiceamount'/>" />
+							    	    <script>kendo.bind($("#noTaxAmount"),viewModel);</script>
+						    	    </div>
+							</td>
+							<td>
+									<!-- 税额（实际） -->
+						    	    <lable class="col-xs-6 control-lable" style="text-align:right;padding:0px;margin-top:1%"><@spring.message "taxinvoice.invoicetaxamount"/>：</lable>
+						    	    <div class="col-xs-6"  style="padding:0px">
+							    	    <input id="invoiceTaxAmount"  disabled   data-role="maskedtextbox" type="text" data-bind="value:model.invoiceTaxAmount" data-lable="<@spring.message 'taxinvoice.invoicetaxamount'/>" />
+							    	    <script>kendo.bind($("#invoiceTaxAmount"),viewModel);</script>
+						    	    </div>
+						    </td>
+							<td>
+									<!-- 含税总额（实际） -->
+						    	    <lable class="col-xs-6 control-lable" style="text-align:right;padding:0px;margin-top:1%"><@spring.message "taxinvoice.invoiceamount"/>：</lable>
+						    	    <div class="col-xs-6"  style="padding:0px">
+							    	    <input id="invoiceAmount"  disabled   data-role="maskedtextbox" type="text" data-bind="value:model.invoiceAmount" data-lable="<@spring.message 'taxinvoice.invoiceamount'/>" />
+							    	    <script>kendo.bind($("#invoiceAmount"),viewModel);</script>
+						    	    </div>
+						   </td>
+						    <td rowspan="2">
+						    		 <!-- 审批备注 -->
+						    	    <lable class="col-xs-6 control-lable" style="text-align:right;padding:0px;margin-top:1%"><@spring.message "taxinvoice.approvedremarks"/>：</lable>
+						    	    <div class="col-xs-6" style="padding:0px">
+							    	    <textarea id="approvedRemarks" style="" disabled data-role="maskedtextbox" type="" data-bind="value:model.approvedRemarks"></textarea>
+							    	    <script>kendo.bind($("#approvedRemarks"),viewModel);</script>
+						    	    </div>
+						    </td>
+						</tr>
+						<tr>
+							<td colspan="2">
+									<!-- 税务发票号 -->
+						    	    <lable class="col-xs-3 control-lable" style="text-align:right;padding:0px;margin-top:1%"><@spring.message "taxinvoice.taxinvoicenum"/>：</lable>
+						    	    <div class="col-xs-9"  style="padding:0px">
+							    	    <input id="taxInvoiceNum" style="width:108%" disabled  data-role="maskedtextbox" type="text" data-bind="value:model.taxInvoiceNum" data-lable="<@spring.message 'taxinvoice.taxinvoicenum'/>" />
+							    	    <script>kendo.bind($("#taxInvoiceNum"),viewModel);</script>
+						    	    </div>
+							</td>
+							<td>
+									<!-- 发票数量 -->
+						    	    <lable class="col-xs-6 control-lable" style="text-align:right;padding:0px;margin-top:1%"><@spring.message "taxinvoice.taxinvoiceqty"/>：</lable>
+						    	    <div class="col-xs-6"  style="padding:0px">
+							    	    <input id="taxInvoiceQty" oninput = "value=value.replace(/[^\d]/g,'')"   disabled  data-role="maskedtextbox" type="text" data-bind="value:model.taxInvoiceQty" data-lable="<@spring.message 'taxinvoice.taxinvoiceqty'/>" />
+							    	    <script>kendo.bind($("#taxInvoiceQty"),viewModel);</script>
+						    	    </div>
+						    </td>
+							<td>
+
+						   </td>
+						    <td>
+
+						    </td>
+						</tr>
+					</table>
+				    </div>
+				    <div class="col-sm-12" style="margin-top:10px">
+				    	<ul class="nav nav-tabs" id="mytab">
+				    		<li class="active"><a id="tab-create-settlement" href="#tab1-id" data-toggle="tab"><@spring.message "srm.invoice.detail"/></a></li>
+				    		<li class=""><a id="tab-confirm-settlement" href="#tab2-id" data-toggle="tab"><@spring.message "srm.invoice.adjustmentdetail"/></a></li>
+				    	</ul>
+				    	<div id="tabContent" class="tab-content" style="margin-top:5px">
+					    	<div class="tab-pane fade in active" id="tab1-id">
+						    	<div class="pull-left" id="toolbar-btn-1" style="padding-bottom:10px;">
+							        <span class="btn btn-primary k-grid-excel" style="float:left;margin-right:5px;" data-bind="click:exportExcel">
+							    	<i class="fa fa-file-excel-o" style="margin-right:3px"></i><@spring.message "srm.exportexcel"/></span>
+							    </div>
+				    			<script>kendo.bind($('#toolbar-btn'), viewModel);</script>
+				    			
+							    <div style="clear:both;margin-top:30px">
+							        <div id="grid"></div>
+							    </div>
+				    </div>
+				    <script>kendo.bind($('#tab1-id'), viewModel);</script>
+					<div class="tab-pane fade" id="tab2-id">
+			    		<iframe id="iframe-confirm-settlement" height="420px" width="100%" frameborder="0" seamless scrolling="auto"></iframe>
+			    	</div>  
+			  </div>
+		    </div>  	
+			</div>
+		</form>
+	</div>
+</div>
+
+<script type="text/javascript">
+    Hap.initEnterQuery('#query-form', viewModel.query);
+    var BaseUrl = _basePath;
+    dataSource = new kendo.data.DataSource({
+        transport: {
+            read: {
+                url: BaseUrl + "/hcs/doc/settlement/query",
+                type: "POST",
+                dataType: "json"
+            },
+            update: {
+                url: BaseUrl + "/hcs/doc/settlement/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            destroy: {
+                url: BaseUrl + "/hcs/doc/settlement/remove",
+                type: "POST",
+                contentType: "application/json"
+            },
+            create: {
+                url: BaseUrl + "/hcs/doc/settlement/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            parameterMap: function (options, type) {
+                if (type !== "read" && options.models) {
+                    var datas = Hap.prepareSubmitParameter(options, type)
+                    return kendo.stringify(datas);
+                } else if (type === "read") {
+                	//viewModel.model.settlementStatus = 'P';
+                	var modelData = {
+                			
+                	}
+                	if(parentData[0].changeFlag === 'N'){                		
+                		var idArr = new Array();
+	                	$.each(parentData,function(i,n){
+	                		idArr.push(parentData[i].docSettlementId)
+	                	})
+	                	modelData.docSettlementIdList = JSON.stringify(idArr).replace(/\[|]/g,'');
+                	}else if(parentData[0].changeFlag === 'E'){
+                		webInvoiceId = parentData[0].webInvoiceId;
+                		modelData.webInvoiceId = parentData[0].webInvoiceId;
+					}
+                	//console.log(viewModel.model.toJSON())
+                    return Hap.prepareQueryParameter(modelData, options)
+                }
+            }
+        },
+        batch: true,
+        serverPaging: true,
+        pageSize: 10,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+                id: "docSettlementId",
+                fields: {}
+            }
+        }
+    });
+
+    $("#grid").kendoGrid({
+    	excel: {
+    		fileName:"发票明细.xlsx",
+    		filterable: true,
+    	},
+    	excelExport: function(e){
+    		var rows = e.workbook.sheets[0].rows;
+    		var datas = e.data;
+    		
+    		for(var i=1;i<rows.length; i++){
+    			rows[i].cells[8].value = Hap.getCodeMeaning(SRM_DOC_SETTLEMENT_TYPE,datas[i-1].docType);
+    		}
+    	},
+        dataSource: dataSource,
+        resizable: true,
+        scrollable: true,
+        sortable:true,
+        navigatable: false,
+        dataBound: function () {
+            if (parent.autoResizeIframe) {
+                parent.autoResizeIframe('${RequestParameters.functionCode!}')
+            }
+        },
+        pageable: {
+            pageSizes: [5, 10, 20, 50],
+            refresh: true,
+            buttonCount: 5
+        },
+        columns: [
+        	{
+                field: "relPoNumH",
+                title: '<@spring.message "docsettlement.relPoNumH"/>',
+                width: 100,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+                locked: true,
+            },
+                    
+                    {
+                field: "relPoNumL",
+                title: '<@spring.message "docsettlement.relPoNumL"/>',
+                width: 60,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+                locked: true,
+            },  
+            {
+                field: "plantName",
+                title: '<@spring.message "docsettlement.plantName"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+            
+            {
+                field: "itemCode",
+                title: '<@spring.message "docsettlement.itemCode"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+            {
+                field: "itemName",
+                title: '<@spring.message "docsettlement.itemName"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+                   
+                    {
+                field: "itemVersion",
+                title: '<@spring.message "docsettlement.itemversion"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+            {
+                field: "docQty",
+                title: '<@spring.message "docsettlement.docqty"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+            
+            {
+                field: "itemUom",
+                title: '<@spring.message "docsettlement.itemuom"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+                    {
+                field: "docType",
+                title: '<@spring.message "docsettlement.doctype"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+                template: function (dataItem) {
+                    var v = dataItem.docType ? dataItem.docType : "";
+                    $.each(SRM_DOC_SETTLEMENT_TYPE, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return v;
+                        }
+                    });
+                    return v;
+                },
+                editor: function (container, options) {
+                    $('<input name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            dataTextField: "meaning",
+                            dataValueField: "value",
+                            valuePrimitive: true,
+                            dataSource:SRM_DOC_SETTLEMENT_TYPE
+                        });
+                }
+            },
+                    {
+                field: "accountDate",
+                title: '<@spring.message "docsettlement.accountdate"/>',
+                width: 150,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+            {
+                field: "unitPrice",
+                title: '<@spring.message "docsettlement.unitprice"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+            {
+                field: "priceUnit",
+                title: '<@spring.message "docsettlement.priceunit"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+            {
+                field: "actualAmount",
+                title: '<@spring.message "docsettlement.actualamount"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },     
+            {
+                field: "taxCode",
+                title: '<@spring.message "docsettlement.taxcode"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },        
+//             {
+//                 field: "agentFullName",
+//                 title: '<@spring.message "docsettlement.agentfullname"/>',
+//                 width: 120,
+//                 attributes: {style: "text-align:center;white-space: nowrap;"},
+//                 headerAttributes: {style: "text-align:center"},
+//             },
+            {
+                field: "remarks",
+                title: '<@spring.message "docsettlement.remarks"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+            {
+                field: "relDocNumH",
+                title: '<@spring.message "docsettlement.relDocNumH"/>',
+                width: 150,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+                    {
+                field: "relDocNumL",
+                title: '<@spring.message "docsettlement.relDocNumL"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+            
+            {
+                field: "docSettlementNum",
+                title: '<@spring.message "docsettlement.docsettlementnum"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+        ],
+        editable: false
+    });
+    Hap.autoResizeGrid('#grid');
+</script>
+</body>
+</html>

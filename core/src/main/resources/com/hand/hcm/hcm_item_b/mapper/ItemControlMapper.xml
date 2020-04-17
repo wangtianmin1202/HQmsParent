@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hcm.hcm_item_b.mapper.ItemControlMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hcm.hcm_item_b.dto.ItemControl">
+        <result column="ITEM_ID" property="itemId" jdbcType="DECIMAL" />
+        <result column="PLANT_ID" property="plantId" jdbcType="DECIMAL" />
+        <result column="SCHEDULE_REGION_ID" property="scheduleRegionId" jdbcType="DECIMAL" />
+        <result column="ASSEMBLY_SHRINKAGE" property="assemblyShrinkage" jdbcType="DECIMAL" />
+        <result column="COMPONENT_SHRINKAGE" property="componentShrinkage" jdbcType="DECIMAL" />
+        <result column="ECONOMIC_LOT_SIZE" property="economicLotSize" jdbcType="DECIMAL" />
+        <result column="TRANSFER_LOT_SIZE" property="transferLotSize" jdbcType="DECIMAL" />
+        <result column="PROCESSING_LEAD_TIME" property="processingLeadTime" jdbcType="DECIMAL" />
+        <result column="SAFETY_LEAD_TIME" property="safetyLeadTime" jdbcType="DECIMAL" />
+        <result column="EXCEED_LEAD_TIME" property="exceedLeadTime" jdbcType="DECIMAL" />
+        <result column="SCHEDULE_TIME_FENCE" property="scheduleTimeFence" jdbcType="DECIMAL" />
+        <result column="RELEASE_TIME_FENCE" property="releaseTimeFence" jdbcType="DECIMAL" />
+        <result column="DEMAND_TIME_FENCE" property="demandTimeFence" jdbcType="DECIMAL" />
+        <result column="FIX_TIME_FENCE" property="fixTimeFence" jdbcType="DECIMAL" />
+        <result column="OPTIMIZATION_GROUP" property="optimizationGroup" jdbcType="VARCHAR" />
+        <result column="PROD_LINE_RULE" property="prodLineRule" jdbcType="VARCHAR" />
+        <result column="PARTNER_ITEM_ID" property="partnerItemId" jdbcType="DECIMAL" />
+        <result column="CONTROL_FLAG" property="controlFlag" jdbcType="VARCHAR" />
+        <result column="COMPLETE_CTRL_TYPE" property="completeCtrlType" jdbcType="VARCHAR" />
+        <result column="COMPLETE_CTRL_QTY" property="completeCtrlQty" jdbcType="DECIMAL" />
+        <result column="UNIT_WEIGHT" property="unitWeight" jdbcType="DECIMAL" />
+        <result column="ISSUE_CTRL_TYPE" property="issueCtrlType" jdbcType="VARCHAR" />
+        <result column="ISSUE_CTRL_QTY" property="issueCtrlQty" jdbcType="DECIMAL" />
+        <result column="ORDER_TIME_FENCE" property="orderTimeFence" jdbcType="DECIMAL" />
+        <result column="ITEM_TYPE_ID" property="itemTypeId" jdbcType="DECIMAL" />
+        <result column="RANGE_FLAG" property="rangeFlag" jdbcType="VARCHAR" />
+        <result column="CID" property="cid" jdbcType="DECIMAL" />
+    </resultMap>
+
+
+</mapper>

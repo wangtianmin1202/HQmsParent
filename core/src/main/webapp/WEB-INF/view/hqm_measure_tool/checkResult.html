@@ -1,0 +1,70 @@
+<#include "../include/header.html">
+<script src="${base.contextPath}/common/code?HQM_MSA_ANALYSIS_CONTENT=HQM_MSA_ANALYSIS_CONTENT"></script>
+<body>
+<script type="text/javascript">
+	var parentData = window.parent.parentData;
+	var viewModel = kendo.observable({
+		model: {
+		},
+		closeWin: function(e){
+        	window.parent.$("#checkResultWindow").data("kendoWindow").close();
+        },
+        confirm: function(){
+        	var meaning = $("input[name='check']:checked").val();
+        	parentData[0].checkResult = $("input[name='check']:checked").val()
+				$.ajax({
+    				url:"${base.contextPath}/hqm/measure/tool/checkResult",
+    				type:"POST",
+    				data: kendo.stringify(parentData),
+    				contentType: "application/json",
+    				success: function (data){
+    					if(data.success){
+    						Hap.showToast({
+                    			type:'success',
+                    			"positionClass": "toast-bottom-right",
+                    			message:'校验成功',
+                    			hideDuration:10*1000
+                    		})	
+                    		window.parent.viewModel.refresh();
+    						window.parent.$("#checkResultWindow").data("kendoWindow").close();
+    					}else{
+    						kendo.ui.showErrorDialog({
+    							title: "错误提示",
+    			    			message: data.message
+    			    		})
+    					}
+    				}
+    			})
+        }
+	});
+</script>
+<div id="page-content">
+	<div style="">
+		<table  style='color: black;width: 100%;table-layout: fixed;font-size: small;text-align: center;border-color:#697882;' border='2px'>
+			<tr>
+				<th style="width:20%"></th>
+				<th style="text-align: center;width:80%"><@spring.message "measuretool.check.result"/></th>
+			</tr>
+			<tr>
+			<td style="width:20%"><input type="radio" name="check" value="OK" style="margin-top:5%"></td>
+			<td style="width:80%">合格</td>
+			</tr>
+			<tr>
+			<td style="width:20%"><input type="radio" name="check" value="NG" style="margin-top:5%"></td>
+			<td style="width:80%">不合格</td>
+			</tr>
+		</table>
+	</div>
+	
+</div>
+<div id="mainBottom" class="text-center" style="bottom: 15px;position: fixed;  float: left;padding-top:15px;border-top:1px solid #ebebeb;width:100%; background: #fff;">
+	        <span class="btn btn-danger" style="float:right;margin-right:2%;" data-bind="click:closeWin"><i class="fa fa-trash-o" style="margin-right:3px;"></i><@spring.message "measuretool.cancel"/></span>
+        <span class="btn btn-success k-grid-save-changes fa fa-check" data-bind="click:confirm" style="float:right;margin-right:5px;"><@spring.message " hap.confirm "/></span>
+</div>
+
+<script type="text/javascript">
+    kendo.bind($('#mainBottom'),viewModel);
+	kendo.bind($('#mainform'), viewModel);
+</script>
+</body>
+</html>

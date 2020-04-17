@@ -1,0 +1,350 @@
+<!--
+ * description: 检验单新建对话框 hqm_inspection_attribute
+ * author:tianmin.wang
+ * date:20190726
+ -->
+<#include "../include/header.html">
+<script src="${base.contextPath}/common/code?yesNo=SYS.YES_NO"></script><!-- 是否 -->
+<script src="${base.contextPath}/common/code?hqmIqcInspectionType=HQM_INSPECTION_TYPE"></script><!-- 检验类型 -->
+<script src="${base.contextPath}/common/code?hqmIqcSourceType=HQM_IQC_SOURCE_TYPE"></script>
+<body>
+<script type="text/javascript">
+	var viewModel = kendo.observable({
+		model: {
+			taskFrom:"1",
+			inspectionType:"IQC",
+		},
+		save: function(e){
+		 	var data= viewModel.model.toJSON();
+		 	console.log(data);
+			var validator = $("#mainform").data("kendoValidator");
+			if (validator.validate()) {
+				$.ajax({
+			        url: '${base.contextPath}/hqm/iqc/inspection/h/addnew',
+			        type: 'POST',
+			        data: data,
+			        async: false,
+			        dataType: "json",
+			        success: function (response) {
+			            if (response.success) {
+			            	window.parent.grid.dataSource.fetch();
+			            	window.parent.openInspectionAddedWindow(response.rows[0].inspectionNum);
+			            	window.parent.$("#createInspectionWindow").data("kendoWindow").close();
+			            } else {
+			            	kendo.ui.showWarningDialog({
+			                    message: response.message
+			                });
+			            }
+			        }
+			    });
+			}
+		},
+		closeWin: function(e){
+        	window.parent.$("#createInspectionWindow").data("kendoWindow").close();
+        }
+	});
+
+</script>
+
+<div id="page-content">
+	<form id="mainform"  class="form-horizontal" method="post" enctype="application/json;charset=UTF-8">
+
+	<div class="row" style="margin-left: 5px;">
+	 	<div class="col-sm-12">
+	 		<!-- 工厂+检验类型 -->
+	 	  	<div class="row" style="margin-top:15px">
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message "asliqccontrol.plant"/>:</label>
+					<div class="col-sm-9">
+                        <input id="lovPlant" required style="width:100%" name="plantId" required
+                               data-label="<@spring.message 'asliqccontrol.plant'/>"
+								data-bind="enabled: model.isEnabled,value:model.plantId,text:model.plantCode">
+						<span data-for="plantId" class=".k-invalid-msg"></span>
+					</div>
+					<script>
+					$("#lovPlant").kendoLov($.extend
+				    	    (<@lov"LOV_PLANT"/>, {
+				    	        textField: 'plantCode',
+				    	        valueField:'plantId',
+				    	        change:function(e){
+				    	        	viewModel.model.plantCode=this._dataItem.plantCode;
+				    	        }
+				    	    }));
+					</script>
+				</div>
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message "iqcinspectionh.inspectiontype"/>:</label>
+					<div class="col-sm-9">
+                        <input id="inspectionTypeComboBox" disabled style="width:100%" required name="inspectiontype"
+                               data-label="<@spring.message 'iqcinspectionh.inspectiontype'/>"
+                               data-bind="value:model.inspectionType">
+						<span data-for="inspectiontype" class=".k-invalid-msg"></span>
+					</div>
+					<script>
+					$("#inspectionTypeComboBox").kendoComboBox({
+				 		dataSource:hqmIqcInspectionType,
+				 		valuePrimitive: true,
+				 		dataTextField: "meaning",
+				 		dataValueField: "value"
+				 	});
+					</script>
+				</div>
+            </div>
+			<!-- 物料+描述 -->
+			<div class="row" style="margin-top:15px">
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message "hqm.qc.item"/>:</label>
+					<div class="col-sm-9">
+						<input required style="width:100%" id="lovItem" name="itemId" data-label="<@spring.message '物料'/>"  data-bind="value:model.itemId,text:model.itemCode">
+						<span data-for="itemId" class=".k-invalid-msg"></span>
+					</div>
+					<script>
+					$("#lovItem").kendoLov($.extend
+						    (<@lov"HCS_ASL_SUPPLIER_ITEM"/>, {
+						        textField: 'itemCode',
+						        valueField:'itemId',
+						        query:function(e){
+						        	e.param.plantId = viewModel.model.plantId;
+						        },
+						        change:function() {
+		                            var v = this.value();
+		                            if (v == undefined  || v == ""){
+		                            }else{
+		                            	viewModel.model.itemCode = this._dataItem.itemCode;
+		                                viewModel.model.supplierId = this._dataItem.supplierId;
+		                                viewModel.model.set('itemDescriptions',this._dataItem.itemName);
+		                                viewModel.model.set('supplierCode',this._dataItem.supplierCode);
+		                                viewModel.model.set('supplierName',this._dataItem.supplierName);
+		                            }
+		                        }
+						    }));
+					</script>
+				</div>
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message "hqm.qc.itemdescription"/>:</label>
+					<div class="col-sm-9">
+						<input  style="width:100%" name="itemDescriptions" disabled data-bind="value:model.itemDescriptions" data-role="maskedtextbox">
+						<span data-for="itemDescriptions" class=".k-invalid-msg"></span>
+					</div>
+				</div>
+			</div>
+			<!-- 供应商+描述 -->
+			<div class="row" style="margin-top:15px">
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message "hqm.qc.supplier"/>:</label>
+					<div class="col-sm-9">
+						<input disabled style="width:100%" id="lovSupplier" data-label="<@spring.message 'hqm.qc.supplier'/>"  name="supplierId" 
+						data-bind="value:model.supplierId,text:model.supplierCode">
+						<span data-for="supplierId" class=".k-invalid-msg"></span>
+					</div>
+					<script>
+					$("#lovSupplier").kendoLov($.extend
+						    (<@lov"LOV_SUPPLIER"/>, {
+						        textField: 'supplierCode',
+						        valueField:'supplierId',
+						        change:function() {
+		                            var v = this.value();
+		                            if (v == undefined  || v == ""){
+		                            }else{
+		                            	viewModel.model.supplierCode = this._dataItem.supplierCode;
+		                                viewModel.model.set('supplierName',this._dataItem.supplierName);
+		                            }
+		                        }
+						    }));
+					</script>
+				</div>
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message "iqcinspectionh.suppliername"/>:</label>
+					<div class="col-sm-9">
+						<input style="width:100%" name="supplierName" disabled data-bind="value:model.supplierName" data-role="maskedtextbox">
+						<span data-for="supplierName" class=".k-invalid-msg"></span>
+					</div>
+				</div>
+			</div>
+			
+			<!-- 批次号+来源类型 -->
+			<div class="row" style="margin-top:15px">
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message "iqcinspectionh.productionbatch"/>:</label>
+					<div class="col-sm-9">
+                        <input required style="width:100%" name="productionBatch"
+                               data-label="<@spring.message 'iqcinspectionh.productionbatch'/>" id="productionBatch"
+                               data-bind="value:model.productionBatch" data-role="maskedtextbox">
+						<span data-for="productionBatch" class=".k-invalid-msg"></span>
+					</div>
+				</div>
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message "hqm.qc.sourcetype"/>:</label>
+					<div class="col-sm-9">
+                        <input style="width:100%" required name="gender"
+                        		 id="sourceTypeComboBox"
+                               data-bind="value:model.sourceType">
+						<span data-for="gender" class=".k-invalid-msg"></span>
+						<script type="text/javascript">
+							$("#sourceTypeComboBox").kendoComboBox({
+						        dataTextField: "meaning",
+						        dataValueField: "value",
+						        valuePrimitive: true,
+						        dataSource: hqmIqcSourceType
+							});
+						</script>
+					</div>
+				</div>
+			</div>
+			<!-- 接收日期 + 接收数量 -->
+			<div class="row" style="margin-top:15px">
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message "hqm.qc.dateofreceipt"/>:</label>
+					<div class="col-sm-9">
+                        <input id="receiveDatePicker" required style="width:100%" name="receiveDate"
+                               data-bind="value:model.receiveDate">
+						<span data-for="receiveDate" class=".k-invalid-msg"></span>
+					</div>
+					<script type="text/javascript">
+						$("#receiveDatePicker").kendoDatePicker({
+							//ARIATemplate: "Date: #=kendo.toString(data.current, 'G')#",
+							max: new Date(),
+							format: "yyyy-MM-dd",
+							change:function(){
+								viewModel.model.receiveDate = this.value().format("yyyy-MM-dd hh:mm:ss");
+							}
+						});
+					</script>
+				</div>
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message "hqm.qc.numberofreceipts"/>:</label>
+					<div class="col-sm-9">
+                        <input id="receiveQtyNumberic" required style="width:100%" name="status"
+                               data-label="<@spring.message 'employee.status'/>"
+                               data-bind="value:model.receiveQty">
+						<span data-for="receiveQty" class=".k-invalid-msg"></span>
+					</div>
+					<script type="text/javascript">
+						$("#receiveQtyNumberic").kendoNumericTextBox({
+	                        min: 1,
+	                        step: 1,
+	                        format: "0"
+	                    });
+					</script>
+				</div>
+			</div>
+			<!-- 接收人 + 是否加急 -->
+			<div class="row" style="margin-top:15px">
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message "hqm.qc.receiver"/>:</label>
+					<div class="col-sm-9">
+						<input id="lovRecipient" required style="width:100%" name="recipientId" data-bind="value:model.recipientId" >
+						<span data-for="recipientId" class=".k-invalid-msg"></span>
+					</div>
+					<script>
+					$("#lovRecipient").kendoLov($.extend
+						    (<@lov"user_lov"/>, {
+						        textField: 'employeeName',
+						        valueField:'userId',
+						        
+						    }));
+					</script>
+				</div>
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message "hqm.qc.whethertoexpedite"/>:</label>
+					<div class="col-sm-9">
+						<input id="isUrgencyComboBox" required  style="width:100%" name="email" data-bind="value:model.isUrgency">
+						<span data-for="isUrgency" class=".k-invalid-msg"></span>
+					</div>
+					<script>
+	    				$("#isUrgencyComboBox").kendoComboBox({
+					        dataTextField: "meaning",
+					        dataValueField: "value",
+					        valuePrimitive: true,
+					        dataSource: yesNo
+						});
+    				</script>
+				</div>
+			</div>
+			<!-- 送货单 + 检验员 -->
+			<div class="row" style="margin-top:15px">
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message "hqm.qc.deliverynote"/>:</label>
+					<div class="col-sm-9">
+                        <input required style="width:100%" name="sourceOrder"
+                               data-label="<@spring.message '送货单'/>" id="sourceOrder"
+                               data-bind="value:model.sourceOrder" data-role="maskedtextbox">
+						<span data-for="sourceOrder" class=".k-invalid-msg"></span>
+					</div>
+				</div>
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message "hqm.qc.inspector"/>:</label>
+					<div class="col-sm-9">
+                        <input id="inspectorUserName" style="width:100%" name="inspectorUserName"
+                               data-label="<@spring.message '检验员'/>"
+                               data-bind="value:model.inspectorId">
+						<span data-for="inspectorUserName" class=".k-invalid-msg"></span>
+					</div>
+					<script>
+					$("#inspectorUserName").kendoLov($.extend
+    			    	    (<@lov"user_lov"/>, {
+    			    	        textField: 'employeeName',
+    			    	        valueField:'userId',
+    			    	        change:function(){
+    			    	        	
+    			    	        }
+    			    	    }));
+    				</script>
+				</div>
+			</div>
+			
+			<!-- 物料版本 -->
+			<div class="row" style="margin-top:15px">
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message "iqcinspectiontemplateh.itemedition"/>:</label>
+					<div class="col-sm-9">
+                        <input id="itemEdition" required style="width:100%" name="itemEdition"
+                               data-label="<@spring.message 'iqcinspectiontemplateh.itemedition'/>"
+                               data-bind="value:model.itemEdition">
+						<span data-for="itemEdition" class=".k-invalid-msg"></span>
+					</div>
+					<script>
+					$("#itemEdition").kendoLov($.extend
+    			    	    (<@lov"ITEM_EDITION_LOV"/>, {
+    			    	    	query: function(e){
+    			    	    		e.param.mainType = "IQC";
+    			    	    	}
+    			    	    }));
+    				</script>
+				</div>
+			</div>
+			
+		</div>
+	  </div>
+
+
+	</form>
+</div>
+<div id="mainBottom" class="text-right" style="bottom: 15px;position: fixed;  float: left;padding-top:15px;border-top:1px solid #ebebeb;width:100%; background: #fff;">
+        <span class="btn btn-primary" data-bind="click:save" type="submit" style="margin-right:5px"><@spring.message "hap.save"/></span>
+        <span class="btn btn-default" data-bind="click:closeWin" type="button" style="margin-right:25px;"><@spring.message "hap.cancel"/></span>
+</div>
+
+<script type="text/javascript">
+    kendo.bind($('#mainBottom'),viewModel);
+	kendo.bind($('#mainform'), viewModel);
+
+    function isNotEmpty(obj) {
+        if(obj != undefined && obj != null && obj != ""){
+            return true;
+        }else{
+            return false;
+        }
+    }
+    var initMinDate = new Date(1900, 0, 1);
+    var initMaxDate = new Date(2099, 11, 31);
+	//验证
+	$("#mainform").kendoValidator({
+    	messages: {
+            required: '<@spring.message "hap.validation.notempty"/>'
+    	},
+		invalidMessageType : "tooltip"
+    });
+</script>
+</body>
+</html>

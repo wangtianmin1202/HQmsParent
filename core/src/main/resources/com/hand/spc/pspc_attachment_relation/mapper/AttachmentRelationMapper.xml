@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.spc.pspc_attachment_relation.mapper.AttachmentRelationMapper">
+    <resultMap id="BaseResultMap" type="com.hand.spc.pspc_attachment_relation.dto.AttachmentRelation">
+        <result column="attachment_relation_id" property="attachmentRelationId" jdbcType="DECIMAL" />
+        <result column="tenant_id" property="tenantId" jdbcType="DECIMAL" />
+        <result column="site_id" property="siteId" jdbcType="DECIMAL" />
+        <result column="attachment_group_id" property="attachmentGroupId" jdbcType="DECIMAL" />
+        <result column="attachment_id" property="attachmentId" jdbcType="DECIMAL" />
+    </resultMap>
+
+
+    <select id="selectRelationByCroupId" parameterType="java.lang.Long" resultMap="BaseResultMap">
+        SELECT par.attachment_relation_id
+              ,par.attachment_group_id
+              ,par.attachment_id
+        FROM   pspc_attachment_relation par
+        WHERE  par.attachment_group_id = #{attachmentGroupId}
+    </select>
+</mapper>

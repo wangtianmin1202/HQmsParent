@@ -1,0 +1,1015 @@
+<#include "../include/header.html">
+<script src="${base.contextPath}/lib/prints/doc_print.js" type="text/javascript" charset="UTF-8"></script>
+<script type="text/javascript">
+var parentData = window.parent.parentData;
+//列
+var sampleNumList;
+//行
+var map;
+var mapLine;
+//均值
+var averageData = new Array();
+//极差
+var jcList = new Array();
+//标准差
+var bzcList = new Array();
+//平均极差
+var averageJc;
+//平均标准差
+var averageBzc;
+//s图能否查看标识
+var sFlag;
+//测量值集合
+var measureValueList = new Array();
+//测量值均值
+var cl
+var rows = 3;
+var cols = 10;
+var groups = 2;
+
+//测量人零件分组
+var userLjList = []
+//重复测量次数
+var m = 0;
+//测量人数
+var peopleCount = 0;
+//零件个数
+var ljSum = 0;
+//测量人数*零件个数
+var g;
+//所有零件总测量值均值的极差
+var jcAll = 0;
+//（每个测量值-测量值所对应的测量者对所对应的零件的测量平均值）的平方和
+var sumSqrt = 0;
+//零件数集合
+var ljValueList = [];
+//每个零件的平均值
+var avgByLjList = [];
+//每个测量人的均值
+var avgByUserList = [];
+//每个测量人的极差
+var jzByUserList = [];
+//每个测量人每个零件的平均值
+var avgByUserLjList = [];
+var viewModel = kendo.observable({
+	model: {
+	},
+	submit: function(e){ 
+		//页面数据
+		var jsonList = [];
+		var len;
+		if(checkStr(sampleNumList)){
+			len = sampleNumList.length;
+		}else{
+			len = cols;
+		}
+			var sampleFlag = 0;
+			var sampleNumListNew = [];
+			//测量人
+			var measuredBy;
+			$('#mytable tr').each(function() {
+				sampleFlag ++;
+				if(sampleFlag == 2){	
+					$(this).find('input').each(function(){
+						sampleNumListNew.push($(this).val())
+					})
+				}else if(sampleFlag != 1){
+					if($(this).find('input').length>len){
+						//获取测量人
+						measuredBy = $(this).find('input:eq(0)').val();
+						var sampleNum = -2;
+						$(this).find('input').each(function(){
+							sampleNum ++;
+							if(sampleNum != -1){
+								if(checkStr($(this).val())){	
+									var arr = $(this).attr("name").split("|")
+									var jsonData = {
+											"measureValue" : $(this).val(),
+											"measuredBy" : measuredBy,
+											"tolerance" : viewModel.model.tolerance,
+											"measureCharacter": viewModel.model.measureCharacter,
+											"sampleDescription" : viewModel.model.sampleDescription,
+											"msaPlanId" : parentData.msaPlanId,
+											"msaGrrValueId" : arr[1],
+											"sampleNum" :sampleNumListNew[sampleNum],
+											
+											"measureNum" :arr[0],
+										   };
+									jsonList.push(jsonData)
+								}
+							}
+						})
+					}else if($(this).find('input').length == len){
+						var sampleNum = -1;
+						$(this).find('input').each(function(){
+							sampleNum ++;
+							if(checkStr($(this).val())){	
+								var arr = $(this).attr("name").split("|")
+								var jsonData = {
+										"measureValue" : $(this).val(),
+										"measuredBy" : measuredBy,
+										"tolerance" : viewModel.model.tolerance,
+										"measureCharacter": viewModel.model.measureCharacter,
+										"sampleDescription" : viewModel.model.sampleDescription,
+										"msaPlanId" : parentData.msaPlanId,
+										"msaGrrValueId" : arr[1],
+										"sampleNum" :sampleNumListNew[sampleNum],
+										"measureNum" :arr[0],
+									   };
+								jsonList.push(jsonData)
+							}
+						})
+					}
+
+				}
+
+				
+			});		
+			if(jsonList.length == 0){
+				var jsonData = {
+						"measureValue" : null,
+						"tolerance" : viewModel.model.tolerance,
+						"measureCharacter": viewModel.model.measureCharacter,
+						"sampleDescription" : viewModel.model.sampleDescription,
+						"msaPlanId" : parentData.msaPlanId,
+					   };
+				jsonList.push(jsonData);
+			}
+		$.ajax({
+			url:"${base.contextPath}/hqm/msa/grr/value/save",
+			type:"POST",
+			data: kendo.stringify(jsonList),
+			contentType: "application/json",
+			success: function (resultData){
+				if(resultData.success){
+					Hap.showToast({
+            			type:'success',
+            			"positionClass": "toast-bottom-right",
+            			message:"保存成功",
+            			hideDuration:10*1000
+            		})	
+            		parentData.sampleDescription = viewModel.model.sampleDescription
+            		parentData.tolerance = viewModel.model.tolerance
+            		parentData.measureCharacter = viewModel.model.measureCharacter
+            		window.parent.viewModel.query();
+            		initTable();
+				}else{
+					kendo.ui.showErrorDialog({
+						title: "错误提示",
+		    			message: resultData.message
+		    		})
+				}
+			}
+		})  
+	},
+	//删除
+	remove: function(){
+		if(!checkStr(parentData.msaPlanId)){
+			kendo.ui.showInfoDialog({
+    			title: '<@spring.message "dialog.showInfo"/>',
+    			message: '获取计划信息失败'
+    		})
+    		return;
+		}
+		kendo.ui.showConfirmDialog({
+    		title: '<@spring.message "dialog.showInfo"/>',
+    		message: '是否确认清除？'
+    	}).done(function(e){
+    		if(e.button=='OK'){    			
+				var jsonData = {
+		    			"msaPlanId" : parentData.msaPlanId
+		    	}
+		    	$.ajax({
+		    		url: "${base.contextPath}/hqm/msa/grr/value/removeByMsaPlanId",
+		    		data: jsonData,
+		    		type: "POST",
+		    		async:false,
+		    		dataType: "json",
+		    		success: function(data){
+		    			if(data.success){
+		    				 Hap.showToast({
+		                         type: 'success',
+		                         "positionClass": "toast-bottom-right",
+		                         message: "删除成功"
+		                     });
+		             		initTable()
+		    			}else{
+		            		kendo.ui.showErrorDialog({
+		                            message: data.message
+		                        });
+		            		
+		            	}
+		    		}
+		    	})
+    		}
+    	})
+	},
+	//返回
+	closeWin: function(e){
+    	window.parent.$("#grr").data("kendoWindow").close();
+    },
+    //刷新
+    refresh: function(){
+    	initTable();
+    },
+    importExcel : function(){
+    	var newModelWindow = $('#excelimport').kendoWindow({
+            title: '<@spring.message "msaplan.import"/>',
+            width: 300,
+            height: 120,
+            modal: true,
+            actions: ["Minimize", "Maximize", "Close"],
+        }).data('kendoWindow');
+    	newModelWindow.center().open();
+    },
+    //均值极差法
+    jzFuncion: function(){
+		//重复性EV
+		var d2Ev = getD2(m,g)
+		var jzEv = averageJc/d2Ev;
+		window.parent.EV = jzEv;
+		//再线性AV
+		var d2Av = getD2(Object.keys(map).length,1);
+		var jzAv = Math.sqrt(Math.pow((Math.max.apply(null,avgByUserList)-Math.min.apply(null,avgByUserList))/d2Av,2) - Math.pow(jzEv,2)/(ljSum*m));
+		jzAv = (isNaN(jzAv) ? 0 : jzAv)
+		window.parent.AV = jzAv;
+		//零件间变差PV
+		var d2Pv = getD2(ljSum,1);
+		var jzPv = jcAll/d2Pv;
+		window.parent.PV = jzPv;
+		//GRR
+		var jzGRR = Math.sqrt(Math.pow(jzEv,2) + Math.pow(jzAv,2));
+		window.parent.GRR = jzGRR;
+		//TV
+		var jzTv = Math.sqrt(Math.pow(jzGRR,2) + Math.pow(jzPv,2))
+		window.parent.TV = jzTv;
+        openWindow('pictureGrrJzWindow','<@spring.message "msaplan.analysis.grr.average.result"/>')
+    },
+    //交叉方差法
+    jcFunction: function(){
+    	//误差的均方值MSE
+    	var jcMSE = sumSqrt/(ljSum*peopleCount*(m-1));
+    	//（每个测量者对每个零件的测量均值-对应测量者的总均值-对应零件的总均值+所有测量值总均值）的平方和
+		var sumAvgSqrt = 0;
+    	var t=-1;
+		for(var key in map){
+			t++;
+	    	var idNum = "jz"+t;
+	    	for(var k=0; k<sampleNumList.length; k++){
+				idStr = idNum + k;
+				sumAvgSqrt += Math.pow((parseFloat($("#"+idStr).text()) - parseFloat($("#"+idNum).text()) -parseFloat($("#avg"+ k ).text()) + parseFloat($("#average").text())),2)
+			}
+	    	
+		} 
+		
+		//交互作用的均方值MSOP
+    	var jcMSOP = m*sumAvgSqrt/((ljSum-1)*(peopleCount-1))
+    	//（每个零件总均值-所有测量值均值）的平方和
+    	var sumAvgLjSqrt = 0;
+    	for(var k=0; k<sampleNumList.length; k++){
+			idStr = idNum + k;
+			sumAvgLjSqrt += Math.pow((parseFloat($("#avg"+ k ).text()) - parseFloat($("#average").text())),2)
+		}
+    	
+    	
+    	//统计量FOP
+		var FOP = jcMSOP/jcMSE;
+    	//临界值FA：根据n1=（零件数-1）*（测量人数-1），n2=零件数*测量人数*（重复测量次数-1）， α=0.025，
+    	var FA = finvs(0.025,(ljSum-1),ljSum*peopleCount*(m-1));
+    	
+    	if(FOP < FA){
+    		jcMSOP = jcMSE;
+    	}
+    	//零件的均方值MSP
+    	var jcMSP = peopleCount*m*sumAvgLjSqrt/(ljSum-1)
+    	
+    	//（每个测量人总均值-所有测量值均值）的平方和
+    	var sumUserSqrt = 0;
+    	var j=-1;
+    	for(var key in map){
+			j++;
+	    	var idNum = "jz"+j;
+	    	sumUserSqrt += Math.pow((parseFloat($("#"+idNum).text())- parseFloat($("#average").text())),2)    	
+		} 
+    	//测量人的均方值MSO
+    	var jcMSO = ljSum*m*sumUserSqrt/(peopleCount-1)
+
+    	
+    	//重复性EV
+		var Ev = Math.sqrt(jcMSE);
+		window.parent.EV = Ev;
+
+		//再现性AV
+		var Av = Math.sqrt((jcMSO-jcMSOP)/(ljSum*m));
+		Av = (isNaN(Av) ? 0 : Av)
+		window.parent.AV = Av;
+		//零件间变差PV
+		var Pv = Math.sqrt((jcMSP-jcMSOP)/(peopleCount*m));
+		window.parent.PV = Pv;
+		//交互作用变差IV
+		var Iv = Math.sqrt((jcMSOP-jcMSE)/m)
+		//GRR
+		var GRR = Math.sqrt(Math.pow(Ev,2) + Math.pow(Av,2)+ Math.pow(Iv,2));
+		window.parent.GRR = GRR;
+		//总变差TV
+		var Tv = Math.sqrt(Math.pow(GRR,2) + Math.pow(Pv,2))
+		window.parent.TV = Tv;
+		openWindow('pictureGrrJcWindow','<@spring.message "msaplan.analysis.grr.variance.result"/>')
+		}
+});
+/**
+ * 求f分布
+ */
+function finvs(a,n1,n2){
+	var finvs = -1;
+	var jsonData = {
+			"a": a,
+			"n1": n1,
+			"n2": n2
+	}
+	$.ajax({
+		url:"${base.contextPath}/hqm/msa/grr/value/finvs",
+		type:"POST",
+		data:jsonData,
+		async: false,
+		jsonType:"json",
+		success: function(resultData){
+			finvs = resultData;
+		}
+	})
+	return finvs;
+}
+function openWindow(windowName,title){
+	
+	var msaPlanLine = {
+  			"measurePlanLineId": parentData.measurePlanLineId
+  	}
+	$.ajax({
+		url: "${base.contextPath}/hqm/msa/plan/line/updateAnalyzeData",
+		data: msaPlanLine,
+		type: "POST",
+		dataType: "json",
+		success: function(data){
+			if(data.success){
+				viewModel.model.set('analyzeDate',data.rows[0].analyzeDate);
+			}
+		}
+	})
+	
+	//零件的平均值
+	window.parent.avgByLjList = avgByLjList;
+	//均值
+	window.parent.averageData = averageData;
+	//列
+	window.parent.sampleNumList = sampleNumList;
+	//行
+	window.parent.map = mapLine;
+	//极差
+	window.parent.jcList = jcList;
+	//平均极差
+	window.parent.averageJc = averageJc;
+	//测量值集合
+	window.parent.measureValueList = measureValueList;
+	//零件数集合
+	window.parent.ljValueList = ljValueList;
+	//每个测量人的均值
+	window.parent.avgByUserList = avgByUserList; 
+	//测量人分组
+	window.parent.userLjList = userLjList;
+	//每个测量人的极差
+	window.parent.jzByUserList = jzByUserList;
+	window.parent.windowName = windowName
+	var t=-1;
+	for(var key in mapLine){
+		t++;
+    	var idNum = "jz"+t;
+    	var byUserLjList = [];
+    	for(var k=0; k<sampleNumList.length; k++){
+			idStr = idNum + k;
+			byUserLjList.push($("#"+idStr).text())
+		}
+    	avgByUserLjList.push(byUserLjList);
+	} 
+	
+	window.parent.avgByUserLjList = avgByUserLjList;
+	 var selectFunction = window.parent.$("#"+windowName).kendoWindow({
+        actions: ["Close"],
+        width: 1500,
+		height: 750,
+        title: title,
+        visible: false,
+        iframe: true,
+        modal: true,
+        content: 'msa_grr_value_picture.html'
+    }).data("kendoWindow");
+    selectFunction.center().open(); 
+
+}
+$(function(){
+	//计算高度
+	$("#tableRow").height(window.innerHeight*19/24)
+	$("#tableRow").width(window.innerWidth*97/100)
+	//量具名称
+	viewModel.model.set('measureToolName',parentData.measureToolName);
+	//量具编号
+	viewModel.model.set('measureToolNum',parentData.measureToolNum);
+	//样品名称 
+	viewModel.model.set('sampleDescription',parentData.sampleDescription);
+	//待测特性
+	viewModel.model.set('measureCharacter',parentData.measureCharacter);
+	//量具量程
+	viewModel.model.set('measuringRange',parentData.measuringRange);
+	//分析人
+	viewModel.model.set('userName',parentData.userName);
+	//分析日期
+	viewModel.model.set('analyzeDate',parentData.analyzeDate);
+	//公差
+	viewModel.model.set('tolerance',parentData.tolerance);
+	
+	
+	initTable()
+	//已关闭隐藏按钮
+	if(parentData.measurePlanStatus == '3'){
+		$("#refresh").hide()
+		$("#save").hide()
+		$("#import").hide()
+		$("#getImport").hide()
+		$("#clear").hide();
+	}
+})
+/**
+ * 大于零的数 保留两位
+ */
+function clearNoNum(obj) { 
+        obj.value = obj.value.replace(/[^\d.]/g,""); //清除"数字"和"."以外的字符  
+            obj.value = obj.value.replace(/^\./g,""); //验证第一个字符是数字而不是  
+            obj.value = obj.value.replace(/\.{2,}/g,"."); //只保留第一个. 清除多余的  
+            obj.value = obj.value.replace(".","$#$").replace(/\./g,"").replace("$#$",".");  
+            obj.value = obj.value.replace(/^(\-)*(\d+)\.(\d\d).*$/,'$1$2.$3'); //只能输入两个小数  
+
+    }
+/**
+ * 整数
+ */
+function onlyNum(obj){
+	obj.value=obj.value.replace(/[^\d]/g,'');
+}
+//加载table数据 
+function initTable(){
+	var jsonData = {
+			"msaPlanId" : parentData.msaPlanId
+	}
+	$.ajax({
+		url: "${base.contextPath}/hqm/msa/grr/value/query",
+		data: jsonData,
+		type: "POST",
+		dataType: "json",
+		success: function(data){
+			if(data.success){
+				var lLength = 0;
+				if(data.rows != null && data.rows.length > 0){ 
+					avgByUserList = []
+					//清空测量值集合
+					measureValueList = [];
+					//行 
+					var _obj = JSON.stringify(data.rows[0].map);
+					map = JSON.parse(_obj);
+					//map = Object.assign([],data.rows[0].map);
+					mapLine = data.rows[0].map;
+					//列
+					sampleNumList = data.rows[0].sampleNumList;
+					//第一行
+					var str = '<tr><th colspan="2" rowspan="2" style="text-align: center"><@spring.message "msaplan.measure.person"/></th>';
+           			str += '<th style="padding:0px;text-align: center" colspan="'+ sampleNumList.length +'">零件</th>';
+           			str += '<th style="padding:0px;text-align: center"><@spring.message "msaplan.measure.average"/></th>'
+            		str += '</tr>';
+            		//第二行
+            		str += '<tr>';
+					$.each(sampleNumList,function(j,x){
+           				str += '<th style="padding:0px"><input name="sampleNum" oninput="onlyNum(this)" style="margin:0px;border:0;background:transparent;width:100%;text-align: center;"  value="'+ parseFloat(x).toFixed(0) +'"/></th>';
+						//str += "<th style='padding:0px'><input name='sampleNum' oninput = \"value=value.replace(/[^\d]/g,'')\" style='margin:0px;border:0;background:transparent;width:100%;text-align: center;'  value='"+ parseFloat(x).toFixed(0) +"'/></th>";
+            		})
+            		str += '<th style="text-align: center" ></th>'
+            		str += '</tr>';
+					//遍历行(第三行开始)
+					var t=-1;
+					//零件个数
+					var ljNum = 0;
+					userLjList = [];
+					for(var key in map){
+						userljList = [];
+						t++;
+						var flag = true;
+						  //总测量平均值
+						  var sumRightAll = 0;
+						  //总测量平均值个数
+						  var sunRightCountAll = 0;
+						  for(var keyChild in map[key]){
+							  var valList = [];
+							  if(t == 0){
+								  ljNum += sampleNumList.length;
+							  }
+							  //测量人
+							  if(flag){	
+								  m = Object.keys(map[key]).length;
+								  str += '<tr><th rowspan="'+ (Object.keys(map[key]).length + 2)  +'" style="text-align: center"><input name="measuredBy'+ t +'"   style="margin:0px;border:0;background:transparent;width:100%;text-align: center;"  value="'+ key +'"/></th>';
+								  flag = false;
+							  }else{
+								  str += '<tr>';
+							  }
+							  //测量次数
+							  str += '<th style="text-align: center">'+ parseFloat(keyChild).toFixed(0) +'</th>';
+							  //平均值
+							  var sumRight = 0;
+							  //测量平均值个数
+							  var sunRightCount = 0;
+							  for(var i=0; i<sampleNumList.length; i++){
+								  var flagChild = true;
+								  var nameStr = keyChild + "|" ;
+								  
+								  for(var j=0;j<map[key][keyChild].length;j++){
+									  var x = map[key][keyChild][j];
+									  if(sampleNumList[i] === x.sampleNum){
+										  measureValueList.push(x.measureValue)
+										  sumRight += x.measureValue;
+										  sunRightCount ++;
+										  nameStr += x.msaGrrValueId;
+										  str += '<td><input class="a'+ t + i +'" name="'+ nameStr +'" onkeyup="clearNoNum(this)" onblur="clearNoNum(this)" onfocus="clearNoNum(this)"  style="margin:0px;border:0;background:transparent;width:100%;text-align: center;" value="'+ x.measureValue +'"/></td>';
+										  userljList.push(x.measureValue)
+										  valList.push(x.measureValue)
+										  map[key][keyChild].splice(j,1);
+										  flagChild = false;
+			                			  break;
+									  }
+								  }
+				            	  if(flagChild){
+				            		    valList.push('')
+			                			str += '<td><input name="'+ nameStr +'" onkeyup="clearNoNum(this)" onblur="clearNoNum(this)" onfocus="clearNoNum(this)" style="margin:0px;border:0;background:transparent;width:100%;text-align: center;"/></td>';
+			                	  }
+							  }
+							  ljValueList.push(valList)
+							  sumRightAll += sumRight/sunRightCount;
+							  sunRightCountAll ++;
+							  str += '<th style="text-align: center" >'+ (sumRight/sunRightCount).toFixed(3) +'</th>'
+							  str += '</tr>'
+							 
+						  }
+						  
+						//最后两行
+	                	for(var l=0; l<2; l++){
+	                		var idNum;
+	                		var idStr;
+	                		if(l == 0){
+		                		str += '<tr><th style="text-align: center"><@spring.message "msaplan.measure.average"/></th>';
+		                		idNum = "jz"+t;
+	                		}else{
+	                			str += '<tr><th style="text-align: center"><@spring.message "msaplan.measure.range"/></th>';
+	                			idNum = "jc"+t;
+	                		}
+	                		for(var k=0; k<sampleNumList.length; k++){
+	                			idStr = idNum + k;
+	                			str += '<th class="'+ idNum +'" id="'+ idStr +'" style="text-align: center" ></th>';
+	                		}
+	                		var num = '';
+	                		if(l==0){
+                				num = sumRightAll/sunRightCountAll;
+                				idNum = "jz"+t;
+                				avgByUserList.push(num)
+                			}else{
+                				idNum = "jc"+t;
+                				//num = 
+                			}
+	                		str += '<th id="'+ idNum +'" style="text-align: center" >'+ parseFloat(num).toFixed(3) +'</th>';
+	                		str += '</tr>';
+	                	}
+	                	userLjList.push(userljList);
+					}
+					//g: 测量人数*零件个数
+					//测量人数
+					peopleCount = Object.keys(map).length;
+					//零件个数
+					ljSum = sampleNumList.length;
+					g = peopleCount * ljSum;
+					//零件平均值
+					str += '<tr><th colspan="2" rowspan="2" style="text-align: center">零件平均值</th>';
+					for(var k=0; k<sampleNumList.length; k++){
+               			str += '<th id="avg'+ k +'" rowspan="2" style="text-align: center"></th>';
+               		}
+					//零件平均值的平均值
+					str += '<th id="average" style="text-align: center"></th></tr>';
+					//零件平均值极差
+					str += '<tr><th id="avgJc" style="text-align: center"></th></tr>';
+					
+					//设置table宽度
+
+					$("#mytable").width(window.innerWidth/13*(sampleNumList.length+3));
+					$("table").html("");
+					$("table").append(str);
+					//$("[name = 'groupNum']").attr('oninput',  "value=value.replace(/[^\d]/g,'')")
+					operation()
+				}else{
+					//第一行
+					var str = '<tr><th colspan="2" rowspan="2" style="text-align: center"><@spring.message "msaplan.measure.person"/></th>';
+           			str += '<th style="padding:0px;text-align: center" colspan="'+ cols +'">零件</th>';
+           			str += '<th style="padding:0px;text-align: center"><@spring.message "msaplan.measure.average"/></th>'
+            		str += '</tr>';
+            		//第二行
+            		str += '<tr>';
+					for(var i=0;i<cols;i++){						
+         				str += '<th style="padding:0px"><input name="sampleNum" oninput="onlyNum(this)" style="margin:0px;border:0;background:transparent;width:100%;text-align: center;"  value="'+ (i+1) +'"/></th>';
+					}
+            		str += '<th style="text-align: center" ></th>';
+            		str += '</tr>';
+					for(var k=0;k<groups;k++){
+						//行
+						for(var i=0; i<rows;i++){
+							if(i == 0){
+								str += '<tr><th rowspan="'+ rows +'" style="text-align: center"><input name="measuredBy'+ k +'"   style="margin:0px;border:0;background:transparent;width:100%;text-align: center;"  value=""/></th>';
+							}else{
+								str += '<tr>';
+							}
+							//测量次数
+							str += '<th style="text-align: center">'+ (i+1) +'</th>';
+							//列
+							for(var j=0; j<cols; j++){
+									str += '<td><input class="a'+ k + j +'" name="'+ (i+1) +'|" onkeyup="clearNoNum(this)" onblur="clearNoNum(this)" onfocus="clearNoNum(this)"  style="margin:0px;border:0;background:transparent;width:100%;text-align: center;" value=""/></td>';
+							}
+							str += '<th style="text-align: center" ></th>'
+							str += '</tr>'
+						}
+						
+					}
+					//零件平均值
+					str += '<tr><th colspan="2" rowspan="2" style="text-align: center">零件平均值</th>';
+					for(var k=0; k<cols; k++){
+               			str += '<th id="avg'+ k +'" rowspan="2" style="text-align: center"></th>';
+               		}
+					//零件平均值的平均值
+					str += '<th id="average" style="text-align: center"></th></tr>';
+					//零件平均值极差
+					str += '<tr><th id="avgJc" style="text-align: center"></th></tr>';
+					//设置table宽度
+
+					$("#mytable").width(window.innerWidth/13*(cols+3));
+                	$("table").html("");
+					$("table").append(str);
+					//$("[name = 'groupNum']").attr('oninput',  'value=value.replace(/[^\d]/g,"")')
+				}
+				if(parentData.measurePlanStatus == '3'){
+		    		$("input").attr('readOnly','true')
+		    	}
+			}
+		}
+	}) 
+}
+//均值 极差运算
+function operation(){
+	//清空均值
+	averageData = [];
+	//清空极差
+	jcList = [];
+	avgByLjList = [];
+	//极差和
+	var jcSum = 0;
+	var jc;
+	var len;
+	if(checkStr(sampleNumList)){
+		len = sampleNumList.length;
+	}else{
+		len = cols;
+	}
+		//零件平均值的平均值总和
+		var averageSum = 0;
+		//
+		var avgMin = -1;
+		var avgMax = -1;
+		var avgNumFlag = true;
+		var avgSameFlag;
+		for(var i=0; i<len; i++){
+			//相同零件不同测量人 平均数总和
+			var avgCount = 0;
+			//相同零件
+			var keyIndex = -1;
+			//计算零件平均值
+			var avgKeyIndex = -1;
+			var length = 0;
+			for(var key in map){
+				//相同测量人
+				keyIndex++;
+				avgKeyIndex++;
+				var count = 0;
+				var sum = 0;
+				var flag = 1;
+				var max = 0;
+				var min = 0;
+				var numFlag = true;
+				var sameFlag;
+				//测量值集合
+				var valueList = []
+				$('#mytable tr').each(function() { 
+					$(this).find('input.a'+ keyIndex + i).each(function(){ 
+						sum += parseFloat($(this).val());
+						valueList.push($(this).val())
+						count++;
+						if(numFlag){
+							max = parseFloat(nvl($(this).val(),0));
+							min = parseFloat($(this).val());
+							numFlag = false;
+							sameFlag = '1';
+						}else if(!numFlag && parseFloat(max) <= parseFloat($(this).val())){
+							sameFlag = '2';
+							max = parseFloat(nvl($(this).val(),0));
+						}else if(!numFlag && parseFloat(min) > parseFloat($(this).val())){
+							sameFlag = '2';
+							min = parseFloat($(this).val());
+						}
+					}); 
+				});	
+				//均值
+				var average;
+				if(count === 0){
+					avgKeyIndex --;
+					average = sum;
+				}else{
+					average = sum/count;
+				}
+				avgCount += average;
+				$('#jz'+ keyIndex + i +'').text(average.toFixed(3));
+				averageData.push(average) 
+				
+				  
+				//（每个测量值-测量值所对应的测量者对所对应的零件的测量平均值）的平方和
+				for(var k=0;k<valueList.length;k++){
+				    sumSqrt += Math.pow((valueList[k] - average),2);
+				} 
+				
+				//极差
+				if(sameFlag === '1' && max == min){
+					length++;
+					$('#jc'+ keyIndex + i +'').text(max.toFixed(3));
+					jcList.push(max)
+					jcSum += max;
+				}else if(sameFlag === '2'){
+					length++;
+					$('#jc'+ keyIndex + i +'').text((max-min).toFixed(3));
+					jcList.push(max-min)
+					jcSum += max-min;
+				}
+			}
+			//平均极差
+	    	averageJc = jcSum/length;
+			//零件平均值
+			averageSum += avgCount/(avgKeyIndex+1);
+			$("#avg"+i).html((avgCount/(avgKeyIndex+1)).toFixed(3));
+			avgByLjList.push(avgCount/(avgKeyIndex+1))
+			if(avgNumFlag){
+				avgMax = avgCount/(avgKeyIndex+1);
+				avgMin = avgCount/(avgKeyIndex+1);
+				avgNumFlag = false;
+				avgSameFlag = '1';
+			}else if(!avgNumFlag && avgMax <= avgCount/(avgKeyIndex+1)){
+				avgSameFlag = '2';
+				avgMax = avgCount/(avgKeyIndex+1);
+			}else if(!avgNumFlag && avgMin > avgCount/(avgKeyIndex+1)){
+				sameFlag = '2';
+				avgMin = avgCount/(avgKeyIndex+1);
+			}
+		} 
+		//零件平均值的平均值
+		$("#average").html((averageSum/len).toFixed(4));
+		
+		//零件平均值的极差
+		$("#avgJc").html(avgMax - avgMin);
+		if(avgSameFlag === '1' && avgMin == avgMax){
+			jcAll += parseFloat(avgMax);
+			$("#avgJc").html(avgMax.toFixed(3));
+		}else if(avgSameFlag === '2'){
+			jcAll += parseFloat(avgMax) - parseFloat(avgMin);
+			$("#avgJc").html((avgMax - avgMin).toFixed(3));
+		}
+		
+		//每个测量人的极差均值
+		var index = 0;
+		var jcSum = 0;
+		for(var key in map){
+			var jzbyUserList = [];
+			var jcSumByUser = 0;
+			var count = 0;
+			$(".jc"+index).each(function(){
+				jcSumByUser += parseFloat($(this)[0].innerText);
+				jzbyUserList.push(parseFloat($(this)[0].innerText))
+				count++;
+			})
+			$("#jc"+index).html((jcSumByUser/count).toFixed(3))
+			jcSum += jcSumByUser/count;
+			index++;
+			jzByUserList.push(jzbyUserList);			
+		}
+		averageJc = jcSum/index;
+}
+function checkStr(str){
+	if(str == null || str === '' ||typeof(str) == "undefined"){
+		return false;
+	}
+	return true;
+}
+function getD2(m,g){
+	if(g>20){
+		g = 21;
+	}
+	var jsonData = {
+			"m": m,
+			"g": g
+	}
+	var d2 = -1;
+	$.ajax({
+		url:"${base.contextPath}/hqm/d2/value/query",
+		type:"POST",
+		data:jsonData,
+		async: false,
+		jsonType:"json",
+		success: function(resultData){
+			if(resultData.success){
+				d2 = resultData.rows[0].d2;
+			}
+		}
+	})
+	return d2;
+}
+$(document).ready(function() {
+	var msaPlanId = parentData.msaPlanId;
+	$("#files1").kendoUpload({
+		async: {
+        saveUrl: "${base.contextPath}/hqm/msa/grr/value/upload?${_csrf.parameterName}=${_csrf.token}",//
+		autoUpload: true
+		},
+		upload : function(e){
+			e.data = {
+					"msaPlanId": msaPlanId
+			}
+		},
+        success : function(e){
+        	var response = e.response;
+        	if(response.success){
+        		Hap.showToast({
+                    type: 'success',
+                    "positionClass": "toast-bottom-right",
+                    message: "导入成功"
+                });
+        		initTable()
+        		//kendo.ui.showInfoDialog({message: "导入成功"});
+        	}else{
+        		kendo.ui.showErrorDialog({
+                        message: response.message
+                    });
+        		
+        	}
+        },
+		showFileList:false,
+					});
+				});
+</script>
+<body>
+<div id="pictureWindow"></div>
+<div id="page-content" style="heigth:100%;">
+	<div id="head" style="heigth:100%">
+		<form class="form-horizontal" style="heigth:100%">
+			<div id="form" style="heigth:100%">
+					<div class="row" style=";height:10%">
+					    <div class="pull-left" id="toolbar-btn" style="padding-bottom:10px;">
+					    	<span id="save" class="btn btn-success k-grid-save-changes" style="float:left;margin-right:5px;"
+                          	data-bind="click:submit"><i class="fa fa-save" style="margin-right:3px;"></i><@spring.message "hap.save"/></span>
+                          	
+					    	<span id="getImport" class="btn btn-primary" style="float:left;width:120px;margin-right:5px;margin-left: 5px;" onclick="modelDownload()" type="submit"><@spring.message "excel.getexceltemplate"/></span>
+                            <span id="import" data-bind="click:importExcel" class="btn btn-primary fa fa-upload" style="float:left;margin-right:5px;">&nbsp;<@spring.message "hap.import"/></span>
+					    	<span id="jzJc" type="button" class="btn btn-primary"
+                            style="float:left;margin-right:5px" data-bind="click:jzFuncion"><i  style="margin-right:3px;"></i><@spring.message "msaplan.analysis.grr.average"/></span>
+                            <span id="jcFc" type="button" class="btn btn-primary"
+                            style="float:left;margin-right:5px" data-bind="click:jcFunction"><i  style="margin-right:3px;"></i><@spring.message "msaplan.analysis.grr.variance"/></span>
+					    	<span id="clear" class="btn btn-danger" style="float:left;margin-right:5px" data-bind="click:remove"><i class="fa fa-trash-o" style="margin-right:3px;"></i><@spring.message "hap.clear"/></span>
+					    	<span id="refresh" class="btn btn-default k-grid-save-changes"  style="float:left;margin-right:5px;" data-bind="click:refresh"><i class="fa fa-refresh" style="margin-right: 3px;"></i><@spring.message "hap.refresh"/></span>
+					    	<span type="button" class="btn btn-primary"
+                            style="float:left;margin-right:5px" data-bind="click:closeWin"><i class="fa fa-undo" style="margin-right:3px;"></i><@spring.message "hap.back"/></span>
+					    </div>
+					    <script>kendo.bind($('#toolbar-btn'), viewModel);</script>
+					    <div class="pull-right" id="query-form" style="padding-bottom:10px;">
+					        <div style="clear:both"></div>
+					    </div>
+					    <script>kendo.bind($('#query-form'), viewModel);</script>
+				    </div>
+				    <div class="row" style="height:10%;margin-top: 5px;font-size:14px">
+				    		<!-- 量具名称 -->
+				    		<div class="col-sm-3" style="padding:0px">
+						    	    <lable class="col-xs-5 control-lable" style="text-align:right;padding:0px;margin-top:1%"><@spring.message "msaplan.measuretoolname"/>：</lable>
+						    	    <div class="col-xs-7"  style="padding:0px">
+							    	    <input id=measureToolName style="width:200px" disabled="disabled"    data-role="maskedtextbox" type="text" data-bind="value:model.measureToolName" />
+							    	    <script>kendo.bind($("#measureToolName"),viewModel);</script>
+						    	    </div>
+						    </div>
+							<!-- 量具编号 -->
+						    <div class="col-sm-3" style="padding:0px">
+						    	    <lable class="col-xs-5 control-lable" style="text-align:right;padding:0px;margin-top:1%"><@spring.message "msaplan.measuretoolnum"/>：</lable>
+						    	    <div class="col-xs-7"  style="padding:0px">
+							    	    <input id="measureToolNum" style="width:200px" disabled="disabled"    data-role="maskedtextbox" type="text" data-bind="value:model.measureToolNum" />
+							    	    <script>kendo.bind($("#measureToolNum"),viewModel);</script>
+						    	    </div>
+						    </div>
+						    <!-- 样品名称 -->
+						    <div class="col-sm-3" style="padding:0px">
+						    	    <lable class="col-xs-5 control-lable" style="text-align:right;padding:0px;margin-top:1%"><@spring.message "msaplan.sampledescription"/>：</lable>
+						    	    <div class="col-xs-7"  style="padding:0px">
+							    	    <input id="sampleDescription" style="width:200px"    data-role="maskedtextbox" type="text" data-bind="value:model.sampleDescription" />
+							    	    <script>kendo.bind($("#sampleDescription"),viewModel);</script>
+						    	    </div>
+						    </div>
+						    <div class="col-sm-3" style="padding:0px">
+						    </div>
+				    </div>
+				    <div class="row" style="height:10%;margin-top: 5px;font-size:14px">
+						    <!-- 待测特性 -->
+						    <div class="col-sm-3" style="padding:0px">
+						    	    <lable class="col-xs-5 control-lable" style="text-align:right;padding:0px;margin-top:1%"><@spring.message "msaplan.measurecharacter"/>：</lable>
+						    	    <div class="col-xs-7"  style="padding:0px">
+							    	    <input id="measureCharacter" style="width:200px"   data-role="maskedtextbox" type="text" data-bind="value:model.measureCharacter" />
+							    	    <script>kendo.bind($("#measureCharacter"),viewModel);</script>
+						    	    </div>
+						    </div>
+						    <!-- 量具量程 -->
+						    <div class="col-sm-3" style="padding:0px">
+						    	    <lable class="col-xs-5 control-lable" style="text-align:right;padding:0px;margin-top:1%"><@spring.message "msaplan.measuringrange"/>：</lable>
+						    	    <div class="col-xs-7" style="padding:0px">
+							    	    <input  disabled id="measuringRange" style="width:200px" data-role="maskedtextbox" type="text" data-bind="value:model.measuringRange" type="text"  /> 
+						    	    	<script>kendo.bind($("#measuringRange"),viewModel);</script>
+						    	    </div>				    	    
+						    </div>
+						    <!-- 公差 -->
+						    <div class="col-sm-3" style="padding:0px">
+						    	    <lable class="col-xs-5 control-lable" style="text-align:right;padding:0px;margin-top:1%"><@spring.message "msaplan.tolerance"/>：</lable>
+						    	    <div class="col-xs-7" style="padding:0px">
+							    	    <input id="tolerance"  style="width:200px"  data-role="maskedtextbox" type="text" data-bind="value:model.tolerance" />
+						    	    	<script>kendo.bind($("#tolerance"),viewModel);</script>
+						    	    </div>
+						    </div>
+						    
+				    </div>
+				    <div class="row" style="height:10%;margin-top: 5px;font-size:14px">
+						    <!-- 分析人 -->
+						    <div class="col-sm-3" style="padding:0px">
+						    	    <lable class="col-xs-5 control-lable" style="text-align:right;padding:0px;margin-top:1%"><@spring.message "msaplan.analyzedby"/>：</lable>
+						    	    <div class="col-xs-7"  style="padding:0px">
+							    	    <input disabled id="userName" style="width:200px"   data-role="maskedtextbox" type="text" data-bind="value:model.userName" />
+							    	    <script>kendo.bind($("#userName"),viewModel);</script>
+						    	    </div>
+						    </div>
+						    <!-- 分析日期 -->
+						    <div class="col-sm-3" style="padding:0px">
+						    	    <lable class="col-xs-5 control-lable" style="text-align:right;padding:0px;margin-top:1%"><@spring.message "msaplanline.analyzeDate"/>：</lable>
+						    	    <div class="col-xs-7" style="padding:0px">
+							    	    <input  disabled id="analyzeDate" style="width:200px" data-role="maskedtextbox" type="text" data-bind="value:model.analyzeDate" type="text"  /> 
+						    	    	<script>kendo.bind($("#analyzeDate"),viewModel);</script>
+						    	    </div>				    	    
+						    </div>						    
+				    </div>
+				    <div id="tableRow" class="row" style="height:500px;margin-top:10px">
+				    	<div style="height:100%; overflow:scroll;">
+							<table id="mytable" style='color: black;width: 100%;table-layout: fixed;font-size: small;text-align: center;border-color:#697882;overflow:scroll' border='2px'>
+								<!-- <tr>
+									<th style="width:20%"></th>
+									<th style="text-align: center;width:80%">分析内容</th>
+								</tr> 
+								<tr>
+									<td style="width:20%"><input type="radio" name="check" value="" style="margin-top:5%"></td>
+									<td style="width:80%"></td>
+								</tr> -->
+							</table>
+						</div>
+				    </div>
+			</div>
+		</form>
+	</div>
+</div>
+<div id="excelimport" style="display:none">
+	<form id="mainform" class="form-horizontal">
+	<div class="row" style="width:95%">
+		<div class="form-group">
+			<label class="col-sm-3 control-label"><@spring.message "attachcategory.attachment"/></label>
+			<div class="col-sm-7" style="margin-left: 20%">
+			<div class="demo-section k-content">
+				<input name="files" id="files1" type="file" accept=".xlsx" />
+			</div>
+
+			<script>
+				
+				</script>
+			</div>
+		</div>
+	</div>
+	</form>
+</div>
+<script>
+    function modelDownload() {//EXCEL模板下载
+        window.location.href="${base.contextPath}/resources/files/重复性和再现性数据导入模板.xlsx";
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.spc.pspc_classify.mapper.ClassifyMapper">
+    <resultMap id="BaseResultMap" type="com.hand.spc.pspc_classify.dto.Classify">
+        <result column="classify_id" property="classifyId" jdbcType="DECIMAL" />
+        <result column="tenant_id" property="tenantId" jdbcType="DECIMAL" />
+        <result column="site_id" property="siteId" jdbcType="DECIMAL" />
+        <result column="classify_code" property="classifyCode" jdbcType="VARCHAR" />
+        <result column="description" property="description" jdbcType="VARCHAR" />
+    </resultMap>
+
+    <select id="queryByParamterId" resultMap="BaseResultMap" parameterType="com.hand.spc.pspc_classify.dto.Classify">
+        SELECT
+            PC.CLASSIFY_ID,
+            PC.CLASSIFY_CODE,
+            PC.DESCRIPTION
+        FROM
+            PSPC_CLASSIFY PC
+            LEFT JOIN PSPC_CLASSIFY_RELATION PCR ON PC.CLASSIFY_ID = PCR.CLASSIFY_ID
+            LEFT JOIN PSPC_CE_PARAMETER_RELATION PCPR ON PCR.CLASSIFY_GROUP_ID = PCPR.CLASSIFY_GROUP_ID
+            LEFT JOIN PSPC_CE_PARAMETER PCP ON PCPR.CE_PARAMETER_ID = PCP.CE_PARAMETER_ID
+        WHERE
+            PCP.CE_PARAMETER_ID = #{ceParameterId}
+    </select>
+
+    <select id="selectClassifyLov" resultMap="BaseResultMap" parameterType="com.hand.spc.pspc_classify.dto.Classify">
+        select pc.classify_id, pc.classify_code, pc.description
+          from pspc_classify pc
+        left join pspc_classify_relation pcr
+          on pc.classify_id = pcr.classify_id
+        left join pspc_classify_group pcg
+          on pcg.classify_group_id = pcr.classify_group_id
+        where 1 = 1
+            <if test="classifyGroupId != null and classifyGroupId != ''">
+                and pcg.classify_group_id = #{classifyGroupId}
+            </if>
+            <if test="classifyCode != null and classifyCode != ''">
+                and pc.classify_code like concat('%',concat(#{classifyCode},'%'))
+            </if>
+            <if test="description != null and description != ''">
+                and pc.description like concat('%',concat(#{description},'%'))
+            </if>
+    </select>
+
+    <select id="queryLov" resultMap="BaseResultMap" parameterType="com.hand.spc.pspc_classify.dto.Classify">
+         select pc.classify_id, pc.classify_code, pc.description
+           from pspc_classify pc
+          where
+              1 = 1
+            <if test="classifyCode != null and classifyCode !=''">
+                and pc.classify_code = #{classifyCode,jdbcType=VARCHAR}
+            </if>
+            <if test="description != null and description !=''">
+                and pc.description = #{description,jdbcType=VARCHAR}
+            </if>
+    </select>
+
+</mapper>

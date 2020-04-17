@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.spc.message_type_maintenance.mapper.MessageTypeMapper">
+    <resultMap id="BaseResultMap" type="com.hand.spc.message_type_maintenance.dto.MessageType">
+        <result column="MESSAGE_TYPE_ID" property="messageTypeId" jdbcType="DECIMAL" />
+        <result column="TENANT_ID" property="tenantId" jdbcType="DECIMAL" />
+        <result column="SITE_ID" property="siteId" jdbcType="DECIMAL" />
+        <result column="MESSAGE_TYPE_CODE" property="messageTypeCode" jdbcType="VARCHAR" />
+        <result column="MESSAGE_TYPE_STATUS" property="messageTypeStatus" jdbcType="VARCHAR" />
+        <result column="PROGRAM_APPLICATION_ID" property="programApplicationId" jdbcType="DECIMAL" />
+        <result column="PROGRAM_UPDATE_DATE" property="programUpdateDate" jdbcType="DATE" />
+    </resultMap>
+
+    <select id="selectData" resultMap="BaseResultMap">
+        select t.* from PSPC_MESSAGE_TYPE t where 1=1
+        <if test="messageTypeCode!=null">
+         and t.MESSAGE_TYPE_CODE like concat(concat('%',#{messageTypeCode}),'%')
+        </if>
+    </select>
+
+    <select id="selectTypeCodeCount" resultType="java.lang.Integer">
+        SELECT
+            COUNT (1)
+        FROM
+            pspc_judgement pj,
+            pspc_message_type pmt
+        WHERE
+            1 = 1
+        AND pj.MESSAGE_TYPE_CODE = pmt.MESSAGE_TYPE_CODE
+        AND pj.MESSAGE_TYPE_CODE = #{messageTypeCode}
+    </select>
+
+    <select id="queryElementStatus" resultMap="BaseResultMap">
+         SELECT
+            t.MESSAGE_TYPE_STATUS
+        FROM
+            PSPC_MESSAGE_TYPE t
+        WHERE
+            1=1
+         AND t.MESSAGE_TYPE_ID = #{messageTypeId}
+    </select>
+
+
+</mapper>

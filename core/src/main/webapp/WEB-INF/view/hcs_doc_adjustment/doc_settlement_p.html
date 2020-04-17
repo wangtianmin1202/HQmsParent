@@ -1,0 +1,579 @@
+<#include "../include/header.html">
+<script src="${base.contextPath}/common/code?SRM_DOC_SETTLEMENT_STATUS=SRM_DOC_SETTLEMENT_STATUS"></script>
+<script src="${base.contextPath}/common/code?SRM_DOC_SETTLEMENT_TYPE=SRM_DOC_SETTLEMENT_TYPE"></script>
+<script src="${base.contextPath}/common/code?SRM_PURCHASE_GROUP=SRM_PURCHASE_GROUP"></script>
+<script src="${base.contextPath}/lib/prints/doc_print.js" type="text/javascript" charset="UTF-8"></script>
+<script src="${base.contextPath}/lib/bootstrap-3.3.7/js/bootstrap.min.js"></script>
+<script type="text/javascript">
+    var viewModel = Hap.createGridViewModel("#grid");
+    var parentData;
+    var supplierId;
+    $(function(){
+    	if(window.innerHeight > 400){    		
+	    	$('#tab2-id').height(window.innerHeight*87/96)
+    	}else{
+    		$('#tab2-id').height(730)
+    	}
+    	//应收发票创建
+    	$("#tab-create-invoice").on("click",function(){
+    			window.location.reload()
+    			//viewModel.query();
+    	});
+    	//应收发票编辑
+    	$("#iframe-edit-invoice").on("load",function(){
+    		$(this).show();
+    	});
+    	$("#tab-edit-invoice").on("click",function(){
+    		$("#sum1").hide()
+    		$("#sum2").hide()
+    		$("#iframe-edit-invoice").hide();
+    		$("#iframe-edit-invoice").attr("src","${base.contextPath}/hcs_doc_adjustment/tax_invoice.html");
+    	})
+    }) ; 
+    /* 页面初始化查询供应商id */
+    $(document).ready(function(){
+    	$.ajax({
+    		url:"${base.contextPath}/hcs/supplier/onhand/quantities/querySupplier",
+    		type: "POST",
+    		contentType: "application/json",
+    		success: function(data){
+    			if(data.success){
+    				if(data.rows[0] != null){
+    					supplierId = data.rows[0].supplierId;
+    					if(supplierId == null ){
+    						$("#openDetailWindow").hide();
+    					}else{
+    						$("#group").hide();
+    					}
+    				}
+    			}
+    		}
+    	})
+    })
+    //生成应收发票
+    viewModel.openDetailWindow = function(){
+    	var grid = $("#grid").data("kendoGrid");
+       	var checked = grid.selectedDataItems();
+       	var len = checked.length;
+       	if(len === 0){
+       		kendo.ui.showInfoDialog({
+       			title: '<@spring.message "hap.tip.info"/>',
+       			message: "请先选择数据"
+       		})
+       		return;
+       	}else{
+       		for (var i = 1; i < len ; i++) {
+       			if(checked[i].currency != checked[i-1].currency 
+       					|| checked[i].plantName != checked[i-1].plantName 
+       					|| checked[i].supplierName != checked[i-1].supplierName 
+       					|| checked[i].supplierSiteName != checked[i-1].supplierSiteName){
+       				kendo.ui.showInfoDialog({
+    						title: '<@spring.message "hap.tip.info"/>',
+    		    			message: '<@spring.message "error.srm_invoice_0010"/>'
+    		    		})
+    		    		return;
+       			}
+       		}
+       		parentData = checked;
+       		parentData[0].changeFlag = "N";
+
+   			var dialog = $("#lineWindow").kendoWindow({
+       			actions: ["Close"],
+       			width: 1400,
+       			height: 750,
+       			title: "应收发票明细",
+       			visible: false,
+       			iframe: true,
+       			modal: true,
+       			content: 'doc_adjustment.html?'
+       			 
+       		}).data("kendoWindow");
+       		dialog.center().open();
+        		
+       	}
+    }
+</script>
+<body>
+<div id="lineWindow"></div>
+<div id="page-content">
+	<div class="col-sm-12" style="margin-top:10px">
+    	<ul class="nav nav-tabs" id="mytab">
+    		<li class="active"><a id="tab-create-invoice" href="#tab1-id" data-toggle="tab"><@spring.message "srm.invoice.invoicecreate"/></a></li>
+    		<li class=""><a id="tab-edit-invoice" href="#tab2-id" data-toggle="tab"><@spring.message "srm.invoice.invoiceedit"/></a></li>
+    		<!--  采购组-->
+              <span id="group" style="float:right">              
+	              <input id="purchaseGroup" style="margin-right:5px;" placeholder='<@spring.message "polinelocations.purchaseGroup"/>'
+	                 data-bind="value:model.purchaseGroup">     
+	              <script>
+		              	   kendo.bind($("#purchaseGroup"),viewModel);
+		                   $("#purchaseGroup").kendoComboBox({
+			               	    dataTextField: "meaning",
+			               	    dataValueField: "value",
+			               	    valuePrimitive: true,
+			               	    dataSource: SRM_PURCHASE_GROUP
+			               	});    
+	              </script> 
+              </span>
+    		<li id="sum2" class="" style="float:right"><@spring.message "docsettlement.taxamount"/>：<input id="sum2Input" type="text" readOnly="readOnly"  data-role="maskedtextbox" style="margin-right:5px;"  class="k-textbox"></li>
+    		<li id="sum1" class="" style="float:right"><@spring.message "docsettlement.notaxamount"/>：<input id="sum1Input" type="text" readOnly="readOnly" data-role="maskedtextbox" style="margin-right:5px;"  class="k-textbox"></li>
+    	</ul>
+    	<div id="tabContent" class="tab-content" style="margin-top:5px">
+	    	<div class="tab-pane fade in active" id="tab1-id">
+
+			    <div class="pull-left" id="toolbar-btn" style="padding-bottom:10px;">
+			        <span id="openDetailWindow" class="btn btn-success k-grid-save-changes" data-bind="click:openDetailWindow" style="float:left;margin-right:5px;"><@spring.message "docsettlement.createinvoice"/></span>
+			        <span class="btn btn-primary k-grid-excel" style="float:left;margin-right:5px;" data-bind="click:exportExcel">
+			    	<i class="fa fa-file-excel-o" style="margin-right:3px"></i><@spring.message "srm.exportexcel"/></span>
+			    </div>
+			    <script>kendo.bind($('#toolbar-btn'), viewModel);</script>
+			    <div class="pull-right" id="queryPanel" style="padding-bottom:10px;">
+			    	<div class="k-query-simple" id="query-form">
+			    		<!-- 结算单号 -->
+				    	<input type="text" data-role="maskedtextbox" style="width:100px;margin-right:5px;" placeholder='<@spring.message "docsettlement.docsettlementnum"/>'
+				                   data-bind="value:model.docSettlementNum" >
+			            <!-- 事物类型 -->
+			            <input id="docType"  style="width:100px;margin-right:5px;" placeholder='<@spring.message "docsettlement.docType"/>'
+			            data-bind="value:model.docType">
+			            <script>
+			                   $("#docType").kendoComboBox({
+				               	    dataTextField: "meaning",
+				               	    dataValueField: "value",
+				               	    valuePrimitive: true,
+				               	    dataSource: SRM_DOC_SETTLEMENT_TYPE
+				               	});
+	                   </script>
+	                   <!-- 事务日期从 -->
+	                   <input type="text" data-role="datepicker" style="margin-right:5px;width:110px;" placeholder='<@spring.message "docsettlement.startTime"/>'
+	                   data-bind="value:model.startTime" class="datepicker">
+	                   <!-- 事务日期至 -->
+	                   <input type="text" data-role="datepicker" style="margin-right:5px;width:110px;" placeholder='<@spring.message "docsettlement.endTime"/>'
+	                   data-bind="value:model.endTime" class="datepicker"> 
+
+			    	</div>
+			         <script>kendo.bind($('#query-form'), viewModel);</script>
+			         <div class="k-query-detail" id="query-form2">
+			         		<div class="rows">
+			         			
+			         			<!-- 工厂 -->
+<!-- 		         				<input  id="plantLov" style="margin-right:5px;" placeholder="<@spring.message 'asliqccontrol.plantName'/>" data-bind="value:model.plantId" > -->
+		         				<script>
+// 			         				$("#plantLov").kendoLov($.extend
+// 		       					    (<@lov"LOV_PLANT_BY_USER"/>, {
+// 		       					        textField: 'plantName',
+// 		       					        valueField:'plantId',
+// 		       					    	query: function(e){
+// 			                	        	e.param['supplierId'] = supplierId;
+// 			                	        	e.param['enableFlag'] = 'Y';
+// 			                	        }
+// 		       					    }));
+		         				</script>
+		         				<!--  物料 -->
+					            <input  id="itemLov" style="margin-right:5px" placeholder="<@spring.message 'polinelocations.item'/>" data-bind="value:model.itemId" >
+					            <script>
+				                	$("#itemLov").kendoLov($.extend
+				                	    (<@lov"LOV_ITEM_BY_USER"/>, {
+				                	        textField: 'itemName',
+				                	        valueField:'itemId',
+				                	        query: function(e){
+				                	        	e.param['supplierId'] = supplierId;
+				                	        	e.param['enableFlag'] = 'Y';
+				                	        }
+				                	}));
+			                	</script> 
+			                	<!-- 供应商名称 -->
+							            <input  id="supplierLov" style="margin-right:5px" placeholder="<@spring.message 'polinelocations.supplierId'/>" data-bind="value:model.supplierId" >
+							            <script>
+							                	$("#supplierLov").kendoLov($.extend
+							                	    (<@lov"LOV_SUPPLIER_SRM"/>, {
+							                	        textField: 'supplierCode',
+							                	        valueField:'supplierId',
+							                	        query: function(e){
+							                	        	e.param['supplierId'] = supplierId;
+							                	        }
+							                	}));
+							            </script>
+			                	<!-- 关联订单号 -->
+			                	<input type="text" data-role="maskedtextbox" style="margin-right:5px;" placeholder='<@spring.message "docsettlement.relPoNumH"/>'
+			                   	data-bind="value:model.relPoNumH" class="k-textbox">
+			         		</div>
+			         		<div class="rows" style="margin-top: 5px">   
+			         				<!-- 关联单据号 -->
+				                	<input type="text" data-role="maskedtextbox" style="margin-right:5px;" placeholder='<@spring.message "docsettlement.relDocNumH"/>'
+				                   	data-bind="value:model.relDocNumH" class="k-textbox">	
+				                   	<!-- 对账单号 -->
+				                	<input type="text" data-role="maskedtextbox" style="margin-right:5px;" placeholder='<@spring.message "docsettlement.docStatementNum"/>'
+				                   	data-bind="value:model.docStatementNum" class="k-textbox">
+			         				
+			         		</div>
+			         </div>  
+			         <script>kendo.bind($('#query-form2'), viewModel);</script> 
+			        <!-- <span class="btn btn-primary" style="float:left;width:70px" data-bind="click:query" type="submit"><@spring.message "hap.query"/></span> -->
+			        <div style="clear:both"></div>
+			    </div>
+			    <div style="clear:both">
+			        <div id="grid"></div>
+			    </div>
+			</div>
+			<div class="tab-pane fade" id="tab2-id">
+	    		<iframe id="iframe-edit-invoice" style="height:100%" width="100%" frameborder="0" seamless scrolling="auto"></iframe>
+	    	</div>  
+	  </div>
+    </div>  	  
+</div>
+
+<script type="text/javascript">
+	$("#queryPanel").kendoQueryPanel({
+		queryFunction: function(){
+			viewModel.query();
+		},
+		resetFunction: function(){
+			viewModel.reset();
+		}
+	})
+    Hap.initEnterQuery('#query-form', viewModel.query);
+    var BaseUrl = _basePath;
+    dataSource = new kendo.data.DataSource({
+        transport: {
+            read: {
+                url: BaseUrl + "/hcs/doc/settlement/query",
+                type: "POST",
+                dataType: "json"
+            },
+            update: {
+                url: BaseUrl + "/hcs/doc/settlement/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            destroy: {
+                url: BaseUrl + "/hcs/doc/settlement/remove",
+                type: "POST",
+                contentType: "application/json"
+            },
+            create: {
+                url: BaseUrl + "/hcs/doc/settlement/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            parameterMap: function (options, type) {
+                if (type !== "read" && options.models) {
+                    var datas = Hap.prepareSubmitParameter(options, type)
+                    return kendo.stringify(datas);
+                } else if (type === "read") {
+                	viewModel.model.settlementStatus = 'P';
+                	$("#sum1Input").val('');
+        	   		$("#sum2Input").val('');
+                    return Hap.prepareQueryParameter(viewModel.model.toJSON(), options)
+                }
+            }
+        },
+        batch: true,
+        serverPaging: true,
+        pageSize: 200,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+                id: "docSettlementId",
+                fields: {}
+            }
+        }
+    });
+
+    $("#grid").kendoGrid({
+    	excel: {
+    		fileName:"应收发票创建.xlsx",
+    		filterable: true,
+    	},
+    	excelExport: function(e){
+    		var rows = e.workbook.sheets[0].rows;
+    		var datas = e.data;
+    		for(var i=1;i<rows.length; i++){
+    			rows[i].cells[22].value = Hap.getCodeMeaning(SRM_DOC_SETTLEMENT_STATUS,datas[i-1].settlementStatus);
+    			rows[i].cells[9].value = Hap.getCodeMeaning(SRM_DOC_SETTLEMENT_TYPE,datas[i-1].docType);
+    		}
+    	},
+        dataSource: dataSource,
+        resizable: true,
+        scrollable: true,
+        sortable:true,
+        navigatable: false,
+        selectable: 'multiple, rowbox',
+        dataBound: function () {
+            if (parent.autoResizeIframe) {
+                parent.autoResizeIframe('${RequestParameters.functionCode!}')
+            }
+        },
+        pageable: {
+            pageSizes: [20, 50, 200, 500],
+            refresh: true,
+            buttonCount: 5
+        },
+        columns: [
+                    
+            {
+                field: "relPoNumH",
+                title: '<@spring.message "docsettlement.relPoNumH"/>',
+                width: 100,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+                locked:true
+            },
+                    
+                    {
+                field: "relPoNumL",
+                title: '<@spring.message "docsettlement.relPoNumL"/>',
+                width: 60,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+                locked:true
+            },
+            {
+                field: "itemCode",
+                title: '<@spring.message "docsettlement.itemCode"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+            {
+                field: "itemName",
+                title: '<@spring.message "docsettlement.itemName"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+            {
+                field: "docStatementNum",
+                title: '<@spring.message "docsettlement.docStatementNum"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+            
+            {
+                field: "plantName",
+                title: '<@spring.message "docsettlement.plantName"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+                   
+                    {
+                field: "itemVersion",
+                title: '<@spring.message "docsettlement.itemversion"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+            {
+                field: "docQty",
+                title: '<@spring.message "docsettlement.docqty"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+            
+            {
+                field: "itemUom",
+                title: '<@spring.message "docsettlement.itemuom"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+                    {
+                field: "docType",
+                title: '<@spring.message "docsettlement.doctype"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+                template: function (dataItem) {
+                    var v = dataItem.docType ? dataItem.docType : "";
+                    $.each(SRM_DOC_SETTLEMENT_TYPE, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return v;
+                        }
+                    });
+                    return v;
+                },
+                editor: function (container, options) {
+                    $('<input name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            dataTextField: "meaning",
+                            dataValueField: "value",
+                            valuePrimitive: true,
+                            dataSource:SRM_DOC_SETTLEMENT_TYPE
+                        });
+                }
+            },
+                    {
+                field: "accountDate",
+                title: '<@spring.message "docsettlement.accountdate"/>',
+                width: 150,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+                template: function(rowdata){
+                	if(rowdata.accountDate != null){
+	                	var str = rowdata.accountDate.slice(0,10)
+	                	return '<span>'+str+'</span>'
+                	}else{
+                		return '<span></span>'
+                	}
+                } 
+            },
+            {
+                field: "unitPrice",
+                title: '<@spring.message "docsettlement.unitprice"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+            {
+                field: "priceUnit",
+                title: '<@spring.message "docsettlement.priceunit"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+            {
+                field: "actualAmount",
+                title: '<@spring.message "docsettlement.actualamount"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },     
+            {
+                field: "taxCode",
+                title: '<@spring.message "docsettlement.taxcode"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },      
+            {
+                field: "currency",
+                title: '<@spring.message "docsettlement.currency"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },   
+//             {
+//                 field: "agentFullName",
+//                 title: '<@spring.message "docsettlement.agentfullname"/>',
+//                 width: 120,
+//                 attributes: {style: "text-align:center;white-space: nowrap;"},
+//                 headerAttributes: {style: "text-align:center"},
+//             },
+            {
+                field: "remarks",
+                title: '<@spring.message "docsettlement.remarks"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+            
+//             {
+//                 field: "supplierSiteName",
+//                 title: '<@spring.message "docsettlement.supplierSiteName"/>',
+//                 width: 120,
+//                 attributes: {style: "text-align:center;white-space: nowrap;"},
+//                 headerAttributes: {style: "text-align:center"},
+//             },
+            {
+                field: "relDocNumH",
+                title: '<@spring.message "docsettlement.relDocNumH"/>',
+                width: 150,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+                    {
+                field: "relDocNumL",
+                title: '<@spring.message "docsettlement.relDocNumL"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+            {
+                field: "supplierCode",
+                title: '<@spring.message "docsettlement.supplierCode"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+            {
+                field: "supplierName",
+                title: '<@spring.message "docsettlement.supplierName"/>',
+                width: 200,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+            {
+                field: "docSettlementNum",
+                title: '<@spring.message "docsettlement.docsettlementnum"/>',
+                width: 200,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+                
+            },
+            {
+                field: "settlementStatus",
+                title: '<@spring.message "docsettlement.settlementstatus"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+                template: function (dataItem) {
+                    var v = dataItem.settlementStatus ? dataItem.settlementStatus : "";
+                    $.each(SRM_DOC_SETTLEMENT_STATUS, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return v;
+                        }
+                    });
+                    return v;
+                },
+                editor: function (container, options) {
+                    $('<input name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            dataTextField: "meaning",
+                            dataValueField: "value",
+                            valuePrimitive: true,
+                            dataSource:SRM_DOC_SETTLEMENT_STATUS
+                        });
+                }
+            },
+        ],
+        editable: false
+    });
+    Hap.autoResizeGrid('#grid');
+  	//全选框点击事件
+	 $(".k-checkbox").click(function(){ 
+		 setTimeout("amountSum()","20");
+	 });
+  	//行多选框点击事件
+	 $("#grid").on("click",".k-checkbox",function(){
+		 amountSum();
+	 })
+  	//计算金额（含税总计不含税总计）
+  	function amountSum(){
+  		var grid = $("#grid").data("kendoGrid");
+       	var checked = grid.selectedDataItems();
+       	var len = checked.length;
+       	if(len === 0){
+       		$("#sum1Input").val('');
+	   		$("#sum2Input").val('');
+       	}else{
+       		var sum1 = 0;
+	   		var sum2 = 0;
+       		for (var i = 0; i < len ; i++) {
+       			var actualAmount = parseFloat(nvl(checked[i].actualAmount,0))
+	   			var taxCode = parseFloat(nvl(checked[i].taxCode,0)) * 0.01
+	   			sum1 = sum1 + actualAmount;
+	   			sum2 = sum2 + actualAmount * taxCode + actualAmount
+       		}
+       		$("#sum1Input").val(sum1.toFixed(2)) ;
+	   		$("#sum2Input").val(sum2.toFixed(2))  ;
+       	}
+  	}
+</script>
+</body>
+</html>

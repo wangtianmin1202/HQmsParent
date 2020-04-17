@@ -1,0 +1,164 @@
+<#include "../include/header.html">
+
+<style>
+	div[role=tooltip].k-tooltip{
+		padding: 2px;
+		background: #5c9acf;
+	}
+	.k-tooltip-content{
+		padding: 4px;
+		text-align: left;
+		background: #fff;
+		color: #666;
+	}
+	.k-callout {
+		border-bottom-color: #5c9acf;
+	}
+</style>
+
+<script>
+    var functionCode="${RequestParameters.functionCode!'-1'}";
+</script>
+
+<script type="text/javascript">
+    var viewModel = Hap.createGridViewModel("#grid");
+    var toolTipOpt = {
+        		show: function(e){
+        			if($.trim(this.content.text()) !=""){
+        				$('[role="tooltip"]').css("visibility", "visible");
+        			}
+        		},
+        		hide: function(){
+        			$('[role="tooltip"]').css("visibility", "hidden");
+        		},
+        		filter: "td:nth-child(n+3)",
+        		content: function(e){
+        			var element = e.target[0];
+        			if(element.offsetWidth < element.scrollWidth){
+        				var text = $(e.target).text();
+        				return '<div style="min-width:100px;max-width: 1000px;">' + text + '</div>';
+        			}else{//解决鼠标�?�?始放在上面出现空模块
+        				$('[role="tooltip"]').css("visibility", "hidden");
+        				return "";
+        			}
+        		}
+        };
+</script>
+
+<body>
+
+<div id="page-content">
+    <div style="clear:both">
+        <div id="grid"></div>
+    </div>
+</div>
+
+<script>
+    Hap.initEnterQuery('#query-form', viewModel.query);
+    var BaseUrl = _basePath;
+    dataSource = new kendo.data.DataSource({
+        transport: {
+            read: {
+                url: BaseUrl + "/sys/individuation/template/query?functionCode=" +functionCode,
+                type: "POST",
+                dataType: "json"
+            },
+            update: {
+                url: BaseUrl + "/sys/individuation/template/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            destroy: {
+                url: BaseUrl + "/sys/individuation/template/remove",
+                type: "POST",
+                contentType: "application/json"
+            },
+            create: {
+                url: BaseUrl + "/sys/individuation/template/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            parameterMap: function (options, type) {
+                if (type !== "read" && options.models) {
+                    var datas = Hap.prepareSubmitParameter(options, type)
+                    return kendo.stringify(datas);
+                } else if (type === "read") {
+                    return Hap.prepareQueryParameter(viewModel.model.toJSON(), options)
+                }
+            }
+        },
+        batch: true,
+        serverPaging: true,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+                id: "templateId",
+                fields: {}
+            }
+        }
+    });
+</script>
+
+<script>
+    function onChange(arg) {
+        var selected=grid.selectedDataItems();
+        var sql=selected[0].templateSql;
+        var value=selected[0].templateValue;
+        window.parent.individuationSql=sql;
+        window.parent.individuationValue=value;
+        window.parent.$("#templateWindow").data("kendoWindow").close();
+    }
+</script>
+
+<script>
+	$("#grid").kendoTooltip(toolTipOpt).data("kendoTooltip");
+    var grid = $("#grid").kendoGrid({
+        dataSource: dataSource,
+        resizable: true,
+        scrollable: true,
+        navigatable: false,
+        sortable:true,
+        selectable: "row",
+        change: onChange,
+        dataBound: function () {
+            if (parent.autoResizeIframe) {
+                parent.autoResizeIframe('${RequestParameters.functionCode!}')
+            }
+        },
+        columns: [
+            {
+                field: "templateId",
+                title: '<@spring.message "individuationtemplate.templateid"/>',
+                width: 120,
+                attributes:{style:"white-space:nowrap;text-overflow:ellipsis;"},
+                hidden:true
+            },
+                    {
+                field: "templateName",
+                title: '<@spring.message "individuationtemplate.templatename"/>',
+                width: 200,
+                attributes:{style:"white-space:nowrap;text-overflow:ellipsis;"}
+            },
+            {
+                field: "templateSql",
+                title: '<@spring.message "individuationtemplate.templatesql"/>',
+                width: 120,
+                attributes:{style:"white-space:nowrap;text-overflow:ellipsis;"},
+                hidden:true
+            },
+            {
+                field: "templateValue",
+                title: '<@spring.message "individuationtemplate.templatevalue"/>',
+                width: 120,
+                attributes:{style:"white-space:nowrap;text-overflow:ellipsis;"},
+                hidden:true
+            },
+            { command: ["destroy"],
+                width: "40px" },
+        ],
+        editable: "inline"
+    }).data("kendoGrid");
+</script>
+</body>
+</html>

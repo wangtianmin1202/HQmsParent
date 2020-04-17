@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_platform_program_his.mapper.PlatformProgramHisMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_platform_program_his.dto.PlatformProgramHis">
+        <result column="EVENT_ID" property="eventId" jdbcType="DECIMAL" />
+        <result column="EVENT_BY" property="eventBy" jdbcType="DECIMAL" />
+        <result column="EVENT_TIME" property="eventTime" jdbcType="DATE" />
+        <result column="PLATFORM_ID" property="platformId" jdbcType="DECIMAL" />
+        <result column="PLANT_ID" property="plantId" jdbcType="DECIMAL" />
+        <result column="PROGRAM_TYPE" property="programType" jdbcType="VARCHAR" />
+        <result column="PLATFORM_TYPE" property="platformType" jdbcType="VARCHAR" />
+        <result column="SAMPLE_TYPE" property="sampleType" jdbcType="VARCHAR" />
+        <result column="ENABLE_FLAG" property="enableFlag" jdbcType="VARCHAR" />
+    </resultMap>
+
+
+</mapper>

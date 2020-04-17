@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.spc.ecr_main.mapper.EcrDetailMapper">
+    
+
+<resultMap id="baseResult" type="com.hand.spc.ecr_main.dto.EcrDetail">
+        <result column="KID" property="kid" jdbcType="DECIMAL" />
+        <result column="ecrno" property="ecrno" jdbcType="VARCHAR" />
+        <result column="descriptions" property="itemDescription" jdbcType="VARCHAR" />
+        <result column="po_qty" property="poQty" jdbcType="DECIMAL" />    
+        <result column="supplier_onhand" property="supplierOnhand" jdbcType="DECIMAL" />
+        <result column="special_onhand" property="specialOnhand" jdbcType="DECIMAL" />
+		<result column="calculate_onhand" property="calculateOnhand" jdbcType="DECIMAL" />
+		<result column="buyer" property="buyer" jdbcType="VARCHAR" />
+		<result column="material_id" property="materialId" jdbcType="DECIMAL" />
+		<result column="item_version" property="itemVersion" jdbcType="VARCHAR" />
+		<result column="item_code" property="itemCode" jdbcType="VARCHAR" />
+		<result column="supplier_name" property="supplierName" jdbcType="VARCHAR" />
+		<result column="item_pirce" property="itemPrice" jdbcType="DECIMAL" />
+		<result column="end_date" property="endDate" jdbcType="DATE" />
+		<result column="purchase_lead_time" property="purchaseLeadTime" jdbcType="DECIMAL" />
+		<result column="moq" property="moq" jdbcType="DECIMAL" />
+		<result column="hei_kid" property="heiKid" jdbcType="DECIMAL" />
+		<result column="SPECIAL_WIP_ONHAND" property="supplierWipOnhand" jdbcType="VARCHAR"/>
+		<result column="supplier_id" property="supplierId" jdbcType="VARCHAR"/>
+		<result column="SPECIAL_WIP_ONHAND" property="specialWipOnhand" jdbcType="DECIMAL" />
+		<result column="item_qty" property="itemQty" jdbcType="DECIMAL" />
+    </resultMap>
+
+    <select id="inventoryDetailsQuery" parameterType="com.hand.spc.ecr_main.dto.EcrDetail"
+            resultMap="baseResult">
+            select  heis.kid,
+		            hei.kid hei_kid,
+		            hei.ecrno,
+		            hei.mes_onhand,
+		            hi.descriptions,
+		            hi.ITEM_CODE,
+		            nvl(heis.po_qty,hei.po_qty) po_qty,
+		            nvl(heis.supplier_onhand, hei.supplier_onhand) supplier_onhand,
+		            nvl(heis.special_onhand,hei.special_onhand) special_onhand,
+		            nvl(heis.calculate_onhand,hei.calculate_onhand) calculate_onhand,
+		            nvl(heis.SPECIAL_WIP_ONHAND,hei.SPECIAL_WIP_ONHAND) SPECIAL_WIP_ONHAND,
+		            heis.item_version,
+		            (select su.user_name from hcs_asl ha join hcs_asl_control hac on hac.asl_id = ha.asl_id
+		            join srm_user_purchase_group supg on supg.purchase_group_code = hac.purchase_group join sys_user su
+		            on su.user_id = supg.user_id where ha.item_id = hei.material_id and rownum = 1) buyer,
+		            hac.end_date,
+		            hac.purchase_lead_time,
+		            hac.moq,
+		            hac.item_pirce,
+		            hs.supplier_code||'-'||hs.supplier_name  supplier_name,
+		            hs.supplier_id,
+		      	    hac.item_qty
+        from hpm_ecr_influencedmaterial hei
+        left join hpm_ecr_item_suppliers heis on hei.kid = heis.ecr_item_kid
+        left join hcm_item hi on hei.material_id = hi.ITEM_ID
+        left join hcs_asl ha on hei.material_id = ha.item_id
+        left join hcs_asl_control hac on ha.asl_id = hac.asl_id
+        left join hcs_suppliers hs on ha.supplier_id = hs.supplier_id
+        left join hcs_supplier_item_version hsiv on hei.material_id = hsiv.item_id
+  <include refid="baseWhere"></include>
+    </select>
+    
+    <sql id="baseWhere">
+	    <where>
+	    	<if test="ecrno != null">
+	    	hei.ecrno = #{ecrno}
+	    	</if>
+	    	<if test="materialId != null">
+	    	and hei.material_id = #{materialId}
+	    	</if>
+	    </where>
+    </sql>
+
+    <select id="stockQuery" resultType="java.lang.Long">
+        select sum(t.loct_onhand) wms_onhand
+               from HME_ITEM_ONHAND_QUANTITIES t
+              where (t.inventory_status = 'UU'
+                 OR T.INVENTORY_STATUS = 'QI')
+                 and t.item_id=#{itemId}                 
+              group by t.item_id
+    </select>
+
+    <select id="finalDateQuery" resultType="java.util.Date">
+        select last_update_date
+  from (select t.item_id,
+               t.last_update_date,
+               ROW_NUMBER() OVER(partition by t.item_id order by t.last_update_date desc nulls last) rn
+          from HME_ITEM_ONHAND_QUANTITIES t
+         where (t.inventory_status = 'UU' OR T.INVENTORY_STATUS = 'QI') and t.item_id=#{itemId}  )
+ where rn = 1
+    </select>
+    
+    
+    <resultMap id="sumMap" type="com.hand.spc.ecr_main.dto.EcrDetail"> 
+        <result column="po_qty" property="poQty" jdbcType="DECIMAL" />    
+        <result column="supplier_onhand" property="supplierOnhand" jdbcType="DECIMAL" />
+        <result column="special_onhand" property="specialOnhand" jdbcType="DECIMAL" />
+		<result column="calculate_onhand" property="calculateOnhand" jdbcType="DECIMAL" /> 
+    </resultMap>
+	<select id="getSumQtys" resultMap="sumMap">				
+		select sum(t.po_qty) po_qty,
+		       sum(t.supplier_onhand) supplier_onhand ,
+		       sum(t.special_onhand) special_onhand,
+		       sum(t.calculate_onhand) calculate_onhand
+		  from hpm_ecr_item_suppliers t
+		 where t.ecr_item_kid = #{ecrItemKid}
+	</select>
+</mapper>

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_pqc_warning_record.mapper.PqcWarningRecordMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_pqc_warning_record.dto.PqcWarningRecord">
+        <result column="KID" property="kid" jdbcType="DECIMAL" />
+        <result column="PLANT_ID" property="plantId" jdbcType="DECIMAL" />
+        <result column="WARNING_ID" property="warningId" jdbcType="DECIMAL" />
+        <result column="TASK_ID" property="taskId" jdbcType="DECIMAL" />
+        <result column="WARNING_DESC" property="warningDesc" jdbcType="VARCHAR" />
+        <result column="WARNING_OBJECT" property="warningObject" jdbcType="VARCHAR" />
+        <result column="IS_SEND" property="isSend" jdbcType="VARCHAR" />
+    </resultMap>
+
+
+</mapper>

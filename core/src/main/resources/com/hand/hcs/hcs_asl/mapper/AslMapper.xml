@@ -1,0 +1,282 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hcs.hcs_asl.mapper.AslMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hcs.hcs_asl.dto.Asl">
+        <result column="ASL_ID" property="aslId" jdbcType="DECIMAL" />
+        <result column="PLANT_ID" property="plantId" jdbcType="DECIMAL" />
+        <result column="ITEM_ID" property="itemId" jdbcType="DECIMAL" />
+        <result column="SUPPLIER_ID" property="supplierId" jdbcType="DECIMAL" />
+        <result column="SUPPLERS_SITE_ID" property="supplersSiteId" jdbcType="DECIMAL" />
+        <result column="ENABLE_FLAG" property="enableFlag" jdbcType="VARCHAR" />
+        <result column="ASL_STATUS" property="aslStatus" jdbcType="DECIMAL" />
+        <result column="VENDOR_BUSINESS_TYPE" property="vendorBusinessType" jdbcType="VARCHAR" />
+        <result column="CID" property="cid" jdbcType="DECIMAL" />
+        
+        <!-- 业务字段 -->
+        <result column="URGENT_LEAD_TIME" property="urgentLeadTime" jdbcType="DECIMAL" />
+        <result column="TOTAL_CAPACITY" property="totalCapacity" jdbcType="DECIMAL" />
+        <result column="ITEM_CODE" property="itemCode" jdbcType="VARCHAR" />
+        <result column="ITEM_NAME" property="itemName" jdbcType="VARCHAR" />
+        <result column="PRIMARY_UOM" property="primaryUom" jdbcType="VARCHAR" />
+        <result column="SUPPLIER_CODE" property="supplierCode" jdbcType="VARCHAR" />
+        <result column="SUPPLIER_NAME" property="supplierName" jdbcType="VARCHAR" />
+        <result column="SITE_DESCRIPTION" property="siteDescription" jdbcType="VARCHAR" />
+        <result column="PLANT_NAME" property="plantName" jdbcType="VARCHAR" />
+        <result column="PLANT_CODE" property="plantCode" jdbcType="VARCHAR" />
+        <result column="supplier_site_code" property="supplierSiteCode" jdbcType="VARCHAR" />
+        <result column="SUPPLIER_SITE_ID" property="supplierSiteId" jdbcType="DECIMAL" />
+        <result column="SUPPLIER_SIT_ID" property="supplierSitId" jdbcType="DECIMAL" />
+        <result column="lead_time" property="leadTime" jdbcType="DECIMAL" />
+        <result column="purchase_type" property="purchaseType" jdbcType="VARCHAR" />
+        <result column="purchase_group" property="purchaseGroup" jdbcType="VARCHAR" />
+        <result column="name" property="name" jdbcType="VARCHAR" />
+    </resultMap>
+	<!-- 合格物料查询 -->
+	<select id="query" resultMap="BaseResultMap" parameterType="com.hand.hcs.hcs_asl.dto.Asl">
+		SELECT hs.supplier_id,
+		       hi.item_code,
+		       hi.descriptions ITEM_NAME,
+		       hi.primary_uom,
+		       hsup.supplier_code,
+		       hsup.supplier_name,
+<!-- 		       hss.description SITE_DESCRIPTION, -->
+       		   hp.descriptions PLANT_NAME,
+       		   hi.item_Id,
+       		   hp.plant_id,
+		       hi.purchase_type,
+		       hac.lead_time,
+		       hac.purchase_group,
+		       he.name,
+       		   hs.asl_id,
+       		   hac.URGENT_LEAD_TIME,
+       		   hac.TOTAL_CAPACITY
+		FROM sys_user su
+		join hcs_asl hs on decode(su.user_type,'S',su.supplier_id,hs.supplier_id) = hs.supplier_id
+		join hcm_item hi on hs.item_id = hi.item_id
+		join hcs_suppliers hsup on hs.supplier_id = hsup.supplier_id
+<!-- 		join hcs_supplier_site hss on hs.supplers_site_id = hss.supplers_site_id -->
+		join hcm_plant hp on hi.PLANT_ID = hp.plant_id
+		left join hcs_asl_control hac on hs.asl_id = hac.asl_id
+		left join srm_user_purchase_group supg on hac.purchase_group = supg.purchase_group_code
+		left join sys_user sus on supg.user_id = sus.user_id
+		left join hr_employee he on sus.employee_id = he.employee_id
+		WHERE hs.enable_flag = 'Y'
+		AND	su.user_id = #{request.userId}
+		AND hi.plant_id = hs.plant_id
+		<if test = "itemId != null">
+		AND hi.item_Id = #{itemId}
+		</if>
+		<if test = "purchaseGroup != null">
+		AND hac.purchase_group= #{purchaseGroup}
+		</if>
+		<if test = "plantId != null">
+		AND hp.plant_id = #{plantId}
+		</if>
+		<if test = "supplierId != null">
+		AND hs.supplier_id = #{supplierId}
+		</if>
+		<if test = "itemName != null">
+		AND hi.descriptions LIKE concat('%',concat(#{itemName},'%')) 
+		</if>
+		<if test = "supplierName != null">
+		AND hsup.supplier_name LIKE concat('%',concat(#{supplierName},'%')) 
+		</if>
+		<if test = "purchaseType != null">
+		AND nvl(hi.purchase_type,'NULL') = #{purchaseType}
+		</if>
+		<if test = "leadTimeHave != null">
+		AND NVL2(hac.lead_time,'N','Y') = #{leadTimeHave}
+		</if>
+		ORDER BY hs.creation_date DESC
+	</select>
+	<!-- 合格物料Lov -->
+	<select id="queryLov" resultMap="BaseResultMap" parameterType="com.hand.hcs.hcs_asl.dto.Asl">
+		SELECT hs.supplier_id,
+		hs.supplers_site_id,
+       hi.item_code,
+       hi.descriptions        item_name,
+       hi.primary_uom,
+       hsup.supplier_code,
+       hsup.supplier_name,
+       hss.description        site_description,
+       hss.supplier_site_code,
+       hp.descriptions        plant_name,
+       hi.item_id,
+       hp.plant_id
+  FROM hcs_asl hs
+  JOIN hcm_item hi
+    ON hs.item_id = hi.item_id
+  JOIN hcs_suppliers hsup
+    ON hs.supplier_id = hsup.supplier_id
+  LEFT JOIN hcs_supplier_site hss
+    ON hs.supplers_site_id = hss.supplers_site_id
+  JOIN hcm_plant hp
+    ON hi.plant_id = hp.plant_id
+ WHERE hs.enable_flag = 'Y'
+   AND hi.plant_id = hs.plant_id
+		<if test = "itemId != null">
+		AND hi.item_Id = #{itemId}
+		</if>
+		<if test = "plantId != null">
+		AND hp.plant_id = #{plantId}
+		</if>
+		<if test = "supplierId != null">
+		AND hs.supplier_id = #{supplierId}
+		</if>
+		<if test = "itemName != null">
+		AND hi.descriptions LIKE concat('%',concat(#{itemName},'%')) 
+		</if>
+		<if test = "itemCode != null">
+		AND hi.item_code LIKE concat('%',concat(#{itemCode},'%')) 
+		</if>
+		<if test = "supplierName != null">
+		AND hsup.supplier_name LIKE concat('%',concat(#{supplierName},'%')) 
+		</if>
+		
+		ORDER BY hs.creation_date DESC
+	</select>
+	
+	<!--add by jy 20190925   -->
+	<select id="selectDatas" resultMap="BaseResultMap" parameterType="com.hand.hcs.hcs_asl.dto.Asl">	
+	 select 
+		   plant_id,
+	       item_Id,
+	       supplier_id,
+	       supplier_site_id,
+	       item_code,
+	       item_name,
+	       primary_uom,
+	       supplier_code,
+	       supplier_name,
+	       site_description,
+	       plant_name,
+	       plant_code
+	  from (SELECT hp.plant_id          plant_id,
+	               hi.item_Id           item_Id,
+	               hs.supplier_id       supplier_id,
+	               hss.supplers_site_id supplier_site_id,
+	               hi.item_code,
+	               hi.descriptions      ITEM_NAME,
+	               hi.primary_uom,
+	               hsup.supplier_code,
+	               hsup.supplier_name,
+	               hss.description      SITE_DESCRIPTION,
+	               hp.descriptions      PLANT_NAME,
+	               hp.plant_code
+	          FROM hcs_asl hs
+	          join hcm_item hi
+	            on hs.item_id = hi.item_id
+	          join hcs_suppliers hsup
+	            on hs.supplier_id = hsup.supplier_id
+	          join hcs_supplier_site hss
+	            on hs.supplers_site_id = hss.supplers_site_id
+	          join hcm_plant hp
+	            on hi.PLANT_ID = hp.plant_id
+	         WHERE hs.enable_flag = 'Y'
+				AND hi.plant_id = hs.plant_id
+				<if test = "itemId != null">
+				AND hi.item_Id = #{itemId}
+				</if>
+				<if test = "plantId != null">
+				AND hp.plant_id = #{plantId}
+				</if>
+				<if test = "supplierId != null">
+				AND hs.supplier_id = #{supplierId}
+				</if>
+				<if test = "itemName != null">
+				AND hi.descriptions LIKE concat('%',concat(#{itemName},'%')) 
+				</if>
+				<if test = "supplierName != null">
+				AND hsup.supplier_name LIKE concat('%',concat(#{supplierName},'%')) 
+				</if>
+				ORDER BY hs.creation_date DESC)
+	 where (plant_id, item_Id, supplier_id, supplier_site_id) NOT in
+	       (select plant_id, item_Id, supplier_id, supplier_site_id
+	          from (select hsie.plant_id         plant_id,
+	                       hsie.item_Id          item_Id,
+	                       hsie.supplier_id      supplier_id,
+	                       hsie.supplier_site_id supplier_site_id
+	                  from HQM_SUPP_ITEM_EXEMPTION hsie))
+	</select>
+	
+	<select id="IQCControlSelectDatas" resultMap="BaseResultMap" parameterType="com.hand.hcs.hcs_asl.dto.Asl">	
+	 select 
+		   plant_id,
+	       item_Id,
+	       supplier_id,
+	       supplier_sit_id,
+	       item_code,
+	       item_name,
+	       primary_uom,
+	       supplier_code,
+	       supplier_name,
+	       site_description,
+	       plant_name,
+	       plant_code
+	  from (SELECT hp.plant_id          plant_id,
+	               hi.item_Id           item_Id,
+	               hs.supplier_id       supplier_id,
+	               hss.supplers_site_id supplier_sit_id,
+	               hi.item_code,
+	               hi.descriptions      ITEM_NAME,
+	               hi.primary_uom,
+	               hsup.supplier_code,
+	               hsup.supplier_name,
+	               hss.description      SITE_DESCRIPTION,
+	               hp.descriptions      PLANT_NAME,
+	               hp.plant_code
+	          FROM hcs_asl hs
+	          join hcm_item hi
+	            on hs.item_id = hi.item_id
+	          join hcs_suppliers hsup
+	            on hs.supplier_id = hsup.supplier_id
+	          join hcs_supplier_site hss
+	            on hs.supplers_site_id = hss.supplers_site_id
+	          join hcm_plant hp
+	            on hi.PLANT_ID = hp.plant_id
+	         WHERE hs.enable_flag = 'Y'
+				AND hi.plant_id = hs.plant_id
+				<if test = "itemId != null">
+				AND hi.item_Id = #{itemId}
+				</if>
+				<if test = "plantId != null">
+				AND hp.plant_id = #{plantId}
+				</if>
+				<if test = "supplierId != null">
+				AND hs.supplier_id = #{supplierId}
+				</if>
+				<if test = "itemName != null">
+				AND hi.descriptions LIKE concat('%',concat(#{itemName},'%')) 
+				</if>
+				<if test = "supplierName != null">
+				AND hsup.supplier_name LIKE concat('%',concat(#{supplierName},'%')) 
+				</if>
+				ORDER BY hs.creation_date DESC)
+	 where (plant_id, item_Id, supplier_id, supplier_sit_id) NOT in
+	       (select plant_id, item_Id, supplier_id, supplier_sit_id
+	          from (select haic.plant_id         plant_id,
+	                       haic.item_Id          item_Id,
+	                       haic.supplier_id      supplier_id,
+	                       haic.supplier_sit_id supplier_sit_id
+	                  from HQM_ASL_IQC_CONTROL haic))
+	</select>
+
+	<select id="interfaceSelect" resultMap="BaseResultMap" parameterType="com.hand.hcs.hcs_asl.dto.Asl">
+	SELECT ha.enable_flag, ha.asl_id
+  FROM hcs_asl ha
+  JOIN hcm_item_b hib
+    ON ha.item_id = hib.item_id
+   AND ha.plant_id = hib.plant_id
+  JOIN hcm_plant hp
+    ON ha.plant_id = hp.plant_id
+  JOIN hcs_suppliers hs
+    ON ha.supplier_id = hs.supplier_id
+ WHERE 1 = 1
+   AND hib.item_code = #{itemCode}
+   AND hp.plant_code = #{plantCode}
+   AND hs.supplier_code = #{supplierCode}
+	
+	</select>
+
+</mapper>

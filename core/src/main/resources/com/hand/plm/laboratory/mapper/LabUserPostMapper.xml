@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.plm.laboratory.mapper.LabUserPostMapper">
+    <resultMap id="BaseResultMap" type="com.hand.plm.laboratory.dto.LabUserPost">
+        <result column="POST_ID" property="postId" jdbcType="DECIMAL" />
+        <result column="LAB_USER_ID" property="labUserId" jdbcType="DECIMAL" />
+        <result column="POST_CODE" property="postCode" jdbcType="VARCHAR" />
+        <result column="POST_NUM" property="postNum" jdbcType="DECIMAL" />
+    </resultMap>
+
+
+</mapper>

@@ -1,0 +1,295 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.spc.ecr_main.mapper.EcrMainMapper">
+    <resultMap id="BaseResultMap" type="com.hand.spc.ecr_main.dto.EcrMain">
+        <result column="ECRNO" property="ecrno" jdbcType="VARCHAR" />
+        <result column="HAPPENDDATETIME" property="happenddatetime" jdbcType="DATE" />
+        <result column="HASSAMPLE" property="hassample" jdbcType="VARCHAR" />
+        <result column="ISSUE" property="issue" jdbcType="VARCHAR" />
+        <result column="ISSUESOURCENO" property="issuesourceno" jdbcType="VARCHAR" />
+        <result column="MATNEEDCONTROL" property="matneedcontrol" jdbcType="VARCHAR" />
+        <result column="RISKDEGREE" property="riskdegree" jdbcType="VARCHAR" />
+        <result column="UFR" property="ufr" jdbcType="VARCHAR" />
+        <result column="status" property="status" jdbcType="VARCHAR" />
+        <result column="issue_type" property="issueType" jdbcType="VARCHAR" />
+        <result column="KID" property="kid" jdbcType="DECIMAL" /> 
+        <result column="process_id" property="processId" jdbcType="DECIMAL" />
+        <result column="process_employee_code" property="processEmployeeCode" jdbcType="VARCHAR" />
+        <result column="process_status" property="processStatus" jdbcType="VARCHAR" />
+        <result column="process_start_date" property="processStartDate" jdbcType="DATE" />
+        <result column="process_end_date" property="processEndDate" jdbcType="DATE" />
+        <result column="plan_finished_date" property="planFinishedDate" jdbcType="DATE" />        
+        <result column="main_duty" property="mainDuty" jdbcType="VARCHAR" />
+        <result column="sub_duty" property="subDuty" jdbcType="VARCHAR" />
+	    <result column="act_finished_date" property="actFinishedDate" jdbcType="DATE" />
+	    <result column="ecr_type" property="ecrType" jdbcType="DATE" /> 
+	                
+	    <result column="VTP_FLAG" property="vtpFlag" jdbcType="VARCHAR" />            
+	    <result column="QTP_FLAG" property="qtpFlag" jdbcType="VARCHAR" />                           
+	    <result column="creation_date" property="creationDate" jdbcType="DATE" />                           
+    </resultMap>
+	<select id="getNumer" resultType="java.lang.String" >
+		select nvl(max(substr(t.ecrno,-4,4)),1) from hpm_ecr_main t where t.ecrno like '%'||#{ruleCode}||'%'
+	</select>
+	
+	 <resultMap id="getLineMap" type="com.hand.spc.ecr_main.view.EcrItemSkuV1">
+        <result column="ITEM_CODE" property="itemCode" jdbcType="VARCHAR" />
+        <result column="descriptions" property="itemDesc" jdbcType="VARCHAR" /> 
+        <result column="item_id" property="itemId" jdbcType="VARCHAR" />  
+    </resultMap> 
+	<select id="getItemLov" resultMap="getLineMap" parameterType="com.hand.spc.ecr_main.view.EcrItemSkuV1">
+		select * from hcm_item t where t.MAKE_BUY_CODE='F'     
+		    <if test="itemCode">
+                and t.ITEM_CODE=#{itemCode}
+            </if>
+            <if test="itemDesc">
+                and t.descriptions=#{itemDesc}
+            </if>
+	</select>
+	 <resultMap id="SingleMap" type="com.hand.spc.ecr_main.view.EcrMainV0">
+        <result column="ECRNO" property="ecrno" jdbcType="VARCHAR" />
+        <result column="created_by" property="createBy" jdbcType="VARCHAR" />
+        <result column="creation_date" property="creationDate" jdbcType="VARCHAR" />
+        <result column="issue" property="issue" jdbcType="VARCHAR" />
+        <result column="issueType" property="issueType" jdbcType="VARCHAR" />
+        <result column="happenddatetime" property="issueDate" jdbcType="VARCHAR" />
+        <result column="issuesourceno" property="issueFrom" jdbcType="VARCHAR" />
+        <result column="riskdegree" property="risk" jdbcType="VARCHAR" />
+        <result column="ufr" property="ufr" jdbcType="VARCHAR" />
+        <result column="finishDate" property="finishDate" jdbcType="VARCHAR" />
+    </resultMap>
+	<select id="singleOrder" resultMap="SingleMap">
+		select t.ecrno,     (SELECT hu.user_name
+                           FROM sys_user hu
+                          WHERE hu.user_id = t.created_by) AS   created_by,t.creation_date,t.issue,t.issue_type issueType,t.happenddatetime,t.issuesourceno,t.riskdegree,t.ufr,t.plan_finished_date finishDate from HPM_ECR_MAIN t where t.ecrno=#{ecrno}
+                          and rownum=1 
+                                                  
+	</select>
+	 
+    	
+	 
+	   <resultMap id="ViewResultMap" type="com.hand.spc.ecr_main.view.EcrMainV1" extends="BaseResultMap">
+        <result column="solution" property="solution" jdbcType="VARCHAR"/>
+        <result column="real_name" property="realName" jdbcType="VARCHAR"/>
+        <result column="item_flag" property="itemFlag" jdbcType="VARCHAR"/>
+        <result column="sample_flag" property="sampleFlag" jdbcType="VARCHAR"/>
+        <result column="issue_msg" property="issueMsg" jdbcType="VARCHAR"/>
+        <result column="start_date" property="startDate" jdbcType="VARCHAR" />            
+	    <result column="end_date" property="endDate" jdbcType="VARCHAR" />            
+	    <result column="relevance_first" property="relevanceFirst" jdbcType="VARCHAR" />            
+	    <result column="relevance_second" property="relevanceSecond" jdbcType="VARCHAR" />            
+	    <result column="plan_change_date" property="planChangeDate" jdbcType="DATE" />            
+	    <result column="act_change_date" property="actChangeDate" jdbcType="DATE" />  
+    </resultMap>
+    
+	<select id="baseQuery"  resultMap="ViewResultMap">
+		select hem.ecrno,
+		       hem.issue,
+		       hem.main_duty,
+		       hem.created_by,
+		       hem.status,
+		       hem.ecn_release_date as plan_change_date,
+		       hem.act_finished_date as act_change_date,
+		       hem.plan_finished_date,
+		       hesm.issue_msg,
+		       hem.creation_date,
+		       decode((select count(1) from hpm_ecr_sample hes where hes.ecrno=hem.ecrno),0,'N','Y') sample_flag,
+		       hem.issue_type,
+		       hem.matneedcontrol,
+		       hem.issuesourceno,
+		       hem.riskdegree,
+		       hem.ufr,
+		       hem.vtp_flag,
+		       hem.qtp_flag 
+		from hpm_ecr_main hem, hpm_ecr_solution_main hesm
+		where hem.ecrno = hesm.ecrno(+)         
+		       <if test="individuationSql!=null">  
+		            ${individuationSql} 
+		       </if>  
+		       
+		       <if test="startDate!=null">  
+		            and to_char(hem.creation_date,'yyyymmdd') &gt;=  to_char(#{startDate},'yyyymmdd')
+		       </if>
+		       <if test="endDate!=null">
+		            and to_char(hem.creation_date,'yyyymmdd') &lt;= to_char(#{endDate},'yyyymmdd')
+		       </if>
+		       
+	           <if test="mainDuty!=null">  
+	                and hem.main_duty = #{mainDuty}   
+	           </if>
+	
+	           <if test="riskdegree!=null">  
+	                and hem.riskdegree in
+	                <foreach collection="riskdegreeList" item="item" index="index" open="(" close=")" separator=",">
+	                 	#{item}
+	                 </foreach>
+	           </if>
+		     
+		order by hem.ecrno desc
+	</select> 
+	
+	
+	<select id="countUser" resultType="java.lang.Integer">
+	select count( distinct hpur.user_id)
+  from hcm_item_category_settings hics,
+       hcm_position_category      hpc,
+       hcm_position_role          hpr,
+       hcm_position_user_role hpur
+ where hpr.kid = hpc.position_id
+   and hpc.category_first_id = hics.category_first_id
+   and hpc.category_second_id = hics.category_second_id
+   and hpc.category_third_id = hics.category_third_id
+   and hpr.position_type='U1'
+   and hpur.position_id=hpr.kid
+   and hics.item_id in
+     <foreach collection="itemIds" index="index" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach> 
+	</select>
+	
+	 <resultMap id="PositionResultMap" type="com.hand.spc.ecr_main.view.EcrMainV2" >
+        <result column="categoryFirst" property="categoryFirst" jdbcType="VARCHAR"/>
+        <result column="categorySecond" property="categorySecond" jdbcType="VARCHAR"/>
+        <result column="categoryThird" property="categoryThird" jdbcType="VARCHAR"/>
+        <result column="mainPosition" property="mainPosition" jdbcType="VARCHAR"/>
+        <result column="subPosition" property="subPosition" jdbcType="VARCHAR"/>
+        <result column="mainDuty" property="mainDuty" jdbcType="VARCHAR"/>
+        <result column="subDuty" property="subDuty" jdbcType="VARCHAR"/>
+        <result column="email" property="email" jdbcType="VARCHAR"/>  
+    </resultMap>
+	<select id="getPosition" resultMap="PositionResultMap" >
+			select distinct fc.spare_part_name categoryFirst,
+                sc.spare_part_name categorySecond,
+                tc.spare_part_name categoryThird,
+                hpr.description    mainPosition,
+                hprsb.description  subPosition,
+                he.employee_code       mainDuty,
+                hesb.employee_code     subDuty,
+                hpur.email
+		  from hcm_item_category_settings hics,
+		       hcm_position_category      hpc,
+		       hcm_position_role          hpr,
+		       hcm_position_user_role     hpur,
+		       hcm_position_category      hpcsb,
+		       hcm_position_role          hprsb,
+		       hcm_position_user_role     hpursb,
+		       npi_technology_spare_part  fc,
+		       npi_technology_spare_part  sc,
+		       npi_technology_spare_part  tc,
+		       sys_user                   su,
+		       sys_user                   susb,
+		       hr_employee  he,
+		       hr_employee hesb
+		 where hpr.kid = hpc.position_id
+		   and hpc.category_first_id = hics.category_first_id
+		   and hpc.category_second_id = hics.category_second_id
+		   and hpc.category_third_id = hics.category_third_id
+		   and hpr.position_type = 'U1'
+		   and hpur.position_id = hpr.kid
+		   and hpcsb.category_first_id(+) = hics.category_first_id
+		   and hpcsb.category_second_id(+) = hics.category_second_id
+		   and hpcsb.category_third_id(+) = hics.category_third_id
+		   and nvl(hprsb.position_type, 'U2') = 'U2'
+		   and hprsb.kid = hpcsb.position_id
+		   and hpursb.position_id = hprsb.kid
+		   and fc.spare_part_id = hics.category_first_id
+		   and sc.spare_part_id = hics.category_second_id
+		   and tc.spare_part_id = hics.category_third_id
+		   and su.user_id = hpur.user_id
+		   and susb.user_id = hpursb.user_id
+		   and he.employee_id=su.employee_id
+		   and hesb.employee_id=susb.employee_id
+		    <if test="itemIds">
+		    and hics.item_id in
+  		   <foreach collection="itemIds" index="index" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>    
+        </if>    
+	</select>
+	
+	<select id="getPositionLov" resultMap="PositionResultMap" parameterType="com.hand.spc.ecr_main.dto.EcrInfluencedmaterial" >
+			select distinct fc.description categoryFirst,
+           sc.description categorySecond,
+           tc.description categoryThird,
+           hpr.description mainPosition,
+           hprsb.description subPosition,
+           su.user_name mainDuty, 
+           susb.user_name  subDuty   ,
+           hpur.email   
+      from hcm_item_category_settings hics,
+           hcm_position_category      hpc,
+           hcm_position_role          hpr,
+           hcm_position_user_role hpur,
+            hcm_position_category      hpcsb,
+           hcm_position_role          hprsb,
+           hcm_position_user_role hpursb,
+           hcm_category_settings  fc,
+           hcm_category_settings sc,
+           hcm_category_settings tc,
+           sys_user su,
+           sys_user susb,hpm_ecr_influencedmaterial hei
+     where hpr.kid = hpc.position_id
+       and hpc.category_first_id = hics.category_first_id
+       and hpc.category_second_id = hics.category_second_id
+       and hpc.category_third_id = hics.category_third_id
+       and hpr.position_type='U1'
+       and hpur.position_id=hpr.kid
+       and hpcsb.category_first_id (+)= hics.category_first_id
+       and hpcsb.category_second_id (+)= hics.category_second_id
+       and hpcsb.category_third_id (+)= hics.category_third_id
+       and nvl(hprsb.position_type,'U2')='U2'
+       and hprsb.kid = hpcsb.position_id
+       and hpursb.position_id=hprsb.kid
+       and fc.kid=hics.category_first_id
+      and sc.kid=hics.category_second_id
+       and tc.kid=hics.category_third_id
+       and su.user_id=hpur.user_id
+       and susb.user_id=hpursb.user_id
+       and hei.material_id=hics.item_id       
+		    <if test="ecrno">
+		    and hei.ecrno=#{ecrno}	    
+        </if>    
+	</select>
+	<update id="saveMainDuty"> 
+		  update hpm_ecr_influencedmaterial t
+		    set t.main_duty       =#{mainDuty},
+		        t.sub_duty       =#{subDuty},
+		        t.main_position   =#{mainPosition},
+		        t.sub_position   =#{subPosition},
+		        t.category_first  =#{categoryFirst},
+		        t.category_second =#{categorySecond},	
+		        t.category_third=#{categoryThird},
+		        t.last_update_date=sysdate,
+		        t.last_updated_by=#{updateBy} 
+		  where t.ecrno =#{ecrno}
+	</update>
+	<update id="saveMainDutyHead"> 
+		  update hpm_ecr_main t
+			   set t.last_updated_by  =#{updateBy},
+			       t.last_update_date =sysdate,
+			       t.main_duty        =#{mainDuty},
+			       t.sub_duty         =#{subDuty}
+			 where t.ecrno =#{ecrno}
+	</update>
+	
+	
+	<select id="getItemLeadTime" resultType="java.lang.Long">
+		select nvl(max(hac.purchase_lead_time),0) from hcs_asl ha,hcs_asl_control hac
+			 where ha.asl_id=hac.asl_id
+			 and ha.item_id=#{itemId}
+	</select>
+	
+	<select id="getBuyer" resultType="java.lang.String">
+		 select he.employee_code
+      from hcs_asl ha
+      join hcs_asl_control hac
+        on hac.asl_id = ha.asl_id
+      join srm_user_purchase_group supg
+        on supg.purchase_group_code = hac.purchase_group
+        join sys_user su on su.user_id=supg.user_id
+        join hr_employee he on he.employee_id=su.employee_id
+        where ha.item_id=#{itemId}
+        and rownum=1 
+	</select>
+</mapper>

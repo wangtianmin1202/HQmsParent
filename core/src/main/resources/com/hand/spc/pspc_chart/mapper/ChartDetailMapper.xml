@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.spc.pspc_chart.mapper.ChartDetailMapper">
+    <resultMap id="BaseResultMap" type="com.hand.spc.pspc_chart.dto.ChartDetail">
+        <result column="CHART_DETAIL_ID" property="chartDetailId" jdbcType="DECIMAL" />
+        <result column="TENANT_ID" property="tenantId" jdbcType="DECIMAL" />
+        <result column="SITE_ID" property="siteId" jdbcType="DECIMAL" />
+        <result column="CHART_ID" property="chartId" jdbcType="DECIMAL" />
+        <result column="CHART_DETAIL_TYPE" property="chartDetailType" jdbcType="VARCHAR" />
+        <result column="AXIS_LABEL_X" property="axisLabelX" jdbcType="VARCHAR" />
+        <result column="AXIS_LABEL_Y" property="axisLabelY" jdbcType="VARCHAR" />
+        <result column="AXIS_MAX_Y" property="axisMaxY" jdbcType="DECIMAL" />
+        <result column="AXIS_MIN_Y" property="axisMinY" jdbcType="DECIMAL" />
+        <result column="CONTROL_LIMIT_USAGE" property="controlLimitUsage" jdbcType="VARCHAR" />
+        <result column="UPPER_CONTROL_LIMIT" property="upperControlLimit" jdbcType="DECIMAL" />
+        <result column="CENTER_LINE" property="centerLine" jdbcType="DECIMAL" />
+        <result column="LOWER_CONTROL_LIMIT" property="lowerControlLimit" jdbcType="DECIMAL" />
+        <result column="DISPLAY_SPEC_LIMIT" property="displaySpecLimit" jdbcType="VARCHAR" />
+        <result column="UPPER_SPEC_LIMIT" property="upperSpecLimit" jdbcType="DECIMAL" />
+        <result column="SPEC_TARGET" property="specTarget" jdbcType="DECIMAL" />
+        <result column="LOWER_SPEC_LIMIT" property="lowerSpecLimit" jdbcType="DECIMAL" />
+        <result column="ENABLE_JUDGE_GROUP" property="enableJudgeGroup" jdbcType="VARCHAR" />
+        <result column="JUDGEMENT_GROUP_ID" property="judgementGroupId" jdbcType="DECIMAL" />
+    </resultMap>
+
+
+</mapper>

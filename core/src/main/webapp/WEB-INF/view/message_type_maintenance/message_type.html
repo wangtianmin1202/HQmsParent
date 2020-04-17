@@ -1,0 +1,648 @@
+<#include "../include/header.html">
+<script src="${base.contextPath}/common/code?PSPC_MESSAGE_THEME_ELEMENT=PSPC.MESSAGE.THEME.ELEMENT" type="text/javascript"></script>
+<script src="${base.contextPath}/common/code?PSPC_MESSAGE_CONTENT_ELEMENT=PSPC.MESSAGE.CONTENT.ELEMENT" type="text/javascript"></script>
+
+<style>
+    .k-multiselect-wrap{
+        background-color: #FFF8C5;
+    }
+</style>
+
+<script type="text/javascript">
+
+    var messageTypeId = "";
+    var messageTypeStatus ="";
+
+    var viewModel = Hap.createGridViewModel("#grid",{
+        model:{},
+        PSPC_MESSAGE_THEME_ELEMENT:PSPC_MESSAGE_THEME_ELEMENT,
+        PSPC_MESSAGE_CONTENT_ELEMENT:PSPC_MESSAGE_CONTENT_ELEMENT,
+
+    })
+
+
+    var viewModelDetail = Hap.createGridViewModel("#gridDetail",{
+        model:{},
+        PSPC_MESSAGE_THEME_ELEMENT:PSPC_MESSAGE_THEME_ELEMENT,
+        PSPC_MESSAGE_CONTENT_ELEMENT:PSPC_MESSAGE_CONTENT_ELEMENT,
+
+        query: function () {
+
+            $.ajax({
+                type: 'post',
+                dataType: "json",
+                data: {"messageTypeId": messageTypeId},
+                url: _basePath + "/pspc/message/type/queryElementStatus",
+                success: function (resultData) {
+                    messageTypeStatus = resultData.rows[0].messageTypeStatus;
+                    //改变有效性的选择
+                    if(messageTypeStatus =="Y"){
+                        $('#statusCheckbox').prop("checked", true);
+                    }else {
+                        $('#statusCheckbox').prop("checked", false);
+                    }
+                }
+            });
+
+
+
+            $.ajax({
+                type: 'post',
+                dataType: "json",
+                data: {"messageTypeId": messageTypeId},
+                url: _basePath + "/pspc/message/type/queryMessageTypeTheme",
+                success: function (resultData) {
+                    $("#multiselect").data('kendoMultiSelect').value(resultData.rows);
+                }
+            });
+
+            $.ajax({
+                type: 'post',
+                dataType: "json",
+                data: {"messageTypeId": messageTypeId},
+                url: _basePath + "/pspc/message/type/queryMessageTypeContent",
+                success: function (resultData) {
+                    $("#multiselect2").data('kendoMultiSelect').value(resultData.rows);
+                }
+            });
+
+            //显示行表数据
+            $("#gridRel").data("kendoGrid").dataSource.read();
+        },
+        creatData:function () {
+            $("#lineData-window").kendoWindow({
+                width: "70%",
+                height: "60%",
+                title: '新增消息类型',
+                modal: true,
+                resizable: false,
+                visible: false,
+                iframe: true,
+                close: function (e) {
+
+                }
+            });
+            var win = $("#lineData-window").data("kendoWindow");
+            win.refresh('message_type_creat.html');
+            win.center().open();
+        },
+        save:function () {
+
+            var datas = new Array();
+            var messageTypeId = viewModel.model.messageTypeId;
+            //这里可以拿到多选下拉框的所有值，然后跟行id一起传进后台保存
+            var multiselect = $("#multiselect").data('kendoMultiSelect').value();
+            var multiselect2 = $("#multiselect2").data('kendoMultiSelect').value();
+
+            var messageType = $("#pscpcGroup").val();
+            if(messageType==""||messageType==null){
+                kendo.ui.showInfoDialog({
+                    title: $l('hap.tip.info'),
+                    message: "消息类型不能为空！"
+                });
+                return;
+            }
+
+            if(multiselect==""||multiselect==null){
+                kendo.ui.showInfoDialog({
+                    title: $l('hap.tip.info'),
+                    message: "消息主题不能为空！"
+                });
+                return;
+            }
+
+            if(multiselect2==""||multiselect2==null){
+                kendo.ui.showInfoDialog({
+                    title: $l('hap.tip.info'),
+                    message: "消息内容不能为空！"
+                });
+                return;
+            }
+
+            for(var i=0;i<multiselect.length;i++){
+                var obj = new Object();
+                obj.messageTypeId = messageTypeId;
+                obj.elementCategory = "THEME";
+                obj.elementCode = multiselect[i];
+                obj.elementStatus = document.getElementById('statusCheckbox').checked?'Y':'N';
+                obj.tenantId = "-1";
+                obj.siteId = "-1";
+                datas.push(obj);
+            }
+            for(var i=0;i<multiselect2.length;i++){
+                var obj = new Object();
+                obj.messageTypeId = messageTypeId;
+                obj.elementCategory = "CONTENT";
+                obj.elementCode = multiselect2[i];
+                obj.elementStatus = document.getElementById('statusCheckbox').checked?'Y':'N';
+                obj.tenantId = "-1";
+                obj.siteId = "-1";
+                datas.push(obj);
+            }
+
+            $.ajax({
+                type: 'post',
+                url: "${base.contextPath}/pspc/message/type/detail/submit",
+                data: kendo.stringify(datas),
+                contentType: "application/json",
+                async:false,
+                success: function (data) {
+                    if (data.success) {
+                        kendo.ui.showConfirmDialog({message: "保存成功！"});
+                        //显示行表数据
+                        $("#gridRel").data("kendoGrid").dataSource.read();
+                    } else {
+                        return kendo.ui.showErrorDialog({message: 'ERROR:' + data.message});
+                    }
+                }
+            });
+        }
+    });
+
+    var viewModelRel = Hap.createGridViewModel("#gridRel",{
+        model:{},
+        create: function(){
+            //行新建的时候，如果没有找到头id，则不给新建
+            if(ifNotNull(viewModel.model.messageTypeId)){
+                $('#gridRel').data('kendoGrid').addRow();
+                return;
+            }
+        },
+    });
+</script>
+<style>
+    .head-div{
+        margin-top: 20px;
+    }
+    .head-div div{
+        height: 30px;
+    }
+    .head-div label{
+        color: black;
+        font-size: 14px;
+        line-height: 30px;
+        text-align: right;
+        width: 100%;
+    }
+    .head-div input{
+        width:150px;
+        /*margin-right:5px;*/
+    }
+    .dialog-div label{
+        color: black;
+        font-size: 14px;
+        line-height: 30px;
+        text-align: right;
+    }
+    .dialog-div input{
+        width:150px;
+    }
+    td a{
+        color:#204d74;
+    }
+    .dialog-div .row{
+        margin-top: 20px;
+    }
+    .btn-foot{
+        width: 95%;
+        position: absolute;
+        bottom: 20px;
+    }
+    .dialog-div
+</style>
+<body>
+
+<div id="lineData-window"></div>
+
+<div id="page-content">
+    <div class="pull-right" id="query-form" style="padding-bottom:10px;">
+        <span class="btn btn-success k-grid-save-changes" data-bind="click:save" style="float:left;margin-right:5px;"><@spring.message "hap.save"/></span>
+        <span class="btn btn-primary k-grid-add" style="float:right;margin-right:5px;" data-bind="click:creatData"><@spring.message "新增消息类型"/></span>
+        <div style="clear:both"></div>
+    </div>
+    <script>kendo.bind($('#query-form'), viewModelDetail);</script>
+    <!-- 上方头信息 -->
+    <div style="clear:both;width: 100%" class="container">
+        <!-- 消息类型 -->
+        <div id="aa" class="head-div row">
+            <div class="col-md-2">
+                <label><span style='color:red'>*&nbsp;&nbsp;</span><@spring.message "pspcmessagetypeuploadrel.messagetype"/>：</label>
+            </div>
+            <div class="col-md-2">
+                <input type="text" id="pscpcGroup" style="clear: both;width: 180px;background-color: #FFF8C5">
+            </div>
+            <script>
+                $("#pscpcGroup").kendoLov($.extend(<@lov "PSPC_PSPC_MESSAGE_TYPE"/>,{
+                    textField: 'messageTypeCode',
+                    model: viewModel.model,
+                    select:function (e) {
+                        viewModel.model.messageTypeId = e.item.messageTypeId;
+                        viewModelDetail.model.messageTypeId = e.item.messageTypeId;
+                        messageTypeId = e.item.messageTypeId;
+                        viewModelRel.model.messageTypeId = e.item.messageTypeId;
+                        viewModel.model.messageTypeStatus = e.item.messageTypeStatus;
+                        messageTypeStatus = e.item.messageTypeStatus;
+                        //改变有效性的选择
+                        if(viewModel.model.messageTypeStatus =="Y"){
+                            $('#statusCheckbox').prop("checked", true);
+                        }else {
+                            $('#statusCheckbox').prop("checked", false);
+                        }
+                        //从LOV拿到messageTypeId后，ajax传到后台（限制ELEMENT_CATEGORY = “THEME”）查出对应的行数据在这里拼接value或者text
+
+                        $.ajax({
+                            type: 'post',
+                            dataType: "json",
+                            data: {"messageTypeId": viewModelDetail.model.messageTypeId},
+                            url: _basePath + "/pspc/message/type/queryMessageTypeTheme",
+                            success: function (resultData) {
+                                    $("#multiselect").data('kendoMultiSelect').value(resultData.rows);
+                            }
+                        });
+
+                        $.ajax({
+                            type: 'post',
+                            dataType: "json",
+                            data: {"messageTypeId": viewModelDetail.model.messageTypeId},
+                            url: _basePath + "/pspc/message/type/queryMessageTypeContent",
+                            success: function (resultData) {
+                                $("#multiselect2").data('kendoMultiSelect').value(resultData.rows);
+                            }
+                        });
+
+                        //显示行表数据
+                        //$("#gridRel").data("kendoGrid").dataSource.read();
+                    }
+                }));
+            </script>
+            <div id="bb" class="col-md-2">
+                <span class="btn btn-default" style="float:left;margin-right:5px;" onclick="reset()"><@spring.message "hap.reset"/></span>
+                <span class="btn btn-primary k-grid-add" style="float:left;margin-right:5px;"data-bind="click:query"><@spring.message "hap.query"/></span>
+            </div>
+        </div>
+        <script>kendo.bind($('#aa'), viewModelDetail);</script>
+        <!-- 消息主题 -->
+        <div class="head-div row">
+            <div class="col-md-2">
+                <label><span style='color:red'>*&nbsp;&nbsp;</span><@spring.message "pspcmessagetypeuploadrel.messagesubject"/>：</label>
+            </div>
+            <div class="col-md-9">
+                <input id="multiselect"  style="height:36px;background-color: #FFF8C5" data-bind="value:model.messageTypeId"/>
+                <!--<select required style="width:100%" id="multiselect"-->
+                        <!--data-bind="value:model.elementCategory"></select>-->
+                <script>
+                                    $("#multiselect").kendoMultiSelect({
+                                        dataTextField: "meaning",
+                                        dataValueField: "value",
+                                        dataSource:PSPC_MESSAGE_THEME_ELEMENT,
+                                        valuePrimitive: true
+                                    });
+                        kendo.bind($('#multiselect'), viewModelDetail);
+                </script>
+            </div>
+        </div>
+        <!-- 消息内容 -->
+        <div class="head-div row">
+            <div class="col-md-2">
+                <label><span style='color:red'>*&nbsp;&nbsp;</span><@spring.message "pspcmessagetypeuploadrel.messagecontent"/>：</label>
+            </div>
+            <div class="col-md-9">
+                <input id="multiselect2"  style="height:36px;background-color: #FFF8C5" data-bind="value:model.messageTypeId2"/>
+                <!--<select required style="width:100%" id="multiselect"-->
+                <!--data-bind="value:model.elementCategory"></select>-->
+                <script>
+                    $("#multiselect2").kendoMultiSelect({
+                        dataTextField: "meaning",
+                        dataValueField: "value",
+                        dataSource:PSPC_MESSAGE_CONTENT_ELEMENT,
+                        valuePrimitive: true
+                    });
+                    kendo.bind($('#multiselect2'), viewModelDetail);
+                </script>
+            </div>
+        </div>
+        <!-- 有效性 -->
+        <div class="head-div row" id="youxiao">
+            <div class="col-md-2">
+                <label ><@spring.message "pspcmessagetypeuploadrel.effectiveness"/>：</label>
+            </div>
+            <div class="col-md-2">
+                <input type="checkbox" id="statusCheckbox" checked  data-bind="value:model.elementStatus" style="width: 20px;height: 20px;top: 50%;
+                                            transform: translateY(-50%);
+                                            position: relative;">
+            </div>
+        </div>
+    </div>
+
+    <!-- 分类项和费雷要素 tab页切换 -->
+    <div id="toolbar-btn-rel">
+        <ul class="nav nav-tabs" id="mytab" style="height: 39px">
+            <li class="active" data-gridid="classifyGrid" >
+                <a href="#showTreeUnit" data-toggle="tab">
+                    <@spring.message "pspcmessagetypeuploadrel.triggertype"/>
+                </a>
+            </li>
+        </ul>
+        <span  data-bind="click:remove" class="btn btn-danger" style="margin-top: 5px;float:right;margin-right:5px;"><@spring.message "hap.delete"/></span>
+        <span class="btn btn-success k-grid-save-changes" data-bind="click:save" style="margin-top: 5px;float:right;margin-right:10px;"><@spring.message "hap.save"/></span>
+        <span class="btn btn-primary k-grid-add" style="margin-top: 5px;float:right;margin-right:10px;" data-bind="click:create"><@spring.message "hap.new"/></span>
+
+        <div id="tabContent" class="tab-content">
+            <div style="clear:both">
+            <div id="gridRel" style="margin-top: 15px;float: left;"></div>
+            </div>
+        </div>
+    </div>
+    <script>kendo.bind($('#toolbar-btn-rel'), viewModelRel);</script>
+</div>
+
+<script type="text/javascript">
+    // Hap.initEnterQuery('#query-form', viewModel.query);
+    var BaseUrl = _basePath;
+    dataSource = new kendo.data.DataSource({
+        transport: {
+            read: {
+                url: BaseUrl + "/pspc/message/type/query",
+                type: "POST",
+                dataType: "json"
+            },
+            update: {
+                url: BaseUrl + "/pspc/message/type/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            destroy: {
+                url: BaseUrl + "/pspc/message/type/remove",
+                type: "POST",
+                contentType: "application/json"
+            },
+            create: {
+                url: BaseUrl + "/pspc/message/type/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            parameterMap: function (options, type) {
+                if (type !== "read" && options.models) {
+                    var datas = Hap.prepareSubmitParameter(options, type)
+                    return kendo.stringify(datas);
+                } else if (type === "read") {
+                    return Hap.prepareQueryParameter(viewModel.model.toJSON(), options)
+                }
+            }
+        },
+        batch: true,
+        serverPaging: true,
+        pageSize: 10,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+                id: "messageTypeId",
+                fields: {}
+            }
+        }
+    });
+
+    dataSourceDetail = new kendo.data.DataSource({
+        transport: {
+            read: {
+                url: BaseUrl + "/pspc/message/type/detail/query",
+                type: "POST",
+                dataType: "json"
+            },
+            update: {
+                url: BaseUrl + "/pspc/message/type/detail/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            destroy: {
+                url: BaseUrl + "/pspc/message/type/detail/remove",
+                type: "POST",
+                contentType: "application/json"
+            },
+            create: {
+                url: BaseUrl + "/pspc/message/type/detail/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            parameterMap: function (options, type) {
+                if (type !== "read" && options.models) {
+                    var datas = Hap.prepareSubmitParameter(options, type);
+                    return kendo.stringify(datas);
+                } else if (type === "read") {
+                    return Hap.prepareQueryParameter(viewModelDetail.model.toJSON(), options)
+                }
+            }
+        },
+        batch: true,
+        serverPaging: true,
+        pageSize: 10,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+                id: "messageTypeDetailId",
+                fields: {}
+            }
+        }
+    });
+
+
+    dataSourceRel = new kendo.data.DataSource({
+        transport: {
+            read: {
+                url: BaseUrl + "/pspc/message/type/upload/rel/query/ui",
+                type: "POST",
+                dataType: "json"
+            },
+            update: {
+                url: BaseUrl + "/pspc/message/type/upload/rel/submit/ui",
+                type: "POST",
+                contentType: "application/json"
+            },
+            destroy: {
+                url: BaseUrl + "/pspc/message/type/upload/rel/remove",
+                type: "POST",
+                contentType: "application/json"
+            },
+            create: {
+                url: BaseUrl + "/pspc/message/type/upload/rel/submit/ui",
+                type: "POST",
+                contentType: "application/json"
+            },
+            parameterMap: function (options, type) {
+                if (type !== "read" && options.models) {
+                    //增删改传入messageTypeId
+                    var datas = Hap.prepareSubmitParameter(options, type);
+                    for (var i = 0; i <datas.length;i++) {
+                        datas[i].tenantId = "-1";
+                        datas[i].siteId = "-1";
+                        datas[i].messageTypeId = viewModel.model.messageTypeId;
+                    }
+                    console.log(datas);
+                    return kendo.stringify(datas);
+                } else if (type === "read") {
+                    return Hap.prepareQueryParameter(viewModelRel.model.toJSON(), options)
+                }
+            }
+        },
+        batch: true,
+        serverPaging: true,
+        pageSize: 10,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+                id: "relId",
+                fields: {
+                    uploadConfigId:{
+                        validation: {
+                            required: true,
+                            required: {message: "请选择配置编码"}
+                        }
+                    }
+                },
+                editable: function (col) {
+                    //设置新增后不可编辑
+                    if (col == 'configType'||col == 'configDescription'||col == 'configValue') {
+                        if (!this.id==null || !this.isNew()) {
+                            return false;
+                        }
+                        return true;
+                    }
+
+                    //不可编辑
+                        if (col == 'xxx') {
+                            return false;
+                        }
+                    return true;
+                }
+            }
+        }
+    });
+
+    $("#gridRel").kendoGrid({
+        dataSource: dataSourceRel,
+        resizable: true,
+        scrollable: true,
+        navigatable: false,
+        selectable: 'multiple, rowbox',
+        dataBound: function () {
+            if (parent.autoResizeIframe) {
+                parent.autoResizeIframe('${RequestParameters.functionCode!}')
+            }
+        },
+        pageable: {
+            pageSizes: [5, 10, 20, 50],
+            refresh: true,
+            buttonCount: 5
+        },
+        columns: [
+            // {
+            //     field: "relId",
+            //     title: '<@spring.message "messagetypeuploadrel.relid"/>',
+            //     width: 120
+            // },
+            {
+                field: "uploadConfigId",//配置编码id
+                title: '<@spring.message "pspcmessagetypeuploadrel.conflgcode"/>',
+                width: 120,
+                // attributes: {style: "text-align:center;background-color:RGB(255,248,197)"},
+                template: function (dataItem) {
+                    return dataItem.configCode || ''
+                },
+                editor: function (container, options) {
+                    $('<input name="' + options.field + '" required="required"/>')
+                        .appendTo(container)
+                        .kendoLov($.extend(<@lov "PSPC_MESSAGE_UPLOAD_CONFIG" />, {
+                        valueField: "uploadConfigId",
+                        textField: "configCode",
+                        model: options.model,
+                        select: function(e) {
+                            options.model.set("configCode", e.item.configCode);
+                            options.model.set("configType", e.item.configType);
+                            options.model.set("configValue", e.item.configValue);
+                            options.model.set("configDescription", e.item.configDescription);
+                        }
+                    }));
+                },
+            },
+            // {
+            //     field: "configType",//配置编码
+            //     title: '<@spring.message "messagetypeuploadrel.conflgCode"/>',
+            //     width: 120
+            // },
+            {
+                field: "configType",//配置类型
+                title: '<@spring.message "pspcmessagetypeuploadrel.conflgtype"/>',
+                width: 120,
+                editor: function (container, options) {
+                    $('<span data-bind="text:configType"></span>').appendTo(container);  // 绑定自动带出
+                }
+            },
+            {
+                field: "configDescription",//描述
+                title: '<@spring.message "pspcmessagetypeuploadrel.des"/>',
+                width: 120,
+                editor: function (container, options) {
+                    $('<span data-bind="text:configDescription"></span>').appendTo(container);  // 绑定自动带出
+                }
+            },
+            {
+                field: "configValue",//参数值
+                title: '<@spring.message "pspcmessagetypeuploadrel.parametervalue"/>',
+                width: 120,
+                editor: function (container, options) {
+                    $('<span data-bind="text:configValue"></span>').appendTo(container);  // 绑定自动带出
+                }
+            },
+        ],
+        editable: true
+    });
+
+    //非空校验
+    function ifNotNull(data) {
+        if(data != null && data != "" && data != undefined){
+            return true;
+        }
+        return false;
+    };
+
+    /**
+     * 重置
+     */
+    function reset() {
+        window.location.reload();
+    };
+
+    /**
+     * 查询
+     */
+    // function queryCeGroup(){
+    //     $.ajax({
+    //         type: 'post',
+    //         dataType: "json",
+    //         data: {"messageTypeId": viewModelDetail.model.messageTypeId},
+    //         url: _basePath + "/pspc/message/type/queryMessageTypeTheme",
+    //         success: function (resultData) {
+    //             $("#multiselect").data('kendoMultiSelect').value(resultData.rows);
+    //         }
+    //     });
+    //
+    //     $.ajax({
+    //         type: 'post',
+    //         dataType: "json",
+    //         data: {"messageTypeId": viewModelDetail.model.messageTypeId},
+    //         url: _basePath + "/pspc/message/type/queryMessageTypeContent",
+    //         success: function (resultData) {
+    //             $("#multiselect2").data('kendoMultiSelect').value(resultData.rows);
+    //         }
+    //     });
+    //
+    //     //显示行表数据
+    //     $("#gridRel").data("kendoGrid").dataSource.read();
+    // }
+
+</script>
+</body>
+</html>

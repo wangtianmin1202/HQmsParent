@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.spc.repository.mapper.OocRMapper">
+
+	<select id="listOOC"
+		parameterType="com.hand.spc.repository.dto.OocRequestDTO"
+		resultType="com.hand.spc.repository.dto.OocResponseDTO">
+		SELECT
+		po.tenant_id,
+		po.site_id,
+		po.ooc_id,
+		pe.entity_code,
+		pe.entity_version,
+		pcg.ce_group_id,
+		pcg.ce_group,
+		pcp.ce_parameter_id,
+		pcp.ce_parameter,
+		pc.chart_code,
+		pjg.judgement_group_code,
+		pj.judgement_code,
+		pj.judgement_short_code,
+		pj.message_type_code,
+		gro.classify_group_id,
+		gro.description classify_group_name,
+		cla.classify_id,
+		cla.description classify_name,
+		po.ooc_status,
+		psg.attachment_group_description,
+		po.remark,
+		po.creation_date,
+		po.object_version_number,
+		po.sample_subgroup_id,
+		po.chart_detail_type,
+		pj.length_data,
+		pj.limit_data
+		FROM
+		pspc_entity pe,
+		pspc_attachment_group
+		psg,
+		pspc_ce_group pcg,
+		pspc_ce_parameter pcp,
+		pspc_chart pc,
+		pspc_judgement_group pjg,
+		pspc_judgement pj,
+		pspc_ooc po
+		LEFT JOIN
+		pspc_classify_group gro ON gro.tenant_id = po.tenant_id
+		AND gro.site_id
+		= po.site_id
+		AND gro.classify_group_id = po.classify_group_id
+		LEFT JOIN
+		pspc_classify cla ON cla.tenant_id = po.tenant_id
+		AND cla.site_id =
+		po.site_id
+		AND cla.classify_id = po.classify_id
+		WHERE
+		pe.tenant_id =
+		po.tenant_id
+		AND pe.site_id = po.site_id
+		AND pe.entity_code =
+		po.entity_code
+		AND pe.entity_version = po.entity_version
+		AND
+		psg.tenant_id = pe.tenant_id
+		AND psg.site_id = pe.site_id
+		AND
+		psg.attachment_group_id = pe.attachment_group_id
+		AND pcg.tenant_id =
+		pe.tenant_id
+		AND pcg.site_id = pe.site_id
+		AND pcg.ce_group_id =
+		pe.ce_group_id
+		AND pcp.tenant_id = pe.tenant_id
+		AND pcp.site_id =
+		pe.site_id
+		AND pcp.ce_parameter_id = pe.ce_parameter_id
+		AND pc.tenant_id
+		= pe.tenant_id
+		AND pc.site_id = pe.site_id
+		AND pc.chart_id = pe.chart_id
+		AND pj.tenant_id = po.tenant_id
+		AND pj.site_id = po.site_id
+		AND
+		pj.judgement_id = po.judgement_id
+		AND pjg.tenant_id = pj.tenant_id
+		AND
+		pjg.site_id = pj.site_id
+		AND pjg.judgement_group_id =
+		pj.judgement_group_id
+		AND po.tenant_id = #{tenantId,jdbcType=DECIMAL}
+		AND po.site_id = #{siteId,jdbcType=DECIMAL}
+		<if test="creationDateFrom!=null">
+			AND po.creation_date &gt;= #{creationDateFrom}
+		</if>
+		<if test="creationDateTo!=null">
+			AND po.creation_date &lt;= #{creationDateTo}
+		</if>
+		<if test="ceGroupId != null">
+			AND pe.ce_group_id = #{ceGroupId,jdbcType=DECIMAL}
+		</if>
+		<if test="ceParameterId != null">
+			AND pe.ce_parameter_id = #{ceParameterId,jdbcType=DECIMAL}
+		</if>
+		<if test="entityId != null">
+			AND pe.entity_id = #{entityId,jdbcType=DECIMAL}
+		</if>
+		<if test="oocStatus != null and oocStatus !=''">
+			AND po.ooc_status = #{oocStatus,jdbcType=VARCHAR}
+		</if>
+		<if test="subgroupIdList!=null">
+			AND po.sample_subgroup_id IN
+			<foreach collection="subgroupIdList" item="subgroupId"
+				index="index" open="(" close=")" separator=",">
+				#{subgroupId}
+			</foreach>
+		</if>
+		<if test="chartDetailType!=null and chartDetailType!=''">
+			AND po.chart_detail_type=#{chartDetailType}
+		</if>
+	</select>
+
+ <resultMap id="BaseResultMap1" type="com.hand.spc.repository.dto.OocR">
+        <result column="OOC_ID" property="oocId" jdbcType="VARCHAR" />
+        <result column="TENANT_ID" property="tenantId" jdbcType="DECIMAL" />
+        <result column="SITE_ID" property="siteId" jdbcType="DECIMAL" />
+        <result column="OOC_STATUS" property="oocStatus" jdbcType="VARCHAR" />
+        <result column="SAMPLE_SUBGROUP_ID" property="sampleSubgroupId" jdbcType="DECIMAL" />
+        <result column="ENTITY_CODE" property="entityCode" jdbcType="VARCHAR" />
+        <result column="ENTITY_VERSION" property="entityVersion" jdbcType="VARCHAR" />
+        <result column="MAX_PLOT_POINTS" property="maxPlotPoints" jdbcType="DECIMAL" />
+        <result column="TICK_LABEL_X" property="tickLabelX" jdbcType="VARCHAR" />
+        <result column="AXIS_LABEL_X" property="axisLabelX" jdbcType="VARCHAR" />
+        <result column="AXIS_LABEL_Y" property="axisLabelY" jdbcType="VARCHAR" />
+        <result column="CHART_DETAIL_TYPE" property="chartDetailType" jdbcType="VARCHAR" />
+        <result column="UPPER_CONTROL_LIMIT" property="upperControlLimit" jdbcType="DECIMAL" />
+        <result column="CENTER_LINE" property="centerLine" jdbcType="DECIMAL" />
+        <result column="LOWER_CONTROL_LIMIT" property="lowerControlLimit" jdbcType="DECIMAL" />
+        <result column="UPPER_SPEC_LIMIT" property="upperSpecLimit" jdbcType="DECIMAL" />
+        <result column="SPEC_TARGET" property="specTarget" jdbcType="DECIMAL" />
+        <result column="LOWER_SPEC_LIMIT" property="lowerSpecLimit" jdbcType="DECIMAL" />
+        <result column="JUDGEMENT_ID" property="judgementId" jdbcType="DECIMAL" />
+        <result column="FIRST_SUBGROUP_NUM" property="firstSubgroupNum" jdbcType="DECIMAL" />
+        <result column="LAST_SUBGROUP_NUM" property="lastSubgroupNum" jdbcType="DECIMAL" />
+        <result column="CLASSIFY_GROUP_ID" property="classifyGroupId" jdbcType="DECIMAL" />
+        <result column="CLASSIFY_ID" property="classifyId" jdbcType="DECIMAL" />
+        <result column="REMARK" property="remark" jdbcType="VARCHAR" />
+    </resultMap>
+
+	<select id="listOocBySampleSubgroupIdList"
+		parameterType="com.hand.spc.repository.dto.OocRequestDTO"
+		resultMap="BaseResultMap1">   <!--resultType="com.hand.spc.repository.dto.OocR"  -->
+		SELECT
+		po.ooc_id,
+		po.sample_subgroup_id,
+		po.chart_detail_type,
+		po.judgement_id
+		FROM
+		pspc_ooc po
+		WHERE
+		po.tenant_id =
+		#{tenantId,jdbcType=DECIMAL}
+		AND po.site_id =
+		#{siteId,jdbcType=DECIMAL}
+		AND po.sample_subgroup_id IN
+		<foreach collection="subgroupIdList" item="subgroupId"
+			index="index" open="(" close=")" separator=",">
+			#{subgroupId}
+		</foreach>
+	</select>
+
+	<insert id="batchInsertRows" parameterType="java.util.List">
+		<foreach collection="list" item="item" index="index" open="begin" close=";end;" separator=";">
+			INSERT INTO pspc_ooc (
+			ooc_id,
+			tenant_id,
+			site_id,
+			ooc_status,
+			sample_subgroup_id,
+			entity_code,
+			entity_version,
+			max_plot_points,
+			tick_label_x,
+			axis_label_x,
+			axis_label_y,
+			chart_detail_type,
+			upper_control_limit,
+			center_line,
+			lower_control_limit,
+			upper_spec_limit,
+			spec_target,
+			lower_spec_limit,
+			judgement_id,
+			first_subgroup_num,
+			last_subgroup_num,
+			classify_group_id,
+			classify_id,
+			remark)VALUES(
+			#{item.oocId},
+			#{item.tenantId},
+			#{item.siteId},
+			#{item.oocStatus},
+			#{item.sampleSubgroupId},
+			#{item.entityCode},
+			#{item.entityVersion},
+			#{item.maxPlotPoints},
+			#{item.tickLabelX},
+			#{item.axisLabelX},
+			#{item.axisLabelY},
+			#{item.chartDetailType},
+			#{item.upperControlLimit},
+			#{item.centerLine},
+			#{item.lowerControlLimit},
+			#{item.upperSpecLimit},
+			#{item.specTarget},
+			#{item.lowerSpecLimit},
+			#{item.judgementId},
+			#{item.firstSubgroupNum},
+			#{item.lastSubgroupNum},
+			#{item.classifyGroupId},
+			#{item.classifyId},
+			#{item.remark})
+		</foreach>
+	</insert>
+
+</mapper>

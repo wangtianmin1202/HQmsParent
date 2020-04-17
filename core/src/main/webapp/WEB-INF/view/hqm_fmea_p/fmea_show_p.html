@@ -1,0 +1,673 @@
+<#include "../include/header.html">
+<script type="text/javascript">
+    var viewModel = Hap.createGridViewModel("#grid");
+</script>
+<script src="${base.contextPath}/common/code?HQM_FMEA_SEVERITY_RANGE=HQM_FMEA_SEVERITY_RANGE"></script><!-- 严重度 -->
+<script src="${base.contextPath}/common/code?HQM_FMEA_SPECIAL_TYPE=HQM_FMEA_SPECIAL_TYPE"></script><!-- 特殊特性 -->
+<script src="${base.contextPath}/common/code?HQM_FMEA_OCCURRENCE_RANGE=HQM_FMEA_OCCURRENCE_RANGE"></script><!-- 频度 -->
+<script src="${base.contextPath}/common/code?HQM_FMEA_DETECTION_RANGE=HQM_FMEA_DETECTION_RANGE"></script><!-- 检测度 -->
+<script src="${base.contextPath}/common/code?HQM_FMEA_SEVERITY_RANGE=HQM_FMEA_SEVERITY_RANGE"></script><!-- 结果严重度 -->
+<script src="${base.contextPath}/common/code?HQM_FMEA_OCCURRENCE_RANGE=HQM_FMEA_OCCURRENCE_RANGE"></script><!-- 结果频度 -->
+<script src="${base.contextPath}/common/code?HQM_FMEA_DETECTION_RANGE=HQM_FMEA_DETECTION_RANGE"></script><!-- 结果检测度 -->
+<body>
+<script type="text/javascript">
+chooseUser=function(id){
+	if(id==null||id==undefined||id=="")
+		{
+		kendo.ui.showWarningDialog({
+            message: "请先保存当前数据"
+        });
+		return;
+		}
+/* 	 console.log($("#grid").data("kendoGrid")._data); */ 
+   var dialog = $("#childWindow").kendoWindow({
+    width: window.innerWidth*0.5,
+    height: window.innerHeight*0.6,
+    title: '<@spring.message "fmea.member.selection"/>',
+    visible: false,
+    iframe: true,
+    modal: true,
+    close: function(){	
+        $("#grid").data("kendoGrid").dataSource.page(1);
+       },
+    content: '../hqm_fmea_staff/fmea_staff.html?id='+id
+}).data("kendoWindow");     
+dialog.center().open();  
+
+}
+
+function clearn(){
+	
+}
+viewModel.clearn=function(){
+	console.log(123)
+	location.reload();
+	/* var ctrl2=document.getElementById("severity");
+    for(var i=0;i<ctrl2.options.length;) 
+    { 
+        ctrl2.removeChild(ctrl2.options[i]); 
+    } */
+}
+function clean_up(){
+	document.getElementById("severity").length=0;
+	viewModel.model.set('severitys',null);
+	document.getElementById("occurrence").length=0;
+	viewModel.model.set('occurrence',null);
+	document.getElementById("detection").length=0;
+	viewModel.model.set('detection',null);
+	document.getElementById("postSeverity").length=0;
+	viewModel.model.set('postSeverity',null);
+	document.getElementById("postOccurrence").length=0;
+	viewModel.model.set('postOccurrence',null);
+	document.getElementById("postDetection").length=0;	
+	viewModel.model.set('postDetection',null);
+	document.getElementById("specialCharacteristicType").length=0;
+	viewModel.model.set('specialCharacteristicType',null);
+	document.getElementById("specialCharacteristicType").length=0;
+}
+function selectStaff(controlPlanId,mainStaff){
+    var dialog = $("#staffWindow").kendoWindow({
+    	width: "30%",
+	        height: "45%",
+        title: '<@spring.message "fmea.member.selection"/>',
+        visible: false,
+        iframe: true,
+        modal: true,
+        content: 'control_plan_staff.html?controlPlanId='+controlPlanId+'&mainStaff='+mainStaff
+}).data("kendoWindow");     
+dialog.center().open(); 
+}
+
+detail=function(kid){	
+	
+	 var dialog = $("#childWindow").kendoWindow({
+		    width: window.innerWidth*0.8,
+		    height: window.innerHeight*0.8,
+		    title:'<@spring.message "fmea.histioric.version"/>',
+		    visible: false,
+		    iframe: true,
+		    modal: true,
+		    content: '../hqm_fmea/fmea_detail.html?kid='+kid
+		}).data("kendoWindow");     
+		dialog.center().open(); 	
+} 
+
+dfmeadetail=function(kid){	
+	
+	 var dialog = $("#childWindow1").kendoWindow({
+		    width: window.innerWidth*0.9,
+		    height: window.innerHeight*0.9,
+		    title: '<@spring.message "fmea.detail"/>',
+		    visible: false,
+		    iframe: true,
+		    modal: true,
+		    content: '../hqm_dfmea_detail/dfmea_detail.html?kid='+kid
+		}).data("kendoWindow");     
+		dialog.center().open(); 	
+} 
+
+
+function loadData(_kid,username,ids)
+{
+	 
+	console.log(ids);
+ var data = $("#grid").data("kendoGrid")._data;
+ if(_kid==""||_kid==null||_kid=="undefined")
+	 {
+	  $("#grid").data("kendoGrid").dataSource.data()[0].set("useNames",username);
+	  $("#grid").data("kendoGrid").dataSource.data()[0].set("staffId",ids);
+	 }
+  else
+	 {
+ for(var i=0 ;i<data.length;i++)
+	   {
+	    if (data[i].kid ==_kid)
+	    	{ 	
+	    	$("#grid").data("kendoGrid").dataSource.data()[i].set("useNames",username);
+	    	$("#grid").data("kendoGrid").dataSource.data()[i].set("staffId",ids);
+	    	} 	   
+	   }
+	 } 
+
+ console.log($("#grid").data("kendoGrid")._data);
+}
+</script>
+<div id="childWindow"></div>
+<div id="childWindow1"></div>
+<div id="staffWindow"></div>
+<div id="page-content">
+	
+    		 <div class="row">
+	 	 <div class="row">
+          <div class="pull-left" id="toolbar-btn" style="padding-bottom:10px;">
+           <span class="btn btn-warning fa fa-paper-plane-o" data-bind="click:clearn"   style="float:left;margin-right:5px;"><@spring.message "清除"/></span>
+           <span class="btn btn-success fa fa-at"data-bind="click:query"  style="float:left;background-color:#449dEE;border-color:#449dEE;"><@spring.message "查询"/></span>
+          </div>
+           <script>kendo.bind($('#toolbar-btn'), viewModel);</script>
+          </div>
+    	<div class="row" style="margin-top:10px">
+	    	<div id="query-form">
+	    		<div class="row" style="margin-left: 5px;margin-top:10px">
+	    			<!-- 项目编号 -->
+	    			<div class="col-sm-3">
+	    				<lable class="col-xs-4 control-lable" style="text-align:right;padding:0px;margin-top:2%"> <@spring.message "fmea.fmeacode"/> :</lable>
+			  			<div class="col-xs-8">
+	    					<input  id="fmeaCode" style="width:100%"  data-bind="value:model.fmeaCode"class="k-textbox">  
+	    				</div>
+	    			</div>
+	    			<!-- 项目名称 -->
+	    			<div class="col-sm-3">
+	            		<lable class="col-xs-4 control-lable" style="text-align:right;padding:0px;margin-top:2%"> <@spring.message "fmea.fmeaname"/> :</lable>
+			  			<div class="col-xs-8">
+	    					<input  id="fmeaName" style="width:100%" data-bind="value:model.fmeaName"class="k-textbox">         
+	    				</div>
+	    			</div>
+	    			<!-- 结构 -->
+	    			<div class="col-sm-3">
+	            		<lable class="col-xs-4 control-lable" style="text-align:right;padding:0px;margin-top:2%"> <@spring.message "工序"/> :</lable>
+			  			<div class="col-xs-8">
+	    					<input  id="structureName"  style="width:100%"  data-bind="value:model.structureName"class="k-textbox">         
+	    				</div>
+	    			</div>
+	    			<!-- 功能/要求 -->
+	    			<div class="col-sm-3">
+	            		<lable class="col-xs-4 control-lable" style="text-align:right;padding:0px;margin-top:2%"> <@spring.message "步骤"/> :</lable>
+			  			<div class="col-xs-8">
+	    					<input  id="functionName" style="width:100%"  data-bind="value:model.functionName"class="k-textbox">         
+	    				</div>
+	    			</div>
+	    		</div>
+	    		<div class="row" style="margin-left: 5px;margin-top:10px">	
+	    			<!-- 潜在失效模式 -->
+	    			<div class="col-sm-3" >
+	            		<lable class="col-xs-4 control-lable" style="text-align:right;margin-top:2%"> <@spring.message "潜在失效模式"/>  :</lable>
+			  			<div class="col-xs-8">
+		            		<input  id="potentialFailureMode" style="width:100%" data-bind="value:model.potentialFailureMode"class="k-textbox">         
+	    				</div>
+	    			</div>
+	    			<!-- 潜在失效后果 -->
+	    			<div class="col-sm-3">
+	            		<lable class="col-xs-4 control-lable" style="text-align:right;padding:0px;margin-top:2%"> <@spring.message "fmea.failure.effect"/> :</lable>
+			  			<div class="col-xs-8">
+	    					<input  id="failureConsequences" style="width:100%"  data-bind="value:model.failureConsequences"class="k-textbox"> 
+	    				</div>
+	    			</div>
+	    			<!-- 严重度 -->
+	    			<div class="col-sm-3">
+	    				<lable class="col-xs-4 control-lable" style="text-align:right;padding:0px;margin-top:2%"> <@spring.message "fmea.severity"/> :</lable>
+			  			<div class="col-xs-8">
+			  				<select class="severity"  multiple="multiple" style="width:100%" id="severity" ></select>  
+	    				</div>
+	    			</div>
+	    			<!-- 频度 -->
+	    			<div class="col-sm-3">
+	    				<lable class="col-xs-4 control-lable" style="text-align:right;padding:0px;margin-top:2%"> <@spring.message "fmea.occurrence"/> :</lable>
+			  			<div class="col-xs-8">
+			  				<select class="occurrence"  multiple="multiple" style="width:100%" id="occurrence" ></select>  
+	    				</div>
+	    			</div>
+	    		</div>
+	    		<div class="row" style="margin-left: 5px;margin-top:10px">	
+	    			<!-- 检测度 -->
+	    			<div class="col-sm-3">
+	    				<lable class="col-xs-4 control-lable" style="text-align:right;padding:0px;margin-top:2%"> <@spring.message "fmea.detection"/> :</lable>
+			  			<div class="col-xs-8">
+			  				<select class="detection"  multiple="multiple" style="width:100%" id="detection" ></select>  
+	    				</div>
+	    			</div>
+	    			<!-- S结果 -->
+	    			<div class="col-sm-3">
+	    				<lable class="col-xs-4 control-lable" style="text-align:right;padding:0px;margin-top:2%"> <@spring.message "fmea.result.severity"/> :</lable>
+			  			<div class="col-xs-8">
+			  				<select class="postSeverity"  multiple="multiple" style="width:100%" id="postSeverity" ></select>  
+	    				</div>
+	    			</div>
+	    			<!-- O结果 -->
+	    			<div class="col-sm-3">
+	    				<lable class="col-xs-4 control-lable" style="text-align:right;padding:0px;margin-top:2%"> <@spring.message "fmea.result.occurrence"/> :</lable>
+			  			<div class="col-xs-8">
+			  				<select class="postOccurrence"  multiple="multiple" style="width:100%" id="postOccurrence" ></select>  
+	    				</div>
+	    			</div>
+	    			<!-- D结果 -->
+	    			<div class="col-sm-3">
+	    				<lable class="col-xs-4 control-lable" style="text-align:right;padding:0px;margin-top:2%"> <@spring.message "fmea.result.detection"/> :</lable>
+			  			<div class="col-xs-8">
+			  				<select class="postDetection"  multiple="multiple" style="width:100%" id="postDetection" ></select>  
+	    				</div>
+	    			</div>
+	    		</div>
+	    		<div class="row" style="margin-left: 5px;margin-top:10px">
+	    			<!-- 特殊特性分类 -->
+	    			<div class="col-sm-3">
+	    				<lable class="col-xs-4 control-lable" style="text-align:right;padding:0px;margin-top:2%"> <@spring.message "hqminvalid.specialcharactertype"/> :</lable>
+			  			<div class="col-xs-8">
+			  				<select class="specialCharacteristicType"  multiple="multiple" style="width:100%" id="specialCharacteristicType" ></select>  
+	    				</div>
+	    			</div>
+	    			<!-- 潜在失效原因 -->
+	    			<div class="col-sm-3">
+	            		<lable class="col-xs-4 control-lable" style="text-align:right;padding:0px;margin-top:2%"> <@spring.message "fmea.failure.cause"/> :</lable>
+			  			<div class="col-xs-8">
+	           	 			<input  id="failureReason" style="width:100%"  data-bind="value:model.failureReason"class="k-textbox">         
+	    				</div>
+	    			</div>
+	    			<!-- 现行预防措施 -->
+	    			<div class="col-sm-3">
+	            		<lable class="col-xs-4 control-lable" style="text-align:right;padding:0px;margin-top:2%"> <@spring.message "fmea.current.preventive.measure"/> :</lable>
+			  			<div class="col-xs-8">
+		            		<input  id="preventiveMeasure" style="width:100%"  data-bind="value:model.preventiveMeasure"class="k-textbox">         
+	    				</div>
+	    			</div>
+	    			<!-- 现行检测措施 -->
+	    			<div class="col-sm-3">
+	            		<lable class="col-xs-4 control-lable" style="text-align:right;padding:0px;margin-top:2%"> <@spring.message "fmea.current.testing.measure"/> :</lable>
+			  			<div class="col-xs-8">
+		            		<input  id="detectionMeasure" style="width:100%"  data-bind="value:model.detectionMeasure"class="k-textbox">         
+	    				</div>
+	    			</div>
+	    		</div>
+	    		<div class="row" style="margin-left: 5px;margin-top:10px">
+	    			<!-- 责任人 -->
+	    			<div class="col-sm-3">
+	            		<lable class="col-xs-4 control-lable" style="text-align:right;margin-top:2%"> <@spring.message "fmea.usename"/> :</lable>
+			  			<div class="col-xs-8">
+							<input  id="userLov" style="width:100%"  data-bind="value:model.chargeId">		            
+	    				</div>
+	    			</div>	    
+	    			<!-- 建议措施 -->			
+	    			<div class="col-sm-3">
+	            		<lable class="col-xs-4 control-lable" style="text-align:right;margin-top:2%"> <@spring.message "fmea.recommended.measures"/> :</lable>
+			  			<div class="col-xs-8">
+	    					<input  id="suggestMeasure" style="width:100%"  data-bind="value:model.suggestMeasure"class="k-textbox">         
+	    				</div>
+	    			</div>	    			
+	    			<!-- 预计完成时间从 -->
+	    			<div class="col-sm-3">
+	            		<lable class="col-xs-4 control-lable" style="text-align:right;margin-top:2%"><@spring.message "msaplan.starttime"/>:</lable>
+			  			<div class="col-xs-8">
+		            		<input  id="estimatedFinishTimeStart" style="width:100%" data-role="datepicker"    data-bind="value:model.estimatedFinishTimeStart">
+	    				</div>
+	    			</div>
+	    			<!-- 预计完成时间至 -->
+	    			<div class="col-sm-3">
+	            		<lable class="col-xs-4 control-lable" style="text-align:right;margin-top:2%"><@spring.message "msaplan.endtime"/>:</lable>
+			  			<div class="col-xs-8">
+		            		<input  id="estimatedFinishTimeEnd" style="width:100%" data-role="datepicker"     data-bind="value:model.estimatedFinishTimeEnd">
+	    				</div>
+	    			</div>
+	    		</div>
+	    		<div class="row" style="margin-left: 5px;margin-top:10px;margin-bottom:10px">
+	    			<!-- 实际执行措施 -->
+	    			<div class="col-sm-3" >
+	            		<lable class="col-xs-4 control-lable" style="text-align:right;margin-top:2%"> <@spring.message "实际执行措施"/> :</lable>
+			  			<div class="col-xs-8">
+		            		<input  id="measureResult" style="width:100%"  data-bind="value:model.measureResult"class="k-textbox">         
+	    				</div>
+	    			</div>	
+	    			<div class="col-sm-3" >
+	            		<lable class="col-xs-4 control-lable" style="text-align:right;margin-top:2%"> <@spring.message "RPN"/>  >=:</lable>
+			  			<div class="col-xs-8">
+		            		<input  id="rpn" style="width:100%"  placeholder='请输入1~1000的数字'  data-bind="value:model.rpn"class="k-textbox">         
+	    				</div>
+	    			</div>	
+	    			<div class="col-sm-3" >
+	            		<lable class="col-xs-4 control-lable" style="text-align:right;margin-top:2%"> <@spring.message "RPN结果"/>  >=:</lable>
+			  			<div class="col-xs-8">
+		            		<input  id="rpn" style="width:100%"  placeholder='请输入1~1000的数字'  data-bind="value:model.postRpn"class="k-textbox">         
+	    				</div>
+	    			</div>
+	    			<div class="col-sm-3" >
+	            		<lable class="col-xs-4 control-lable" style="text-align:right;margin-top:2%"> <@spring.message "要求"/>  :</lable>
+			  			<div class="col-xs-8">
+		            		<input  id="claim" style="width:100%" data-bind="value:model.claim"class="k-textbox">         
+	    				</div>
+	    			</div>
+	    		</div>
+	    	</div>
+	    	<script>kendo.bind($('#query-form'), viewModel);</script>	
+    	</div>
+     
+    <div style="clear:both">
+        <div id="grid"></div>
+    </div>
+</div>
+<script type="text/javascript">
+$(".severity").kendoMultiSelect({
+     dataTextField: "meaning",
+     dataValueField: "value",
+     dataSource: HQM_FMEA_SEVERITY_RANGE
+ }).data('kendoMultiSelect');
+ $("#severity").siblings('div').css("background","#EDEDED");
+ $("#severity").siblings('div').children('input').removeAttr('style')
+ $("#severity").siblings('div').children('input').attr('style','width:100%')
+$(".occurrence").kendoMultiSelect({
+     dataTextField: "meaning",
+     dataValueField: "value",
+     dataSource: HQM_FMEA_OCCURRENCE_RANGE
+ }).data('kendoMultiSelect');
+ $("#occurrence").siblings('div').css("background","#EDEDED");
+ $("#occurrence").siblings('div').children('input').removeAttr('style')
+ $("#occurrence").siblings('div').children('input').attr('style','width:100%')
+$(".detection").kendoMultiSelect({
+     dataTextField: "meaning",
+     dataValueField: "value",
+     dataSource: HQM_FMEA_DETECTION_RANGE
+ }).data('kendoMultiSelect');
+ $("#detection").siblings('div').css("background","#EDEDED");
+ $("#detection").siblings('div').children('input').removeAttr('style')
+ $("#detection").siblings('div').children('input').attr('style','width:100%')
+$(".postSeverity").kendoMultiSelect({
+     dataTextField: "meaning",
+     dataValueField: "value",
+     dataSource: HQM_FMEA_SEVERITY_RANGE
+ }).data('kendoMultiSelect');
+ $("#postSeverity").siblings('div').css("background","#EDEDED");
+ $("#postSeverity").siblings('div').children('input').removeAttr('style')
+ $("#postSeverity").siblings('div').children('input').attr('style','width:100%')
+$(".postOccurrence").kendoMultiSelect({
+     dataTextField: "meaning",
+     dataValueField: "value",
+     dataSource: HQM_FMEA_OCCURRENCE_RANGE
+ }).data('kendoMultiSelect');
+ $("#postOccurrence").siblings('div').css("background","#EDEDED");
+ $("#postOccurrence").siblings('div').children('input').removeAttr('style')
+ $("#postOccurrence").siblings('div').children('input').attr('style','width:100%')
+$(".postDetection").kendoMultiSelect({
+     dataTextField: "meaning",
+     dataValueField: "value",
+     dataSource: HQM_FMEA_DETECTION_RANGE
+ }).data('kendoMultiSelect');
+ $("#postDetection").siblings('div').css("background","#EDEDED");
+ $("#postDetection").siblings('div').children('input').removeAttr('style')
+ $("#postDetection").siblings('div').children('input').attr('style','width:100%')
+$(".specialCharacteristicType").kendoMultiSelect({
+     dataTextField: "meaning",
+     dataValueField: "value",
+     dataSource: HQM_FMEA_SPECIAL_TYPE
+ }).data('kendoMultiSelect');
+ $("#specialCharacteristicType").siblings('div').css("background","#EDEDED");
+ $("#specialCharacteristicType").siblings('div').children('input').removeAttr('style')
+ $("#specialCharacteristicType").siblings('div').children('input').attr('style','width:100%')
+ 
+$('#queryPanel').kendoQueryPanel({
+    queryFunction: function () {
+        viewModel.query();
+        console.log(viewModel);
+    },
+    resetFunction: function () {
+        viewModel.reset();
+    }
+});
+$("#userLov").kendoLov($.extend
+	    (<@lov"user_lov"/>, {
+	        textField: 'useName',
+	        valueField:'chargeId',
+	    }));
+$("#usersLov").kendoLov($.extend
+	    (<@lov"user_lov"/>, {
+	        textField: 'useName',
+	        valueField:'staffId',
+	    }));
+$("#fmeacodeLov").kendoLov($.extend
+	    (<@lov"DFEMA_LOV"/>, {
+	        textField: 'fmeaName',
+	        valueField:'fmeaCode',
+	    }));
+    Hap.initEnterQuery('#query-form', viewModel.query);
+    var BaseUrl = _basePath;
+    dataSource = new kendo.data.DataSource({
+        transport: {
+            read: {
+                url: BaseUrl + "/hqm/pfmea/detail/query/condition",
+                type: "POST",
+                dataType: "json"
+            },
+            update: {
+                url: BaseUrl + "/hqm/dfmea/save",
+                type: "POST",
+                contentType: "application/json"
+            },
+            destroy: {
+                url: BaseUrl + "/hqm/fmea/remove",
+                type: "POST",
+                contentType: "application/json"
+            },
+            create: {
+                url: BaseUrl + "/hqm/dfmea/save",
+                type: "POST",
+                contentType: "application/json"
+            },
+            parameterMap: function (options, type) {
+                if (type !== "read" && options.models) {
+                    var datas = Hap.prepareSubmitParameter(options, type)
+                    return kendo.stringify(datas);
+                } else if (type === "read") {
+                	var validator = $("#query-form").kendoValidator().data("kendoValidator");
+                	if (validator.validate()) {                		
+                    	var postDetections = $("#postDetection").data("kendoMultiSelect").value();
+                    	
+                    	viewModel.model.set('postDetections',JSON.stringify(postDetections).replace(/\[|]/g,''));
+                    	
+                    	var severitys = $("#severity").data("kendoMultiSelect").value();
+                    	
+	                    viewModel.model.set('severitys',JSON.stringify(severitys).replace(/\[|]/g,''));                    		
+                    	
+                    	var occurrences = $("#occurrence").data("kendoMultiSelect").value();
+                    	
+	                    viewModel.model.set('occurrences',JSON.stringify(occurrences).replace(/\[|]/g,''));                    		
+                    	
+                    	var detections = $("#detection").data("kendoMultiSelect").value();
+                    	
+	                    viewModel.model.set('detections',JSON.stringify(detections).replace(/\[|]/g,''));                    		
+                    	
+                    	var postSeveritys = $("#postSeverity").data("kendoMultiSelect").value();
+                    	
+	                    viewModel.model.set('postSeveritys',JSON.stringify(postSeveritys).replace(/\[|]/g,''));
+                    	
+                    	var postOccurrences = $("#postOccurrence").data("kendoMultiSelect").value();
+                   
+						viewModel.model.set('postOccurrences',JSON.stringify(postOccurrences).replace(/\[|]/g,''));
+                    	
+                    	var specialCharacteristicTypes = $("#specialCharacteristicType").data("kendoMultiSelect").value();
+                    	
+	                    viewModel.model.set('specialCharacteristicTypes',JSON.stringify(specialCharacteristicTypes).replace(/\[|]/g,''));
+  
+                	}
+	                return Hap.prepareQueryParameter(viewModel.model.toJSON(), options)
+                }
+            }
+        },
+        batch: true,
+        serverPaging: true,
+        pageSize: 10,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+                id: "kid",
+                fields: {             	 
+                        },
+                editable:function(col){
+                	  if(col =='updateBy'||col =='updateDate'||col =='currentVersion'||col =='fmeaCode'||col=='useNames')
+                  	{ 
+                  		return false;
+                      }
+                  	else
+                      {
+                  		return true;
+                      }    	  
+                  }
+            }
+        }
+    });
+
+    $("#grid").kendoGrid({
+        dataSource: dataSource,
+        resizable: true,
+        scrollable: true,
+        navigatable: false,
+        autoBind: false,
+        selectable: 'multiple, rowbox',
+        dataBound: function () {
+            if (parent.autoResizeIframe) {
+                parent.autoResizeIframe('${RequestParameters.functionCode!}')
+            }
+        },
+        pageable: {
+            pageSizes: [5, 10, 20, 50],
+            refresh: true,
+            buttonCount: 5
+        },
+        columns: [
+                    {
+                field: "fmeaCode",
+                title: '<@spring.message "fmea.fmeacode"/>',
+                width: 120
+            },
+                    {
+                field: "fmeaName",
+                title: '<@spring.message "fmea.fmeaname"/>',
+                width: 120
+            },
+    				{
+                field: "structureName",
+                title: '<@spring.message "工序"/>',
+                width: 120
+            },
+            		{
+                field: "functionName",
+                title: '<@spring.message "步骤"/>',
+                width: 120
+            },
+            		{
+                field: "claim",
+                title: '<@spring.message "要求"/>',
+                width: 120
+            },
+            		{
+                field: "potentialFailureMode",
+                title: '<@spring.message "潜在失效模式"/>',
+                width: 120
+            },
+           			{
+                field: "invalidConsequence",
+                title: '<@spring.message "fmea.failure.effect"/>',
+                width: 120
+            },
+            {
+                field: "severity",
+                title: '<@spring.message "fmea.severity"/>',
+                width: 80
+            },
+            	{
+                field: "specialCharacteristicType",
+                title: '<@spring.message "fmea.class"/>',
+                width: 80,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+                template: function (dataItem) {
+                    var v = dataItem.specialCharacteristicType ? dataItem.specialCharacteristicType : "";
+                    $.each(HQM_FMEA_SPECIAL_TYPE, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return v;
+                        }
+                    });
+                    return v;
+                },
+            },
+            {
+                field: "failureReason",
+                title: '<@spring.message "fmea.failure.cause"/>',
+                width: 160
+            },
+            
+            {
+                field: "preventiveMeasure",
+                title: '<@spring.message "fmea.current.preventive.measure"/>',
+                width: 160
+            },
+                    {
+                field: "occurrence",
+                title: '<@spring.message "fmea.occurrence"/>',
+                width: 70
+            },
+            	{
+                field: "detectionMeasure",
+                title: '<@spring.message "fmea.current.testing.measure"/>',
+                width: 160
+            },
+                    {
+                field: "detection",
+                title: '<@spring.message "fmea.detection"/>',
+                width: 80
+            },
+                    {
+                field: "rpn",
+                title: '<@spring.message "fmea.rpn"/>',
+                width:  70
+            },
+            {
+                field: "apVal",
+                title: '<@spring.message "AP"/>',
+                width: 70,
+//                 template: function (dataItem) {
+//                     return dataItem.apVal == "null" ? "" : dataItem.apVal;
+//                 },
+            },
+                {
+                    field: "suggestMeasure",
+                    title:'<@spring.message "fmea.recommended.measures"/>',
+                    width: 160
+            },  
+               {
+                field: "useName",
+                title: '<@spring.message "fmea.principal"/>',
+                width: 80
+            }, 
+            {
+                field: "estimatedFinishTime",
+                title:'<@spring.message "fmea.estimated.finish.time"/>',
+                width: 160
+            },
+            {
+                field: "measureResult",
+                title:'<@spring.message "fmea.measure.result"/>',
+                width: 180
+            },
+                {
+            	field: "postSeverity",
+                title: '<@spring.message "fmea.result.severity"/>',
+                width: 60
+            },
+                {
+            	field: "postOccurrence",
+                title: '<@spring.message "fmea.result.occurrence"/>',
+                width: 60
+            },
+                {
+            	field: "postDetection",
+                title: '<@spring.message "fmea.result.detection"/>',
+                width: 60
+            },
+                {
+            	field: "postRpn",
+                title:  '<@spring.message "fmea.result.rpn"/>',
+                width: 80
+            },  
+            {
+                field: "apVal",
+                title: '<@spring.message "AP结果"/>',
+                width: 70,
+//                 template: function (dataItem) {
+//                     return dataItem.apVal == "null" ? "" : dataItem.apVal;
+//                 },
+            },
+        ],
+        editable: false
+    });
+
+</script>
+</body>
+</html>

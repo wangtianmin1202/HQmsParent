@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.npi.npi_technology.mapper.SopRouteRefMapper">
+    <resultMap id="BaseResultMap" type="com.hand.npi.npi_technology.dto.SopRouteRef">
+        <result column="REF_ID" property="refId" jdbcType="DECIMAL" />
+        <result column="ROUTE_ID" property="routeId" jdbcType="DECIMAL" />
+        <result column="SOP_ID" property="sopId" jdbcType="DECIMAL" />
+        <result column="ANIMATION_VERSION" property="animationVersion" jdbcType="VARCHAR" />
+        <result column="AFTER_SOP_ID" property="afterSopId" jdbcType="DECIMAL" />
+        <result column="BEGIN_DATE" property="beginDate" jdbcType="DATE" />
+        <result column="WFL_CODE" property="wflCode" jdbcType="VARCHAR" />
+        <result column="VERSION_NUMBER" property="versionNumber" jdbcType="DECIMAL" />
+        <result column="ROUTE_CODE" property="routeCode" jdbcType="VARCHAR" />
+        <result column="BEFORE_SOP_CODE" property="beforeSopCode" jdbcType="VARCHAR" />
+        <result column="BEFORE_SOP_NAME" property="beforeSopName" jdbcType="VARCHAR" />
+        <result column="AFTER_SOP_CODE" property="afterSopCode" jdbcType="VARCHAR" />
+        <result column="AFTER_SOP_NAME" property="afterSopName" jdbcType="VARCHAR" />
+        
+        
+    </resultMap>
+    <select id="dataQuery" resultMap="BaseResultMap" >
+    	select b.VERSION_NUMBER,b.BEGIN_DATE,b.REF_ID,b.ROUTE_ID,b.SOP_ID,t1.sop_code BEFORE_SOP_CODE,t1.sop_name BEFORE_SOP_NAME,
+    		t3.route_number ROUTE_CODE from (
+    			select t.*, row_number() over (partition by route_id order by VERSION_NUMBER desc) rn
+					from NPI_SOP_ROUTE_REF t
+					where t.begin_date &lt; sysdate
+					) b
+    	left join NPI_SOP_INFO t1 on b.sop_id = t1.sop_id
+    	left join NPI_TECHNOLOGY_ROUTE t3 on b.route_id = t3.route_id
+    	where b.rn=1
+    </select>
+    <select id="hisQuery" resultMap="BaseResultMap" >
+    	select t.VERSION_NUMBER,t.BEGIN_DATE,t.REF_ID,t.ROUTE_ID,t.SOP_ID,t.WFL_CODE,t1.sop_code BEFORE_SOP_CODE,t1.sop_name BEFORE_SOP_NAME,
+    		t2.sop_code AFTER_SOP_CODE,t2.sop_name AFTER_SOP_NAME,
+    		t3.route_number ROUTE_CODE from  NPI_SOP_ROUTE_REF t
+    	left join NPI_SOP_INFO t1 on t.sop_id = t1.sop_id
+    	left join NPI_SOP_INFO t2 on t.AFTER_SOP_ID = t2.sop_id
+    	left join NPI_TECHNOLOGY_ROUTE t3 on t.route_id = t3.route_id
+		where t.begin_date &lt; sysdate and t.AFTER_SOP_ID is not null and t.ROUTE_ID=#{dto.routeId}
+		order by t.VERSION_NUMBER desc
+    </select>
+
+
+</mapper>

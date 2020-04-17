@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.npi.npi_technology.mapper.InvalidPatternMapper">
+    <resultMap id="BaseResultMap" type="com.hand.npi.npi_technology.dto.InvalidPattern">
+        <result column="INVALID_PATTERN_ID" property="invalidPatternId" jdbcType="DECIMAL" />
+        <result column="INVALID_PATTERN_NUMBER" property="invalidPatternNumber" jdbcType="VARCHAR" />
+        <result column="INVALID_PATTERN_NAME" property="invalidPatternName" jdbcType="VARCHAR" />
+        <result column="INVALID_PATTERN_CONSEQUENCE" property="invalidPatternConsequence" jdbcType="VARCHAR" />
+        <result column="SPEC_DETAIL_ID" property="specDetailId" jdbcType="VARCHAR" />
+        <result column="SEV" property="sev" jdbcType="VARCHAR" />
+        <result column="invalidCauseId" property="invalidCauseId" jdbcType="DECIMAL" />
+        <result column="preventionMeasureId" property="preventionMeasureId" jdbcType="DECIMAL" />
+        <result column="PARENT_ID" property="parentId" jdbcType="DECIMAL" />
+        <result column="PFMEA_VERSION" property="pfmeaVersion" jdbcType="VARCHAR" />
+        <result column="APPROVE_STATUS" property="approveStatus" jdbcType="VARCHAR" />
+    </resultMap>
+    
+    <select id="selectMaxNumber" resultMap="BaseResultMap"
+		parameterType="com.hand.npi.npi_technology.dto.InvalidPattern">
+		select s.INVALID_PATTERN_NUMBER from npi_invalid_pattern s where s.INVALID_PATTERN_NUMBER like  concat(#{invalidPatternNumber}, '%') 
+		order by s.INVALID_PATTERN_NUMBER desc
+	</select>
+	
+    <select id="selectPatternChild" resultMap="BaseResultMap"
+		parameterType="com.hand.npi.npi_technology.dto.InvalidPattern">
+		select p.invalid_pattern_id,c.invalid_cause_id invalidCauseId,m.prevention_id preventionMeasureId
+		 from npi_invalid_pattern p left join npi_invalid_cause c
+		on p.invalid_pattern_id = c.INVALID_PATTERN_ID
+		left join npi_prevention_measure m 
+		on c.invalid_cause_id = m.invalid_cause_id
+		<where>
+            <if test="invalidPatternId!=null">
+                AND p.invalid_pattern_id=#{invalidPatternId}
+            </if>
+        </where>
+	</select>
+	
+	<select id="queryNewVersionData" resultMap="BaseResultMap"
+		parameterType="com.hand.npi.npi_technology.dto.InvalidPattern">
+		SELECT  t.*   
+           FROM npi_invalid_pattern t 
+		where 
+			<if test="specDetailId != null and specDetailId != ''">
+				t.SPEC_DETAIL_ID =#{specDetailId}
+			</if>
+			and CONNECT_BY_ISLEAF =1
+		     START WITH t.parent_id IS NULL  
+		     CONNECT BY t.parent_id = PRIOR t.invalid_pattern_id
+		order by t.invalid_pattern_id desc
+	</select>
+
+	<select id="queryHisData" resultMap="BaseResultMap"
+		parameterType="com.hand.npi.npi_technology.dto.InvalidPattern">
+		SELECT  t.*   
+           FROM npi_invalid_pattern t 
+		<where>
+			<if test="specDetailId != null and specDetailId != ''">
+				and t.SPEC_DETAIL_ID =#{specDetailId}
+			</if>
+			<if test="invalidPatternId != null and invalidPatternId != ''">
+				and t.INVALID_PATTERN_ID != #{invalidPatternId}
+			</if>
+			START WITH t.INVALID_PATTERN_ID = #{invalidPatternId}  
+		     CONNECT BY t.INVALID_PATTERN_ID = PRIOR t.parent_id
+		</where>
+		order by t.INVALID_PATTERN_ID desc
+	</select>
+
+</mapper>

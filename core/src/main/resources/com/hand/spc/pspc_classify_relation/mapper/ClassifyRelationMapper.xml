@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.spc.pspc_classify_relation.mapper.ClassifyRelationMapper">
+    <resultMap id="BaseResultMap" type="com.hand.spc.pspc_classify_relation.dto.ClassifyRelation">
+        <result column="classify_relation_id" property="classifyRelationId" jdbcType="DECIMAL" />
+        <result column="tenant_id" property="tenantId" jdbcType="DECIMAL" />
+        <result column="site_id" property="siteId" jdbcType="DECIMAL" />
+        <result column="classify_id" property="classifyId" jdbcType="DECIMAL" />
+        <result column="classify_group_id" property="classifyGroupId" jdbcType="DECIMAL" />
+        <result column="sequence" property="sequence" jdbcType="DECIMAL" />
+    </resultMap>
+
+
+</mapper>

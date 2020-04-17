@@ -1,0 +1,305 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.spc.repository.mapper.CountOocRMapper">
+	<!-- 可根据自己的需求，是否要使用 -->
+    <resultMap id="BaseResultMap" type="com.hand.spc.repository.dto.CountOocR">
+        <result column="count_ooc_id" property="countOocId" jdbcType="VARCHAR"/>
+        <result column="tenant_id" property="tenantId" jdbcType="DECIMAL"/>
+        <result column="site_id" property="siteId" jdbcType="DECIMAL"/>
+        <result column="ooc_status" property="oocStatus" jdbcType="VARCHAR"/>
+        <result column="entity_code" property="entityCode" jdbcType="VARCHAR"/>
+        <result column="entity_version" property="entityVersion" jdbcType="VARCHAR"/>
+        <result column="max_plot_points" property="maxPlotPoints" jdbcType="DECIMAL"/>
+        <result column="tick_label_x" property="tickLabelX" jdbcType="VARCHAR"/>
+        <result column="axis_label_x" property="axisLabelX" jdbcType="VARCHAR"/>
+        <result column="axis_label_y" property="axisLabelY" jdbcType="VARCHAR"/>
+        <result column="chart_detail_type" property="chartDetailType" jdbcType="VARCHAR"/>
+        <result column="upper_control_limit" property="upperControlLimit" jdbcType="DECIMAL"/>
+        <result column="center_line" property="centerLine" jdbcType="DECIMAL"/>
+        <result column="lower_control_limit" property="lowerControlLimit" jdbcType="DECIMAL"/>
+        <result column="upper_spec_limit" property="upperSpecLimit" jdbcType="DECIMAL"/>
+        <result column="spec_target" property="specTarget" jdbcType="DECIMAL"/>
+        <result column="lower_spec_limit" property="lowerSpecLimit" jdbcType="DECIMAL"/>
+        <result column="judgement_id" property="judgementId" jdbcType="DECIMAL"/>
+        <result column="first_subgroup_num" property="firstSubgroupNum" jdbcType="DECIMAL"/>
+        <result column="last_subgroup_num" property="lastSubgroupNum" jdbcType="DECIMAL"/>
+        <result column="classify_group_id" property="classifyGroupId" jdbcType="DECIMAL"/>
+        <result column="classify_id" property="classifyId" jdbcType="DECIMAL"/>
+        <result column="remark" property="remark" jdbcType="VARCHAR"/>
+        <result column="count_sample_data_id" property="countSampleDataId" jdbcType="DECIMAL"/>
+        <result column="object_version_number" property="objectVersionNumber" jdbcType="DECIMAL"/>
+        <result column="creation_date" property="creationDate" jdbcType="DATE"/>
+        <result column="created_by" property="createdBy" jdbcType="DECIMAL"/>
+        <result column="last_updated_by" property="lastUpdatedBy" jdbcType="DECIMAL"/>
+        <result column="last_update_date" property="lastUpdateDate" jdbcType="DATE"/>
+    </resultMap>
+
+    <select id="listCountOocByStatisticList" parameterType="com.hand.spc.repository.dto.CountOocRequestDTO" resultMap="BaseResultMap" > <!-- resultType="com.hand.spc.repository.dto.CountOocR" -->
+        SELECT
+        pco.count_ooc_id,
+        pco.count_sample_data_id,
+        pco.chart_detail_type,
+        pco.judgement_id,
+        pco.ooc_status
+        FROM
+        pspc_count_ooc pco
+        WHERE
+        pco.tenant_id = #{tenantId,jdbcType=DECIMAL}
+        AND pco.site_id = #{siteId,jdbcType=DECIMAL}
+        <if test="countSampleDataIdList != null and countSampleDataIdList.size() > 0">
+            AND pco.count_sample_data_id IN
+            <foreach collection="countSampleDataIdList" item="countSampleDataId" index="index" open="(" close=")" separator=",">
+                #{countSampleDataId}
+            </foreach>
+        </if>
+    </select>
+
+    <!-- <insert id="batchInsertRows" parameterType="java.util.List">
+        INSERT INTO pspc_count_ooc (
+        count_ooc_id,
+        tenant_id,
+        site_id,
+        ooc_status,
+        entity_code,
+        entity_version,
+        max_plot_points,
+        tick_label_x,
+        axis_label_x,
+        axis_label_y,
+        chart_detail_type,
+        upper_control_limit,
+        center_line,
+        lower_control_limit,
+        upper_spec_limit,
+        spec_target,
+        lower_spec_limit,
+        judgement_id,
+        first_subgroup_num,
+        last_subgroup_num,
+        classify_group_id,
+        classify_id,
+        remark,
+        count_sample_data_id
+        )
+        VALUES
+        <foreach collection="list" item="item" index="index" separator=",">
+              (
+            #{item.countOocId},
+            #{item.tenantId},
+            #{item.siteId},
+            #{item.oocStatus},
+            #{item.entityCode},
+            #{item.entityVersion},
+            #{item.maxPlotPoints},
+            #{item.xTickLabel},
+            #{item.xAxisLabel},
+            #{item.yAxisLabel},
+            #{item.chartDetailType},
+            #{item.upperControlLimit},
+            #{item.centerLine},
+            #{item.lowerControlLimit},
+            #{item.upperSpecLimit},
+            #{item.specTarget},
+            #{item.lowerSpecLimit},
+            #{item.judgementId},
+            #{item.firstSubgroupNum},
+            #{item.lastSubgroupNum},
+            #{item.classifyGroupId},
+            #{item.classifyId},
+            #{item.remark},
+            #{item.countSampleDataId}
+              )
+        </foreach>
+    </insert> -->
+    
+    <insert id="batchInsertRows" parameterType="java.util.List">
+    <foreach collection="list" item="item" index="index" open="begin" close=";end;" separator=";">
+        INSERT INTO pspc_count_ooc (
+        count_ooc_id,
+        tenant_id,
+        site_id,
+        ooc_status,
+        entity_code,
+        entity_version,
+        max_plot_points,
+        tick_label_x,
+        axis_label_x,
+        axis_label_y,
+        chart_detail_type,
+        upper_control_limit,
+        center_line,
+        lower_control_limit,
+        upper_spec_limit,
+        spec_target,
+        lower_spec_limit,
+        judgement_id,
+        first_subgroup_num,
+        last_subgroup_num,
+        classify_group_id,
+        classify_id,
+        remark,
+        count_sample_data_id)VALUES(
+            #{item.countOocId},
+            #{item.tenantId},
+            #{item.siteId},
+            #{item.oocStatus},
+            #{item.entityCode},
+            #{item.entityVersion},
+            #{item.maxPlotPoints},
+            #{item.tickLabelX},
+            #{item.axisLabelX},
+            #{item.axisLabelY},
+            #{item.chartDetailType},
+            #{item.upperControlLimit},
+            #{item.centerLine},
+            #{item.lowerControlLimit},
+            #{item.upperSpecLimit},
+            #{item.specTarget},
+            #{item.lowerSpecLimit},
+            #{item.judgementId},
+            #{item.firstSubgroupNum},
+            #{item.lastSubgroupNum},
+            #{item.classifyGroupId},
+            #{item.classifyId},
+            #{item.remark},
+            #{item.countSampleDataId})
+        </foreach>
+    </insert>
+
+
+    <resultMap id="ListCountOOCResultMap" type="com.hand.spc.repository.dto.CountOocResponseDTO">
+        <result column="tenant_id" property="tenantId" jdbcType="DECIMAL"/>
+        <result column="site_id" property="siteId" jdbcType="DECIMAL"/>
+        <result column="count_ooc_id" property="countOocId" jdbcType="VARCHAR"/>
+        <result column="entity_code" property="entityCode" jdbcType="VARCHAR"/>
+        <result column="entity_version" property="entityVersion" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <select id="listCountOOC" parameterType="com.hand.spc.repository.dto.CountOocRequestDTO" resultMap="ListCountOOCResultMap">
+        SELECT
+        pco.tenant_id,
+        pco.site_id,
+        pco.count_ooc_id,
+        pe.entity_code,
+        pe.entity_version,
+        pcg.ce_group_id,
+        pcg.ce_group,
+        pcp.ce_parameter_id,
+        pcp.ce_parameter,
+        pc.chart_code,
+        pjg.judgement_group_code,
+        pj.judgement_code,
+        pj.judgement_short_code,
+        pj.message_type_code,
+        gro.classify_group_id,
+        gro.description classify_group_name,
+        cla.classify_id,
+        cla.description classify_name,
+        pco.ooc_status,
+        psg.attachment_group_description,
+        pco.remark,
+        pco.creation_date,
+        pco.object_version_number,
+        pco.count_sample_data_id,
+        pco.chart_detail_type,
+        pj.length_data,
+        pj.limit_data
+        FROM
+        pspc_entity pe,
+        pspc_attachment_group psg,
+        pspc_ce_group pcg,
+        pspc_ce_parameter pcp,
+        pspc_chart pc,
+        pspc_judgement_group pjg,
+        pspc_judgement pj,
+        pspc_count_ooc pco
+        LEFT JOIN pspc_classify_group gro ON gro.tenant_id = pco.tenant_id
+        AND gro.site_id = pco.site_id
+        AND gro.classify_group_id = pco.classify_group_id
+        LEFT JOIN pspc_classify cla ON cla.tenant_id = pco.tenant_id
+        AND cla.site_id = pco.site_id
+        AND cla.classify_id = pco.classify_id
+        WHERE
+        pe.tenant_id = pco.tenant_id
+        AND pe.site_id = pco.site_id
+        AND pe.entity_code = pco.entity_code
+        AND pe.entity_version = pco.entity_version
+        AND psg.tenant_id = pe.tenant_id
+        AND psg.site_id = pe.site_id
+        AND psg.attachment_group_id = pe.attachment_group_id
+        AND pcg.tenant_id = pe.tenant_id
+        AND pcg.site_id = pe.site_id
+        AND pcg.ce_group_id = pe.ce_group_id
+        AND pcp.tenant_id = pe.tenant_id
+        AND pcp.site_id = pe.site_id
+        AND pcp.ce_parameter_id = pe.ce_parameter_id
+        AND pc.tenant_id = pe.tenant_id
+        AND pc.site_id = pe.site_id
+        AND pc.chart_id = pe.chart_id
+        AND pj.tenant_id = pco.tenant_id
+        AND pj.site_id = pco.site_id
+        AND pj.judgement_id = pco.judgement_id
+        AND pjg.tenant_id = pj.tenant_id
+        AND pjg.site_id = pj.site_id
+        AND pjg.judgement_group_id = pj.judgement_group_id
+        AND pco.tenant_id = #{tenantId,jdbcType=DECIMAL}
+        AND pco.site_id = #{siteId,jdbcType=DECIMAL}
+        <if test="creationDateFrom!=null">
+            AND pco.creation_date &gt;= #{creationDateFrom}
+        </if>
+        <if test="creationDateTo!=null">
+            AND pco.creation_date &lt;= #{creationDateTo}
+        </if>
+        <if test="ceGroupId != null">
+            AND pco.ce_group_id = #{ceGroupId,jdbcType=DECIMAL}
+        </if>
+        <if test="ceParameterId != null">
+            AND pco.ce_parameter_id = #{ceParameterId,jdbcType=DECIMAL}
+        </if>
+        <if test="entityId != null">
+            AND pco.entity_id = #{entityId,jdbcType=DECIMAL}
+        </if>
+        <if test="oocStatus != null and oocStatus !=''">
+            AND pco.ooc_status = #{oocStatus,jdbcType=VARCHAR}
+        </if>
+        <if test="countSampleDataIdList!=null">
+            AND pco.count_sample_data_id IN
+            <foreach collection="countSampleDataIdList" item="countSampleDataId" index="index" open="(" close=")" separator=",">
+                #{countSampleDataId}
+            </foreach>
+        </if>
+        <if test="chartDetailType!=null and chartDetailType!=''">
+            AND pco.chart_detail_type=#{chartDetailType}
+        </if>
+    </select>
+
+    <select id="CountOOCById" parameterType="com.hand.spc.repository.dto.OocRequestDTO"
+            resultType="com.hand.spc.repository.dto.CountOocResponseDTO">
+        SELECT
+            pco.count_sample_data_id,
+            pco.count_ooc_id,
+            pco.classify_group_id,
+            pcg.description classifyGroupName,
+            pco.classify_id,
+            pc.description classifyName,
+            pco.remark,
+            pco.ooc_status,
+            pj.judgement_id,
+            pj.judgement_code,
+            pj.judgement_short_code,
+            pj.limit_data,
+            pj.length_data,
+            pco.object_version_number,
+            pco.tenant_id,
+            pco.site_id
+        FROM
+            pspc_count_ooc pco LEFT JOIN pspc_judgement pj ON pco.judgement_id = pj.judgement_id
+            LEFT JOIN pspc_classify pc ON pco.classify_id = pc.classify_id
+            LEFT JOIN pspc_classify_group pcg ON pco.classify_group_id = pcg.classify_group_id
+        WHERE
+            pco.tenant_id = #{tenantId,jdbcType=DECIMAL}
+            AND pco.site_id = #{siteId,jdbcType=DECIMAL}
+            AND pco.count_sample_data_id = #{countSampleDataId}
+    </select>
+
+</mapper>

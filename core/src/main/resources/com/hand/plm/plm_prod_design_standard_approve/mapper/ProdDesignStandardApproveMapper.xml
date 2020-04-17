@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.plm.plm_prod_design_standard_approve.mapper.ProdDesignStandardApproveMapper">
+    <resultMap id="BaseResultMap" type="com.hand.plm.plm_prod_design_standard_approve.dto.ProdDesignStandardApprove">
+        <result column="KID" property="kid" jdbcType="DECIMAL" />
+        <result column="CHANGE_NUM" property="changeNum" jdbcType="VARCHAR" />
+        <result column="DESIGN_STANDARD_ID" property="designStandardId" jdbcType="DECIMAL" />
+        <result column="DETAIL_ID" property="detailId" jdbcType="DECIMAL" />
+        <result column="DESION_DIMENSION" property="desionDimension" jdbcType="VARCHAR" />
+        <result column="RELATED_PARTS" property="relatedParts" jdbcType="VARCHAR" />
+        <result column="DESIGN_STANDARD_DESCRIPTION" property="designStandardDescription" jdbcType="VARCHAR" />
+        <result column="GRAPHIC_CODE" property="graphicCode" jdbcType="VARCHAR" />
+        <result column="CHECKER" property="checker" jdbcType="VARCHAR" />
+        <result column="STATUS" property="status" jdbcType="VARCHAR" />
+        <result column="VERSION" property="version" jdbcType="VARCHAR" />
+        <result column="OPERATION_TYPE" property="operationType" jdbcType="VARCHAR" />
+        <result column="REMARK" property="remark" jdbcType="VARCHAR" />
+        <result column="CURRENT_APPROVE_BY" property="currentApproveBy" jdbcType="VARCHAR" />
+        <result column="LAST_APPROVED_BY" property="lastApprovedBy" jdbcType="VARCHAR" />
+    </resultMap>
+
+
+</mapper>

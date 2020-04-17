@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.spc.message_type_maintenance.mapper.MessageTypeDetailMapper">
+    <resultMap id="BaseResultMap" type="com.hand.spc.message_type_maintenance.dto.MessageTypeDetail">
+        <result column="MESSAGE_TYPE_DETAIL_ID" property="messageTypeDetailId" jdbcType="DECIMAL" />
+        <result column="MESSAGE_TYPE_ID" property="messageTypeId" jdbcType="DECIMAL" />
+        <result column="TENANT_ID" property="tenantId" jdbcType="DECIMAL" />
+        <result column="SITE_ID" property="siteId" jdbcType="DECIMAL" />
+        <result column="ELEMENT_CATEGORY" property="elementCategory" jdbcType="VARCHAR" />
+        <result column="ELEMENT_CODE" property="elementCode" jdbcType="VARCHAR" />
+        <result column="ELEMENT_STATUS" property="elementStatus" jdbcType="VARCHAR" />
+        <result column="PROGRAM_APPLICATION_ID" property="programApplicationId" jdbcType="DECIMAL" />
+        <result column="PROGRAM_UPDATE_DATE" property="programUpdateDate" jdbcType="DATE" />
+    </resultMap>
+
+    <delete id="deleteAll">
+        delete from PSPC_MESSAGE_TYPE_DETAIL t where t.MESSAGE_TYPE_ID = #{messageTypeId}
+    </delete>
+
+    <select id="queryMessageType" resultMap="BaseResultMap">
+        SELECT
+            t.ELEMENT_CODE,t.ELEMENT_STATUS
+        FROM
+            PSPC_MESSAGE_TYPE_DETAIL t
+        WHERE
+            t.ELEMENT_CATEGORY = 'THEME'
+         AND t.MESSAGE_TYPE_ID = #{messageTypeId}
+    </select>
+
+
+    <select id="queryMessageTypeContent"
+            resultMap="BaseResultMap">
+         SELECT
+            t.ELEMENT_CODE
+        FROM
+            PSPC_MESSAGE_TYPE_DETAIL t
+        WHERE
+            t.ELEMENT_CATEGORY = 'CONTENT'
+          AND  t.MESSAGE_TYPE_ID = #{messageTypeId}
+    </select>
+
+</mapper>

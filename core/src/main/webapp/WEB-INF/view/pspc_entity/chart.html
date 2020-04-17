@@ -1,0 +1,1229 @@
+<#include "../include/header.html">
+<script src="${base.contextPath}/common/code?PSPC_CONTROL_LIMIT_USAGE=PSPC.CONTROL.LIMIT.USAGE"></script>
+<script src="${base.contextPath}/common/code?PSPC_CHART_TYPE=PSPC.CHART.TYPE"></script>
+<script src="${base.contextPath}/common/code?PSPC_X_TICK_LABEL=PSPC.X.TICK.LABEL"></script>
+
+
+<script type="text/javascript">
+    var viewModel = Hap.createGridViewModel("#grid");
+    var chartId = "${RequestParameters.chartId!'0'}";
+    var viewModelDetail = kendo.observable({
+        model: {},
+        reset: function () {
+            var formData = this.model.toJSON();
+            for (var k in formData) {
+                this.model.set(k, null);
+            }
+        }
+    });
+
+    // 主数据保存
+    viewModel.save= function () {
+        var data = $('#grid').data('kendoGrid')._data;
+
+        $.ajax({
+            url: "${base.contextPath}/pspc/chart/submit",
+            type: "POST",
+            data: kendo.stringify(data),
+            contentType: "application/json",
+            async: false,
+            success: function (data) {
+                if (data.success) {
+                    viewModel.model.set("enableFlagSub","");
+                    viewModel.model.set("enableFlagType","");
+                    $("#grid").data("kendoGrid").dataSource.data(data.rows);
+                    Hap.showToast({
+                        type:'success',
+                        message: $l('hap.tip.success'),
+                        hideDuration:3000, //展示3秒成功框
+                        "positionClass": "toast-bottom-right",
+                    });
+                } else {
+                    if(data.message=="A"){
+                        kendo.ui.showConfirmDialog({
+                            title: $l('hap.tip.info'),
+                            message: "子组大小更改，会影响已存在实体控制图，确认是否保存？"
+                        }).done(function (event) {
+                            if (event.button == 'OK') {
+                                viewModel.model.set("enableFlagSub","Y");
+                                $("#grid").data('kendoGrid').saveChanges();
+                            }
+                        })
+                        return;
+                    }
+                    if(data.message=="B"){
+                        kendo.ui.showConfirmDialog({
+                            title: $l('hap.tip.info'),
+                            message: "控制图类型更改，会影响已存在实体控制图，确认是否保存？"
+                        }).done(function (event) {
+                            if (event.button == 'OK') {
+                                viewModel.model.set("enableFlagType","Y");
+                                $("#grid").data('kendoGrid').saveChanges();
+                            }
+                        })
+                        return;
+                    }
+
+                    if(data.message=="C"){
+                        kendo.ui.showErrorDialog({message:"已存在实体控制图数据，不能更改为其他类型"});
+                        return;
+                    }
+
+                    kendo.ui.showErrorDialog({message:data.message});
+                }
+            }
+        });
+
+    }
+
+    // 明细数据保存
+    function saveAllInf() {
+
+        // 判断是否有对应的头数据，没有则报错
+        if (viewModelDetail.model.chartId == undefined || viewModelDetail.model.chartId == "" || viewModelDetail.model.chartId == null) {
+           kendo.ui.showErrorDialog({message:"请先选择要新增或修改的数据"});
+        }else {
+
+            // 判断主控制图的控制选项和判异组规则是否有值 ，没有则报错
+            if($("#controlLimitUsageMain").val()==""||viewModelDetail.model.judgementGroupIdMain==""||viewModelDetail.model.controlLimitUsageMain==""){
+                kendo.ui.showErrorDialog({message: "主控制图控制选项和判异组规则必输！"});
+                return;
+            }
+
+            // 根据头的类型，进行次界面判断是否必输
+            if(viewModelDetail.model.enableFlag=="Y"){
+                if($("#controlLimitUsageSecond").val()==""||viewModelDetail.model.judgementGroupIdSecond==""||viewModelDetail.model.controlLimitUsageSecond=="") {
+                    kendo.ui.showErrorDialog({message: "次控制图控制选项和判异组规则必输！"});
+                    return;
+                }
+            }
+
+            // 判断控制限制选项是否选择了固定值
+            if (viewModelDetail.model.controlLimitUsageSecond == "FIXED") {
+
+                if(viewModelDetail.model.upperControlLimitSecond.toString()==""||viewModelDetail.model.centerLineSecond.toString()==""||viewModelDetail.model.lowerControlLimitSecond.toString()==""){
+                    kendo.ui.showErrorDialog({message: "控制上限/中心线/控制下限必输！"});
+                    return;
+                }
+                if (viewModelDetail.model.upperControlLimitSecond < viewModelDetail.model.lowerControlLimitSecond) {
+                    kendo.ui.showErrorDialog({message: "控制上限的值不能小于控制下限的值"});
+                    return;
+                }
+                // 判断上限和下限是否关于中心对称 不对称则报错
+                if ((viewModelDetail.model.upperControlLimitSecond - viewModelDetail.model.centerLineSecond) != (viewModelDetail.model.centerLineSecond - viewModelDetail.model.lowerControlLimitSecond)) {
+                    kendo.ui.showErrorDialog({message: "控制上下限的值必须关于中心线对称"});
+                    return;
+                }
+            }
+
+
+
+            // 判断控制限制选项是否选择了固定值
+            if (viewModelDetail.model.controlLimitUsageMain == "FIXED") {
+
+                if(viewModelDetail.model.upperControlLimitMain.toString()==""||viewModelDetail.model.centerLineMain.toString()==""||viewModelDetail.model.lowerControlLimitMain.toString()==""){
+                    kendo.ui.showErrorDialog({message: "控制上限/中心线/控制下限必输！"});
+                    return;
+                }
+
+                if (viewModelDetail.model.upperControlLimitMain < viewModelDetail.model.lowerControlLimitMain) {
+                    kendo.ui.showErrorDialog({message: "控制上限的值不能小于控制下限的值"});
+                    return;
+                }
+                // 判断上限和下限是否关于中心对称 不对称则报错
+                if ((viewModelDetail.model.upperControlLimitMain - viewModelDetail.model.centerLineMain) != (viewModelDetail.model.centerLineMain - viewModelDetail.model.lowerControlLimitMain)) {
+                    kendo.ui.showErrorDialog({message: "控制上下限的值必须关于中心线对称"});
+                    return;
+                }
+            }
+
+            // 对界面上限和下限进行限制
+            if (viewModelDetail.model.yAxisMaxMain!=null&&viewModelDetail.model.yAxisMinMain!=null&&viewModelDetail.model.yAxisMaxMain < viewModelDetail.model.yAxisMinMain) {
+                kendo.ui.showErrorDialog({message: "规格上限的值不能小于规格下限的值"});
+                return;
+            }
+            if (viewModelDetail.model.yAxisMaxSecond!=null&&viewModelDetail.model.yAxisMinSecond!=null&&viewModelDetail.model.yAxisMaxSecond < viewModelDetail.model.yAxisMinSecond) {
+                kendo.ui.showErrorDialog({message: "规格上限的值不能小于规格下限的值"});
+                return;
+            }
+
+            // 对界面上限和下限进行限制
+            if (viewModelDetail.model.upperSpecLimitMain!=null&&viewModelDetail.model.lowerSpecLimitMain!=null&&viewModelDetail.model.upperSpecLimitMain < viewModelDetail.model.lowerSpecLimitMain) {
+                kendo.ui.showErrorDialog({message: "规格上限的值不能小于规格下限的值"});
+                return;
+            }
+            if (viewModelDetail.model.upperSpecLimitSecond!=null&&viewModelDetail.model.lowerSpecLimitSecond!=null&&viewModelDetail.model.upperSpecLimitSecond < viewModelDetail.model.lowerSpecLimitSecond) {
+                kendo.ui.showErrorDialog({message: "规格上限的值不能小于规格下限的值"});
+                return;
+            }
+
+            viewModelDetail.model.enableJudgeGroupSecond = checkToYN(document.getElementById('enableJudgeGroupSecond').checked);
+            viewModelDetail.model.displaySpecLimitSecond = checkToYN(document.getElementById('displaySpecLimitSecond').checked);
+            viewModelDetail.model.enableJudgeGroupMain = checkToYN(document.getElementById('enableJudgeGroupMain').checked);
+            viewModelDetail.model.displaySpecLimitMain = checkToYN(document.getElementById('displaySpecLimitMain').checked);
+
+            //校验通过以后，明细数据保存
+            $.ajax({
+                url: "${base.contextPath}/pspc/chart/detail/saveData",
+                data: kendo.stringify(viewModelDetail.model),
+                type: 'POST',
+                async: false,
+                contentType: "application/json",
+                success: function (data) {
+                    if (data.success) {
+
+                        Hap.showToast({
+                            type:'success',
+                            message: $l('hap.tip.success'),
+                            hideDuration:3000,
+                            "positionClass": "toast-bottom-right",
+                        });
+
+                        for (var i = 0; i < data.rows.length; i++) {
+
+                            // 根据控制图明细类型 分别赋值
+                            if (data.rows[i].chartDetailType == "M") {
+
+                                viewModelDetail.model.set("chartDetailIdMain", data.rows[i].chartDetailId);
+                            }
+                            if (data.rows[i].chartDetailType == "S") {
+
+                                viewModelDetail.model.set("chartDetailIdSecond", data.rows[i].chartDetailId);
+                            }
+                        }
+
+                    } else {
+                        kendo.ui.showErrorDialog({message: data.message});
+                        return;
+                    }
+                }
+            });
+
+        }
+    }
+
+</script>
+<body>
+<div id="page-content">
+    <div class="pull-left" id="toolbar-btn" style="padding-bottom:10px;">
+        <span class="btn btn-primary k-grid-add" style="float:left;margin-right:5px;" data-bind="click:create"><@spring.message "hap.new"/></span>
+        <span class="btn btn-success k-grid-save-changes" data-bind="click:save" style="float:left;margin-right:5px;"><@spring.message "hap.save"/></span>
+        <span data-bind="click:remove" class="btn btn-danger" style="float:left;"><@spring.message "hap.delete"/></span>
+        <span class="btn " onclick="confirm()" style="color: #fefdfd; background: green; float:left;"><@spring.message "hap.confirm"/></span>
+    </div>
+    <script>kendo.bind($('#toolbar-btn'), viewModel);</script>
+    <div class="pull-right" id="query-form" style="padding-bottom:10px;">
+        <input type="text" data-role="maskedtextbox" style=" width:150px;margin-right:5px;"
+               placeholder='<@spring.message "chart.chartcode"/>'
+               data-bind="value:model.chartCode" class="k-textbox">
+
+        <input id="chartType" type="text" style="width:150px;margin-right:5px;"
+               placeholder='<@spring.message "chart.charttype"/>'
+               data-bind="value:model.chartType">
+        <script>
+            $("#chartType").kendoComboBox({
+                dataTextField: "meaning",
+                dataValueField: "value",
+                valuePrimitive: true,
+                dataSource: PSPC_CHART_TYPE
+            });
+        </script>
+        <span class="btn btn-default" style="width:70px;margin-right: 5px" data-bind="click:reset"
+              type="submit"><@spring.message "hap.reset"/></span>
+        <span class="btn btn-primary" style="width:70px" data-bind="click:query" type="submit"><@spring.message "hap.query"/></span>
+        <div style="clear:both"></div>
+    </div>
+    <script>kendo.bind($('#query-form'), viewModel);</script>
+    <div style="clear:both">
+        <div id="grid"></div>
+    </div>
+
+
+    <div>
+        <span class="btn btn-success k-grid-save-changes" onclick="saveAllInf()" style="float:left;margin-right:5px;"><@spring.message "hap.save"/></span>
+    </div>
+
+    <br>
+    <br>
+
+    <ul class="nav nav-tabs" id="mytab" style="clear: both;">
+        <li id="controlTab" style="font-size: 15px;font-weight: bold" class="active"><a href="#gridSecond"
+                                                                                        onclick="controlTab()"
+                                                                                        data-toggle="tab">控制图标签</a></li>
+        <li id="mainControlTab" style="font-size: 15px;font-weight: bold" class=""><a href="#gridThree"
+                                                                                      onclick="mainControlTab()"
+                                                                                      data-toggle="tab">主要控制图详细信息</a>
+        </li>
+        <li id="secondControlTab" style="font-size: 15px;font-weight: bold" class=""><a href="#gridFour"
+                                                                                        onclick="secondControlTab()"
+                                                                                        data-toggle="tab">次要控制图详细信息</a>
+        </li>
+    </ul>
+
+
+    <div class="tab-pane fade in active" id="gridSecond" style="margin-left: 10px">
+
+        <!--标题-->
+        <div class="row" style="margin-top: 20px">
+            <div class="col-md-4" style="text-align: center">
+                <label style="font-size: 16px;color:black;font-weight: bold;text-align: center">主要控制图</label>
+            </div>
+            <div class="col-md-3" style="text-align: center">
+
+            </div>
+            <div class="col-md-4" style="text-align: center">
+                <label style="font-size: 16px;color:black;font-weight: bold;text-align: center">次要控制图</label>
+            </div>
+        </div>
+
+        <!--存值-->
+        <div class="row" style="margin-top: 20px">
+            <div class="col-md-4" style="text-align: center">
+                <label style="margin-left: 13px; font-size: 13px;color:black;text-align: center">X轴标签：</label>
+                <input id="xAxisLabelMain" class="k-textbox" type="text" style="width:180px;"
+                       data-bind="value:model.xAxisLabelMain">
+
+            </div>
+            <div class="col-md-3" style="text-align: center">
+
+            </div>
+            <div class="col-md-4" style="text-align: center">
+                <label style="margin-left: 13px;font-size: 13px;color:black;text-align: center">X轴标签：</label>
+                <input id="xAxisLabelSecond" class="k-textbox" type="text" style="width:180px;"
+                       data-bind="value:model.xAxisLabelSecond">
+            </div>
+        </div>
+
+        <div class="row" style="margin-top: 20px">
+            <div class="col-md-4" style="text-align: center">
+                <label style="margin-left: 13px;font-size: 13px;color:black;text-align: center">Y轴标签：</label>
+                <input id="yAxisLabelMain" class="k-textbox" type="text" style="width:180px;"
+                       data-bind="value:model.yAxisLabelMain">
+
+            </div>
+            <div class="col-md-3" style="text-align: center">
+
+            </div>
+            <div class="col-md-4" style="text-align: center">
+                <label style="margin-left: 13px;font-size: 13px;color:black;text-align: center">Y轴标签：</label>
+                <input id="yAxisLabelSecond" class="k-textbox" type="text" style="width:180px;"
+                       data-bind="value:model.yAxisLabelSecond">
+            </div>
+        </div>
+
+        <div class="row" style="margin-top: 20px">
+            <div class="col-md-4" style="text-align: center">
+                <label style="font-size: 13px;color:black;text-align: center">Y轴最大值：</label>
+                <input id="yAxisMaxlMain" class="k-textbox" type="number" style="width:180px;"
+                       data-bind="value:model.yAxisMaxMain">
+
+            </div>
+            <div class="col-md-3" style="text-align: center">
+
+            </div>
+            <div class="col-md-4" style="text-align: center">
+                <label style="font-size: 13px;color:black;text-align: center">Y轴最大值：</label>
+                <input id="yAxisMaxSecond" class="k-textbox" type="number" style="width:180px;"
+                       data-bind="value:model.yAxisMaxSecond">
+            </div>
+        </div>
+
+        <div class="row" style="margin-top: 20px">
+            <div class="col-md-4" style="text-align: center">
+                <label style="font-size: 13px;color:black;text-align: center">Y轴最小值：</label>
+                <input id="yAxisMinMain" class="k-textbox" type="number" style="width:180px;"
+                       data-bind="value:model.yAxisMinMain">
+
+            </div>
+            <div class="col-md-3" style="text-align: center">
+
+            </div>
+            <div class="col-md-4" style="text-align: center">
+                <label style="font-size: 13px;color:black;text-align: center">Y轴最小值：</label>
+                <input id="yAxisMinSecond" class="k-textbox" type="number" style="width:180px;"
+                       data-bind="value:model.yAxisMinSecond">
+            </div>
+        </div>
+        <br>
+
+    </div>
+    <script>kendo.bind($('#gridSecond'), viewModelDetail);</script>
+
+    <div id="gridThree" style="margin-left: 10px;display: none" class="tab-pane fade">
+
+        <!--标题-->
+        <div class="row" style="margin-top: 20px">
+            <div class="col-md-4" style="text-align: center">
+                <label style="font-size: 16px;color:black;font-weight: bold;text-align: center">控制限制</label>
+            </div>
+            <div class="col-md-3" style="text-align: center">
+
+            </div>
+            <div class="col-md-4" style="text-align: center">
+                <label style="font-size: 16px;color:black;font-weight: bold;text-align: center">规格限制</label>
+            </div>
+        </div>
+
+        <!--存值-->
+        <div class="row" style="margin-top: 20px">
+            <div class="col-md-4" style="text-align: center">
+                <label style="margin-left: 13px; font-size: 13px;color:black;text-align: center">控制限选项：</label>
+                <input id="controlLimitUsageMain" type="text" required style="width:180px;" onchange="setEnableEditMain()"
+                       data-bind="value:model.controlLimitUsageMain">
+                <script>
+                    $("#controlLimitUsageMain").kendoComboBox({
+                        dataTextField: "meaning",
+                        dataValueField: "value",
+                        valuePrimitive: true,
+                        dataSource: PSPC_CONTROL_LIMIT_USAGE
+                    });
+                </script>
+            </div>
+            <div class="col-md-3" style="text-align: center">
+
+            </div>
+            <div class="col-md-4" style="text-align: center">
+                <label style="margin-left: 27px;font-size: 13px;color:black;text-align: center">规格上限：</label>
+                <input id="upperSpecLimitMain" class="k-textbox" type="number" style="width:180px;"
+                       data-bind="value:model.upperSpecLimitMain">
+            </div>
+        </div>
+
+        <div class="row" style="margin-top: 20px">
+            <div class="col-md-4" style="text-align: center">
+                <label style="margin-left: 27px;font-size: 13px;color:black;text-align: center">控制上限：</label>
+                <input id="upperControlLimitMain" disabled class="k-textbox" type="number" style="width:180px;"
+                       data-bind="value:model.upperControlLimitMain">
+
+            </div>
+            <div class="col-md-3" style="text-align: center">
+
+            </div>
+            <div class="col-md-4" style="text-align: center">
+                <label style="margin-left: 38px;font-size: 13px;color:black;text-align: center">目标值：</label>
+                <input id="specTargetMain" class="k-textbox" type="number" style="width:180px;"
+                       data-bind="value:model.specTargetMain">
+            </div>
+        </div>
+
+        <div class="row" style="margin-top: 20px">
+            <div class="col-md-4" style="text-align: center">
+                <label style="font-size: 13px;margin-left: 40px;color:black;text-align: center">中心线：</label>
+                <input id="centerLineMain" disabled class="k-textbox" type="number" style="width:180px;"
+                       data-bind="value:model.centerLineMain">
+            </div>
+            <div class="col-md-3" style="text-align: center">
+                <label style="font-size: 16px;color:black;font-weight: bold;text-align: center">判异限制</label>
+            </div>
+            <div class="col-md-4" style="text-align: center">
+                <label style="font-size: 13px;margin-left: 27px;color:black;text-align: center">规格下限：</label>
+                <input id="lowerSpecLimitMain" class="k-textbox" type="number" style="width:180px;"
+                       data-bind="value:model.lowerSpecLimitMain">
+            </div>
+        </div>
+
+        <div class="row" style="margin-top: 20px">
+            <div class="col-md-4" style="text-align: center">
+                <label style="font-size: 13px;margin-left: 27px;color:black;text-align: center">控制下限：</label>
+                <input id="lowerControlLimitMain" disabled class="k-textbox" type="number" style="width:180px;"
+                       data-bind="value:model.lowerControlLimitMain">
+
+            </div>
+            <div class="col-md-3" style="text-align: center">
+                <label style="margin-left: 13px;font-size: 13px;color:black;text-align: center">判异规则组：</label>
+
+                <input id="judgementGroupIdMain" type="text" required style="width:180px;"
+                       data-bind="value:model.judgementGroupIdMain">
+                <script>
+                    $("#judgementGroupIdMain").kendoLov($.extend(${lovProvider.getLov(base.contextPath, base.locale, "PSPC_PSPC_JUDGEMENT_GROUP")}, {}))
+                </script>
+            </div>
+            <div class="col-md-4" style="text-align: center">
+                <input type="checkbox" id="displaySpecLimitMain"
+                       style="margin-left: -20px;width: 20px;height: 20px;transform: translateY(27%);position: relative;">
+                <label style="margin-left: 13px;font-size: 13px;color:black;">显示控制图规格限</label>
+            </div>
+        </div>
+
+
+        <div class="row" style="margin-top: 20px">
+            <div class="col-md-4" style="text-align: center">
+            </div>
+            <div class="col-md-3" style="text-align: center">
+                <input type="checkbox" id="enableJudgeGroupMain"
+                       style="margin-left: -20px;width: 20px;height: 20px;transform: translateY(27%);position: relative;">
+                <label style="margin-left: 13px;font-size: 13px;color:black;text-align: center">启用判异规则组</label>
+            </div>
+            <div class="col-md-4" style="text-align: center">
+
+            </div>
+        </div>
+        <br>
+    </div>
+    <script>kendo.bind($('#gridThree'), viewModelDetail);</script>
+
+    <div id="gridFour" style="margin-left: 10px;display: none" class="tab-pane fade">
+
+        <!--标题-->
+        <div class="row" style="margin-top: 20px">
+            <div class="col-md-4" style="text-align: center">
+                <label style="font-size: 16px;color:black;font-weight: bold;text-align: center">控制限制</label>
+            </div>
+            <div class="col-md-3" style="text-align: center">
+
+            </div>
+            <div class="col-md-4" style="text-align: center">
+                <label style="font-size: 16px;color:black;font-weight: bold;text-align: center">规格限制</label>
+            </div>
+        </div>
+
+        <!--存值-->
+        <div class="row" style="margin-top: 20px">
+            <div class="col-md-4" style="text-align: center">
+                <label style="margin-left: 13px; font-size: 13px;color:black;text-align: center">控制限选项：</label>
+                <input id="controlLimitUsageSecond" type="text" style="width:180px;" onchange="setEnableEditSecond()"
+                       data-bind="value:model.controlLimitUsageSecond">
+                <script>
+                    $("#controlLimitUsageSecond").kendoComboBox({
+                        dataTextField: "meaning",
+                        dataValueField: "value",
+                        valuePrimitive: true,
+                        dataSource: PSPC_CONTROL_LIMIT_USAGE
+                    });
+
+                </script>
+            </div>
+            <div class="col-md-3" style="text-align: center">
+
+            </div>
+            <div class="col-md-4" style="text-align: center">
+                <label style="margin-left: 27px;font-size: 13px;color:black;text-align: center">规格上限：</label>
+                <input id="upperSpecLimitSecond" class="k-textbox" type="number" style="width:180px;"
+                       data-bind="value:model.upperSpecLimitSecond">
+            </div>
+        </div>
+
+        <div class="row" style="margin-top: 20px">
+            <div class="col-md-4" style="text-align: center">
+                <label style="margin-left: 27px;font-size: 13px;color:black;text-align: center">控制上限：</label>
+                <input id="upperControlLimitSecond" disabled class="k-textbox" type="number" style="width:180px;"
+                       data-bind="value:model.upperControlLimitSecond">
+
+            </div>
+            <div class="col-md-3" style="text-align: center">
+
+            </div>
+            <div class="col-md-4" style="text-align: center">
+                <label style="margin-left: 38px;font-size: 13px;color:black;text-align: center">目标值：</label>
+                <input id="specTargetSecond" class="k-textbox" type="number" style="width:180px;"
+                       data-bind="value:model.specTargetSecond">
+            </div>
+        </div>
+
+        <div class="row" style="margin-top: 20px">
+            <div class="col-md-4" style="text-align: center">
+                <label style="font-size: 13px;margin-left: 40px;color:black;text-align: center">中心线：</label>
+                <input id="centerLineSecond" disabled class="k-textbox" type="number" style="width:180px;"
+                       data-bind="value:model.centerLineSecond">
+            </div>
+            <div class="col-md-3" style="text-align: center">
+                <label style="font-size: 16px;color:black;font-weight: bold;text-align: center">判异限制</label>
+            </div>
+            <div class="col-md-4" style="text-align: center">
+                <label style="font-size: 13px;margin-left: 27px;color:black;text-align: center">规格下限：</label>
+                <input id="lowerSpecLimitSecond"  class="k-textbox" type="number" style="width:180px;"
+                       data-bind="value:model.lowerSpecLimitSecond">
+            </div>
+        </div>
+
+        <div class="row" style="margin-top: 20px">
+            <div class="col-md-4" style="text-align: center">
+                <label style="font-size: 13px;margin-left: 27px;color:black;text-align: center">控制下限：</label>
+                <input id="lowerControlLimitSecond" disabled class="k-textbox" type="number" style="width:180px;"
+                       data-bind="value:model.lowerControlLimitSecond">
+
+            </div>
+            <div class="col-md-3" style="text-align: center">
+                <label style="margin-left: 13px;font-size: 13px;color:black;text-align: center">判异规则组：</label>
+
+                <input id="judgementGroupIdSecond" type="text" style="width:180px;"
+                       data-bind="value:model.judgementGroupIdSecond">
+                <script>
+                    $("#judgementGroupIdSecond").kendoLov($.extend(${lovProvider.getLov(base.contextPath, base.locale, "PSPC_PSPC_JUDGEMENT_GROUP")}, {}))
+                </script>
+            </div>
+            <div class="col-md-4" style="text-align: center">
+                <input type="checkbox" id="displaySpecLimitSecond"
+                       style="margin-left: -20px;width: 20px;height: 20px;transform: translateY(27%);position: relative;">
+                <label style="margin-left: 13px;font-size: 13px;color:black;">显示控制图规格限</label>
+            </div>
+        </div>
+
+
+        <div class="row" style="margin-top: 20px">
+            <div class="col-md-4" style="text-align: center">
+            </div>
+            <div class="col-md-3" style="text-align: center">
+                <input type="checkbox" id="enableJudgeGroupSecond"
+                       style="margin-left: -20px;width: 20px;height: 20px;transform: translateY(27%);position: relative;">
+                <label style="margin-left: 13px;font-size: 13px;color:black;text-align: center">启用判异规则组</label>
+            </div>
+            <div class="col-md-4" style="text-align: center">
+
+            </div>
+        </div>
+        <br>
+    </div>
+    <script>kendo.bind($('#gridFour'), viewModelDetail);</script>
+
+</div>
+
+</div>
+
+<!--标签点击 界面弹出-->
+<script>
+
+    // 初始化的时候 默认赋值标签
+    viewModel.set('tab', "gridSecond");
+
+    function controlTab() {
+
+        // 标签指定
+        $('#controlTab').attr('class', 'active');
+        $('#mainControlTab').attr('class', '');
+        $('#secondControlTab').attr('class', '');
+
+        // 指定显示的grid
+        $('#gridSecond').css('display', 'block');
+        $('#gridSecond').attr('class', 'k-grid k-widget tab-pane fade in active');
+
+        // 隐藏其余的grid
+        $('#gridThree').attr('class', 'k-grid k-widget tab-pane fade');
+        $('#gridThree').css('display', 'none');
+
+        // 隐藏其余的grid
+        $('#gridFour').attr('class', 'k-grid k-widget tab-pane fade');
+        $('#gridFour').css('display', 'none');
+
+
+        viewModel.set('tab', "gridSecond");
+    }
+
+    function mainControlTab() {
+        // 标签指定
+        $('#controlTab').attr('class', '');
+        $('#mainControlTab').attr('class', 'active');
+        $('#secondControlTab').attr('class', '');
+
+        // 指定显示的grid
+        $('#gridThree').css('display', 'block');
+        $('#gridThree').attr('class', 'k-grid k-widget tab-pane fade in active');
+
+        // 隐藏其余的grid
+        $('#gridSecond').attr('class', 'k-grid k-widget tab-pane fade');
+        $('#gridSecond').css('display', 'none');
+
+        // 隐藏其余的grid
+        $('#gridFour').attr('class', 'k-grid k-widget tab-pane fade');
+        $('#gridFour').css('display', 'none');
+
+
+        viewModel.set('tab', "gridThree");
+    }
+
+    function secondControlTab() {
+        // 标签指定
+        $('#controlTab').attr('class', '');
+        $('#mainControlTab').attr('class', '');
+        $('#secondControlTab').attr('class', 'active');
+
+        // 指定显示的grid
+        $('#gridFour').css('display', 'block');
+        $('#gridFour').attr('class', 'k-grid k-widget tab-pane fade in active');
+
+        // 隐藏其余的grid
+        $('#gridThree').attr('class', 'k-grid k-widget tab-pane fade');
+        $('#gridThree').css('display', 'none');
+
+        // 隐藏其余的grid
+        $('#gridSecond').attr('class', 'k-grid k-widget tab-pane fade');
+        $('#gridSecond').css('display', 'none');
+
+
+        viewModel.set('tab', "gridFour");
+    }
+
+</script>
+
+<script type="text/javascript">
+    var chartCode2 = "${RequestParameters.chartCode!}";
+    $("#chartcode").val(chartCode2);
+    viewModel.model.chartCode=chartCode2;
+    Hap.initEnterQuery('#query-form', viewModel.query);
+    var BaseUrl = _basePath;
+    dataSource = new kendo.data.DataSource({
+        transport: {
+            read: {
+                url: BaseUrl + "/pspc/chart/query",
+                type: "POST",
+                dataType: "json"
+            },
+            update: {
+                url: BaseUrl + "/pspc/chart/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            destroy: {
+                url: BaseUrl + "/pspc/chart/remove",
+                type: "POST",
+                contentType: "application/json"
+            },
+            create: {
+                url: BaseUrl + "/pspc/chart/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            parameterMap: function (options, type) {
+                if (type !== "read" && options.models) {
+                    var datas = Hap.prepareSubmitParameter(options, type);
+
+                    if(viewModel.model.enableFlagSub!=null&&viewModel.model.enableFlagSub!=undefined&&viewModel.model.enableFlagSub!=''){
+                        for(var i=0;i<datas.length;i++){
+                            datas[i].enableFlagSub = viewModel.model.enableFlagSub;
+                        }
+                    }
+
+                    if(viewModel.model.enableFlagType!=null&&viewModel.model.enableFlagType!=undefined&&viewModel.model.enableFlagType!=''){
+                        for(var i=0;i<datas.length;i++){
+                            datas[i].enableFlagType = viewModel.model.enableFlagType;
+                        }
+                    }
+
+                    return kendo.stringify(datas);
+                } else if (type === "read") {
+                    viewModelDetail.reset();
+                    document.getElementById('displaySpecLimitSecond').checked = false;
+                    document.getElementById('enableJudgeGroupSecond').checked = false;
+                    document.getElementById('displaySpecLimitMain').checked = false;
+                    document.getElementById('enableJudgeGroupMain').checked = false;
+
+                    return Hap.prepareQueryParameter(viewModel.model.toJSON(), options)
+                }
+            }
+        },
+        batch: true,
+        serverPaging: true,
+        pageSize: 10,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+                id: "chartId",
+                fields: {
+                    chartCode: {
+                        validation: {
+                            required: true,
+                        }
+                    },
+                    triggerMessage: {
+                        type: "boolean",
+                        checkedValue: "Y",
+                        unCheckedValue: "N",
+                        defaultValue: "Y"
+                    },
+                    subgroupSize: {
+                        type: "number",
+                        validation: {
+                            min: 1
+                        }
+                    },
+                    maxPlotPoints: {
+                        type: "number",
+                        validation: {
+                            required: true,
+                            min: 1
+                        }
+                    },
+                },
+                editable: function (col) {
+                    if (col == 'chartTypeControl' && !this.isNew()) {
+                        return false;
+                    }
+                    if (col == 'chartCode' && !this.isNew()) {
+                        return false;
+                    }
+                    return true;
+
+                }
+            }
+        },
+        requestEnd: function (e) {
+            return;
+
+            var response = e.response;
+
+            if(!response.success){
+                if(response.message=="A"){
+                    kendo.ui.showConfirmDialog({
+                        title: $l('hap.tip.info'),
+                        message: "子组大小更改，会影响已存在实体控制图，确认是否保存？"
+                    }).done(function (event) {
+                        if (event.button == 'OK') {
+                            viewModel.model.set("enableFlagSub","Y");
+                            $("#grid").data('kendoGrid').saveChanges();
+                        }
+                    })
+                }
+                if(response.message=="B"){
+                    kendo.ui.showConfirmDialog({
+                        title: $l('hap.tip.info'),
+                        message: "控制图类型更改，会影响已存在实体控制图，确认是否保存？"
+                    }).done(function (event) {
+                        if (event.button == 'OK') {
+                            viewModel.model.set("enableFlagType","Y");
+                            $("#grid").data('kendoGrid').saveChanges();
+                        }
+                    })
+                }
+
+                if(response.message=="C"){
+                    kendo.ui.showErrorDialog({message:"已存在实体控制图数据，不能更改为其他类型"});
+                }
+            }
+
+        },
+    });
+
+    $("#grid").kendoGrid({
+        dataSource: dataSource,
+        resizable: true,
+        scrollable: true,
+        navigatable: false,
+        selectable: 'multiple, rowbox',
+        dataBound: function () {
+            if (parent.autoResizeIframe) {
+                parent.autoResizeIframe('${RequestParameters.functionCode!}')
+            }
+
+            var rows = this.items();
+            $(rows).each(function () {
+                var index = $(this).index() + 1;
+                var rowLabel = $(this).find(".row-number");
+                $(rowLabel).html(index);
+            });
+        },
+
+        pageable: {
+            pageSizes: [5, 10, 20, 50],
+            refresh: true,
+            buttonCount: 5
+        },
+        columns: [
+            {
+                field: "",
+                title: "序号",
+                template: "<span class='row-number'></span>",
+                width: 50,
+                attributes: {style: "text-align:center"},
+                headerAttributes: {style: "text-align:center"},
+            },
+
+            {
+                field: "chartCode",
+                title: '<@spring.message "chart.chartcode"/>',
+                width: 120
+            },
+            {
+                field: "description",
+                title: '<@spring.message "chart.description"/>',
+                width: 120
+            },
+            {
+                field: "chartType",
+                title: '<@spring.message "chart.charttype"/>',
+                width: 120,
+                template: function (dataItem) {
+                    var v = dataItem.chartType ? dataItem.chartType : "";
+                    $.each(PSPC_CHART_TYPE, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return v;
+                        }
+                    })
+                    return v;
+                },
+                editor: function (container, options) {
+                    $('<input required name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            dataTextField: "meaning",
+                            dataValueField: "value",
+                            valuePrimitive: true,
+                            dataSource: PSPC_CHART_TYPE
+                        }).kendoMaskedTextBox({
+                        change: function () {
+                            if (options.model.chartType == "X-Rm")
+                                options.model.set("subgroupSize", 1);
+                        }
+                    });
+                },
+            },
+            {
+                field: "chartTitle",
+                title: '<@spring.message "chart.charttitle"/>',
+                width: 120
+            },
+            {
+                field: "tickLabelX",
+                title: '<@spring.message "chart.xticklabel"/>',
+                width: 120,
+                template: function (dataItem) {
+                    var v = dataItem.tickLabelX ? dataItem.tickLabelX : "";
+                    $.each(PSPC_X_TICK_LABEL, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return v;
+                        }
+                    })
+                    return v;
+                },
+                editor: function (container, options) {
+                    $('<input  name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            dataTextField: "meaning",
+                            dataValueField: "value",
+                            valuePrimitive: true,
+                            dataSource: PSPC_X_TICK_LABEL
+                        });
+                }
+            },
+            {
+                field: "subgroupSize",
+                title: '<@spring.message "chart.subgroupsize"/>',
+                width: 120,
+                editor: function (container, options) {
+
+                    if (options.model.chartType == "" || options.model.chartType == undefined || options.model.chartType == null) {
+                        $('<input  class="k-input k-textbox" type="number" name="' + options.field + '"/>')
+                            .appendTo(container)
+                    }
+
+                    // 判断类型 并赋入是否必输
+                    if (options.model.chartType == "XBAR-R" || options.model.chartType == "XBAR-S" || options.model.chartType == "Me-R") {
+                        $('<input required class="k-input k-textbox" type="number" name="' + options.field + '"/>')
+                            .appendTo(container)
+                    } else {
+                        $('<span data-bind="text:subgroupSize"/>').appendTo(container);
+                    }
+                }
+            },
+            {
+                field: "maxPlotPoints",
+                title: '<@spring.message "chart.maxplotpoints"/>',
+                width: 120
+            },
+            {
+                field: "triggerMessage",
+                title: '<@spring.message "chart.triggermessage"/>',
+                width: 160
+            },
+            {
+                field: "chartTypeControl",
+                title: '<@spring.message "chart.charttypecontrol"/>',
+                width: 120,
+                template: function (dataItem) {
+                    return dataItem.chartCodeDes == undefined ? "" : dataItem.chartCodeDes;
+                },
+                editor:function (container, options) {
+                    var desp = options.model.description;
+                    $('<input  name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoLov($.extend(<@lov "PSPC_PSPC_CHART"/>,{
+                        model: options.model,
+                        select:function (e) {   //连带查询
+                            options.model.set('chartTypeControl', e.item.chartId);
+                            options.model.set('chartCodeDes', e.item.chartCode);
+                            options.model.set('controlChartType', e.item.chartType);
+
+                        },}));
+                },
+            },
+        ],
+        editable: true
+    });
+
+    // 点击行 触发 明细数据显示
+    $("#grid").on('click', 'td', function () {
+
+        viewModelDetail.reset();
+        document.getElementById('displaySpecLimitSecond').checked = false;
+        document.getElementById('enableJudgeGroupSecond').checked = false;
+        document.getElementById('displaySpecLimitMain').checked = false;
+        document.getElementById('enableJudgeGroupMain').checked = false;
+
+        var rowIndex = $(this).parent().index();
+        var data = $("#grid").data("kendoGrid").dataSource.data()[rowIndex];
+        if (data && data.chartId) {
+            viewModelDetail.model.set("chartId", data.chartId);
+
+            // 添加逻辑 次界面根据状态进行非必输校验
+            if(data.chartType =="P"||data.chartType =="nP"||data.chartType =="C"||data.chartType =="U"){
+                viewModelDetail.model.set("enableFlag", "N");
+                $('#controlLimitUsageSecond').siblings('span').children('input').attr("required",false);
+                $('#judgementGroupIdSecond').siblings('span').children('input').attr("required",false);
+                $('#judgementGroupIdSecond').siblings('span').children('input').css("background-color","white");
+
+            }else {
+                $('#controlLimitUsageSecond').siblings('span').children('input').attr("required",true);
+                $('#judgementGroupIdSecond').siblings('span').children('input').attr("required",true);
+                $('#judgementGroupIdSecond').siblings('span').children('input').css("background-color","#fff8c5");
+                viewModelDetail.model.set("enableFlag", "Y");
+            }
+
+
+            $.ajax({
+                url: "${base.contextPath}/pspc/chart/detail/queryDataByChartId",
+                type: "POST",
+                data: {'chartId': data.chartId},
+                dataType: "json",
+                async: false,
+                success: function (data) {
+                    if (data.success) {
+                        if (data.rows.length > 0) {
+
+                            for (var i = 0; i < data.rows.length; i++) {
+                                // 根据控制图明细类型 分别赋值
+                                if (data.rows[i].chartDetailType == "M") {
+
+
+
+                                    viewModelDetail.model.set("chartDetailIdMain", data.rows[i].chartDetailId);
+
+                                    // 第一tab页数据
+                                    viewModelDetail.model.set("xAxisLabelMain", data.rows[i].axisLabelX == null ? "" : data.rows[i].axisLabelX);
+                                    $("#xAxisLabelMain").val(data.rows[i].axisLabelX == null ? "" : data.rows[i].axisLabelX);
+
+                                    viewModelDetail.model.set("yAxisLabelMain", data.rows[i].axisLabelY == null ? "" : data.rows[i].axisLabelY);
+                                    $("#yAxisLabelMain").val(data.rows[i].axisLabelY == null ? "" : data.rows[i].axisLabelY);
+
+                                    viewModelDetail.model.set("yAxisMaxMain", data.rows[i].axisMaxY == null ? "" : data.rows[i].axisMaxY);
+                                    $("#yAxisMaxMain").val(data.rows[i].axisMaxY == null ? "" : data.rows[i].axisMaxY);
+
+                                    viewModelDetail.model.set("yAxisMinMain", data.rows[i].axisMinY == null ? "" : data.rows[i].axisMinY);
+                                    $("#yAxisMinMain").val(data.rows[i].axisMinY == null ? "" : data.rows[i].axisMinY);
+
+                                    // 第二tab页数据
+                                    viewModelDetail.model.set("controlLimitUsageMain", data.rows[i].controlLimitUsage == null ? "" : data.rows[i].controlLimitUsage);
+                                    $("#controlLimitUsageMain").val(data.rows[i].controlLimitUsage == null ? "" : data.rows[i].controlLimitUsage);
+
+                                    viewModelDetail.model.set("upperControlLimitMain", data.rows[i].upperControlLimit == null ? "" : data.rows[i].upperControlLimit);
+                                    $("#upperControlLimitMain").val(data.rows[i].upperControlLimit == null ? "" : data.rows[i].upperControlLimit);
+
+                                    viewModelDetail.model.set("specTargetMain", data.rows[i].specTarget == null ? "" : data.rows[i].specTarget);
+                                    $("#specTargetMain").val(data.rows[i].specTarget == null ? "" : data.rows[i].specTarget);
+
+                                    viewModelDetail.model.set("upperSpecLimitMain", data.rows[i].upperSpecLimit == null ? "" : data.rows[i].upperSpecLimit);
+                                    $("#upperSpecLimitMain").val(data.rows[i].upperSpecLimit == null ? "" : data.rows[i].upperSpecLimit);
+
+                                    viewModelDetail.model.set("centerLineMain", data.rows[i].centerLine == null ? "" : data.rows[i].centerLine);
+                                    $("#centerLineMain").val(data.rows[i].centerLine == null ? "" : data.rows[i].centerLine);
+
+                                    viewModelDetail.model.set("lowerSpecLimitMain", data.rows[i].lowerSpecLimit == null ? "" : data.rows[i].lowerSpecLimit);
+                                    $("#lowerSpecLimitMain").val(data.rows[i].lowerSpecLimit == null ? "" : data.rows[i].lowerSpecLimit);
+
+                                    viewModelDetail.model.set("lowerControlLimitMain", data.rows[i].lowerControlLimit == null ? "" : data.rows[i].lowerControlLimit);
+                                    $("#lowerControlLimitMain").val(data.rows[i].lowerControlLimit == null ? "" : data.rows[i].lowerControlLimit);
+
+                                    viewModelDetail.model.set("judgementGroupIdMain", data.rows[i].judgementGroupId == null ? "" : data.rows[i].judgementGroupId);
+                                    $("#judgementGroupIdMain").val(data.rows[i].judgementGroupId == null ? "" : data.rows[i].judgementGroupId);
+
+                                    $("#judgementGroupIdMain").data("kendoLov").value(data.rows[i].judgementGroupId == null ? "" : data.rows[i].judgementGroupId);
+                                    $("#judgementGroupIdMain").data("kendoLov").text(data.rows[i].judgementGroupCode == null ? "" : data.rows[i].judgementGroupCode);
+
+                                     if(data.rows[i].displaySpecLimit=="Y"){
+                                         document.getElementById('displaySpecLimitMain').checked = true;
+                                     }else {
+                                         document.getElementById('displaySpecLimitMain').checked = false;
+                                     }
+
+                                    if(data.rows[i].enableJudgeGroup=="Y"){
+                                        document.getElementById('enableJudgeGroupMain').checked = true;
+                                    }else {
+                                        document.getElementById('enableJudgeGroupMain').checked = false;
+                                    }
+
+                                }
+
+                                if (data.rows[i].chartDetailType == "S") {
+
+                                    viewModelDetail.model.set("chartDetailIdSecond", data.rows[i].chartDetailId);
+
+                                    // 第一tab页数据
+                                    viewModelDetail.model.set("xAxisLabelSecond", data.rows[i].axisLabelX == null ? "" : data.rows[i].axisLabelX);
+                                    $("#xAxisLabelSecond").val(data.rows[i].axisLabelX == null ? "" : data.rows[i].axisLabelX);
+
+                                    viewModelDetail.model.set("yAxisLabelSecond", data.rows[i].axisLabelY == null ? "" : data.rows[i].axisLabelY);
+                                    $("#yAxisLabelSecond").val(data.rows[i].axisLabelY == null ? "" : data.rows[i].axisLabelY);
+
+                                    viewModelDetail.model.set("yAxisMaxSecond", data.rows[i].axisMaxY == null ? "" : data.rows[i].axisMaxY);
+                                    $("#yAxisMaxSecond").val(data.rows[i].axisMaxY == null ? "" : data.rows[i].axisMaxY);
+
+                                    viewModelDetail.model.set("yAxisMinSecond", data.rows[i].axisMinY == null ? "" : data.rows[i].axisMinY);
+                                    $("#yAxisMinSecond").val(data.rows[i].axisMinY == null ? "" : data.rows[i].axisMinY);
+
+                                    // 第三tab页数据
+                                    viewModelDetail.model.set("controlLimitUsageSecond", data.rows[i].controlLimitUsage == null ? "" : data.rows[i].controlLimitUsage);
+                                    $("#controlLimitUsageSecond").val(data.rows[i].controlLimitUsage == null ? "" : data.rows[i].controlLimitUsage);
+
+                                    viewModelDetail.model.set("upperControlLimitSecond", data.rows[i].upperControlLimit == null ? "" : data.rows[i].upperControlLimit);
+                                    $("#upperControlLimitSecond").val(data.rows[i].upperControlLimit == null ? "" : data.rows[i].upperControlLimit);
+
+                                    viewModelDetail.model.set("specTargetSecond", data.rows[i].specTarget == null ? "" : data.rows[i].specTarget);
+                                    $("#specTargetSecond").val(data.rows[i].specTarget == null ? "" : data.rows[i].specTarget);
+
+                                    viewModelDetail.model.set("upperSpecLimitSecond", data.rows[i].upperSpecLimit == null ? "" : data.rows[i].upperSpecLimit);
+                                    $("#upperSpecLimitSecond").val(data.rows[i].upperSpecLimit == null ? "" : data.rows[i].upperSpecLimit);
+
+                                    viewModelDetail.model.set("centerLineSecond", data.rows[i].centerLine == null ? "" : data.rows[i].centerLine);
+                                    $("#centerLineSecond").val(data.rows[i].centerLine == null ? "" : data.rows[i].centerLine);
+
+                                    viewModelDetail.model.set("lowerSpecLimitSecond", data.rows[i].lowerSpecLimit == null ? "" : data.rows[i].lowerSpecLimit);
+                                    $("#lowerSpecLimitSecond").val(data.rows[i].lowerSpecLimit == null ? "" : data.rows[i].lowerSpecLimit);
+
+                                    viewModelDetail.model.set("lowerControlLimitSecond", data.rows[i].lowerControlLimit == null ? "" : data.rows[i].lowerControlLimit);
+                                    $("#lowerControlLimitSecond").val(data.rows[i].lowerControlLimit == null ? "" : data.rows[i].lowerControlLimit);
+
+                                    viewModelDetail.model.set("judgementGroupIdSecond", data.rows[i].judgementGroupId == null ? "" : data.rows[i].judgementGroupId);
+                                    $("#judgementGroupIdSecond").val(data.rows[i].judgementGroupId == null ? "" : data.rows[i].judgementGroupId);
+
+                                    $("#judgementGroupIdSecond").data("kendoLov").value(data.rows[i].judgementGroupId == null ? "" : data.rows[i].judgementGroupId);
+                                    $("#judgementGroupIdSecond").data("kendoLov").text(data.rows[i].judgementGroupCode == null ? "" : data.rows[i].judgementGroupCode);
+
+                                    if(data.rows[i].displaySpecLimit=="Y"){
+                                        document.getElementById('displaySpecLimitSecond').checked = true;
+                                    }else {
+                                        document.getElementById('displaySpecLimitSecond').checked = false;
+                                    }
+
+                                    if(data.rows[i].enableJudgeGroup=="Y"){
+                                        document.getElementById('enableJudgeGroupSecond').checked = true;
+                                    }else {
+                                        document.getElementById('enableJudgeGroupSecond').checked = false;
+                                    }
+
+                                }
+                            }
+
+                        }
+
+                        setEnableEditMain()
+                        setEnableEditSecond();
+                    } else {
+                        kendo.ui.showErrorDialog({message: data.message});
+                    }
+                }
+            });
+
+        }else {
+            setEnableEditMain()
+            setEnableEditSecond();
+        }
+    })
+
+    function setEnableEditMain() {
+
+        if ($("#controlLimitUsageMain").val() == "FIXED") {
+
+            $("#upperControlLimitMain").removeAttr("disabled");
+            $("#centerLineMain").removeAttr("disabled");
+            $("#lowerControlLimitMain").removeAttr("disabled");
+
+            $("#upperControlLimitMain").css("background-color","#fff8c5");;
+            $("#centerLineMain").css("background-color","#fff8c5");
+            $("#lowerControlLimitMain").css("background-color","#fff8c5");
+
+            viewModelDetail.model.set("upperControlLimitSecond",$("#upperControlLimitMain").val());
+            viewModelDetail.model.set("centerLineSecond",$("#centerLineMain").val());
+            viewModelDetail.model.set("lowerControlLimitSecond",$("#lowerControlLimitMain").val())
+
+        } else {
+
+            $("#upperControlLimitMain").attr("disabled", "disabled");
+            $("#centerLineMain").attr("disabled", "disabled");
+            $("#lowerControlLimitMain").attr("disabled","disabled");
+            $("#upperControlLimitMain").css("background-color","gray");;
+            $("#centerLineMain").css("background-color","gray");
+            $("#lowerControlLimitMain").css("background-color","gray");
+
+            // 当控制限制为无的时候清空
+            $("#upperControlLimitMain").val("");
+            $("#centerLineMain").val("");
+            $("#lowerControlLimitMain").val("");
+
+            viewModelDetail.model.set("upperControlLimitMain","");
+            viewModelDetail.model.set("centerLineMain","");
+            viewModelDetail.model.set("lowerControlLimitMain","");
+
+        }
+    }
+
+    function setEnableEditSecond() {
+
+        if ($("#controlLimitUsageSecond").val() == "FIXED") {
+
+            $("#upperControlLimitSecond").removeAttr("disabled");
+            $("#centerLineSecond").removeAttr("disabled");
+            $("#lowerControlLimitSecond").removeAttr("disabled");
+            $("#upperControlLimitSecond").css("background-color","#fff8c5");;
+            $("#centerLineSecond").css("background-color","#fff8c5");
+            $("#lowerControlLimitSecond").css("background-color","#fff8c5");
+        } else {
+
+            $("#upperControlLimitSecond").attr("disabled", false);
+            $("#centerLineSecond").attr("disabled", false);
+            $("#lowerControlLimitSecond").attr("disabled", false);
+            $("#upperControlLimitSecond").css("background-color","gray");;
+            $("#centerLineSecond").css("background-color","gray");
+            $("#lowerControlLimitSecond").css("background-color","gray");
+
+            // 当控制限制为无的时候清空
+            $("#upperControlLimitSecond").val("");
+            $("#centerLineSecond").val("");
+            $("#lowerControlLimitSecond").val("");
+
+            viewModelDetail.model.set("upperControlLimitSecond","");
+            viewModelDetail.model.set("centerLineSecond","");
+            viewModelDetail.model.set("lowerControlLimitSecond","");
+
+        }
+
+    }
+
+    // 将复选框改true/false为Y/N 用于存入后台
+    function checkToYN(data) {
+        if(data){
+            return 'Y'
+        }else {
+            return 'N'
+        }
+    }
+
+    function confirm()
+    {
+        var row = $("#grid").data("kendoGrid").selectedDataItems();
+        if(row.length!=1)
+        {
+            kendo.ui.showErrorDialog({
+                message: "请选择一条数据"
+            });
+            return;
+        }
+        var data = row[0]
+        window.parent.chartIdSon=data.chartId;
+        window.parent.chartCodeSon=data.chartCode;
+        window.parent.$('#dialog').data("kendoWindow").close();
+    }
+</script>
+</body>
+</html>

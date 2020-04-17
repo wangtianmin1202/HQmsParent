@@ -1,0 +1,88 @@
+<#include "../include/header.html">
+
+<script type="text/javascript">
+	var uid = '${RequestParameters.uid!0}';
+	var BaseUrl = _basePath;
+    var viewModel = Hap.createGridViewModel(null,{
+    	model:{
+    	},
+    	closeWin:function(e) {
+    		window.parent.$("#newEquipWindow").data("kendoWindow").close();
+    	},
+    	save:function(){
+    		//保存数据,并带回生成的编码
+    		var data = viewModel.model.toJSON();
+    		data.__status = "add";
+    		
+    		var validator = $("#mainForm").data("kendoValidator");
+    		if(validator.validate()) {
+    			Hap.request({
+    				url: BaseUrl + "/npi/technology/equip/info/addNewData",
+    				data: kendo.stringify(data),
+    				success:function(data){
+    					if(data.success){
+    						//将自己的数据的ID打包到父页面的对应数据中
+    			    		var grid = $("#grid").data("kendoGrid");
+    			    		var parentRow = parent.$("#equipGrid").data("kendoGrid").dataSource.getByUid(uid);
+    			    		parentRow.equipmentName=data.rows[0].equipmentName;
+    			    		parentRow.equipmentCode=data.rows[0].equipmentCode;
+    			    		parent.$("#equipGrid").data("kendoGrid").refresh();
+    						viewModel.closeWin();
+    					}
+    				}
+    			})
+    		}
+    	}
+    });
+</script>
+
+<body>
+
+<div id="page-content">
+	<form id = "mainForm" style="paddiing-bottom:50px;padding-top:15px" class="form-horizontal" method="post" enctype="application/json;charset=UTF-8">
+		<div class="row">
+			<div class="col-sm-9">
+				<div class="form-group" style="text-align: center">
+					<div class="col-sm-12">
+						<label class="col-sm-4 control-label">设备编码</label>
+							<input style="width:50%" id="detailsName"  data-role="maskedtextbox" class="k-textbox" 
+							data-label="设备编码" placeholder='------------auto------------' disabled>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-sm-9">
+				<div class="form-group" style="text-align: center">
+					<div class="col-sm-12">
+						<label class="col-sm-4 control-label">设备名称</label>
+							<input style="width:50%" id="equipmentName"  data-role="maskedtextbox" class="k-textbox"
+								data-bind="value:model.equipmentName" data-label="设备名称" required>
+					</div>
+				</div>
+			</div>
+		</div>
+	</form>
+	<div style="clear:both">
+		<div id="grid"></div>
+	</div>
+	<div id="mainBottom" class="text-right" style="bottom:15px;position:fixed;float:left;padding-top:15px;border-top:1px solid #e8e1eb;
+		width:100%;background:#fff;margin-right:30px">
+		<span class="btn btn-primary" data-bind="click:save" type="submit" style="margin-right:5px">保存</span>
+		<span class="btn btn-default" data-bind="click:closeWin" type="button" style="margin-right:25px">取消</span>
+	</div>
+	<script>
+		kendo.bind($('#mainForm'), viewModel);
+		kendo.bind($('#mainBottom'), viewModel);
+	</script>
+	<script>
+		$('#mainForm').kendoValidator({
+			messages:{
+				required:'<@spring.message "hap.validation.notempty"/>'
+			},
+			invalidMessageType:"tooltip"
+		});
+	</script>
+</div>
+</body>
+</html>

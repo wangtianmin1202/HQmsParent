@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.spc.ecr_main.mapper.EcrPciMapper">
+
+    <resultMap id="baseResult" type="com.hand.spc.ecr_main.dto.EcrPci">
+        <result column="pci_id" property="pciId" jdbcType="DECIMAL" />
+        <result column="pci_code" property="pciCode" jdbcType="VARCHAR" />
+        <result column="ecrno" property="ecrno" jdbcType="VARCHAR" />
+        <result column="pci_attachment" property="pciAttachment" jdbcType="VARCHAR" />
+        <result column="pci_text" property="pciText" jdbcType="VARCHAR" />
+        <result column="status" property="status" jdbcType="VARCHAR" />
+        <result column="ask_finished_date" property="askFinishedDate" jdbcType="DATE" />
+        <result column="plan_finished_date" property="planFinishedDate" jdbcType="DATE" />
+        <result column="act_finished_date" property="actFinishedDate" jdbcType="DATE" />
+        <result column="create_name" property="createName" jdbcType="VARCHAR" />
+        
+        <result column="DUTYBY" property="dutyby" jdbcType="VARCHAR" />
+        <result column="IS_NEED" property="isNeed" jdbcType="VARCHAR" />
+        <result column="PCI_SEQ" property="pciSeq" jdbcType="DECIMAL" />
+
+    </resultMap>
+
+    <select id="pciQuery" parameterType="com.hand.spc.ecr_main.dto.EcrPci"
+            resultMap="baseResult">
+        select hep.pci_id,
+               hep.pci_code,
+               hep.ecrno,
+               hep.pci_attachment,
+               hep.pci_text,
+               hep.status,
+               hep.ask_finished_date,
+               hep.plan_finished_date,
+               hep.act_finished_date,
+               he.name create_name
+          from hpm_ecr_pci hep
+          left join sys_user su on hep.created_by = su.user_id
+          left join hr_employee he on su.employee_id = he.employee_id
+          <where>
+              <if test="ecrno != null">
+                  hep.ecrno = #{ecrno}
+              </if>
+          </where>
+    </select>
+
+
+
+</mapper>

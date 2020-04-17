@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.sys.sys_user.mapper.UserSysMapper">
+    <resultMap id="BaseResultMap" type="com.hand.sys.sys_user.dto.UserSys">
+        <result column="USER_ID" property="userId" jdbcType="DECIMAL" />
+        <result column="USER_TYPE" property="userType" jdbcType="VARCHAR" />
+        <result column="USER_NAME" property="userName" jdbcType="VARCHAR" />
+        <result column="PASSWORD_ENCRYPTED" property="passwordEncrypted" jdbcType="VARCHAR" />
+        <result column="EMAIL" property="email" jdbcType="VARCHAR" />
+        <result column="PHONE" property="phone" jdbcType="VARCHAR" />
+        <result column="START_ACTIVE_DATE" property="startActiveDate" jdbcType="VARCHAR" />
+        <result column="END_ACTIVE_DATE" property="endActiveDate" jdbcType="VARCHAR" />
+        <result column="STATUS" property="status" jdbcType="VARCHAR" />
+        <result column="LAST_LOGIN_DATE" property="lastLoginDate" jdbcType="VARCHAR" />
+        <result column="LAST_PASSWORD_UPDATE_DATE" property="lastPasswordUpdateDate" jdbcType="VARCHAR" />
+        <result column="FIRST_LOGIN" property="firstLogin" jdbcType="VARCHAR" />
+        <result column="DESCRIPTION" property="description" jdbcType="VARCHAR" />
+        <result column="EMPLOYEE_ID" property="employeeId" jdbcType="DECIMAL" />
+        <result column="CUSTOMER_ID" property="customerId" jdbcType="DECIMAL" />
+        <result column="SUPPLIER_ID" property="supplierId" jdbcType="DECIMAL" />
+        <result column="SUCCESS_FLAG" property="successFlag" jdbcType="VARCHAR" />
+        <result column="SUPPLIER_NAME" property="supplierName" jdbcType="VARCHAR" />
+        <result column="EMPLOYEE_CODE" property="employeeCode" jdbcType="VARCHAR" />
+        <result column="EMPLOYEE_NAME" property="employeeName" jdbcType="VARCHAR" />
+    </resultMap>
+
+<select id="selectSupplierName" resultMap="BaseResultMap" parameterType="com.hand.sys.sys_user.dto.UserSys">
+SELECT hs.supplier_name
+  FROM sys_user su, hcs_suppliers hs
+ WHERE 1 = 1
+   AND su.supplier_id = hs.supplier_id
+   AND su.user_id = #{userId}
+</select>
+
+<select id="getUserIdByEmployeeName" resultType="java.lang.Float">
+SELECT su.user_id
+  FROM sys_user su
+  JOIN hr_employee he
+    ON su.employee_id = he.employee_id
+ WHERE 1 = 1
+ 	AND rownum = 1
+   AND he.name = #{0}
+   
+</select>
+
+
+<select id="getEmployeeNameByUserId" resultType="java.lang.String">
+SELECT he.name AS employee_name
+  FROM sys_user su
+  JOIN hr_employee he
+    ON su.employee_id = he.employee_id
+ WHERE 1 = 1
+   AND su.user_id = #{0}
+</select>
+
+
+<select id="getEmailByUserId" resultType="java.lang.String">
+SELECT su.email
+  FROM sys_user su
+ WHERE 1 = 1
+   AND su.user_id = #{0}
+</select>
+
+<select id="userAndEmployee" resultMap="BaseResultMap" parameterType="com.hand.sys.sys_user.dto.UserSys">
+SELECT sur.user_id,
+       he.employee_id,
+       he.employee_code,
+       sur.user_name,
+       sur.email,
+       sur.phone,
+       he.name AS employee_name
+  FROM sys_user sur, hr_employee he
+ WHERE 1 = 1
+   AND sur.employee_id = he.employee_id
+<if test="userName != null">
+  AND sur.user_name=#{userName}
+</if>
+<if test="employeeName != null">
+  AND he.name LIKE concat('%',concat(#{employeeName},'%'))
+</if>
+</select>
+
+<select id="reSelect" resultMap="BaseResultMap" parameterType="com.hand.sys.sys_user.dto.UserSys">
+SELECT sur.user_id,
+       he.employee_id,
+       he.employee_code,
+       sur.user_name,
+       sur.email,
+       sur.phone,
+       he.name AS employee_name,
+       sur.user_type
+  FROM sys_user sur, hr_employee he
+ WHERE 1 = 1
+   AND sur.employee_id = he.employee_id
+<if test="userName != null">
+  AND sur.user_name = #{userName}
+</if>
+<if test="employeeName != null">
+  AND he.name LIKE concat('%',concat(#{employeeName},'%'))
+</if>
+<if test="userId != null">
+  AND sur.user_id = #{userId}
+</if>
+</select>
+
+<!-- user_type supplier_id 在基础查询sql中是必须的 -->
+<select id="srmUserTypeSelect" resultMap="BaseResultMap" parameterType="com.hand.sys.sys_user.dto.UserSys">
+SELECT sur.user_id,
+       sur.user_name,
+       sur.email,
+       sur.phone,
+       sur.user_type,
+       sur.supplier_id
+  FROM sys_user sur
+ WHERE 1 = 1
+ AND sur.user_id = #{userId}
+<if test="userName != null">
+  AND sur.user_name = #{userName}
+</if>
+  
+</select>
+
+<!-- 获取某用户最后一次登陆成功到当前的时间 -->
+<select id="lastLoginSuccessDaysByUserId" resultType="java.lang.Float">
+
+SELECT tt.last_login_success_days
+  FROM (SELECT floor(SYSDATE - (t.login_time + 0)) last_login_success_days
+          FROM sys_user_login t
+         WHERE t.user_id = #{0}
+         ORDER BY t.login_time DESC) tt
+ WHERE rownum = 1
+
+</select>
+
+
+<select id="getLoginSuccessCount" resultType="java.lang.Integer">
+SELECT COUNT(1)
+  FROM sys_user_login sul
+ WHERE sul.login_time >=
+       SYSDATE - (SELECT sc.config_value
+                    FROM sys_config sc
+                   WHERE sc.config_code = 'LOGIN_FAILUER_UPPER_LIMIT_MINUTE') / 60 / 24
+   AND sul.user_id = #{0}
+</select>
+
+<select id="getLoginFailCount" resultType="java.lang.Integer">
+SELECT COUNT(1)
+  FROM sys_user_login_fail sul
+ WHERE sul.login_time >=
+       SYSDATE - (SELECT sc.config_value
+                    FROM sys_config sc
+                   WHERE sc.config_code = 'LOGIN_FAILUER_UPPER_LIMIT_MINUTE') / 60 / 24
+   AND sul.user_id = #{0}
+</select>
+
+<!-- 某用户的登陆记录 -->
+<select id="getLoginData" resultMap="BaseResultMap">
+SELECT t.*
+  FROM (SELECT sul.success_flag
+          FROM sys_user_login sul
+         WHERE sul.login_time >=
+               SYSDATE -
+               (SELECT sc.config_value
+                  FROM sys_config sc
+                 WHERE sc.config_code = 'LOGIN_FAILUER_UPPER_LIMIT_MINUTE') / 60 / 24
+           AND sul.user_id = #{0}
+         ORDER BY sul.login_time DESC) t
+ WHERE rownum &lt;=
+       (SELECT sc.config_value FROM sys_config sc WHERE sc.config_code = 'LOGIN_FAILUER_UPPER_LIMIT') - 1
+</select>
+
+<select id="getEmployeeCodeBySupplierId" resultType = "java.lang.String">
+SELECT he.employee_code
+  FROM sys_user su
+  JOIN hr_employee he
+    ON su.employee_id = he.employee_id
+ WHERE su.supplier_id = #{0}
+</select>
+
+</mapper>

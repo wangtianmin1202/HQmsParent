@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.spc.pspc_count_sample_data.mapper.CountSampleDataMapper">
+    <resultMap id="BaseResultMap" type="com.hand.spc.pspc_count_sample_data.dto.CountSampleData">
+        <result column="COUNT_SAMPLE_DATA_ID" property="countSampleDataId" jdbcType="DECIMAL" />
+        <result column="TENANT_ID" property="tenantId" jdbcType="DECIMAL" />
+        <result column="SITE_ID" property="siteId" jdbcType="DECIMAL" />
+        <result column="ATTACHMENT_GROUP_ID" property="attachmentGroupId" jdbcType="DECIMAL" />
+        <result column="CE_GROUP_ID" property="ceGroupId" jdbcType="DECIMAL" />
+        <result column="CE_PARAMETER_ID" property="ceParameterId" jdbcType="DECIMAL" />
+        <result column="SAMPLE_VALUE_COUNT" property="sampleValueCount" jdbcType="DECIMAL" />
+        <result column="SAMPLE_TIME" property="sampleTime" jdbcType="DATE" />
+        <result column="UNQUALIFIED_QUANTITY" property="unqualifiedQuantity" jdbcType="DECIMAL" />
+
+        <result column="creation_date" property="creationDate" jdbcType="TIMESTAMP" />
+        <!-- 业务字段 -->
+        <result column="attachment_group_description" property="attachmentGroupDescription" jdbcType="VARCHAR" />
+        <result column="ce_group" property="ceGroup" jdbcType="VARCHAR" />
+        <result column="ce_parameter_name" property="ceParameterName" jdbcType="VARCHAR" />
+    </resultMap>
+    <!-- VO返回集合，此处为了避免转换Map时多出很多无用属性 -->
+    <resultMap id="BaseResultMapVO" type="com.hand.spc.pspc_count_sample_data.dto.CountSampleDataVO">
+        <result column="COUNT_SAMPLE_DATA_ID" property="countSampleDataId" jdbcType="DECIMAL" />
+        <result column="ATTACHMENT_GROUP_ID" property="attachmentGroupId" jdbcType="DECIMAL" />
+        <result column="CE_GROUP_ID" property="ceGroupId" jdbcType="DECIMAL" />
+        <result column="CE_PARAMETER_ID" property="ceParameterId" jdbcType="DECIMAL" />
+        <result column="SAMPLE_VALUE_COUNT" property="sampleValueCount" jdbcType="DECIMAL" />
+        <result column="SAMPLE_TIME" property="sampleTime" jdbcType="DATE" />
+        <result column="UNQUALIFIED_QUANTITY" property="unqualifiedQuantity" jdbcType="DECIMAL" />
+
+        <result column="creation_date" property="creationDate" jdbcType="TIMESTAMP" />
+        <!-- 业务字段 -->
+        <result column="attachment_group_description" property="attachmentGroupDescription" jdbcType="VARCHAR" />
+        <result column="ce_group" property="ceGroup" jdbcType="VARCHAR" />
+        <result column="ce_parameter_name" property="ceParameterName" jdbcType="VARCHAR" />
+    </resultMap>
+    <!-- 计数型数据导入 报表数据查询 -->
+    <select id="selectCountData" resultMap="BaseResultMapVO" parameterType="com.hand.spc.pspc_count_sample_data.dto.CountSampleData">
+        SELECT
+            pcsd.count_sample_data_id,
+            pcsd.attachment_group_id,
+            pcsd.ce_group_id,
+            pcsd.ce_parameter_id,
+            pcsd.sample_value_count,
+            pcsd.sample_time,
+            pcsd.unqualified_quantity,
+            pcsd.creation_date,
+            pag.attachment_group_description,
+            pcg.ce_group,
+            pcp.ce_parameter_name
+        FROM
+            PSPC_COUNT_SAMPLE_DATA pcsd
+            LEFT JOIN pspc_attachment_group pag ON pcsd.attachment_group_id = pag.attachment_group_id
+            LEFT JOIN pspc_ce_group pcg ON pcsd.ce_group_id = pcg.ce_group_id
+            LEFT JOIN pspc_ce_parameter pcp ON pcsd.ce_parameter_id = pcp.ce_parameter_id
+        <where>
+            1 = 1
+            <if test="attachmentGroupId != null and attachmentGroupId !=''">
+                and pcsd.attachment_group_id = #{attachmentGroupId,jdbcType=DECIMAL}
+            </if>
+            <if test="ceGroupId != null and ceGroupId !=''">
+                and pcsd.ce_group_id = #{ceGroupId,jdbcType=DECIMAL}
+            </if>
+            <if test="ceParameterId != null and ceParameterId !=''">
+                and pcsd.ce_parameter_id = #{ceParameterId,jdbcType=DECIMAL}
+            </if>
+            <if test="sampleTimeStart != null and sampleTimeStart !=''">
+                and pcsd.sample_time &gt;= to_date(#{sampleTimeStart,jdbcType=VARCHAR}, 'YYYY-mm-dd hh24:mi:ss')
+            </if>
+            <if test="sampleTimeEnd != null and sampleTimeEnd !=''">
+                and pcsd.sample_time &lt;= to_date(#{sampleTimeEnd,jdbcType=VARCHAR}, 'YYYY-mm-dd hh24:mi:ss')
+            </if>
+        </where>
+    </select>
+
+</mapper>

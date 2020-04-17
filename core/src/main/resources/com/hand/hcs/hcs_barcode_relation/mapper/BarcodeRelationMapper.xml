@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hcs.hcs_barcode_relation.mapper.BarcodeRelationMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hcs.hcs_barcode_relation.dto.BarcodeRelation">
+        <result column="BARCODE_RELATION_ID" property="barcodeRelationId" jdbcType="DECIMAL" />
+        <result column="OUTBARCODE_ID" property="outbarcodeId" jdbcType="DECIMAL" />
+        <result column="OUTBARCODE_TYPE" property="outbarcodeType" jdbcType="VARCHAR" />
+        <result column="INBARCODE_ID" property="inbarcodeId" jdbcType="DECIMAL" />
+        <result column="INBARCODE_TYPE" property="inbarcodeType" jdbcType="VARCHAR" />
+        <result column="ENABLE_FLAG" property="enableFlag" jdbcType="VARCHAR" />
+        <result column="TICKET_ID" property="ticketId" jdbcType="DECIMAL" />
+        <result column="TICKET_LINE_ID" property="ticketLineId" jdbcType="DECIMAL" />
+        
+        <result column="OUTBARCODE_CONTENT" property="outbarcodeContent" jdbcType="VARCHAR" />
+        
+        <result column="INBARCODE_CONTENT" property="inbarcodeContent" jdbcType="VARCHAR" />
+    </resultMap>
+
+<select id="interfaceSelect" resultMap="BaseResultMap" parameterType="com.hand.hcs.hcs_barcode_relation.dto.BarcodeRelation">
+
+SELECT h.outbarcode_type,
+       ob.obarcode AS outbarcode_content,
+       h.inbarcode_type,
+       CASE
+         WHEN h.inbarcode_type = 'TP' OR h.inbarcode_type = 'GS' OR h.inbarcode_type = 'ZZ' OR
+              h.inbarcode_type = 'ZB' THEN
+          ib.obarcode
+         ELSE
+          sb.barcode_content
+       END AS inbarcode_content
+  FROM hcs_barcode_relation h
+  JOIN hcs_out_barcode ob
+    ON h.outbarcode_id = ob.obarcode_id
+  LEFT JOIN hcs_out_barcode ib
+    ON h.inbarcode_id = ib.obarcode_id
+  LEFT JOIN hcs_small_barcode sb
+    ON h.inbarcode_id = sb.sbarcode_id
+ WHERE h.enable_flag = 'Y'
+   AND h.ticket_line_id = #{ticketLineId}
+   UNION ALL
+SELECT NULL, NULL, hsb.sbarcode_type, hsb.barcode_content
+  FROM hcs_small_barcode_control hsbc, hcs_small_barcode hsb
+ WHERE hsbc.sbarcode_id = hsb.sbarcode_id
+   AND hsb.packing_flag = 'N'
+   AND hsbc.ticket_line_id = #{ticketLineId}
+
+</select>
+	<!-- 清空送货单头行id -->
+	<update id="updateTicketId" parameterType="com.hand.hcs.hcs_barcode_relation.dto.BarcodeRelation">
+		update hcs_barcode_relation set TICKET_ID = null,TICKET_LINE_ID = null,LAST_UPDATED_BY = #{request.userId},REQUEST_ID  = -1,
+       PROGRAM_ID = -1, OBJECT_VERSION_NUMBER = OBJECT_VERSION_NUMBER + 1, LAST_UPDATE_DATE  = CURRENT_TIMESTAMP where BARCODE_RELATION_ID = #{barcodeRelationId} 
+	</update>
+</mapper>

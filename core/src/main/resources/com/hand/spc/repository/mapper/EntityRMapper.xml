@@ -1,0 +1,294 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.spc.repository.mapper.EntityRMapper">
+
+    <!-- 样本数据分组数据查询 -->
+    <resultMap id="SubgroupWaitDataResultMap" type="com.hand.spc.repository.dto.EntityR">
+        <result column="tenant_id" property="tenantId" jdbcType="DECIMAL"/>
+        <result column="site_id" property="siteId" jdbcType="DECIMAL"/>
+        <result column="entity_code" property="entityCode" jdbcType="VARCHAR"/>
+        <result column="entity_version" property="entityVersion" jdbcType="VARCHAR"/>
+        <result column="subgroup_size" property="subgroupSize" jdbcType="DECIMAL"/>
+        <result column="description" property="description" jdbcType="VARCHAR"/>
+        <result column="attachment_group_id" property="attachmentGroupId" jdbcType="DECIMAL"/>
+        <result column="ce_group_id" property="ceGroupId" jdbcType="DECIMAL"/>
+        <result column="ce_group" property="ceGroup" jdbcType="VARCHAR"/>
+        <result column="ce_group_description" property="ceGroupDescription" jdbcType="VARCHAR"/>
+        <result column="ce_parameter_id" property="ceParameterId" jdbcType="DECIMAL"/>
+        <result column="ce_parameter" property="ceParameter" jdbcType="VARCHAR"/>
+        <result column="ce_parameter_name" property="ceParameterName" jdbcType="VARCHAR"/>
+        <collection property="sampleSubgroupWaitList" ofType="com.hand.spc.repository.dto.SampleSubgroupWaitR">
+            <result column="sample_data_id" property="sampleDataId" jdbcType="DECIMAL"/>
+            <result column="sample_time" property="sampleTime" jdbcType="TIMESTAMP"/>
+            <result column="sample_value" property="sampleValue" jdbcType="DECIMAL"/>
+            <result column="sample_subgroup_wait_id" property="sampleSubgroupWaitId" jdbcType="DECIMAL"/>
+        </collection>
+    </resultMap>
+
+    <select id="listSubgroupWaitData" parameterType="com.hand.spc.repository.dto.SampleGroupDataVO"
+            resultMap="SubgroupWaitDataResultMap">
+        SELECT
+            ssw.tenant_id,
+            ssw.site_id,
+            ssw.entity_code,
+            ssw.entity_version,
+            ssw.subgroup_size,
+            pe.description,
+            pe.attachment_group_id,
+            pe.ce_group_id,
+            pcg.ce_group,
+            pcg.description ce_group_description,
+            pcp.ce_parameter_id,
+            pcp.ce_parameter,
+            pcp.ce_parameter_name,
+            ssw.sample_data_id,
+            ssw.sample_time,
+            ssw.sample_value,
+            ssw.sample_subgroup_wait_id
+        FROM
+            pspc_sample_subgroup_wait ssw,
+            pspc_entity pe,
+            pspc_ce_group pcg,
+            pspc_ce_parameter pcp
+        WHERE
+            pe.tenant_id = ssw.tenant_id
+        AND pe.site_id = ssw.site_id
+        AND pe.entity_code = ssw.entity_code
+        AND pe.entity_version = ssw.entity_version
+        AND pcg.tenant_id = pe.tenant_id
+        AND pcg.site_id = pe.site_id
+        AND pcg.ce_group_id = pe.ce_group_id
+        AND pcp.tenant_id = pe.tenant_id
+        AND pcp.site_id = pe.site_id
+        AND pcp.ce_parameter_id = pe.ce_parameter_id
+        AND ssw.tenant_id = #{tenantId}
+        AND ssw.site_id = #{siteId}
+        AND pe.attachment_group_id = #{attachmentGroupId}
+        AND pe.ce_group_id = #{ceGroupId}
+        AND pe.ce_parameter_id = #{ceParameterId}
+       
+    </select>
+    <!-- ORDER BY
+            ssw.entity_code,
+            ssw.entity_version,
+            ssw.sample_time,
+            ssw.sample_data_id    
+            mysql oracle 差异  20191030   -->
+
+    <!-- 样本数据(计数) 查询 -->
+    <resultMap id="CountSampleDataWaitResultMap" type="com.hand.spc.repository.dto.EntityR">
+        <result column="tenant_id" property="tenantId" jdbcType="DECIMAL"/>
+        <result column="site_id" property="siteId" jdbcType="DECIMAL"/>
+        <result column="entity_code" property="entityCode" jdbcType="VARCHAR"/>
+        <result column="entity_version" property="entityVersion" jdbcType="VARCHAR"/>
+        <result column="description" property="description" jdbcType="VARCHAR"/>
+        <result column="attachment_group_id" property="attachmentGroupId" jdbcType="DECIMAL"/>
+        <result column="ce_group_id" property="ceGroupId" jdbcType="DECIMAL"/>
+        <result column="ce_group" property="ceGroup" jdbcType="VARCHAR"/>
+        <result column="ce_group_description" property="ceGroupDescription" jdbcType="VARCHAR"/>
+        <result column="ce_parameter_id" property="ceParameterId" jdbcType="DECIMAL"/>
+        <result column="ce_parameter" property="ceParameter" jdbcType="VARCHAR"/>
+        <result column="ce_parameter_name" property="ceParameterName" jdbcType="VARCHAR"/>
+        <collection property="countSampleDataWaitList" ofType="com.hand.spc.repository.dto.CountSampleDataWaitR">
+            <result column="count_sample_data_wait_id" property="countSampleDataWaitId" jdbcType="DECIMAL"/>
+            <result column="sample_time" property="sampleTime" jdbcType="TIMESTAMP"/>
+            <result column="sample_value_count" property="sampleValueCount" jdbcType="DECIMAL"/>
+            <result column="unqualified_quantity" property="unqualifiedQuantity" jdbcType="DECIMAL"/>
+        </collection>
+    </resultMap>
+
+    <select id="listCountSampleDataWait" parameterType="com.hand.spc.repository.dto.CountSampleDataWaitVO"
+            resultMap="CountSampleDataWaitResultMap">
+        SELECT
+        pcsd.tenant_id,
+        pcsd.site_id,
+        pe.entity_code,
+        pe.entity_version,
+        pe.description,
+        pe.attachment_group_id,
+        pe.ce_group_id,
+        pcg.ce_group,
+        pcg.description ce_group_description,
+        pcp.ce_parameter_id,
+        pcp.ce_parameter,
+        pcp.ce_parameter_name,
+        pcsd.count_sample_data_wait_id,
+        pcsd.sample_time,
+        pcsd.sample_value_count,
+        pcsd.unqualified_quantity
+        FROM
+        pspc_count_sample_data_wait pcsd,
+        pspc_entity pe,
+        pspc_ce_group pcg,
+        pspc_ce_parameter pcp
+        WHERE
+        pe.tenant_id = pcsd.tenant_id
+        AND pe.site_id = pcsd.site_id
+        AND pe.attachment_group_id = pcsd.attachment_group_id
+        AND pe.ce_group_id = pcsd.ce_group_id
+        AND pe.ce_parameter_id = pcsd.ce_parameter_id
+        AND pcg.tenant_id = pe.tenant_id
+        AND pcg.site_id = pe.site_id
+        AND pcg.ce_group_id = pe.ce_group_id
+        AND pcp.tenant_id = pe.tenant_id
+        AND pcp.site_id = pe.site_id
+        AND pcp.ce_parameter_id = pe.ce_parameter_id
+        AND pcsd.tenant_id = #{tenantId}
+        AND pcsd.site_id = #{siteId}
+        AND pcsd.attachment_group_id = #{attachmentGroupId}
+        AND pcsd.ce_group_id = #{ceGroupId}
+        AND pcsd.ce_parameter_id = #{ceParameterId}
+        AND pcsd.count_sample_data_wait_id IN
+        <foreach collection="countSampleDataWaitIdList" item="id" index="index" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+        ORDER BY
+        pcsd.sample_time,
+        pcsd.count_sample_data_wait_id
+    </select>
+
+    <resultMap id="entityResultMap" type="com.hand.spc.repository.dto.EntityR">
+
+
+        <result column="object_version_number" property="objectVersionNumber" jdbcType="DECIMAL"/>
+        <result column="entity_id" property="entityId" jdbcType="DECIMAL"/>
+        <result column="tenant_id" property="tenantId" jdbcType="DECIMAL"/>
+        <result column="site_id" property="siteId" jdbcType="DECIMAL"/>
+        <result column="entity_code" property="entityCode" jdbcType="VARCHAR"/>
+        <result column="entity_version" property="entityVersion" jdbcType="VARCHAR"/>
+        <result column="control_date" property="controlDate" jdbcType="DATE"/>
+        <result column="description" property="description" jdbcType="VARCHAR"/>
+        <result column="attachment_group_id" property="attachmentGroupId" jdbcType="DECIMAL"/>
+        <result column="attachment_group_description" property="attachmentGroupDescription" jdbcType="VARCHAR"/>
+        <result column="ce_group_id" property="ceGroupId" jdbcType="DECIMAL"/>
+        <result column="ce_group" property="ceGroup" jdbcType="VARCHAR"/>
+        <result column="ce_parameter_id" property="ceParameterId" jdbcType="DECIMAL"/>
+        <result column="ce_parameter" property="ceParameter" jdbcType="VARCHAR"/>
+        <result column="chart_id" property="chartId" jdbcType="DECIMAL"/>
+        <result column="chart_code" property="chartCode" jdbcType="VARCHAR"/>
+        <result column="entity_status" property="entityStatus" jdbcType="VARCHAR"/>
+        <result column="entity_new" property="entityNew" jdbcType="VARCHAR"/>
+        <collection property="entityRoleRelationList" ofType="com.hand.spc.repository.dto.EntityRoleRelationR">
+            <result column="role_tenant_id" property="tenantId" jdbcType="DECIMAL"/>
+            <result column="role_site_id" property="siteId" jdbcType="DECIMAL"/>
+            <result column="role_id" property="roleId" jdbcType="DECIMAL"/>
+        </collection>
+    </resultMap>
+
+    <select id="queryEntity" resultMap="entityResultMap" parameterType="com.hand.spc.repository.dto.EntityR">
+        SELECT
+        pe.object_version_number,
+        pe.entity_id,
+        pe.tenant_id,
+        pe.site_id,
+        pe.entity_code,
+        pe.entity_version,
+        pe.control_date,
+        pe.description,
+        pe.attachment_group_id,
+        pag.attachment_group_description,
+        pe.ce_group_id,
+        pcg.ce_group,
+        pe.ce_parameter_id,
+        pcp.ce_parameter,
+        pe.chart_id,
+        pc.chart_code,
+        pe.entity_status,
+        pe.entity_new,
+        per.tenant_id AS role_tenant_id,
+        per.site_id AS role_site_id,
+        per.role_id
+        FROM
+        pspc_entity pe
+        LEFT JOIN pspc_entity_role_relation per ON pe.tenant_id = per.tenant_id
+        AND pe.site_id = per.site_id
+        AND pe.entity_code = per.entity_code
+        AND pe.entity_version = per.entity_version
+        INNER JOIN pspc_attachment_group pag ON pag.attachment_group_id = pe.attachment_group_id
+        INNER JOIN pspc_ce_group pcg ON pcg.ce_group_id = pe.ce_group_id
+        INNER JOIN pspc_ce_parameter pcp ON pcp.ce_parameter_id = pe.ce_parameter_id
+        INNER JOIN pspc_chart pc ON pc.chart_id = pe.chart_id
+        WHERE
+        1 = 1
+        AND pe.tenant_id = #{tenantId,jdbcType=DECIMAL}
+        AND pe.site_id = #{siteId,jdbcType=DECIMAL}
+        <if test="ceGroupId !=null">
+            AND pcg.ce_group_id =#{ceGroupId,jdbcType=DECIMAL}
+        </if>
+        <if test="ceParameterId !=null">
+            AND pcp.ce_parameter_id =#{ceParameterId,jdbcType=DECIMAL}
+        </if>
+        <if test="attachmentGroupId !=null">
+            AND pag.attachment_group_id =#{attachmentGroupId,jdbcType=DECIMAL}
+        </if>
+        <if test="chartId !=null">
+            AND pc.chart_id =#{chartId,jdbcType=DECIMAL}
+        </if>
+        <if test="entityId !=null">
+            AND pe.entity_id =#{entityId,jdbcType=DECIMAL}
+        </if>
+    </select>
+
+    <select id="listEntity" resultType="com.hand.spc.repository.dto.EntityR"
+            parameterType="com.hand.spc.repository.dto.EntityR">
+        SELECT
+        pe.tenant_id,
+        pe.site_id,
+        pe.ce_group_id,
+        pe.ce_parameter_id
+        FROM
+        pspc_entity pe
+        LEFT JOIN pspc_entity_role_relation per ON pe.tenant_id = per.tenant_id
+        AND pe.site_id = per.site_id
+        AND pe.entity_code = per.entity_code
+        AND pe.entity_version = per.entity_version
+        INNER JOIN pspc_attachment_group pag ON pag.attachment_group_id = pe.attachment_group_id
+        INNER JOIN pspc_ce_group pcg ON pcg.ce_group_id = pe.ce_group_id
+        INNER JOIN pspc_ce_parameter pcp ON pcp.ce_parameter_id = pe.ce_parameter_id
+        WHERE
+        1 = 1
+        AND pe.tenant_id = #{tenantId,jdbcType=DECIMAL}
+        AND pe.site_id = #{siteId,jdbcType=DECIMAL}
+        <if test="ceGroupId !=null">
+            AND pcg.ce_group_id =#{ceGroupId,jdbcType=DECIMAL}
+        </if>
+        <if test="ceParameterId !=null">
+            AND pcp.ce_parameter_id =#{ceParameterId,jdbcType=DECIMAL}
+        </if>
+        <if test="attachmentGroupId !=null">
+            AND pag.attachment_group_id =#{attachmentGroupId,jdbcType=DECIMAL}
+        </if>
+    </select>
+
+    <!-- 样本数据分组数据查询 -->
+    <resultMap id="EntityByChartResult" type="com.hand.spc.repository.dto.EntityByChartVO">
+        <result column="tenant_id" property="tenantId" jdbcType="DECIMAL"/>
+        <result column="site_id" property="siteId" jdbcType="DECIMAL"/>
+        <result column="entity_code" property="entityCode" jdbcType="VARCHAR"/>
+        <result column="entity_version" property="entityVersion" jdbcType="VARCHAR"/>
+        <result column="chart_code" property="chartCode" jdbcType="VARCHAR"/>
+        <result column="chart_type" property="chartType" jdbcType="VARCHAR"/>
+        <result column="max_plot_points" property="maxPlotPoints" jdbcType="DECIMAL"/>
+    </resultMap>
+
+    <select id="queryEntityByChart" parameterType="com.hand.spc.repository.dto.EntityR"
+            resultMap="EntityByChartResult">
+       SELECT
+        pe.tenant_id,
+        pe.site_id,
+        pe.entity_code,
+        pe.entity_version,
+        pc.chart_code,
+        pc.chart_type,
+        pc.max_plot_points
+        FROM
+        pspc_entity pe,
+        pspc_chart pc
+        WHERE
+        pe.entity_status = 'ACTIVE'
+        AND pc.chart_id = pe.chart_id
+        AND pe.tenant_id = #{tenantId,jdbcType=DECIMAL}
+        AND pe.site_id = #{siteId,jdbcType=DECIMAL}
+        AND pe.entity_id = #{entityId,jdbcType=DECIMAL}
+    </select>
+</mapper>

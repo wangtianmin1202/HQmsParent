@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.dimension.hqm_dimension_congratulate_team.mapper.DimensionCongratulateTeamMapper">
+    <resultMap id="BaseResultMap" type="com.hand.dimension.hqm_dimension_congratulate_team.dto.DimensionCongratulateTeam">
+        <result column="STEP" property="step" jdbcType="DECIMAL" />
+        <result column="CTEAM_ID" property="cteamId" jdbcType="DECIMAL" />
+        <result column="ORDER_ID" property="orderId" jdbcType="DECIMAL" />
+        <result column="MEMBER_ID" property="memberId" jdbcType="DECIMAL" />
+        <result column="IMMEDIATE_ACTION_QTY" property="immediateActionQty" jdbcType="DECIMAL" />
+        <result column="PC_ACTION_QTY" property="pcActionQty" jdbcType="DECIMAL" />
+        <result column="EPC_ACTION_QTY" property="epcActionQty" jdbcType="DECIMAL" />
+        <result column="EFFECTIVE_PC_ACTION_QTY" property="effectivePcActionQty" jdbcType="DECIMAL" />
+        <result column="PREVENTION_ACTION_QTY" property="preventionActionQty" jdbcType="DECIMAL" />
+        <result column="RPA_QTY" property="rpaQty" jdbcType="DECIMAL" />
+        <result column="SUM_ACTION_QTY" property="sumActionQty" jdbcType="DECIMAL" />
+        <result column="OTHER_CONTRIBUTIONS" property="otherContributions" jdbcType="VARCHAR" />
+        
+        <result column="MEMBER_NAME" property="memberName" jdbcType="VARCHAR" />
+        <result column="EMPLOYEE_ID" property="employeeId" jdbcType="DECIMAL" />
+        <result column="EMPLOYEE_NAME" property="employeeName" jdbcType="VARCHAR" />
+    </resultMap>
+<!-- 查询条件相关的所有hqm_8d_congratulate_team数据 -->
+<select id="reSelect" resultMap="BaseResultMap" parameterType="com.hand.dimension.hqm_dimension_congratulate_team.dto.DimensionCongratulateTeam">
+SELECT t.*, su.user_name AS member_name, he.employee_id, he.name AS employee_name
+  FROM hqm_8d_congratulate_team t, sys_user su, hr_employee he
+ WHERE 1 = 1
+   AND t.member_id = su.user_id
+   AND su.employee_id = he.employee_id
+   <if test="orderId != null">
+   AND t.order_id = #{orderId}
+   </if>
+	<if test="orderId == null">
+   AND t.order_id = -1
+   </if>
+   
+</select>
+</mapper>

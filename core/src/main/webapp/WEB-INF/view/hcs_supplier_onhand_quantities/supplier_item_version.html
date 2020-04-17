@@ -1,0 +1,378 @@
+<#include "../include/header.html">
+<script src="${base.contextPath}/common/code?SRM_YES_NO=SRM_YES_NO"></script>
+<script src="${base.contextPath}/lib/prints/doc_print.js" type="text/javascript" charset="UTF-8"></script>
+<script type="text/javascript">
+    var viewModel = Hap.createGridViewModel("#grid");
+    //失效
+    viewModel.changeFlag = function(){
+    	var grid = $("#grid").data("kendoGrid");
+    	var checked = grid.selectedDataItems();
+    	var len = checked.length;
+    	if(len === 0){
+    		kendo.ui.showInfoDialog({
+    			title: '<@spring.message "hap.tip.info"/>',
+    			message: '<@spring.message "hap.tip.selectrow"/>'
+    		})
+    		return;
+    	}
+    	for(var i=0;i<len;i++){
+    		if(checked[i].enableFlag == 'N'){
+    			kendo.ui.showInfoDialog({
+					title: '<@spring.message "hap.tip.info"/>',
+	    			message: '<@spring.message "error.srm_purchase_1099"/>'
+	    		})
+	    		return;
+    		}
+    		if(checked[i].mainVersion == 'Y'){
+    			kendo.ui.showInfoDialog({
+					title: '<@spring.message "hap.tip.info"/>',
+	    			message: '<@spring.message "error.srm_purchase_1101"/>'
+	    		})
+	    		return;
+    		}
+    	}
+    	
+    	kendo.ui.showConfirmDialog({
+    		title: '<@spring.message "po.confirm"/>',
+    		message: '<@spring.message "error.srm_purchase_1100"/>'
+    	}).done(function(e){
+    		if(e.button=='OK'){
+    			$.ajax({
+    				url:"${base.contextPath}/hcs/supplier/item/version/changeFlag",
+    				type:"POST",
+    				data: kendo.stringify(checked),
+    				contentType: "application/json",
+    				success: function (data){
+    					if(data.success){
+    						Hap.showToast({
+    		           			type:'success',
+    		           			"positionClass": "toast-bottom-right",
+    		           			message:'<@spring.message "hap.tip.success"/>',
+    		           			hideDuration:10*1000
+    		       			})
+    			    		viewModel.query();
+    						window.parent.viewModel.query();
+    					}else{
+    						kendo.ui.showErrorDialog({
+    							title: '<@spring.message "hap.error"/>',
+    			    			message: data.message
+    			    		})
+    					}
+    				}
+    			}) 
+    		}
+    	})
+    }
+</script>
+<body>
+<div id="page-content">
+    <div class="pull-left" id="toolbar-btn" style="padding-bottom:10px;">
+        <span class="btn btn-primary k-grid-add" style="float:left;margin-right:5px;" data-bind="click:create"><@spring.message "hap.new"/></span>
+        <span class="btn btn-success k-grid-save-changes" data-bind="click:save" style="float:left;margin-right:5px;"><@spring.message "hap.save"/></span>
+        <span  data-bind="click:changeFlag" class="btn btn-danger" style="float:left;"><@spring.message "supplieritemversion.changeflag"/></span>
+    </div>
+    <script>kendo.bind($('#toolbar-btn'), viewModel);</script>
+    <div id="queryPanel" class="pull-right" id="query-form" style="padding-bottom:10px;">
+    
+    	<div class="k-query-simple" id="query-form">
+        </div>
+        <script>kendo.bind($('#query-form'), viewModel);</script>
+        <div class="k-query-detail" id="query-form2">
+            <div class="rows" style="margin-top:5px">
+
+            </div>
+        </div>
+        <script>kendo.bind($('#query-form2'), viewModel);</script>
+    
+        
+        <div style="clear:both"></div>
+    </div>
+    <script>
+    kendo.bind($('#query-form'), viewModel);
+//     $('#queryPanel').kendoQueryPanel({
+//         queryFunction: function () {
+//             viewModel.query();
+//         },
+//         resetFunction: function () {
+//             viewModel.reset();
+//         }
+//     });
+    </script>
+    <div style="clear:both">
+        <div id="grid"></div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    Hap.initEnterQuery('#query-form', viewModel.query);
+    var BaseUrl = _basePath;
+    dataSource = new kendo.data.DataSource({
+        transport: {
+            read: {
+                url: BaseUrl + "/hcs/supplier/item/version/query",
+                type: "POST",
+                dataType: "json"
+            },
+            update: {
+                url: BaseUrl + "/hcs/supplier/item/version/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            destroy: {
+                url: BaseUrl + "/hcs/supplier/item/version/remove",
+                type: "POST",
+                contentType: "application/json"
+            },
+            create: {
+                url: BaseUrl + "/hcs/supplier/item/version/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            parameterMap: function (options, type) {
+                if (type !== "read" && options.models) {
+                	var selectVal = window.parent.selectVal;
+                	$.each(options.models,function(i,n){
+	                		if(!isNotEmpty(n.kid)){
+	                			console.log("123")
+	                			n.plantId = selectVal.split('_')[3];
+	                			n.itemId = selectVal.split('_')[2]
+	                			n.supplierId = selectVal.split('_')[4]
+	                			n.bomId = selectVal.split('_')[5]
+	                		}
+	                })
+                    var datas = Hap.prepareSubmitParameter(options, type)
+                    return kendo.stringify(datas);
+                } else if (type === "read") {
+                	var selectVal = window.parent.selectVal;
+                	viewModel.model.set('itemId',nvl(selectVal.split('_')[2],-1));
+                	viewModel.model.set('plantId',nvl(selectVal.split('_')[3],-1));
+                	viewModel.model.set('supplierId',nvl(selectVal.split('_')[4],-1));
+                	viewModel.model.set('bomId',nvl(selectVal.split('_')[5],-1));
+                    return Hap.prepareQueryParameter(viewModel.model.toJSON(), options)
+                }
+            }
+        },
+        batch: true,
+        serverPaging: true,
+        pageSize: 20,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+                id: "kid",
+                fields: {
+                	mainVersion:{
+                		type:"boolean",
+                		checkedValue: 'Y',
+                		defaultValue:'N',
+                        uncheckedValue: 'N'
+                	},
+                	enableFlag:{
+                		defaultValue: 'Y',
+                	},
+                	itemVersion:{
+                        validation: {
+                        	required: true,
+                        	min:1,
+                        	itemVersionvalidation: function(input){
+                            	var r = /.*[\u4e00-\u9fa5].*/;
+                            	if(r.test(input.val())){
+                            		input.attr("data-itemVersionvalidation-msg", '<@spring.message "error.srm_purchase_1087"/>');
+                            		return false;
+                            	}
+								if(input.val().length > 30){
+									input.attr("data-itemVersionvalidation-msg", '<@spring.message "error.srm_purchase_1088"/>');
+	                             	return false;
+								}
+                            	return true;
+                            }
+                        },
+                    },
+                    remarks:{
+                        validation: {
+                        	min:1,
+                        	remarksvalidation: function(input){
+								if(input.val().length > 240){
+									input.attr("data-remarksvalidation-msg", '<@spring.message "error.srm_purchase_1093"/>');
+	                             	return false;
+								}
+                            	return true;
+                            }
+                        },
+                    }
+                },
+                editable: function(col){
+                	if(!this.isNew()){                		
+	                	if(col == 'itemVersion' || col == 'enableFlag' || col == 'creationDate' || col == 'userName'){
+	                		return false;
+	                	}else if(this.enableFlag === 'N'){
+	                		return false;
+	                	}else{
+	                		return true;
+	                	}
+                	}else{
+                		if(col == 'mainVersion' || col == 'creationDate' || col == 'userName'){
+                			return false;
+                		}
+                	}
+                	return true;
+                }
+            }
+        }
+    });
+
+    $("#grid").kendoGrid({
+        dataSource: dataSource,
+        resizable: true,
+        scrollable: true,
+        navigatable: false,
+        sortable:true,
+        selectable: ' rowbox',
+        dataBound: function () {
+            if (parent.autoResizeIframe) {
+                parent.autoResizeIframe('${RequestParameters.functionCode!}')
+            }
+        },
+        pageable: {
+            pageSizes: [5, 10, 20, 50],
+            refresh: true,
+            buttonCount: 5
+        },
+        columns: [
+                    {
+                field: "itemVersion",
+                title: '<@spring.message "supplieritemversion.itemversion"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+                    {
+                field: "remarks",
+                title: '<@spring.message "supplieritemversion.remarks"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+                    {
+                field: "enableFlag",
+                title: '<@spring.message "supplieritemversion.enableflag"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+                template: function (dataItem) {
+                    var v = dataItem.enableFlag ? dataItem.enableFlag : "";
+                    $.each(SRM_YES_NO, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return v;
+                        }
+                    });
+                    return v;
+                },
+                editor: function (container, options) {
+                    $('<input name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            dataTextField: "meaning",
+                            dataValueField: "value",
+                            valuePrimitive: true,
+                            dataSource:SRM_YES_NO
+                        });
+                },
+            },
+                    {
+                field: "mainVersion",
+                title: '<@spring.message "supplieritemversion.mainversion"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+                editor: function (container, options) {
+                	var selectVal = window.parent.selectVal;
+                	viewModel.model.set('itemId',selectVal.split('_')[2]);
+                	if(options.model.mainVersion === 'N' && options.model.enableFlag === 'Y'){
+                		var bomId;
+                		if(isNotEmpty(options.model.bomId)){
+                			bomId = options.model.bomId;
+                		}else{
+                			bomId = selectVal.split('_')[5]
+                		}
+                		var jsonData = {
+                				"itemId":selectVal.split('_')[2],
+                				"plantId":selectVal.split('_')[3],
+                				"supplierId":selectVal.split('_')[4],
+                				"bomId":bomId,
+                				"mainVersion":"Y",
+                				"enableFlag":"Y"
+                		}
+                		$.ajax({
+                    		url:"${base.contextPath}/hcs/supplier/item/version/select",
+                    		type: "POST",
+                    		data: jsonData,
+                    		jsonType: "json",
+                    		async:false,
+                    		success: function(resultData){
+                    			if(resultData.success){
+                    				data = resultData.rows
+                    				if(resultData.rows != null && resultData.rows.length >0){
+                    					if(isNotEmpty(options.model.kid) && resultData.rows.length === 1 && options.model.kid != data[0].kid){                    						
+                    						kendo.ui.showInfoDialog({
+	                    		    			message: '<@spring.message "error.srm_purchase_1098"/>'
+	                    		    		});
+	                    					options.model.set("mainVersion","Y")
+	                    		    		return;
+                    					}else if(isNotEmpty(options.model.kid) && resultData.rows.length > 1){
+                    						kendo.ui.showInfoDialog({
+	                    		    			message: '<@spring.message "error.srm_purchase_1098"/>'
+	                    		    		});
+	                    					options.model.set("mainVersion","Y")
+	                    		    		return;
+                    					}else if(!isNotEmpty(options.model.kid)){
+                    						console.log(resultData.rows)
+                    						kendo.ui.showInfoDialog({
+	                    		    			message: '<@spring.message "error.srm_purchase_1098"/>'
+	                    		    		});
+	                    					options.model.set("mainVersion","Y")
+	                    		    		return;
+                    					}
+                    				}
+                    				
+                    			}
+                    		}
+                    	})
+                	}
+                	var dataJson = {
+    					'kid':options.model.kid,
+    					'mainVersion' : options.model.mainVersion === 'N' ? 'Y' : 'N'	
+    				}
+    				$.ajax({
+                		url:"${base.contextPath}/hcs/supplier/item/version/changeMainVersion",
+                		type: "POST",
+                		data: dataJson,
+                		dataType: "json",
+                		async:false,
+                		success: function(resultData){
+                		}
+                	})
+                }
+            },
+            {
+                field: "creationDate",
+                title: '<@spring.message "supplieritemversion.creationDate"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+            {
+                field: "userName",
+                title: '<@spring.message "supplieritemversion.userName"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+        ],
+        editable: true
+    });
+    Hap.autoResizeGrid('#grid');
+</script>
+</body>
+</html>

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.itf.itf_purchase_order_line.mapper.PurchaseOrderLineMapper">
+    <resultMap id="BaseResultMap" type="com.hand.itf.itf_purchase_order_line.dto.PurchaseOrderLine">
+        <result column="PURCHASE_ORDER_HEADER_ID" property="purchaseOrderHeaderId" jdbcType="DECIMAL" />
+        <result column="PURCHASE_ORDER_LINE_ID" property="purchaseOrderLineId" jdbcType="DECIMAL" />
+        <result column="BATCH_NUMBER" property="batchNumber" jdbcType="VARCHAR" />
+        <result column="PROCESS_STATUS" property="processStatus" jdbcType="VARCHAR" />
+        <result column="MESSAGE" property="message" jdbcType="VARCHAR" />
+        <result column="PROCESS_TIME" property="processTime" jdbcType="DATE" />
+        <result column="BELNR" property="belnr" jdbcType="VARCHAR" />
+        <result column="WERKS" property="werks" jdbcType="VARCHAR" />
+        <result column="POSEX" property="posex" jdbcType="VARCHAR" />
+        <result column="IDTNR" property="idtnr" jdbcType="VARCHAR" />
+        <result column="ANETW" property="anetw" jdbcType="VARCHAR" />
+        <result column="BMNG2" property="bmng2" jdbcType="VARCHAR" />
+        <result column="PMENE" property="pmene" jdbcType="VARCHAR" />
+        <result column="WAERS" property="waers" jdbcType="VARCHAR" />
+        <result column="NETPR" property="netpr" jdbcType="VARCHAR" />
+        <result column="MWSKZ" property="mwskz" jdbcType="VARCHAR" />
+        <result column="PEINH" property="peinh" jdbcType="VARCHAR" />
+        <result column="ACTION" property="action" jdbcType="VARCHAR" />
+        <result column="EDATU" property="edatu" jdbcType="VARCHAR" />
+        
+    </resultMap>
+
+
+</mapper>

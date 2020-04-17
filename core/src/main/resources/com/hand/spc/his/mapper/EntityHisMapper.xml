@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.spc.his.mapper.EntityHisMapper">
+    <resultMap id="BaseResultMap" type="com.hand.spc.his.dto.EntityHis">
+        <result column="ENTITY_HIS_ID" property="entityHisId" jdbcType="DECIMAL" />
+        <result column="ENTITY_ID" property="entityId" jdbcType="DECIMAL" />
+        <result column="TENANT_ID" property="tenantId" jdbcType="DECIMAL" />
+        <result column="SITE_ID" property="siteId" jdbcType="DECIMAL" />
+        <result column="ENTITY_CODE" property="entityCode" jdbcType="VARCHAR" />
+        <result column="ENTITY_VERSION" property="entityVersion" jdbcType="VARCHAR" />
+        <result column="CONTROL_DATE" property="controlDate" jdbcType="DATE" />
+        <result column="DESCRIPTION" property="description" jdbcType="VARCHAR" />
+        <result column="ATTACHMENT_GROUP_ID" property="attachmentGroupId" jdbcType="DECIMAL" />
+        <result column="CE_GROUP_ID" property="ceGroupId" jdbcType="DECIMAL" />
+        <result column="CE_PARAMETER_ID" property="ceParameterId" jdbcType="DECIMAL" />
+        <result column="CHART_ID" property="chartId" jdbcType="DECIMAL" />
+        <result column="ENTITY_STATUS" property="entityStatus" jdbcType="VARCHAR" />
+        <result column="ENTITY_NEW" property="entityNew" jdbcType="VARCHAR" />
+    </resultMap>
+
+
+</mapper>

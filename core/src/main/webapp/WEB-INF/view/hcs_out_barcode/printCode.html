@@ -1,0 +1,155 @@
+<#include "../include/header.html">
+<script src="${base.contextPath}/common/code?SRM_BARCODE_STATUS=SRM_BARCODE_STATUS"></script>
+<script src="${base.contextPath}/common/code?yesorno=SRM_YES_NO"></script>
+<script src="${base.contextPath}/common/code?SRM_PACKING_MODE=SRM_PACKING_MODE"></script>
+<script src="${base.contextPath}/common/code?SRM_YES_NO=SRM_YES_NO"></script>
+<script src="${base.contextPath}/lib/prints/JsBarcode.all.min.js" type="text/javascript"></script>
+<script src="${base.contextPath}/lib/prints/jquery-barcode.js" type="text/javascript"></script>
+<script src="${base.contextPath}/lib/prints/jquery-qrcode.min.js" type="text/javascript"></script>
+<script src="${base.contextPath}/lib/prints/qrcode.js" type="text/javascript"></script>
+<script src="${base.contextPath}/lib/prints/doc_print.js" type="text/javascript" charset="UTF-8"></script>
+<script>
+    function initAsnPrintSetting() {
+        var jsonSetting = {
+            PaperWidth: 100,//A4纵向宽度
+            PaperHeight: 80,//A4纵向高度
+/*             MainFontSize: 'middle',
+            TableFontSize: 'middle',
+            TitleFontSize: 'xx-large',
+            TableRowHeight: '15',
+            TableBarCodeFontSize: '5',
+            BarCodeFontSize: '20',
+            FirstPageRowNum: "30", //第一页的表格显示多少行
+            MaxRowNum: "35"  //第2页~第n页的表格显示多少行 */
+        };
+
+        return jsonSetting;
+    }
+    var asnPrintSetting = initAsnPrintSetting();
+</script>
+<script type="text/javascript">
+var dataList = window.parent.dataList;
+$(function(){
+	$('html').css('width', tranMmToPxWidth(asnPrintSetting.PaperWidth) + "px");
+	var str = "";
+	var list = [];
+	var codeList = [];
+	for(var i=0; i<dataList.length;i++){
+		var smallList = dataList[i].smallBarcodeList;
+		var code = dataList[i].obarcode;
+		var str1 = "qrcode" +i;
+		list.push(str1);
+		codeList.push(code)
+		var v = dataList[i].packingLevel ? dataList[i].packingLevel : "";
+        $.each(SRM_PACKING_MODE, function (i, n) {
+            if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                v = n.meaning;
+            }
+        });
+		str += "<div  style='page-break-after:always'>"
+			str += "<div class='rows' style='margin-top: 5px;text-align: center;width: 100%;font-size: big;'>"
+				/* 	str += "<div class='col-sm-10' style='margin:0px;padding:0px;float:left'>"
+					str += "<div class='rows' style='margin:0px;padding:0px'>"
+						str += "<span style='margin:0px;padding:0px;width:20%'><img style='width:25%' class='login-logo' src='${base.contextPath}/lib/image/kohler.png'/></span><lable class='rows' style='margin-top: 5px;margin-left:15px;width: 80%;font-size: 15px;'> 上海科勒电子科技有限公司</lable>"			
+					str += "</div>"
+						str += "<div class='rows' style='margin-top: 5px;text-align: left;width: 100%;font-size: big;'>"
+							str += "<lable  style='margin-top: 5px;width: 100%;font-size: 15px;'>供应商："+dataList[i].supplierName+"</lable>"			
+						str += "</div>"
+					str += "<div class='rows' style:'padding:0px'>"
+						str += "<lable  style='margin-top: 5px;width: 50%;font-size: 15px;float:left;text-align:left'>规格："+nvl(dataList[i].packingSize,"")+"</lable>"			
+						str += "<lable  style='margin-top: 5px;width: 50%;font-size: 15px;float:left;text-align:left'>包装方式："+v+"</lable>"	
+						str += "</div>"
+							str +=	"<div style='width:40%;float:left'  id='"+str1+"'></div>" 
+				str += "</div>"
+					
+				str += "<div class='col-sm-2' style='margin:0px;padding:0px;'>"
+						
+				str += "</div>" */
+				str += "<table class='titleDiv' style='width: 80%;height: 100%;color: black;float:left'>"
+				str += "<tr style='width: 100%;'>"
+				str += "<td colspan='2' style='width: 100%;text-align: left'>"
+					str += "<span style='margin:0px;padding:0px;width:20%'><img style='width:25%' class='login-logo' src='${base.contextPath}/lib/image/kohler.png'/></span><lable class='rows' style='margin-top: 5px;margin-left:15px;width: 80%;font-size: 15px;'> 上海科勒电子科技有限公司</lable>"	
+				str += "</td>"
+				str += "</tr>"
+				
+				str += "<tr style='width: 100%;'>"
+				str += "<td colspan='2' style='width: 90%;text-align: left;'>"
+					str += "<lable  style='margin-top: 5px;width: 100%;font-size: 12px;'><@spring.message 'outbarcodeprint.obarcode'/>："+dataList[i].obarcode+"</lable>"
+				str += "</td>"
+				str += "</tr>"
+				
+				str += "<tr style='width: 100%;'>"
+				str += "<td colspan='2' style='width: 90%;text-align: left;'>"
+					str += "<lable  style='margin-top: 5px;width: 100%;font-size: 12px;'><@spring.message 'outbarcodeprint.suppliername'/>："+dataList[i].supplierName+"</lable>"
+				str += "</td>"
+				str += "</tr>"
+				
+				str += "<tr style='width: 100%;'>"
+				str += "<td style='width: 50%;text-align: left'>"
+					str += "<lable  style='width: 100%;font-size: 12px;float:left;text-align:left'><@spring.message 'outbarcodeprint.packingsize'/>："+nvl(dataList[i].packingSize,"")+"</lable>"	
+				str += "</td>"
+				str += "<td style='width: 50%;text-align: left'>"
+				str += "<lable  style='width: 100%;font-size: 12px;float:left;text-align:left'><@spring.message 'outbarcodeprint.packinglevel'/>："+v+"</lable>"	
+				str += "</td>"
+				str += "</tr>"
+				
+				str += "</table>"
+				str +=	"<div style='width:20%;float:left' id='"+str1+"'></div>" 
+			str += "</div>"
+			str += "<div class='rows' style='margin-top: 5px;width: 100%'>"
+					str += "<table style='float:left;color: black;width: 100%;font-size:10px;text-align: center; margin-right:5px' border='2px'>"
+					str += "<tr style='white-space: nowrap'>"
+					str += "<th style='text-align: center;width: 20%;'><@spring.message 'outbarcodeprint.itemcode'/></th>"
+					str += "<th style='text-align: center;width: 40%;'><@spring.message 'outbarcodeprint.itemname'/></th>"
+					str += "<th style='text-align: center;width: 10%;'><@spring.message 'outbarcodeprint.itemversion'/></th>"
+					str += "<th style='text-align: center;width: 30%;'><@spring.message 'outbarcodeprint.quantity'/></th>"
+					str += "</tr>"
+					for(var j=0; j<smallList.length;j++){
+						str += "<tr style='white-space: nowrap'>"
+						str += "<td style='text-align: center;width: 20%;'>"+smallList[j].itemCode+"</td>"
+						str += "<td style='text-align: center;width: 30%;'>"+smallList[j].itemName+"</td>"
+						str += "<td style='text-align: center;width: 20%;'>"+smallList[j].itemVersion+"</td>"
+						str += "<td style='text-align: center;width: 30%;'>"+smallList[j].quantity+"</td>"
+						str += "</tr>"
+					}
+					
+					str += "</table>"
+					//str +=	"<div style='float:left;width:40%'  id='"+str1+"'></div>" 	
+					
+				str += "</div>"
+					str += "<div class='rows' style='margin-top: 5px;text-align: left;width: 100%;font-size: big;'>"
+						str += "</div>"
+			str += "</div>"
+		str += "</div>" 
+		 
+	}
+	$("#printWindow").append(str);
+	 for(var k=0;k<list.length;k++){
+		var qrcode = new QRCode(list[k], { 
+        	  text: codeList[k], 
+        	  width: 65, 
+        	  height: 65, 
+        	  colorDark : '#000000', 
+        	  colorLight : '#ffffff', 
+        	  correctLevel : QRCode.CorrectLevel.H 
+        }); 
+	}
+	
+	
+	setTimeout(function(){
+		var barcode = $("#printWindow").html();
+		
+		window.document.body.innerHTML = barcode;
+		$("img").css("clear","both");
+		window.print();
+		window.parent.viewModel.refresh();
+		window.parent.$('#printWindow').data('kendoWindow').close();
+		parent.location.reload();
+	},0.1*1000)
+})
+</script>
+
+<body >
+	<div id="printWindow" ></div>
+</body>
+</html>

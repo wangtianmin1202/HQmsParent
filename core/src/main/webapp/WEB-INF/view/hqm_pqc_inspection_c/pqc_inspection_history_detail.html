@@ -1,0 +1,642 @@
+<#include "../include/header.html">
+    <!-- 
+creat by:tianmin.wang/2019-10-14
+检验项的检验记录单独维护界面
+ -->
+    <style>
+        thead {
+            font-size: 14px;
+        }
+        
+        th {
+            width: 5%;
+            vertical-align: middle !important;
+            text-align: center;
+        }
+        
+        table.context td {
+            vertical-align: middle !important;
+            text-align: center;
+        }
+        
+        input {
+            text-align: center;
+        }
+    </style>
+
+    <body>
+        <script>
+            var detailStatus = "${RequestParameters.detailStatus!'E'}";
+            var lineId = "${RequestParameters.lineId!'-1'}";
+            console.log(lineId);
+            var detailRows = new Array();
+            var maxSampleQty = {
+                sampleQty: 0,
+            }; //抽样数量最大的检验项行
+            var ngOk = [{
+                meaning: 'OK',
+                value: "OK"
+            }, {
+                meaning: 'NG',
+                value: "NG"
+            }];
+            var validate = {
+                rules: {
+                    dataPrecision: function(input) {
+                        if (input.is('[dataPrecision]')) {
+                            if (!isNotEmpty(input.val())) {
+                                return true;
+                            }
+                            var connectId = input.attr('connect-id');
+                            var obj = {};
+                            $.each(detailRows, function(i, v) {
+                                if (v.connectId == connectId) {
+                                    obj = v;
+                                    return false;
+                                }
+                            });
+                            if(getPoint(input.val()) != getPoint(obj.standradFrom == null ? obj.standradTo : obj.standradFrom)){
+        	            		return false;
+        	            	}
+                        }
+                        return true;
+                    }
+                },
+                messages: {
+                    dataPrecision: '<@spring.message "hqm_iqc_inspection_template_precision_01"/>'
+                },
+                invalidMessageType: "tooltip",
+            }
+        </script>
+        <script>
+            var viewModel = kendo.observable({
+                model: dealDataTime({
+                    lineId: lineId,
+                }),
+                saveDetail: function() { //保存
+                    var commitJson = JSON.parse(JSON.stringify(detailRows));
+
+                    dealCommitJson(commitJson);
+                    $.ajax({
+                        url: '${base.contextPath}/hqm/pqc/inspection/c/savealldetail',
+                        type: 'POST',
+                        data: JSON.stringify(commitJson),
+                        async: false,
+                        contentType: "application/json",
+                        success: function(response) {
+                            if (response.success) {
+                                getDetailByLineId();
+                                kendo.ui.showInfoDialog({
+                                    message: '成功'
+                                });
+                            } else {
+                                kendo.ui.showWarningDialog({
+                                    message: response.message
+                                });
+                            }
+                        }
+                    });
+                },
+                commitDetail: function() { //提交
+                    var commitJson = JSON.parse(JSON.stringify(detailRows));
+                    commitJson.headerString = JSON.stringify(viewModel.model);
+                    var opFlag = true;
+                    var showMessage = 0;
+                    $.each(commitJson, function(i, v) {
+                        $.each(v.lineList, function(j, e) {
+                            if (!isNotEmpty(e.data) || !isNotEmpty(e.snStatus)) {
+                                opFlag = false;
+                                if (showMessage < 1) {
+                                    kendo.ui.showWarningDialog({
+                                        message: "未输入完整"
+                                    });
+                                }
+                                showMessage++;
+                            }
+                        });
+                    });
+                    if (!opFlag) {
+                        return;
+                    }
+                    dealCommitJson(commitJson);
+                    $.ajax({
+                        url: '${base.contextPath}/hqm/pqc/inspection/c/commitalldetail',
+                        type: 'POST',
+                        data: JSON.stringify(commitJson),
+                        contentType: "application/json",
+                        async: false,
+                        success: function(response) {
+                            if (response.success) {
+                                detailStatus = 'C';
+                                lockInput();
+                                kendo.ui.showInfoDialog({
+                                    message: '成功'
+                                });
+                            } else {
+                                kendo.ui.showWarningDialog({
+                                    message: response.message
+                                });
+                            }
+                        }
+                    });
+                },
+
+                fileUpload: function() { //质检文件
+                    var selectFunction = window.$("#qcFileWindow").kendoWindow({
+                        actions: ["Close"],
+                        width: window.innerWidth * 0.9,
+                        height: window.innerHeight * 0.9,
+                        title: '质检文件管理',
+                        visible: false,
+                        iframe: true,
+                        modal: true,
+                        content: 'qc_files.html'
+                    }).data("kendoWindow");
+                    selectFunction.center().open();
+                }
+            });
+
+            function dealCommitJson(commitJson) {
+                $.each(commitJson, function(i, v) {
+                    v.lineListString = JSON.stringify(v.lineList);
+                    console.log(viewModel.model);
+                    v.headerString = JSON.stringify(viewModel.model);
+                    delete v['lineList'];
+                });
+            }
+
+            function dealDataTime(object) {
+                if (isNotEmpty(object.receiveDate)) {
+                    object.receiveDate = object.receiveDate.replace(/ /, 'T') + '.000Z';
+                }
+                if (isNotEmpty(object.planTime)) {
+                    object.planTime = object.planTime.replace(/ /, 'T') + '.000Z';
+                }
+                if (isNotEmpty(object.inspectionDate)) {
+                    object.inspectionDate = object.inspectionDate.replace(/ /, 'T') + '.000Z';
+                }
+                if (isNotEmpty(object.creationDate)) {
+                    object.creationDate = object.creationDate.replace(/ /, 'T') + '.000Z';
+                }
+                return object;
+            }
+            // kendo.ui.validator.rules.dataPrecision = function (input) {
+            //     if (input.is('[dataPrecision]')) {
+
+            //     }
+            //     return true;
+            // };
+
+            function isNotEmpty(obj) {
+                if (obj != undefined && obj != null && obj != "") {
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+            /**
+             * 刷新snStatus 合格不合格 绿色 红色
+             */
+            function refreshAllStatus() {
+                for (var i = 0; i < maxSampleQty.sampleQty; i++) {
+                    refreshSnStatus(i + '');
+                }
+            }
+
+            function refreshSnStatus(orderNum) {
+                var ngCount = 0;
+                $.each(detailRows, function(index, row) {
+                    $.each(row.lineList, function(j, e) {
+                        if (isNotEmpty(e.data) && e.orderNum == orderNum) {
+                            if (row.standardType == 'M') { //比较数字
+                                if((e.data*1 < row.standradFrom*1 || e.data*1 > row.standradTo*1) && row.standradTo != null && row.standradFrom != null){
+            						ngCount++;
+            					}else if(row.standradFrom != null && e.data*1 < row.standradFrom*1){
+            						ngCount++;
+            					}else if(row.standradTo != null && e.data*1 > row.standradTo*1){
+            						ngCount++;
+            					}
+                            } else { //是否为NG或OK
+                                if (e.data == 'NG') {
+                                    ngCount++;
+                                }
+                            }
+                        }
+                    });
+                });
+                if (ngCount > 0) {
+                    updateLineSnStatus(orderNum, 'NG');
+                } else {
+                    updateLineSnStatus(orderNum, 'OK');
+                }
+            }
+
+            function getDetailByLineId() {
+                $.ajax({
+                    url: '${base.contextPath}/hqm/pqc/inspection/c/getalldetail',
+                    type: 'POST',
+                    data: {
+                        lineId: lineId,
+                    },
+                    async: false,
+                    dataType: "json",
+                    success: function(response) {
+                        if (response.success) {
+                            detailRows = response.rows;
+                            lineListStringToObject(detailRows);
+                            getMaxSampleQty();
+                        } else {
+                            kendo.ui.showWarningDialog({
+                                message: response.message
+                            });
+                        }
+                    }
+                });
+            }
+
+            /**
+             * 检验项行对应的行表D表的数据String转化为Array对象
+             */
+            function lineListStringToObject() {
+                $.each(detailRows, function(i, v) {
+                    v.lineList = JSON.parse(v.lineListString);
+                });
+            }
+            /**
+             * 获取sampleQty最大的检验项行
+             */
+            function getMaxSampleQty() {
+                $.each(detailRows, function(i, v) {
+                    if (v.sampleQty * 1 > maxSampleQty.sampleQty * 1) {
+                        maxSampleQty = v;
+                    }
+                });
+                if(maxSampleQty.sampleQty*180 > 1350)
+            		$("#table-context").width(maxSampleQty.sampleQty*180)
+            }
+
+            /**
+             * 通过orderNum找对应的行表对象
+             */
+            function selectLineDataByOrderNumber(lineList, orderNum) {
+                var returnObj = {};
+                $.each(lineList, function(i, v) {
+                    if (v.orderNum == orderNum) {
+                        returnObj = v;
+                        return false;
+                    }
+                });
+                return returnObj;
+            }
+            //更新inspection_l的对应orderNum的inspection_d中的data字段
+            function updateLineData(connectId, orderNum, value) {
+                $.each(detailRows, function(i, v) {
+                    if (v.connectId == connectId) {
+                        $.each(v.lineList, function(k, w) {
+                            if (w.orderNum == orderNum) {
+                                w.data = value;
+                                return false;
+                            }
+                        });
+                        return false;
+                    }
+                });
+                refreshSnStatus(orderNum);
+            }
+            //更新inspection_l的remark字段
+            function updateRemark(connectId, value) {
+                $.each(detailRows, function(i, v) {
+                    if (v.connectId == connectId) {
+                        v.remark = value;
+                        return false;
+                    }
+                });
+            }
+            //更新inspection_l的对应orderNum的inspection_d中的serialNumber字段
+            function updateLineSerialNumber(orderNum, value) {
+                $.each(detailRows, function(i, v) {
+                    $.each(v.lineList, function(k, w) {
+                        if (w.orderNum == orderNum) {
+                            w.serialNumber = value;
+                            return false;
+                        }
+                    });
+                });
+            }
+
+            function updateLineSnStatus(orderNum, value) {
+                $.each(detailRows, function(i, v) {
+                    $.each(v.lineList, function(k, w) {
+                        if (w.orderNum == orderNum) {
+                            w.snStatus = value;
+                            return false;
+                        }
+                    });
+                });
+                if (value == 'NG') {
+                    $('span.thead.snStatus[order-num="' + orderNum + '"]').text(value).css('color', 'red');
+                } else {
+                    $('span.thead.snStatus[order-num="' + orderNum + '"]').text(value).css('color', 'green');
+                }
+
+            }
+            /**
+             * 绘制表头数据
+             */
+            function loadHead() {
+                var array = new Array();
+                //title row1
+                array.push('<tr>');
+                array.push('<th style="width:30px;" rowspan="3">');
+                array.push('#');
+                array.push('</th>');
+                array.push('<th style="width: 100px;" rowspan="3">');
+                array.push('<@spring.message "检验项目"/>'); //检验项目 列头
+                array.push('</th>');
+                array.push('<th style="width: 480px;" rowspan="3">');
+            	array.push('<@spring.message "检验要求"/>');//
+            	array.push('</th>');
+                array.push('<th style="width: 100px;" rowspan="3">');
+                array.push('<@spring.message "规格值"/>');
+                array.push('</th>');
+                $.each(maxSampleQty.lineList, function(i, v) {
+                    array.push('<th style="width: 185px;">');
+                    array.push('<@spring.message "SN号"/>');
+                    array.push('</th>');
+                });
+                array.push('</th>');
+                array.push('<th rowspan="3" style="width: 185px;">');
+                array.push('<@spring.message "备注"/>');
+                array.push('</th>');
+                array.push('</tr>');
+
+                //title row2
+                array.push('<tr>');
+                for (var i = 0; i < maxSampleQty.sampleQty * 1; i++) {
+                    var forObj = selectLineDataByOrderNumber(maxSampleQty.lineList, i);
+                    var value = isNotEmpty(forObj.serialNumber) ? forObj.serialNumber : '';
+                    array.push('<th style="width: 185px;">');
+                    array.push('<input class="thead serialNumber" style="width:100%" connect-id="' + maxSampleQty.connectId + '" order-num="' + i + '" value="' + value + '" data-role="maskedtextbox"/>');
+                    array.push('</th>');
+                }
+                array.push('</tr>');
+
+                //title row3
+                array.push('<tr>');
+                for (var i = 0; i < maxSampleQty.sampleQty * 1; i++) {
+                    var forObj = selectLineDataByOrderNumber(maxSampleQty.lineList, i);
+                    var value = forObj.snStatus ? forObj.snStatus : 'OK';
+                    array.push('<th style="width: 185px;">');
+                    if (value == 'NG') {
+                        array.push('<span class="thead snStatus" style="color:red;" connect-id="' + maxSampleQty.connectId + '" order-num="' + i + '">' + value + '</span>');
+                    } else {
+                        array.push('<span class="thead snStatus" style="color:green;" connect-id="' + maxSampleQty.connectId + '" order-num="' + i + '">' + value + '</span>');
+                    }
+                    array.push('</th>');
+                }
+                array.push('</tr>');
+                $('#tableThead').append(array.join(''));
+                headBind();
+            }
+            //标题输入框注册kendo组建
+            function headBind() {
+                $('#tableThead input').kendoMaskedTextBox({
+                    change: function() {
+                        var orderNum = this.element.attr('order-num');
+                        var connectId = this.element.attr('connect-id');
+                        updateLineSerialNumber(orderNum, this.value());
+                    }
+                });
+            }
+
+            /**
+             * 加载表体数据
+             */
+            function loadBody() {
+                var array = new Array();
+                $.each(detailRows, function(index, row) {
+                    //行序列
+                    array.push('<tr>');
+                    array.push('<td row-number="' + (index + 1) + '" style="width: 30px;">');
+                    array.push('' + (index + 1));
+                    array.push('</td>');
+                    //检验项目
+                    array.push('<td style="white-space: nowrap;">');
+                    array.push('' + row.inspectionAttribute);
+                    array.push('</td>');
+                  	//检验要求 inspectionTool
+	           		 array.push('<td style="word-break:break-all;">');
+	           		 array.push(''+row.inspectionTool);
+	           		 array.push('</td>');
+                    //规格
+                    array.push('<td>');
+                    array.push('' + spliceStandard(row));
+                    array.push('</td>');
+                    //all检验项
+                    for (var i = 0; i < maxSampleQty.sampleQty * 1; i++) {
+                        var forObj = selectLineDataByOrderNumber(row.lineList, i);
+                        var value = isNotEmpty(forObj.data) ? forObj.data : '';
+                        if (isNotEmpty(forObj.dataId)) {
+                            array.push('<td>');
+                            if (row.standardType == 'M') {
+                                array.push('<input dataPrecision class="tbody data" style="width:100%" standard-type="' + row.standardType +
+                                    '" connect-id="' + row.connectId +
+                                    '" order-num="' + i +
+                                    '" value="' + value + '" data-role="maskedtextbox"/>');
+                            } else {
+                                array.push('<input class="tbody data" style="width:100%" standard-type="' + row.standardType +
+                                    '" connect-id="' + row.connectId +
+                                    '" order-num="' + i +
+                                    '" value="' + value + '" data-role="combobox"/>');
+                            }
+                            array.push('</td>');
+                        } else {
+                            array.push('<td style="background-color: #EEEEEE;">');
+                            array.push('</td>');
+                        }
+                    }
+                    array.push('<td>');
+                    array.push('<input class="tbody serialNumber" style="width:100%" standard-type="' + row.standardType +
+                        '" connect-id="' + row.connectId +
+                        '" value="' + (row.remark ? row.remark : '') + '" data-role="maskedtextbox-remark"/>');
+                    array.push('</td>');
+                    array.push('</tr>');
+                });
+                $('#tableTbody').append(array.join(''));
+                bodyBind();
+            }
+
+            /**
+             * body内容输入框注册kendo组件绑定
+             */
+            function bodyBind() {
+                $('#tableTbody input[data-role="maskedtextbox"]').kendoMaskedTextBox({
+                    change: function() {
+                        var orderNum = this.element.attr('order-num');
+                        var connectId = this.element.attr('connect-id');
+                        var value = clearNoNumNoPrecision(this.value());
+                        this.element.val(value);
+                        var connectId = this.element.attr('connect-id');
+                        var obj = {};
+                        $.each(detailRows, function(i, v) {
+                            if (v.connectId == connectId) {
+                                obj = v;
+                                return false;
+                            }
+                        });
+                        if (isNotEmpty(value) && (value * 1 < obj.standradFrom * 1 || value * 1 > obj.standradTo * 1)) {
+                            this.element.css('color', 'red');
+                        } else {
+                            this.element.css('color', 'black');
+                        }
+                        var validator = this.element.kendoValidator(validate).data("kendoValidator");
+                        updateLineData(connectId, orderNum, value);
+                    }
+                });
+                $('#tableTbody input[data-role="combobox"]').kendoComboBox({
+                    dataTextField: "meaning",
+                    dataValueField: "value",
+                    dataSource: ngOk,
+                    change: function() {
+                        var orderNum = this.element.attr('order-num');
+                        var connectId = this.element.attr('connect-id');
+                        var value = this.value();
+                        if (value == 'NG') {
+                            this.element.siblings('span').children('input').css('color', 'red');
+                        } else {
+                            this.element.siblings('span').children('input').css('color', 'black');
+                        }
+                        updateLineData(connectId, orderNum, this.value());
+                    }
+                });
+                $('#tableTbody input[data-role="maskedtextbox-remark"]').kendoMaskedTextBox({
+                    change: function() {
+                        var connectId = this.element.attr('connect-id');
+                        updateRemark(connectId, this.value());
+                    }
+                });
+                $.each($('#tableTbody input[order-num]'), function(i, v) {
+                    if ($(v).attr("data-role") == 'maskedtextbox') {
+                        var connectId = $(v).attr('connect-id');
+                        var obj = {};
+                        $.each(detailRows, function(j, e) {
+                            if (e.connectId == connectId) {
+                                obj = e;
+                            }
+                        });
+                        if (isNotEmpty($(v).attr('value'))) {
+                            if (($(v).attr('value')) * 1 < obj.standradFrom * 1 || ($(v).attr('value')) * 1 > obj.standradTo * 1) {
+                                $(v).css('color', 'red');
+                            }
+                        }
+                    } else {
+                        if ($(v).attr('value') == 'NG') {
+                            $(v).siblings('span').children('input').val($(v).attr('value')).css('color', 'red');
+                        } else {
+                            $(v).siblings('span').children('input').val($(v).attr('value'));
+                        }
+                    }
+                });
+            }
+
+            //规格值从-规格值至规格单位
+            function spliceStandard(dataItem) {
+                if (!dataItem.standradFrom) {
+                    return "";
+                }
+                var v = dataItem.standradFrom + "-" + dataItem.standradTo + dataItem.standradUom;
+                return v;
+            }
+
+            function closeWindow() {
+                window.parent.$('#childrenWindow').data('kendoWindow').close();
+            }
+        </script>
+        <script>
+            function lockInput() {
+                if (detailStatus == 'C') {
+                    $("#saveDetail").hide();
+                    $("#commitDetail").hide();
+                    $("#fileUpload").hide();
+                    $('input[data-role="maskedtextbox-remark"]').each(function(i, v) {
+                        $(v).data('kendoMaskedTextBox').enable(false);
+                    });
+                    $('input[data-role="combobox"]').each(function(i, v) {
+                        $(v).data('kendoComboBox').enable(false);
+                    });
+                    $('input[data-role="maskedtextbox"]').each(function(i, v) {
+                        $(v).data('kendoMaskedTextBox').enable(false);
+                    });
+                }
+            }
+
+            function clearNoNum(value, precision) {
+                if (!precision) {
+                    return value;
+                }
+                value = value.replace(/[^\d.]/g, ""); //清除"数字"和"."以外的字符  
+                value = value.replace(/^\./g, ""); //验证第一个字符是数字而不是  
+                value = value.replace(/\.{2,}/g, "."); //只保留第一个. 清除多余的  
+                value = value.replace(".", "$#$").replace(/\./g, "").replace("$#$", ".");
+                value = (value * 1);
+                return value;
+            }
+
+            function clearNoNumNoPrecision(value) {
+                if (!isNotEmpty(value)) {
+                    return value;
+                }
+                value = value.replace(/[^\d.]/g, ""); //清除"数字"和"."以外的字符  
+                value = value.replace(/^\./g, ""); //验证第一个字符是数字而不是  
+                value = value.replace(/\.{2,}/g, "."); //只保留第一个. 清除多余的  
+                value = value.replace(".", "$#$").replace(/\./g, "").replace("$#$", ".");
+                return value;
+            }
+
+            function getPoint(value) {
+                //获取小数点之后的字符长度
+                var pointLength = 0;
+                value = value + '';
+                if (value.indexOf('.') < 0) {
+                    return pointLength;
+                } else {
+                    pointLength = value.split('.')[1].length;
+                    return pointLength;
+                }
+            }
+        </script>
+        <div id="qcFileWindow"></div>
+        <div id="page-content">
+            <div class="pull-left" id="toolbar-btn" style="padding-bottom:10px;">
+                <span id="saveDetail" class="btn btn-success fa fa-save" data-bind="click:saveDetail" style="float:left;margin-right:5px;">&nbsp;<@spring.message "保存"/></span>
+                <span id="commitDetail" class="btn btn-primary" data-bind="click:commitDetail" style="float:left;margin-right:5px;">&nbsp;<@spring.message "提交"/></span>
+                <span id="fileUpload" class="btn btn-warning fa fa-file-o" data-bind="click:fileUpload" style="float:left;margin-right:5px;">&nbsp;<@spring.message "文件上传"/></span>
+                <span type="button" class="btn btn-primary fa fa-undo" style="float:left;margin-right:5px" onClick="closeWindow()">&nbsp;<@spring.message "hap.back"/></span>
+            </div>
+            <script>
+                kendo.bind($('#toolbar-btn'), viewModel);
+            </script>
+
+                <div id="table-context" style="clear:both">
+                    <table class="context table table-bordered">
+                        <thead id="tableThead">
+
+                        </thead>
+                        <tbody id="tableTbody">
+
+                        </tbody>
+                    </table>
+                </div>
+        </div>
+
+        <script type="text/javascript">
+            $(function() {
+                getDetailByLineId();
+                loadHead();
+                loadBody();
+                lockInput();
+            });
+        </script>
+    </body>
+
+    </html>

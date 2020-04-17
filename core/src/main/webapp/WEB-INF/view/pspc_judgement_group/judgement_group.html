@@ -1,0 +1,604 @@
+<#include "../include/header.html">
+<script src="${base.contextPath}/common/code?PSPC_JUDGEMENT=PSPC.JUDGEMENT" type="text/javascript"></script>
+
+<script type="text/javascript">
+    var headId = "";
+    var standard = "";
+    var viewModel = Hap.createGridViewModel("#grid",{
+        model:{},
+        save:function () {
+            //重写保存方法，保存完毕之后再查询一遍
+            $('#grid').data('kendoGrid').saveChanges();
+            $('#grid').data('kendoGrid').dataSource.page(1);
+        },
+        remove: function () {
+            // if(standard!="N") {
+                Hap.deleteGridSelection({
+                    grid: $('#grid')
+                });
+            // }
+        },
+    });
+
+    var lineViewModel = Hap.createGridViewModel("#lineGrid",{
+        model:{},
+        PSPC_JUDGEMENT:PSPC_JUDGEMENT,
+        create: function(){
+            //行新建的时候，如果没有找到头id，则不给新建
+            if(ifNotNull(headId)&&standard!="N"){
+                $('#lineGrid').data('kendoGrid').addRow();
+                return;
+            }
+        },
+        save: function () {
+            if(standard!="N") {
+                $('#lineGrid').data('kendoGrid').saveChanges();
+            }
+        },
+        remove: function () {
+            if(standard!="N") {
+                Hap.deleteGridSelection({
+                    grid: $('#lineGrid')
+                });
+            }
+        },
+    });
+
+
+</script>
+<body>
+<div id="page-content">
+    <div class="row" style="margin: 5px">
+        <div class="pull-left" id="toolbar-btn" style="padding-bottom:10px;">
+            <span class="btn btn-primary k-grid-add" style="float:left;margin-right:5px;" data-bind="click:create"><@spring.message "hap.new"/></span>
+            <span class="btn btn-success k-grid-save-changes" data-bind="click:save"
+                  style="float:left;margin-right:5px;"><@spring.message "hap.save"/></span>
+            <span data-bind="click:remove" class="btn btn-danger"
+                  style="float:left;"><@spring.message "hap.delete"/></span>
+        </div>
+        <script>kendo.bind($('#toolbar-btn'), viewModel);</script>
+        <div class="pull-right" id="query-form" style="padding-bottom:10px;">
+            <!--判异规则组-->
+            <input type="text" data-role="maskedtextbox" style="float:left;width:150px;margin-right:5px;" placeholder="<@spring.message 'pspcjudgementgroup.judgementgroupcode'/>"
+                   data-bind="value:model.judgementGroupCode" class="k-textbox">
+            <!--描述-->
+            <input type="text" data-role="maskedtextbox" style="float:left;width:150px;margin-right:5px;" placeholder="<@spring.message 'pspcjudgementgroup.description'/>"
+                   data-bind="value:model.description" class="k-textbox">
+            <span class="btn btn-default" style="float:left;width:70px;margin-right: 5px" data-bind="click:reset"
+                  type="submit"><@spring.message "hap.reset"/></span>
+            <span class="btn btn-primary" style="float:left;width:70px" data-bind="click:query" type="submit"><@spring.message "hap.query"/></span>
+            <div style="clear:both"></div>
+        </div>
+        <script>kendo.bind($('#query-form'), viewModel);</script>
+    </div>
+
+    <!--头 grid div-->
+    <div style="clear:both" id="div1">
+        <div id="grid"></div>
+    </div>
+</div>
+
+<!--行按钮-->
+<div class="row" style="margin: 5px">
+    <div class="pull-left" id="toolbar-btn2" style="padding-bottom:10px;">
+        <span id="new" class="btn btn-primary k-grid-add" style="float:left;margin-right:5px;margin-left:15px;"
+              data-bind="click:create"><@spring.message "hap.new"/></span>
+        <span id="save" class="btn btn-success k-grid-save-changes" data-bind="click:save"
+              style="float:left;margin-right:5px;"><@spring.message "hap.save"/></span>
+        <span id="delete" data-bind="click:remove" class="btn btn-danger"
+              style="float:left;"><@spring.message "hap.delete"/></span>
+    </div>
+    <script>
+        kendo.bind($('#toolbar-btn2'), lineViewModel);
+    </script>
+    <div class="pull-right" id="query-form2" style="padding-bottom:10px;">
+
+        <!--规则简称-->
+        <input type="text" data-role="maskedtextbox" style="width:150px;margin-right:5px;" placeholder="<@spring.message 'pspcjudgement.judgementshortabbr'/>"
+               data-bind="value:model.judgementShortCode" class="k-textbox">
+
+
+        <!--判异规则-->
+        <input id="judgementCode" type="text" style="width:150px;margin-right:5px;" placeholder="<@spring.message 'pspcjudgement.judgementcode'/>"
+               data-bind="value:model.judgementCode">
+        <script>
+            $("#judgementCode").kendoComboBox({
+                dataTextField: "meaning",
+                dataValueField: "value",
+                valuePrimitive: true,
+                dataSource: PSPC_JUDGEMENT
+            });
+        </script>
+
+        <span class="btn btn-default" style="width:70px;margin-right: 5px" data-bind="click:reset"
+              type="submit"><@spring.message "hap.reset"/></span>
+        <span class="btn btn-primary" style="float:right;margin-right:5px;width:70px" data-bind="click:query" type="submit"><@spring.message "hap.query"/></span>
+
+        <div style="clear:both"></div>
+    </div>
+    <script>kendo.bind($('#query-form2'), lineViewModel);</script>
+</div>
+
+<!--行gird-->
+<div id="line-content" style="clear:both;margin: 5px;margin-top: 10px">
+    <div id="lineGrid"></div>
+</div>
+
+<script>kendo.bind($('#page-content'), viewModel);</script>
+<script>kendo.bind($('#line-content'), lineViewModel);</script>
+
+<script type="text/javascript">
+    Hap.initEnterQuery('#query-form', viewModel.query);
+    var BaseUrl = _basePath;
+    dataSource = new kendo.data.DataSource({
+        transport: {
+            read: {
+                url: BaseUrl + "/pspc/judgement/group/query",
+                type: "POST",
+                dataType: "json"
+            },
+            update: {
+                url: BaseUrl + "/pspc/judgement/group/submit",
+                type: "POST",
+                contentType: "application/json",
+                async:false //设置同步，等待保存完毕后再执行其他操作
+            },
+            destroy: {
+                url: BaseUrl + "/pspc/judgement/group/remove",
+                type: "POST",
+                contentType: "application/json"
+            },
+            create: {
+                url: BaseUrl + "/pspc/judgement/group/submit",
+                type: "POST",
+                contentType: "application/json",
+                async:false //设置同步，等待保存完毕后再执行其他操作
+            },
+            parameterMap: function (options, type) {
+                if (type !== "read" && options.models) {
+                    var datas = Hap.prepareSubmitParameter(options, type);
+                    for(var i = 0; i<datas.length;i++)
+                    {
+                        datas[i].tenantId = "-1";
+                        datas[i].siteId = "-1";
+                    }
+                    return kendo.stringify(datas);
+                } else if (type === "read") {
+                    return Hap.prepareQueryParameter(viewModel.model.toJSON(), options)
+                }
+            }
+        },
+        batch: true,
+        serverPaging: true,
+        pageSize: 10,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+                id: "judgementGroupId",
+                fields: {
+                    judgementStatus:{
+                        type: "boolean",
+                        checkedValue: "Y",
+                        uncheckedValue: "N",
+                        defaultValue: "Y"
+                    },
+                    judgementGroupCode: {
+                        validation: {
+                            required: true,
+                            required: {message: "请选择判异规则组"}
+                        }
+                    },
+                },
+                editable: function (col) {
+                    //设置新增后不可编辑
+                    if (col == 'judgementGroupCode'||col == 'judgementGroupCopy') {
+                        if (!this.id==null || !this.isNew()) {
+                            return false;
+                        }
+                        return true;
+                    }
+
+                    //设置不可编辑
+                    if (col == 'xxx'){
+                        return false;
+                    }
+                    return true;
+                }
+            }
+        }
+    });
+
+    $("#grid").kendoGrid({
+        dataSource: dataSource,
+        resizable: true,
+        scrollable: true,
+        navigatable: false,
+        selectable: 'multiple, rowbox',
+        dataBound: function () {
+            if (parent.autoResizeIframe) {
+                parent.autoResizeIframe('${RequestParameters.functionCode!}')
+            }
+
+            var rows = this.items();
+            $(rows).each(function () {
+                var index = $(this).index() + 1;
+                var rowLabel = $(this).find(".row-number");
+                $(rowLabel).html(index);
+            });
+        },
+        pageable: {
+            pageSizes: [5, 10, 20, 50],
+            refresh: true,
+            buttonCount: 5
+        },
+        columns: [
+            // {
+            //     field: "judgementGroupId",
+            //     title: '<@spring.message "judgementgroup.judgementgroupcode"/>',
+            //     width: 120,
+            //     attributes: {style: "text-align:center"},
+            //     headerAttributes: {style: "text-align:center"}
+            // },
+            // {
+            //     field: "tenantId",
+            //     title: '<@spring.message "judgementgroup.tenantid"/>',
+            //     width: 120
+            // },
+            // {
+            //     field: "siteId",
+            //     title: '<@spring.message "judgementgroup.siteid"/>',
+            //     width: 120
+            // },
+            {
+                field: "",
+                title: '<@spring.message "pspcjudgementgroup.serialnumber"/>',
+                template: "<span class='row-number'></span>",
+                width: 50,
+                attributes: {style: "text-align:center"},
+                headerAttributes: {style: "text-align:center"},
+            },
+            {
+                field: "judgementGroupCode",
+                title: '<@spring.message "pspcjudgementgroup.judgementgroupcode"/>',
+                width: 120,
+                attributes: {style: "text-align:center;"},
+                headerAttributes: {style: "text-align:center"}
+            },
+            {
+                field: "description",
+                title: '<@spring.message "pspcjudgementgroup.description"/>',
+                width: 120,
+                attributes: {style: "text-align:center"},
+                headerAttributes: {style: "text-align:center"}
+            },
+            {
+                field: "judgementStatus",
+                title: '<@spring.message "pspcjudgementgroup.judgementstatus"/>',
+                width: 120,
+                attributes: {style: "text-align:center;"},
+                headerAttributes: {style: "text-align:center"}
+            },
+            // {
+            //     field: "standard",
+            //     title: '<@spring.message "judgementgroup.standard"/>',
+            //     width: 120
+            // },
+            {
+                field: "judgementGroupCopy",
+                title: '<@spring.message "pspcjudgementgroup.judgementcopy"/>',
+                width: 120,
+                attributes: {style: "text-align:center;"},
+                headerAttributes: {style: "text-align:center"},
+                template: function (dataItem) {
+                    return ''
+                },
+                editor: function (container, options) {
+                    $('<input name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoLov($.extend(<@lov "PSPC_PSPC_JUDGEMENT_GROUP" />, {
+                        valueField: "judgementGroupCopy",
+                        textField: "judgementGroupCopyCode",
+                        model: options.model,
+                        select: function(e) {
+                            options.model.set("judgementGroupCopy", e.item.judgementGroupId);
+                            options.model.set("judgementGroupCopyCode", e.item.judgementGroupCode);
+                        }
+                    }));
+                },
+            },
+        ],
+        editable: true
+    });
+
+    //行点击事件
+    myGrid2 = $("#grid").data("kendoGrid");
+    $("#grid").on('click', 'td', function () {
+        $("#div1 table tr").css("background-color","#fff");
+        var rowIndex = $(this).parent().index();
+        $(this).parent().css("backgroundColor", "#ECF3F8");
+        var data = myGrid2.dataSource.data()[rowIndex];
+        if(!data.judgementGroupId){
+        }else{
+            headId = data.judgementGroupId;
+            //给行表的lineViewModel传入头ID，以便在查行表数据的时候根据头ID做限制
+            lineViewModel.model.set("judgementGroupId",headId);
+            standard = data.standard;
+            $('#lineGrid').data('kendoGrid').dataSource.page(1);
+        }
+    });
+
+
+    lineDataSource = new kendo.data.DataSource({
+        transport: {
+            read: {
+                url: BaseUrl + "/pspc/judgement/query",
+                type: "POST",
+                dataType: "json"
+            },
+            update: {
+                url: BaseUrl + "/pspc/judgement/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            destroy: {
+                url: BaseUrl + "/pspc/judgement/remove",
+                type: "POST",
+                contentType: "application/json"
+            },
+            create: {
+                url: BaseUrl + "/pspc/judgement/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            parameterMap: function (options, type) {
+                if (type !== "read" && options.models) {
+                    var datas = Hap.prepareSubmitParameter(options, type);
+                    for(var i = 0; i<datas.length;i++)
+                    {
+                        datas[i].judgementGroupId = headId;
+                        datas[i].tenantId = "-1";
+                        datas[i].siteId = "-1";
+                        datas[i].standard = standard;
+                        if(!ifNotNull(datas[i].limitData) && ifNotNull(datas[i].lengthData)){
+                            datas[i].limitData = datas[i].lengthData;
+                        }
+                        if(!ifNotNull(datas[i].lengthData) && ifNotNull(datas[i].limitData)){
+                            datas[i].lengthData = datas[i].limitData;
+                        }
+                    }
+                    return kendo.stringify(datas);
+                } else if (type === "read") {
+                    return Hap.prepareQueryParameter(lineViewModel.model.toJSON(), options);
+                }
+            }
+        },
+        batch: true,
+        serverPaging: true,
+        pageSize: 10,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+                id: "judgementId",
+                fields: {
+                    limitData:{
+                        type :"number",
+                        defaultValue: null,
+                        validation: {
+                            min:0,
+                            required: true,
+                            required: {message: "请输入$"}
+                        }
+                    },
+                    lengthData:{
+                        type :"number",
+                        defaultValue: null,
+                        validation: {
+                            min:0,
+                            required: true,
+                            required: {message: "请输入#"}
+                        }
+                    },
+                    judgementShortCode: {
+                        validation: {
+                            required: true,
+                            required: {message: "请输入规则简称"}
+                        }
+                    },
+                    judgementCode: {
+                        validation: {
+                            required: true,
+                            required: {message: "请输入判异规则"}
+                        }
+                    },
+                    messageTypeCode: {
+                        validation: {
+                            required: true,
+                            required: {message: "请输入消息类型"}
+                        }
+                    },
+                },
+                editable: function (col) {
+                    //设置新增后不可编辑
+                    if (col == 'xxx') {
+                        if (!this.id==null || !this.isNew()) {
+                            return false;
+                        }
+                        return true;
+                    }
+                    //判异规则中有$ $那一列才可编辑，#列同理
+                    if(col == 'limitData'){
+                        var meaning = getMeaningByValue(PSPC_JUDGEMENT,this.judgementCode);
+                        if(this.judgementCode && meaning && meaning.indexOf('$') != -1){
+                            return true;
+                        }else{
+                            return false;
+                        }
+                    }
+                    if(col == 'lengthData'){
+                        var meaning = getMeaningByValue(PSPC_JUDGEMENT,this.judgementCode);
+                        if(this.judgementCode && meaning && meaning.indexOf('#') != -1){
+                            return true;
+                        }else{
+                            return false;
+                        }
+                    }
+
+                    //设置不可编辑
+                    if (standard=="N" && !this.isNew()) {
+                        alert(3);
+                        if ( col == 'judgementShortCode'||col == 'judgementCode'||col == 'limitData'||col == 'lengthData'||col == 'messageTypeCode') {
+                            return false;
+                        }
+                    }else if(standard!="N" && !this.isNew()){
+                        if (col == 'judgementCode') {
+
+                            return false;
+                        }
+
+                    }
+                    return true;
+                }
+            }
+        }
+    });
+
+    $("#lineGrid").kendoGrid({
+        dataSource: lineDataSource,
+        resizable: true,
+        scrollable: true,
+        navigatable: false,
+        autoBind:false, //进入页面的时候禁止自动查询
+        selectable: 'multiple, rowbox',
+        dataBound: function () {
+            if (parent.autoResizeIframe) {
+                parent.autoResizeIframe('${RequestParameters.functionCode!}')
+            }
+
+            var rows = this.items();
+            $(rows).each(function () {
+                var index = $(this).index() + 1;
+                var rowLabel = $(this).find(".row-number");
+                $(rowLabel).html(index);
+            });
+        },
+        pageable: {
+            pageSizes: [5, 10, 20, 50],
+            refresh: true,
+            buttonCount: 5
+        },
+        columns: [
+            {
+                field: "",
+                title: '<@spring.message "pspcjudgementgroup.serialnumber"/>',
+                template: "<span class='row-number'></span>",
+                width: 50,
+                attributes: {style: "text-align:center"},
+                headerAttributes: {style: "text-align:center"},
+            },
+            {
+                field: "judgementShortCode", //规则简称
+                title: '<@spring.message "pspcjudgement.judgementshortabbr"/>',
+                width: 120,
+                attributes: {style: "text-align:center;"},
+                headerAttributes: {style: "text-align:center"}
+            },
+            {
+                field: "judgementCode",//判异规则
+                title: '<@spring.message "pspcjudgement.judgementcode"/>',
+                width: 120,
+                attributes: {style: "text-align:center;"},
+                headerAttributes: {style: "text-align:center"},
+                template: function (dataItem) {
+                    var v = dataItem.judgementCode;
+                    $.each(PSPC_JUDGEMENT, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return false;
+                        }
+                    })
+                    return v||"";
+                },
+                editor: function (container, options) {
+                    $('<input name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            dataTextField: "meaning",
+                            dataValueField: "value",
+                            dataSource: PSPC_JUDGEMENT,
+                            valuePrimitive: true,
+                            select:function (dataItem) {
+                                options.model.judgementDesc = dataItem.item.meaning;
+                            }
+                        });
+                }
+            },
+            {
+                field: "limitData", //$
+                title: '<@spring.message "$"/>',
+                width: 120,
+                attributes: {style: "text-align:center;"},
+                headerAttributes: {style: "text-align:center"}
+            },
+            {
+                field: "lengthData", //#
+                title: '<@spring.message "#"/>',
+                width: 120,
+                attributes: {style: "text-align:center;"},
+                headerAttributes: {style: "text-align:center"}
+            },
+            {
+                field: "messageTypeCode", //消息类型
+                title: '<@spring.message "pspcjudgement.messagetypecode"/>',
+                width: 120,
+                attributes: {style: "text-align:center;"},
+                headerAttributes: {style: "text-align:center"},
+                template: function (dataItem) {
+                    return dataItem.messageTypeCode || ''
+                },
+                editor: function (container, options) {
+                    $('<input name="' + options.field + '"  required/>')
+                        .appendTo(container)
+                        .kendoLov($.extend(<@lov "PSPC_PSPC_MESSAGE_TYPE" />, {
+                        valueField: "messageTypeId",
+                        textField: "messageTypeCode",
+                        model: options.model,
+                        select: function(e) {
+                            options.model.set("messageTypeCode", e.item.messageTypeCode);
+                        }
+                    }));
+                },
+            },
+            // {
+            //     field: "judgementGroupId",
+            //     title: '<@spring.message "judgement.judgementgroupid"/>',
+            //     width: 120
+            // },
+        ],
+        editable: true
+    });
+
+
+
+    //非空校验
+    function ifNotNull(data) {
+        if(data != null && data !== "" && data != undefined){
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * 通过code找value
+     */
+    function getMeaningByValue(codeData,value) {
+        for (var i = 0; i < codeData.length; i++) {
+            if(codeData[i].value == value){
+                return codeData[i].meaning;
+            }
+        }
+    }
+</script>
+</body>
+</html>

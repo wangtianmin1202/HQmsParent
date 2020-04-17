@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.file_classify.mapper.ClassifyMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.file_classify.dto.Classify">
+        <result column="CLASSIFY_ID" property="classifyId" jdbcType="DECIMAL" />
+        <result column="CLASSIFY_CODE" property="classifyCode" jdbcType="VARCHAR" />
+        <result column="CLASSIFY_DESCRIPTIONS" property="classifyDescriptions" jdbcType="VARCHAR" />
+        <result column="PARENT_CLASSIFY_ID" property="parentClassifyId" jdbcType="DECIMAL" />
+        <result column="MAIN_CLASSIFY_CODE" property="mainClassifyCode" jdbcType="VARCHAR" />
+        <result column="ENABLE_FLAG" property="enableFlag" jdbcType="VARCHAR" />
+    </resultMap>
+
+
+ <select id="myselect" parameterType="com.hand.hqm.file_classify.dto.Classify" resultMap="BaseResultMap">
+      /*从头找到所有根数据  */
+select *
+   from FILE_CLASSIFY h
+  start with h.classify_id = #{classifyId}
+connect by prior h.classify_id = h.parent_classify_id
+    </select>
+    
+    
+ <select id="selectParentInvalid" parameterType="com.hand.hqm.file_classify.dto.Classify" resultMap="BaseResultMap">
+       select h.* from FILE_CLASSIFY h where h.parent_classify_id is null 
+            <if test="classifyCode != null and classifyCode != ''">
+                and h.CLASSIFY_CODE like concat('%',concat(#{classifyCode,jdbcType=VARCHAR},'%'))
+            </if>
+             <if test="classifyId != null ">
+                and h.CLASSIFY_ID = #{classifyId} 
+            </if>
+            
+    </select>
+    
+  <select id="selectInvalidByParent" parameterType="com.hand.hqm.file_classify.dto.Classify" resultMap="BaseResultMap">
+      select h.* from FILE_CLASSIFY h where
+             h.PARENT_CLASSIFY_ID =#{parentClassifyId}      
+    </select>  
+    
+    
+   
+</mapper>

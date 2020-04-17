@@ -1,0 +1,1032 @@
+<#include "../include/header.html">
+<script src="${base.contextPath}/common/code?EXTRA_ATTRITUBE=PSPC.DATA.EXTRA.ATTRITUBE" type="text/javascript"></script>
+<script type="text/javascript">
+    var viewModel = Hap.createGridViewModel("#grid");
+
+    // 数据查询
+    viewModel.query = function () {
+        if(viewModel.model.ceGroupId==undefined||viewModel.model.ceParameterId==undefined||viewModel.model.attachmentGroupId==undefined||viewModel.model.ceGroupId==undefined||viewModel.model.startTime==undefined||viewModel.model.endTime==undefined){
+            kendo.ui.showErrorDialog({message:"控制要素组、控制要素、附着对象组、时间为必输条件!"});
+            return;
+        }else {
+
+            //校验时间范围一个月
+            var days = (viewModel.model.endTime.getTime()-viewModel.model.startTime.getTime())/1000/60/60/24;
+            if(days > 30){
+                errorMsg = '时间跨度不能大于1个月';
+                kendo.ui.showErrorDialog({message:errorMsg});
+                return;
+            }
+
+            $("#grid").data("kendoGrid").dataSource.read();
+            var data = $("#grid").data("kendoGrid")._data;
+            hideOrShowCol(data);
+
+        }
+    }
+
+    // 用于列数据和标题的显示
+    function hideOrShowCol(data) {
+        var flag1= false;
+        var title1 = "";
+        var flag2= false;
+        var title2 = "";
+        var flag3= false;
+        var title3 = "";
+        var flag4= false;
+        var title4 = "";
+        var flag5= false;
+        var title5 = "";
+        var flag6= false;
+        var title6 = "";
+        var flag7= false;
+        var title7 = "";
+        var flag8= false;
+        var title8 = "";
+        var flag9= false;
+        var title9 = "";
+        var flag10= false;
+        var title10 = "";
+        var flag11= false;
+        var title11 = "";
+        var flag12= false;
+        var title12 = "";
+        var flag13= false;
+        var title13 = "";
+        var flag14= false;
+        var title14 = "";
+        var flag15= false;
+        var title15 = "";
+        console.log(data);
+        for(var i=0;i<data.length;i++){
+
+            if(data[i].attribute1!=null&&data[i].attribute1!=""&&data[i].attribute1!=undefined){
+                flag1 = true;
+                title1 = Hap.getCodeMeaning(data[i].attribute1Title,EXTRA_ATTRITUBE);
+            }
+            if(data[i].attribute2!=null&&data[i].attribute2!=""&&data[i].attribute2!=undefined){
+                flag2 = true;
+                title2 = Hap.getCodeMeaning(data[i].attribute2Title,EXTRA_ATTRITUBE);
+            }
+            if(data[i].attribute3!=null&&data[i].attribute3!=""&&data[i].attribute3!=undefined){
+                flag3 = true;
+                title3 = Hap.getCodeMeaning(data[i].attribute3Title,EXTRA_ATTRITUBE);
+            }
+            if(data[i].attribute4!=null&&data[i].attribute4!=""&&data[i].attribute4!=undefined){
+                flag4 = true;
+                title4 = Hap.getCodeMeaning(data[i].attribute4Title,EXTRA_ATTRITUBE);
+            }
+            if(data[i].attribute5!=null&&data[i].attribute5!=""&&data[i].attribute5!=undefined){
+                flag5 = true;
+                title5 = Hap.getCodeMeaning(data[i].attribute5Title,EXTRA_ATTRITUBE);
+            }
+            if(data[i].attribute6!=null&&data[i].attribute6!=""&&data[i].attribute6!=undefined){
+                flag6 = true;
+                title6 = Hap.getCodeMeaning(data[i].attribute6Title,EXTRA_ATTRITUBE);
+            }
+            if(data[i].attribute7!=null&&data[i].attribute7!=""&&data[i].attribute7!=undefined){
+                flag7 = true;
+                title7 = Hap.getCodeMeaning(data[i].attribute7Title,EXTRA_ATTRITUBE);
+            }
+            if(data[i].attribute8!=null&&data[i].attribute8!=""&&data[i].attribute8!=undefined){
+                flag8 = true;
+                title8 = Hap.getCodeMeaning(data[i].attribute8Title,EXTRA_ATTRITUBE);
+            }
+            if(data[i].attribute9!=null&&data[i].attribute9!=""&&data[i].attribute9!=undefined){
+                flag9 = true;
+                title9 = Hap.getCodeMeaning(data[i].attribute9Title,EXTRA_ATTRITUBE);
+            }
+            if(data[i].attribute10!=null&&data[i].attribute10!=""&&data[i].attribute10!=undefined){
+                flag10 = true;
+                title10 = Hap.getCodeMeaning(data[i].attribute10Title,EXTRA_ATTRITUBE);
+            }
+            if(data[i].attribute11!=null&&data[i].attribute11!=""&&data[i].attribute11!=undefined){
+                flag11 = true;
+                title11 = Hap.getCodeMeaning(data[i].attribute11Title,EXTRA_ATTRITUBE);
+            }
+            if(data[i].attribute12!=null&&data[i].attribute12!=""&&data[i].attribute12!=undefined){
+                flag12 = true;
+                title12 = Hap.getCodeMeaning(data[i].attribute12Title,EXTRA_ATTRITUBE);
+            }
+            if(data[i].attribute13!=null&&data[i].attribute13!=""&&data[i].attribute13!=undefined){
+                flag13 = true;
+                title13 = Hap.getCodeMeaning(data[i].attribute13Title,EXTRA_ATTRITUBE);
+            }
+            if(data[i].attribute14!=null&&data[i].attribute14!=""&&data[i].attribute14!=undefined){
+                flag14 = true;
+                title14 = Hap.getCodeMeaning(data[i].attribute14Title,EXTRA_ATTRITUBE);
+            }
+            if(data[i].attribute15!=null&&data[i].attribute15!=""&&data[i].attribute15!=undefined){
+                flag15 = true;
+                title15 = Hap.getCodeMeaning(data[i].attribute15Title,EXTRA_ATTRITUBE);
+            }
+        }
+
+        if(flag1){
+            $("#grid").data("kendoGrid").showColumn("attribute1");
+            $("#grid thead [data-field=attribute1]").html(title1);
+        }else {
+            $("#grid").data("kendoGrid").hideColumn("attribute1");
+        }
+        if(flag2){
+            $("#grid").data("kendoGrid").showColumn("attribute2");
+            $("#grid thead [data-field=attribute2]").html(title2);
+        }else {
+            $("#grid").data("kendoGrid").hideColumn("attribute2");
+        }
+        if(flag3){
+            $("#grid").data("kendoGrid").showColumn("attribute3");
+            $("#grid thead [data-field=attribute3]").html(title3);
+        }else {
+            $("#grid").data("kendoGrid").hideColumn("attribute3");
+        }
+        if(flag4){
+            $("#grid").data("kendoGrid").showColumn("attribute4");
+            $("#grid thead [data-field=attribute4]").html(title4);
+        }else {
+            $("#grid").data("kendoGrid").hideColumn("attribute4");
+        }
+        if(flag5){
+            $("#grid").data("kendoGrid").showColumn("attribute5");
+            $("#grid thead [data-field=attribute5]").html(title5);
+        }else {
+            $("#grid").data("kendoGrid").hideColumn("attribute5");
+        }
+        if(flag6){
+            $("#grid").data("kendoGrid").showColumn("attribute6");
+            $("#grid thead [data-field=attribute6]").html(title6);
+        }else {
+            $("#grid").data("kendoGrid").hideColumn("attribute6");
+        }
+        if(flag7){
+            $("#grid").data("kendoGrid").showColumn("attribute7");
+            $("#grid thead [data-field=attribute7]").html(title7);
+        }else {
+            $("#grid").data("kendoGrid").hideColumn("attribute7");
+        }
+
+        if(flag8){
+            $("#grid").data("kendoGrid").showColumn("attribute8");
+            $("#grid thead [data-field=attribute8]").html(title8);
+        }else {
+            $("#grid").data("kendoGrid").hideColumn("attribute8");
+        }
+        if(flag9){
+            $("#grid").data("kendoGrid").showColumn("attribute9");
+            $("#grid thead [data-field=attribute9]").html(title9);
+        }else {
+            $("#grid").data("kendoGrid").hideColumn("attribute9");
+        }
+        if(flag10){
+            $("#grid").data("kendoGrid").showColumn("attribute10");
+            $("#grid thead [data-field=attribute10]").html(title10);
+        }else {
+            $("#grid").data("kendoGrid").hideColumn("attribute10");
+        }
+        if(flag11){
+            $("#grid").data("kendoGrid").showColumn("attribute11");
+            $("#grid thead [data-field=attribute11]").html(title11);
+        }else {
+            $("#grid").data("kendoGrid").hideColumn("attribute11");
+        }
+        if(flag12){
+            $("#grid").data("kendoGrid").showColumn("attribute12");
+            $("#grid thead [data-field=attribute12]").html(title12);
+        }else {
+            $("#grid").data("kendoGrid").hideColumn("attribute12");
+        }
+        if(flag13){
+            $("#grid").data("kendoGrid").showColumn("attribute13");
+            $("#grid thead [data-field=attribute13]").html(title13);
+        }else {
+            $("#grid").data("kendoGrid").hideColumn("attribute13");
+        }
+        if(flag14){
+            $("#grid").data("kendoGrid").showColumn("attribute14");
+            $("#grid thead [data-field=attribute14]").html(title14);
+        }else {
+            $("#grid").data("kendoGrid").hideColumn("attribute14");
+        }
+        if(flag15){
+            $("#grid").data("kendoGrid").showColumn("attribute15");
+            $("#grid thead [data-field=attribute15]").html(title15);
+        }else {
+            $("#grid").data("kendoGrid").hideColumn("attribute15");
+        }
+    }
+    
+    function hideCoi() {
+        for(var i=0;i<15;i++){
+            var attribute = "attribute"+(i+1);
+            $("#grid").data("kendoGrid").hideColumn("attribute"+(i+1));
+        }
+    }
+
+    // 数据新增
+    viewModel.create = function () {
+        if(viewModel.model.ceGroupId==undefined||viewModel.model.ceParameterId==undefined||viewModel.model.attachmentGroupId==undefined||viewModel.model.ceGroupId==undefined){
+            kendo.ui.showErrorDialog({message:"控制要素组、控制要素、附着对象组为必输条件!"});
+            return;
+        }
+        hideCoi();
+        var newRow = {
+            ceGroupId:viewModel.model.ceGroupId,
+            ceGroup: viewModel.model.ceGroup,
+            attachmentGroupId: viewModel.model.attachmentGroupId,
+            attachmentGroupDescription:viewModel.model.attachmentGroupDescription,
+            ceParameterId: viewModel.model.ceParameterId,
+            ceParameter:viewModel.model.ceParameter,
+            creationDate:curentTime()
+        };
+        var extendAttribute =  viewModel.model.extendAttribute;
+        if (extendAttribute != null && extendAttribute.length != 0){
+            for (var i = 0;i < viewModel.model.extendAttribute.length;i++) {
+                var des = viewModel.model.extendAttribute[i].description;
+                checkExtendCol(des);
+            }
+        }
+        var grid = $("#grid").data("kendoGrid");
+        grid.dataSource.add(newRow);
+    }
+
+    // 校验字段是否已经存在,若不存在则放入显示列中
+    function checkExtendCol(col) {
+
+        if ($("#grid thead [data-field=attribute1]").html() != "attribute1" && $("#grid thead [data-field=attribute1]").html() != null && $("#grid thead [data-field=attribute1]").html() != "") {
+            if ($("#grid thead [data-field=attribute1]").html() == col) {
+                $("#grid").data("kendoGrid").showColumn("attribute1");
+                return true;
+            }
+        } else {
+            $("#grid").data("kendoGrid").showColumn("attribute1");
+            $("#grid thead [data-field=attribute1]").html(col);
+            return ;
+        }
+        if ($("#grid thead [data-field=attribute2]").html() != "attribute2" && $("#grid thead [data-field=attribute2]").html() != null && $("#grid thead [data-field=attribute2]").html() != "") {
+            if ($("#grid thead [data-field=attribute2]").html() == col) {
+                $("#grid").data("kendoGrid").showColumn("attribute2");
+                return;
+            }
+        } else {
+            $("#grid").data("kendoGrid").showColumn("attribute2");
+            $("#grid thead [data-field=attribute2]").html(col);
+            return;
+        }
+        if ($("#grid thead [data-field=attribute3]").html() != "attribute3" && $("#grid thead [data-field=attribute3]").html() != null && $("#grid thead [data-field=attribute3]").html() != "") {
+            if ($("#grid thead [data-field=attribute3]").html() == col) {
+                $("#grid").data("kendoGrid").showColumn("attribute3");
+                return;
+            }
+        }
+        else {
+            $("#grid").data("kendoGrid").showColumn("attribute3");
+            $("#grid thead [data-field=attribute3]").html(col);
+            return;
+        }
+        if ($("#grid thead [data-field=attribute4]").html() != "attribute4" && $("#grid thead [data-field=attribute4]").html() != null && $("#grid thead [data-field=attribute4]").html() != "") {
+            if ($("#grid thead [data-field=attribute4]").html() == col) {
+                $("#grid").data("kendoGrid").showColumn("attribute4");
+                return;
+            }
+        } else {
+            $("#grid").data("kendoGrid").showColumn("attribute4");
+            $("#grid thead [data-field=attribute4]").html(col);
+            return;
+        }
+        if ($("#grid thead [data-field=attribute5]").html() != "attribute5" && $("#grid thead [data-field=attribute5]").html() != null && $("#grid thead [data-field=attribute5]").html() != "") {
+            if ($("#grid thead [data-field=attribute5]").html() == col) {
+                $("#grid").data("kendoGrid").showColumn("attribute5");
+                return;
+            }
+        } else {
+            $("#grid").data("kendoGrid").showColumn("attribute5");
+            $("#grid thead [data-field=attribute5]").html(col);
+            return;
+        }
+        if ($("#grid thead [data-field=attribute6]").html() != "attribute6" && $("#grid thead [data-field=attribute6]").html() != null && $("#grid thead [data-field=attribute6]").html() != "") {
+            if ($("#grid thead [data-field=attribute6]").html() == col) {
+                $("#grid").data("kendoGrid").showColumn("attribute6");
+                return;
+            }
+        }
+        else {
+            $("#grid").data("kendoGrid").showColumn("attribute6");
+            $("#grid thead [data-field=attribute6]").html(col);
+            return;
+        }
+        if ($("#grid thead [data-field=attribute7]").html() != "attribute7" && $("#grid thead [data-field=attribute7]").html() != null && $("#grid thead [data-field=attribute7]").html() != "") {
+            if ($("#grid thead [data-field=attribute7]").html() == col) {
+                $("#grid").data("kendoGrid").showColumn("attribute7");
+                return;
+            }
+        }
+        else {
+            $("#grid").data("kendoGrid").showColumn("attribute7");
+            $("#grid thead [data-field=attribute7]").html(col);
+            return;
+        }
+        if ($("#grid thead [data-field=attribute8]").html() != "attribute8" && $("#grid thead [data-field=attribute8]").html() != null && $("#grid thead [data-field=attribute8]").html() != "") {
+            if ($("#grid thead [data-field=attribute8]").html() == col) {
+                $("#grid").data("kendoGrid").showColumn("attribute8");
+                return;
+            }
+        }
+        else {
+            $("#grid").data("kendoGrid").showColumn("attribute8");
+            $("#grid thead [data-field=attribute8]").html(col);
+            return;
+        }
+        if ($("#grid thead [data-field=attribute9]").html() != "attribute9" && $("#grid thead [data-field=attribute9]").html() != null && $("#grid thead [data-field=attribute9]").html() != "") {
+            if ($("#grid thead [data-field=attribute9]").html() == col) {
+                $("#grid").data("kendoGrid").showColumn("attribute9");
+                return;
+            }
+        }
+        else {
+            $("#grid").data("kendoGrid").showColumn("attribute9");
+            $("#grid thead [data-field=attribute9]").html(col);
+            return;
+        }
+        if ($("#grid thead [data-field=attribute10]").html() != "attribute10" && $("#grid thead [data-field=attribute10]").html() != null && $("#grid thead [data-field=attribute10]").html() != "") {
+            if ($("#grid thead [data-field=attribute10]").html() == col) {
+                $("#grid").data("kendoGrid").showColumn("attribute10");
+                return;
+            }
+        }
+        else {
+            $("#grid").data("kendoGrid").showColumn("attribute10");
+            $("#grid thead [data-field=attribute10]").html(col);
+            return;
+        }
+        if ($("#grid thead [data-field=attribute11]").html() != "attribute11" && $("#grid thead [data-field=attribute11]").html() != null && $("#grid thead [data-field=attribute11]").html() != "") {
+            if ($("#grid thead [data-field=attribute11]").html() == col) {
+                $("#grid").data("kendoGrid").showColumn("attribute11");
+                return;
+            }
+        }
+        else {
+            $("#grid").data("kendoGrid").showColumn("attribute11");
+            $("#grid thead [data-field=attribute11]").html(col);
+            return;
+        }
+        if ($("#grid thead [data-field=attribute12]").html() != "attribute12" && $("#grid thead [data-field=attribute12]").html() != null && $("#grid thead [data-field=attribute12]").html() != "") {
+            if ($("#grid thead [data-field=attribute12]").html() == col) {
+                $("#grid").data("kendoGrid").showColumn("attribute12");
+                return;
+            }
+        }
+        else {
+            $("#grid").data("kendoGrid").showColumn("attribute12");
+            $("#grid thead [data-field=attribute12]").html(col);
+            return;
+        }
+        if ($("#grid thead [data-field=attribute13]").html() != "attribute13" && $("#grid thead [data-field=attribute13]").html() != null && $("#grid thead [data-field=attribute13]").html() != "") {
+            if ($("#grid thead [data-field=attribute13]").html() == col) {
+                $("#grid").data("kendoGrid").showColumn("attribute13");
+                return;
+            }
+        }
+        else {
+            $("#grid").data("kendoGrid").showColumn("attribute13");
+            $("#grid thead [data-field=attribute13]").html(col);
+            return;
+        }
+        if ($("#grid thead [data-field=attribute14]").html() != "attribute14" && $("#grid thead [data-field=attribute14]").html() != null && $("#grid thead [data-field=attribute14]").html() != "") {
+            if ($("#grid thead [data-field=attribute14]").html() == col) {
+                $("#grid").data("kendoGrid").showColumn("attribute14");
+                return;
+            }
+        }
+        else {
+            $("#grid").data("kendoGrid").showColumn("attribute14");
+            $("#grid thead [data-field=attribute14]").html(col);
+            return;
+        }
+        if ($("#grid thead [data-field=attribute15]").html() != "attribute15" && $("#grid thead [data-field=attribute15]").html() != null && $("#grid thead [data-field=attribute15]").html() != "") {
+            if ($("#grid thead [data-field=attribute15]").html() == col) {
+                $("#grid thead [data-field=attribute15]").html(col);
+                return;
+            }
+        }
+        else {
+            $("#grid").data("kendoGrid").showColumn("attribute15");
+            $("#grid thead [data-field=attribute15]").html(col);
+            return;
+        }
+    }
+
+    function curentTime()
+    {
+        var now = new Date();
+
+        var year = now.getFullYear();       //年
+        var month = now.getMonth() + 1;     //月
+        var day = now.getDate();            //日
+
+        var hh = now.getHours();            //时
+        var mm = now.getMinutes();          //分
+        var ss = now.getSeconds();          //分
+        var clock = year + "-";
+
+        if(month < 10)
+            clock += "0";
+
+        clock += month + "-";
+
+        if(day < 10)
+            clock += "0";
+
+        clock += day + " ";
+
+        if(hh < 10)
+            clock += "0";
+
+        clock += hh + ":";
+        if (mm < 10) clock += '0';
+        clock += mm + ":";
+        if (ss < 10) clock += '0';
+        clock += ss;
+        return(clock);
+    }
+</script>
+<body>
+<div id="page-content">
+    <div class="pull-left" id="toolbar-btn" style="padding-bottom:10px;">
+        <span class="btn btn-primary k-grid-add" style="float:left;margin-right:5px;" data-bind="click:create"><@spring.message "hap.new"/></span>
+        <span class="btn btn-success k-grid-save-changes" data-bind="click:save" style="float:left;margin-right:5px;"><@spring.message "hap.save"/></span>
+
+        <span class="btn btn-primary" style="float:left;width:120px;margin-right:5px;" onclick="modelDownload()" type="submit">
+            <i class="fa fa-download" style="margin-right: 3px" ></i>
+            <@spring.message "hap.modelexport"/></span>
+
+        <span class="btn btn-primary" style="float:left;margin-right:5px;" onclick="excelUpload()" type="submit">
+            <i class="fa fa-file-excel-o" style="margin-right: 3px"></i>
+            <@spring.message "hap.excelimport"/></span>
+    </div>
+    <script>kendo.bind($('#toolbar-btn'), viewModel);</script>
+    <div class="pull-right" id="query-form" style="padding-bottom:10px;">
+        <span class="btn btn-primary" style="float:left;width:70px;margin-right: 5px;background-color: white;color: #0a001f" data-bind="click:reset" type="submit"><@spring.message "hap.reset"/></span>
+        <span class="btn btn-primary" style="float:left;width:70px;" data-bind="click:query" type="submit"><@spring.message "hap.query"/></span>
+        <div style="clear:both"></div>
+    </div>
+    <script>kendo.bind($('#query-form'), viewModel);</script>
+    <!--查询框-->
+    <div id="queryModel" style="clear:both">
+        <!--第一行-->
+        <div class="row">
+            <div class="col-md-4">
+                <label style="margin-left: 10%;font-size: 14px;color:black"><span style='color:red'>*&nbsp;&nbsp;</span><@spring.message "pspcmetereddataimport.controlelementgroup"/>：</label>
+                <input id="ceGroupId" required  type="text" style="width:180px;margin-right:5px;"
+                       data-bind="value:model.ceGroupId">
+                <script>
+                    $("#ceGroupId").kendoLov($.extend(${lovProvider.getLov(base.contextPath, base.locale, "PSPC_PSPC_CE_GROUP")}, {
+                        select:function (e) {
+                            viewModel.model.set('ceGroup', e.item.ceGroup);
+                        },
+                    }))
+                </script>
+            </div>
+
+            <div class="col-md-4">
+                <label style="margin-left: 10%;font-size: 14px;color:black"><span style='color:red'>*&nbsp;&nbsp;</span><@spring.message "pspcmetereddataimport.controlelement"/>：</label>
+                <input id="ceParameterId" required  type="text" style="width:180px;margin-right:5px;"
+                       data-bind="value:model.ceParameterId">
+                <script>
+                    $("#ceParameterId").kendoLov($.extend(${lovProvider.getLov(base.contextPath, base.locale, "PSPC_PSPC_CE_PARAMETER")}, {
+                        query:function (e) {
+                            e.param['ceGroupId']=viewModel.model.ceGroupId;
+                        },
+                        select:function (e) {
+                            viewModel.model.set('ceParameter', e.item.ceParameter);
+                        },
+                    }))
+                </script>
+            </div>
+
+            <div class="col-md-4">
+                <label style="margin-left: 10%;font-size: 14px;color:black"><span style='color:red'>*&nbsp;&nbsp;</span><@spring.message "pspcmetereddataimport.attachedobjectgroup"/>：</label>
+                <input id="attachmentGroupId" required  type="text" style="width:180px;margin-right:5px;"
+                       data-bind="value:model.attachmentGroupId">
+                <script>
+                    $("#attachmentGroupId").kendoLov($.extend(${lovProvider.getLov(base.contextPath, base.locale, "PSPC_PSPC_ATTACHMENT_GROUP_PRO")}, {
+                        select:function (e) {
+                            viewModel.model.set('attachmentGroupDescription', e.item.attachmentGroupDescription);
+                        },
+                        query:function (e) {
+                            e.param.ceGroupId = viewModel.model.ceGroupId;
+                        }
+                    }))
+                </script>
+            </div>
+        </div>
+        <br>
+
+        <!--第二行-->
+        <div class="row">
+            <div class="col-md-4">
+                <label style="margin-left: 9.5%;font-size: 14px;color:black"><@spring.message "pspcmetereddataimport.samplestarttime"/> ：</label>
+                <input id="startTime"  type="text" style="width:180px;margin-right:5px;"
+                       data-bind="value:model.startTime">
+                <script>
+                    $("#startTime").kendoDateTimePicker({
+                        format: "yyyy-MM-dd HH:mm:ss",
+                        min: new Date(1000, 1, 1, 0, 0, 0),
+                        max: new Date(9999, 12, 31, 23, 59, 59),
+                        close: function(e) {
+                            var value = this.value();
+                            if(value == null || value == ''){
+                                minDate = new Date(1000, 1, 1, 0, 0, 0);
+                            } else {
+                                if($("#endTime").val() == null || $("#endTime").val() == ''){
+                                    maxDate = new Date(9999, 12, 31, 23, 59, 59);
+                                }
+                                if(value > maxDate) {
+                                    this.value(maxDate);
+                                }
+                                minDate = this.value();
+                            }
+                        }
+                    }).data("kendoDateTimePicker");
+                </script>
+            </div>
+
+            <div class="col-md-4">
+                <label style="margin-left: 7%;font-size: 14px;color:black"><@spring.message "pspcmetereddataimport.sampleendtime"/>：</label>
+                <input id="endTime"   type="text" style="width:180px;margin-right:5px;"
+                       data-bind="value:model.endTime">
+                <script>
+                    $("#endTime").kendoDateTimePicker({
+                        format: "yyyy-MM-dd HH:mm:ss",
+                        min: new Date(1000, 1, 1, 0, 0, 0),
+                        max: new Date(9999, 12, 31, 23, 59, 59),
+                        close: function(e) {
+                            var value = this.value();
+                            if(value == null || value == ''){
+                                minDate = new Date(1000, 1, 1, 0, 0, 0);
+                            } else {
+                                if($("#startTime").val() == null || $("#startTime").val() == ''){
+                                    maxDate = new Date(9999, 12, 31, 23, 59, 59);
+                                }
+                                if(value > maxDate) {
+                                    this.value(maxDate);
+                                }
+                                minDate = this.value();
+                            }
+                        }
+                    }).data("kendoDateTimePicker");
+                </script>
+            </div>
+
+            <div class="col-md-4">
+                <label class="col-md-4" style="margin-left: 8%;font-size: 14px;color:black">&emsp;<@spring.message "pspcmetereddataimport.extendedfield"/>   ：</label>
+                    <input class="col-md-6" type="text" id="extendAttribute"  style="width:150px;margin-left: -14px" data-bind="value:model.extendAttribute">
+                <script>
+                    $("#extendAttribute").kendoMultiSelect({
+                        dataTextField: "meaning",
+                        dataValueField: "value",
+                        autoBind: false,
+                        dataSource: EXTRA_ATTRITUBE
+                    });
+                </script>
+            </div>
+        </div>
+        <br>
+    </div>
+
+    <script>kendo.bind($('#queryModel'), viewModel);</script>
+
+    <div style="clear:both">
+        <div id="grid"></div>
+    </div>
+
+    <div id="dialog" style="display: none; font-size: small">
+        <div class="panel" style="padding: 0px;text-align: center">
+            <form class="form-horizontal" id="uploadForm" action=undefined enctype="multipart/form-data">
+                选择上传文件 <input name="file" id="file" type="file" data-role="maskedtextbox"
+                              onchange="getFilePath()"
+                              accept="application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" style="filter:alpha(opacity=0);opacity:0;width: 0;height: 0;">
+                <br/>
+                <span onclick="importModelFunction()" class="btn  btn-info">选择EXCEL文件</span>
+            </form>
+        </div>
+    </div>
+    <script>
+        function modelDownload() {//EXCEL模板下载
+            window.location.href="${base.contextPath}/resources/excelModel/计量数据导入模板.xlsx";
+        }
+
+        function excelUpload() {//EXCEL模板导入
+
+            // 判断必须窗口
+            if(viewModel.model.ceGroupId==undefined||viewModel.model.ceParameterId==undefined||viewModel.model.attachmentGroupId==undefined||viewModel.model.ceGroupId==undefined){
+                kendo.ui.showErrorDialog({message:"控制要素组、控制要素、附着对象组、时间为必输条件!"});
+                return;
+            }
+
+            /*
+             打开上传窗口
+             */
+            var newModelWin = $('#dialog').kendoWindow({
+                actions: ["Minimize", "Maximize", "Close"],
+                title: '计量型数据导入',
+                width: 300,
+                height: 120,
+                modal: true
+            }).data('kendoWindow');
+            newModelWin.center().open();
+        }
+
+        function getFilePath() {//获取EXCEL路径
+            var path = $("#file").val();
+            //上传
+            uploadFile(path);
+            //清空
+            $("#file").val(undefined);
+        }
+
+        function importModelFunction() {
+            $("#file").trigger("click");
+        }
+
+        function uploadFile(path) {//上传文件解析
+            var formData = new FormData($("#uploadForm")[0]);
+
+            var url = _basePath+'/pspc/sample/dataimportExcel?ceParameterId='
+                +viewModel.model.ceParameterId+"&ceGroupId=" +
+                viewModel.model.ceGroupId +"&attachmentGroupId="+ viewModel.model.attachmentGroupId;
+            $.ajax({
+                url: url,
+                type: 'POST',
+                data: formData,
+                async: true,
+                cache: false,
+                contentType: false,
+                processData: false,
+                dataType: "json",
+                success: function (data) {
+                    console.log(data);
+                    if (data.success) {
+                        Hap.showToast({
+                            type: 'success',
+                            "positionClass": "toast-bottom-right",
+                            message: "上传成功"
+                        });
+                    } else {
+                        kendo.ui.showErrorDialog({
+                            message: "导入失败："+((data && data.message)?data.message:'')
+                        });
+                    }
+                }
+            });
+            $('#dialog').data('kendoWindow').close();
+        }
+    </script>
+</div>
+
+<script type="text/javascript">
+    Hap.initEnterQuery('#query-form', viewModel.query);
+    var BaseUrl = _basePath;
+    dataSource = new kendo.data.DataSource({
+        transport: {
+            read: {
+                async: false,
+                url: BaseUrl + "/pspc/sample/data/query",
+                type: "POST",
+                dataType: "json"
+            },
+            update: {
+                async: false,
+                url: BaseUrl + "/pspc/sample/data/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            destroy: {
+                async: false,
+                url: BaseUrl + "/pspc/sample/data/remove",
+                type: "POST",
+                contentType: "application/json"
+            },
+            create: {
+                async: false,
+                url: BaseUrl + "/pspc/sample/data/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            parameterMap: function (options, type) {
+                if (type !== "read" && options.models) {
+                    var datas = Hap.prepareSubmitParameter(options, type);
+                    for(var i=0;i<datas.length;i++){
+                        datas[i].attribute1Title = $("#grid thead [data-field=attribute1]").html();
+                        datas[i].attribute2Title = $("#grid thead [data-field=attribute2]").html()
+                        datas[i].attribute3Title = $("#grid thead [data-field=attribute3]").html()
+                        datas[i].attribute4Title = $("#grid thead [data-field=attribute4]").html()
+                        datas[i].attribute5Title = $("#grid thead [data-field=attribute5]").html()
+                        datas[i].attribute6Title = $("#grid thead [data-field=attribute6]").html();
+                        datas[i].attribute7Title = $("#grid thead [data-field=attribute7]").html()
+                        datas[i].attribute8Title = $("#grid thead [data-field=attribute8]").html()
+                        datas[i].attribute9Title = $("#grid thead [data-field=attribute9]").html()
+                        datas[i].attribute10Title = $("#grid thead [data-field=attribute10]").html()
+                        datas[i].attribute11Title = $("#grid thead [data-field=attribute11]").html();
+                        datas[i].attribute12Title = $("#grid thead [data-field=attribute12]").html()
+                        datas[i].attribute13Title = $("#grid thead [data-field=attribute13]").html()
+                        datas[i].attribute14Title = $("#grid thead [data-field=attribute14]").html()
+                        datas[i].attribute15Title = $("#grid thead [data-field=attribute15]").html()
+                    }
+                    return kendo.stringify(datas);
+                } else if (type === "read") {
+
+                    var extendAttribute = viewModel.model.extendAttribute;
+                    Hap.prepareQueryParameter(viewModel.model.toJSON(), options);
+                    viewModel.model.set("extendAttribute",extendAttribute);
+                }
+            }
+        },
+        batch: true,
+        serverPaging: true,
+        pageSize: 10,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+                id: "sampleDataId",
+                fields: {
+                    sampleTime: {
+                        validation: {
+                            required: true
+                        }
+                    },
+                    sampleValue: {
+                        type:"number",
+                        validation: {
+                            required: true
+                        }
+                    },
+                },
+                editable: function (col) {
+                    if (this.isNew()) {
+                        return true;
+                    }
+                    return false;
+                }
+            }
+        }
+    });
+
+    $("#grid").kendoGrid({
+        dataSource: dataSource,
+        resizable: true,
+        scrollable: true,
+        navigatable: false,
+        autoBind:false,
+        selectable: 'multiple, rowbox',
+        dataBound: function (e) {
+            if (parent.autoResizeIframe) {
+                parent.autoResizeIframe('${RequestParameters.functionCode!}')
+            }
+        },
+        pageable: {
+            pageSizes: [5, 10, 20, 50],
+            refresh: true,
+            buttonCount: 5
+        },
+        columns: [
+            {
+                field: "attachmentGroupId",
+                title: '<@spring.message "pspcmetereddataimport.attachedobjectgroup"/>',
+                width: "12%" ,
+                template: function (dataItem) {
+                    return dataItem.attachmentGroupDescription==undefined?"":dataItem.attachmentGroupDescription;
+                },
+                editor:function (container, options) {
+                    $('<input required disabled name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoLov($.extend(<@lov "PSPC_PSPC_ATTACHMENT_GROUP_PRO"/>,{
+                        textField: 'attachmentGroupDescription',
+                        model: options.model,
+                        }));
+                },
+            },
+            {
+                field: "ceGroupId",
+                title: '<@spring.message "pspcmetereddataimport.controlelementgroup"/>',
+                width: "12%" ,
+                template: function (dataItem) {
+                    return dataItem.ceGroup==undefined?"":dataItem.ceGroup;
+                },
+                editor:function (container, options) {
+                    $('<input required disabled  name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoLov($.extend(<@lov "PSPC_PSPC_CE_GROUP"/>,{
+                        textField: 'ceGroup',
+                        model: options.model,
+                    }));
+                },
+            },
+            {
+                field: "ceParameterId",
+                title: '<@spring.message "pspcmetereddataimport.controlelement"/>',
+                width: "12%" ,
+                template: function (dataItem) {
+                    return dataItem.ceParameter==undefined?"":dataItem.ceParameter;
+                },
+                editor:function (container, options) {
+                    $('<input required disabled  name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoLov($.extend(<@lov "PSPC_PSPC_CE_PARAMETER"/>,{
+                        textField: 'ceParameter',
+                        model: options.model,
+                    }));
+                },
+            },
+            {
+                field: "creationDate",
+                title: '<@spring.message "pspcmetereddataimport.entrytime"/>',
+                width: "12%" ,
+                editor: function (container, options) {
+                    $('<span data-bind="text:creationDate"/>').appendTo(container);
+                }
+            },
+            {
+                field: "sampleTime",
+                title: '<@spring.message "pspcmetereddataimport.sampletime"/>',
+                width: "18%" ,
+                format: "{0:yyyy-MM-dd HH:mm:ss}",
+                editor: function (container, options) {
+                    var opts = {
+                        format: "yyyy-MM-dd HH:mm:ss"
+                    };
+                    $('<input required name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDateTimePicker(opts);
+                },
+                sortable: false
+            },
+            {
+                field: "sampleValue",
+                title: '<@spring.message "pspccountsampledata.samplevaluecount"/>',
+                width: "12%" ,
+            },
+
+            {
+                field: "attribute1",
+                title: '',
+                hidden: true,
+                editor:function (container, options) {
+                    $('<input required class="k-input k-textbox"   name="' + options.field + '"/>')
+                        .appendTo(container)
+                },
+            },
+            {
+                field: "attribute2",
+                title: '',
+                hidden: true,
+                editor:function (container, options) {
+                    $('<input required class="k-input k-textbox"   name="' + options.field  + '"/>')
+                        .appendTo(container)
+                },
+            },
+            {
+                field: "attribute3",
+                title: '',
+                hidden: true,
+                editor:function (container, options) {
+                    $('<input required  class="k-input k-textbox" name="' + options.field + '"/>')
+                        .appendTo(container)
+                },
+            },
+            {
+                field: "attribute4",
+                title: '',
+                hidden: true,
+                editor:function (container, options) {
+                    $('<input required class="k-input k-textbox"  name="' + options.field + '"/>')
+                        .appendTo(container)
+                },
+            },
+            {
+                field: "attribute5",
+                title: '',
+                hidden: true,
+                editor:function (container, options) {
+                    $('<input required class="k-input k-textbox"   name="' + options.field + '"/>')
+                        .appendTo(container)
+                },
+            },
+            {
+                field: "attribute6",
+                title: '',
+                hidden: true,
+                editor:function (container, options) {
+                    $('<input required class="k-input k-textbox"   name="' + options.field + '"/>')
+                        .appendTo(container)
+                },
+            },
+            {
+                field: "attribute7",
+                title: '',
+                hidden: true,
+                editor:function (container, options) {
+                    $('<input required  class="k-input k-textbox"  name="' + options.field + '"/>')
+                        .appendTo(container)
+                },
+            },
+            {
+                field: "attribute8",
+                title: '',
+                hidden: true,
+                editor:function (container, options) {
+                    $('<input required  class="k-input k-textbox"  name="' + options.field + '"/>')
+                        .appendTo(container)
+                },
+            },
+            {
+                field: "attribute9",
+                title: '',
+                hidden: true,
+                editor:function (container, options) {
+                    $('<input required  class="k-input k-textbox" name="' + options.field + '"/>')
+                        .appendTo(container)
+                },
+            },
+            {
+                field: "attribute10",
+                title: '',
+                hidden: true,
+                editor:function (container, options) {
+                    $('<input required class="k-input k-textbox"  name="' + options.field + '"/>')
+                        .appendTo(container)
+                },
+            },
+            {
+                field: "attribute11",
+                title: '',
+                hidden: true,
+                editor:function (container, options) {
+                    $('<input required  class="k-input k-textbox" name="' + options.field + '"/>')
+                        .appendTo(container)
+                },
+            },
+            {
+                field: "attribute12",
+                title: '',
+                hidden: true,
+                editor:function (container, options) {
+                    $('<input required class="k-input k-textbox"  name="' + options.field + '"/>')
+                        .appendTo(container)
+                },
+
+            },
+            {
+                field: "attribute13",
+                title: '',
+                hidden: true,
+                editor:function (container, options) {
+                    $('<input required  class="k-input k-textbox" name="' + options.field + '"/>')
+                        .appendTo(container)
+                },
+            },
+            {
+                field: "attribute14",
+                title: '',
+                hidden: true,
+                editor:function (container, options) {
+                    $('<input required class="k-input k-textbox"  name="' + options.field + '"/>')
+                        .appendTo(container)
+                },
+            },
+            {
+                field: "attribute15",
+                title: '',
+                hidden: true,
+                editor:function (container, options) {
+                    $('<input required class="k-input k-textbox"  name="' + options.field + '"/>')
+                        .appendTo(container)
+                },
+            },
+            {
+                field: "",
+                title: '<@spring.message "pspcmetereddataimport.operating"/>',
+                headerAttributes: {style: "text-align:center;"},
+                attributes: {style: "white-space:nowrap;text-overflow:ellipsis;text-align:center;"},
+                width: 40,
+                template: function (dataItem) {
+                    return "<i style='height: 10px;font-style:normal' onclick='removeRow(this)'>清除</i>";
+                }
+            },
+        ],
+        editable: true
+    });
+
+    /*删除行*/
+    function removeRow(that) {
+        var rows = $(that).parent().parent();
+        var data = $("#grid").data("kendoGrid").dataItem(rows);
+        if (!data.sampleDataId) {
+            $("#grid").data("kendoGrid").dataSource.remove(data);
+            return;
+        }
+
+    }
+</script>
+</body>
+</html>

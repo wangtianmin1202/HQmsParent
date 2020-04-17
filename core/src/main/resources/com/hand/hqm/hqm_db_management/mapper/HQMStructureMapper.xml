@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_db_management.mapper.HQMStructureMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_db_management.dto.HQMStructure">
+        <result column="STRUCTURE_ID" property="structureId" jdbcType="DECIMAL" />
+        <result column="STRUCTURE_NAME" property="structureName" jdbcType="VARCHAR" />
+    </resultMap>
+
+	<select id="structureNamecount" parameterType="string" resultMap="BaseResultMap">
+		select * from HQM_STRUCTURE where structure_name=#{structureName}
+	</select>
+</mapper>

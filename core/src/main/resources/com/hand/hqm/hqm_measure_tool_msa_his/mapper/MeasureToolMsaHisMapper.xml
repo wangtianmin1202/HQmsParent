@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_measure_tool_msa_his.mapper.MeasureToolMsaHisMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_measure_tool_msa_his.dto.MeasureToolMsaHis">
+        <result column="MEASURE_TOOL_MSA_HIS_ID" property="measureToolMsaHisId" jdbcType="DECIMAL" />
+        <result column="MEASURE_TOOL_HIS_ID" property="measureToolHisId" jdbcType="DECIMAL" />
+        <result column="MEASURE_TOOL_MSA_ID" property="measureToolMsaId" jdbcType="DECIMAL" />
+        <result column="MEASURE_TOOL_ID" property="measureToolId" jdbcType="DECIMAL" />
+        <result column="MSA_CONTENT" property="msaContent" jdbcType="VARCHAR" />
+        <result column="MSA_RESULT" property="msaResult" jdbcType="VARCHAR" />
+    </resultMap>
+
+
+</mapper>

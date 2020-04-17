@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.dimension.hqm_dimension_root_cause.mapper.DimensionRootCauseMapper">
+    <resultMap id="BaseResultMap" type="com.hand.dimension.hqm_dimension_root_cause.dto.DimensionRootCause">
+        <result column="STEP" property="step" jdbcType="DECIMAL" />
+        <result column="RCAUSE_ID" property="rcauseId" jdbcType="DECIMAL" />
+        <result column="ORDER_ID" property="orderId" jdbcType="DECIMAL" />
+        <result column="ROOT_CAUSE" property="rootCause" jdbcType="VARCHAR" />
+    </resultMap>
+
+
+</mapper>

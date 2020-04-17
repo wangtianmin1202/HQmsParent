@@ -1,0 +1,107 @@
+<#include "../include/header.html">
+<script type="text/javascript">
+var viewModel = kendo.observable({
+    model: {},
+    save: function(){
+    	var selected = window.parent.grid.selectedDataItems();
+    	$.each(selected,function(i,v){
+    		if(viewModel.model.layeredUserId != undefined){
+    			v.layeredUserId = viewModel.model.layeredUserId;
+        		v.set('layeredName',viewModel.model.layeredName);
+    		}
+    		if(viewModel.model.safetyUserId != undefined){
+    			v.safetyUserId = viewModel.model.safetyUserId;
+        		v.set('safetyName',viewModel.model.safetyName);
+    		}
+    		if(viewModel.model.pwaUserId != undefined){
+    			v.pwaUserId = viewModel.model.pwaUserId;
+        		v.set('pwaName',viewModel.model.pwaName);
+    		}
+    	});
+    	window.parent.$("#batch-window").data("kendoWindow").close();
+    },
+    close: function(){
+    	window.parent.$("#batch-window").data("kendoWindow").close();
+    }
+});
+</script>
+<body>
+<div id="page-content">
+    <div class="container">
+    
+	   	<div class="row" style="margin-top:10px;">
+	   	<div class="col-xs-9" style="text-align:center;padding-top:5px;padding-right:0px;">
+					<div class="col-xs-4" style="text-align:center;padding-top:5px;">
+					<span style="font-size:14px;"><@spring.message "分层审核责任人"/>:</span>
+					</div>
+					<div class="col-xs-8">
+						<input id="layeredUserId" style="width: 100%" />
+					</div>
+					<script>
+					$("#layeredUserId").kendoLov($.extend(<@lov"user_lov"/>, {
+	    				textField: 'employeeName',
+	    				valueField: 'userId',
+	    				select: function(e){
+	    					viewModel.model.layeredUserId = e.item.userId;
+	    					viewModel.model.layeredName = e.item.employeeName;
+	    					
+	    				}
+	    			}));
+					</script>
+		</div>
+	   	</div>
+	   	
+	   	<div class="row" style="margin-top:10px;">
+	   	<div class="col-xs-9" style="text-align:center;padding-top:5px;padding-right:0px;">
+					<div class="col-xs-4" style="text-align:center;padding-top:5px;">
+					<span style="font-size:14px;"><@spring.message "安规检验责任人"/>:</span>
+					</div>
+					<div class="col-xs-8">
+						<input id="safetyUserId" style="width: 100%" />
+					</div>
+					<script>
+					$("#safetyUserId").kendoLov($.extend(<@lov"user_lov"/>, {
+	    				textField: 'employeeName',
+	    				valueField: 'userId',
+	    				select: function(e){
+	    					viewModel.model.safetyUserId = e.item.userId;
+	    					viewModel.model.safetyName = e.item.employeeName;
+	    					
+	    				}
+	    			}));
+					</script>
+		</div>
+		</div>
+		
+		<div class="row" style="margin-top:10px;">
+	   	<div class="col-xs-9" style="text-align:center;padding-top:5px;padding-right:0px;">
+					<div class="col-xs-4" style="text-align:center;padding-top:5px;">
+					<span style="font-size:14px;"><@spring.message "PWA检验责任人"/>:</span>
+					</div>
+					<div class="col-xs-8">
+						<input id="pwaUserId" style="width: 100%" />
+					</div>
+					<script>
+					$("#pwaUserId").kendoLov($.extend(<@lov"user_lov"/>, {
+	    				textField: 'employeeName',
+	    				valueField: 'userId',
+	    				select: function(e){
+	    					viewModel.model.pwaUserId = e.item.userId;
+	    					viewModel.model.pwaName = e.item.employeeName;
+	    					
+	    				}
+	    			}));
+					</script>
+		</div>
+		</div>
+	</div>
+</div>
+<div id="mainBottom" class="text-right" style="bottom: 15px;position: fixed;  float: left;padding-top:15px;border-top:1px solid #ebebeb;width:100%; background: #fff;">
+        <span class="btn btn-primary" data-bind="click:save" type="submit" style="margin-right:5px"><@spring.message "hap.save"/></span>
+        <span class="btn btn-default" data-bind="click:close" type="button" style="margin-right:25px;"><@spring.message "hap.cancel"/></span>
+</div>
+<script type="text/javascript">
+kendo.bind($('#mainBottom'),viewModel);   
+</script>
+</body>
+</html>

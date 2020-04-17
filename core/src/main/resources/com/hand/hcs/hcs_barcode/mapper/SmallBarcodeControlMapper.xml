@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hcs.hcs_barcode.mapper.SmallBarcodeControlMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hcs.hcs_barcode.dto.SmallBarcodeControl">
+        <result column="SBARCODE_CONTROL_ID" property="sbarcodeControlId" jdbcType="DECIMAL" />
+        <result column="SBARCODE_ID" property="sbarcodeId" jdbcType="DECIMAL" />
+        <result column="SUPPLIER_ID" property="supplierId" jdbcType="DECIMAL" />
+        <result column="TICKET_ID" property="ticketId" jdbcType="DECIMAL" />
+        <result column="TICKET_LINE_ID" property="ticketLineId" jdbcType="DECIMAL" />
+        <result column="PO_HEADER_ID" property="poHeaderId" jdbcType="DECIMAL" />
+        <result column="PO_LINE_ID" property="poLineId" jdbcType="DECIMAL" />
+        <result column="LINE_LOCATION_ID" property="lineLocationId" jdbcType="DECIMAL" />
+        <result column="OBARCODE_ID" property="obarcodeId" jdbcType="DECIMAL" />
+        <result column="REFUND_ORDER_ID" property="refundOrderId" jdbcType="DECIMAL" />
+        <result column="SUPPLIERS_SITE_ID" property="suppliersSiteId" jdbcType="DECIMAL" />
+    </resultMap>
+	<!-- 清空容器Id -->
+	<update id="updateObarcodeId" parameterType="com.hand.hcs.hcs_barcode.dto.SmallBarcodeControl">
+		update HCS_SMALL_BARCODE_CONTROL set OBARCODE_ID = null,LAST_UPDATED_BY = #{request.userId},REQUEST_ID  = -1,
+       PROGRAM_ID = -1, OBJECT_VERSION_NUMBER = OBJECT_VERSION_NUMBER + 1, LAST_UPDATE_DATE  = CURRENT_TIMESTAMP where SBARCODE_CONTROL_ID = #{sbarcodeControlId} 
+	</update>
+	<!-- 根据物料标签Id清空送货单头行id -->
+	<update id="updateTicketIdBySbarcodeId" parameterType="com.hand.hcs.hcs_barcode.dto.SmallBarcodeControl">
+		update HCS_SMALL_BARCODE_CONTROL set TICKET_ID = null,TICKET_LINE_ID = null,LAST_UPDATED_BY = #{request.userId},REQUEST_ID  = -1,
+       PROGRAM_ID = -1, OBJECT_VERSION_NUMBER = OBJECT_VERSION_NUMBER + 1, LAST_UPDATE_DATE  = CURRENT_TIMESTAMP where SBARCODE_ID = #{sbarcodeId} 
+	</update>
+	
+	<!-- 根据送货单行id清空送货单头行id -->
+	<update id="updateTicketIdByLineId" parameterType="com.hand.hcs.hcs_barcode.dto.SmallBarcodeControl">
+		update HCS_SMALL_BARCODE_CONTROL set TICKET_ID = null,TICKET_LINE_ID = null,LAST_UPDATED_BY = #{request.userId},REQUEST_ID  = -1,
+       PROGRAM_ID = -1, OBJECT_VERSION_NUMBER = OBJECT_VERSION_NUMBER + 1, LAST_UPDATE_DATE  = CURRENT_TIMESTAMP where TICKET_LINE_ID = #{ticketLineId} 
+	</update>
+</mapper>

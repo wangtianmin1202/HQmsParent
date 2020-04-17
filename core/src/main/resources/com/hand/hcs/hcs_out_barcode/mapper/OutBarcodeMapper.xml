@@ -1,0 +1,771 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hcs.hcs_out_barcode.mapper.OutBarcodeMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hcs.hcs_out_barcode.dto.OutBarcode">
+        <result column="OBARCODE_ID" property="obarcodeId" jdbcType="DECIMAL" />
+        <result column="OBARCODE" property="obarcode" jdbcType="VARCHAR" />
+        <result column="OBARCODE_TYPE" property="obarcodeType" jdbcType="VARCHAR" />
+        <result column="STATUS" property="status" jdbcType="VARCHAR" />
+        <result column="PACKING_SIZE" property="packingSize" jdbcType="VARCHAR" />
+        <result column="PACKING_LEVEL" property="packingLevel" jdbcType="VARCHAR" />
+        <result column="REMARKS" property="remarks" jdbcType="VARCHAR" />
+        <result column="ENABLE_FLAG" property="enableFlag" jdbcType="VARCHAR" />
+        <result column="FREE_FLAG" property="freeFlag" jdbcType="VARCHAR" />
+        <result column="PACKING_FLAG" property="packingFlag" jdbcType="VARCHAR" />
+        <result column="PRINT_TIME" property="printTime" jdbcType="DECIMAL" />
+        <result column="CREATION_DATE" property="creationDate" jdbcType="TIMESTAMP" />
+        <result column="OBARCODE_NUM" property="obarcodeNum" jdbcType="VARCHAR" />
+         <result column="SUPPLIER_ID" property="supplierId" jdbcType="DECIMAL" />
+         <result column="SUPPLIERS_SITE_ID" property="suppliersSiteId" jdbcType="DECIMAL" />
+        <result column="PRINT_TIME" property="printTime" jdbcType="DECIMAL" />
+        <result column="PLANT_ID" property="plantId" jdbcType="DECIMAL" />
+        <result column="last_update_date" property="lastUpdateDate" jdbcType="TIMESTAMP" />
+        
+        <!-- 业务字段 -->
+        <result column="OBARCODE_ID" property="obarcodeId" jdbcType="DECIMAL" />
+        <result column="TICKET_ID" property="ticketId" jdbcType="DECIMAL" />
+        <result column="TICKET_LINE_ID" property="ticketLineId" jdbcType="DECIMAL" />
+        <result column="PO_HEADER_ID" property="poHeaderId" jdbcType="DECIMAL" />
+        <result column="PO_LINE_ID" property="poLineId" jdbcType="DECIMAL" />
+        <result column="LINE_LOCATION_ID" property="lineLocationId" jdbcType="DECIMAL" />
+        <result column="REFUND_ORDER_ID" property="refundOrderId" jdbcType="DECIMAL" />
+        <result column="OBARCODE_CONTROL_ID" property="obarcodeControlId" jdbcType="DECIMAL" />
+        <result column="TICKET_NUMBER" property="ticketNumber" jdbcType="VARCHAR" />
+        <result column="TICKET_LINE_NUM" property="ticketLineNum" jdbcType="DECIMAL" />
+        <result column="PO_NUMBER" property="poNumber" jdbcType="VARCHAR" />
+        <result column="SHIPMENT_NUM" property="shipmentNum" jdbcType="DECIMAL" />
+        <result column="SUPPLIER_CODE" property="supplierCode" jdbcType="VARCHAR" />
+        <result column="SUPPLIER_NAME" property="supplierName" jdbcType="VARCHAR" />
+        <result column="SUPPLERS_SITE_NAME" property="supplersSiteName" jdbcType="VARCHAR" />
+    	<result column="QUANTITY" property="quantity" jdbcType="DECIMAL" />
+    	<result column="START_TIME" property="startTime" jdbcType="VARCHAR" />
+        <result column="END_TIME" property="endTime" jdbcType="VARCHAR" />
+        <result column="COUNT_SMALL_CODE" property="countSmallCode" jdbcType="DECIMAL" />
+        <result column="sbarcode" property="sbarcode" jdbcType="VARCHAR" />
+        <result column="PLANT_CODE" property="plantCode" jdbcType="VARCHAR" />
+        <result column="PLANT_NAME" property="plantName" jdbcType="VARCHAR" />
+        <result column="barcode_content" property="barcodeContent" jdbcType="VARCHAR" />
+        <result column="tp_obarcode_num" property="tpObarcodeNum" jdbcType="VARCHAR" />
+        <result column="tp_obarcode" property="tpObarcode" jdbcType="VARCHAR" />
+        <result column="item_id" property="itemId" jdbcType="DECIMAL" />
+        <result column="item_name" property="itemName" jdbcType="VARCHAR" />
+        <result column="item_code" property="itemCode" jdbcType="VARCHAR" />
+        <result column="item_version" property="itemVersion" jdbcType="VARCHAR" />
+        <result column="uom" property="uom" jdbcType="VARCHAR" />
+        <result column="PRODUCTION_TIME" property="productionTime" jdbcType="DATE" />
+        <result column="lot_code" property="lotCode" jdbcType="VARCHAR" />
+        <result column="CASE_NUMBER" property="caseNumber" jdbcType="VARCHAR" />
+        <result column="purchase_group" property="purchaseGroup" jdbcType="VARCHAR" />
+    </resultMap>
+	<!-- 外箱条码查询 -->
+	<select id="query" resultMap="BaseResultMap" parameterType="com.hand.hcs.hcs_out_barcode.dto.OutBarcode">
+		select  distinct hob.obarcode_id,
+		        hob.obarcode,
+		        hob.obarcode_type,
+		        hob.obarcode_num,
+		        hob.status,
+		        hob.remarks,
+		        hob.creation_date,
+		        hob.packing_flag,
+		        hob.supplier_id,
+		        hs.supplier_name,
+		        hs.supplier_code,
+		        hob2.obarcode_num tp_obarcode_num,
+		        hob2.obarcode tp_obarcode,
+		        decode(hob.obarcode_type,'TP','',hsb.sbarcode) sbarcode,
+            	decode(hob.obarcode_type,'TP','',hsb.barcode_content) barcode_content,
+		        hob.print_time,
+		        hob.enable_flag,
+		        hdth.ticket_number,
+		        hob.plant_id,
+		        hp.plant_code,
+		        hp.descriptions PLANT_NAME
+		from sys_user su
+		join hcs_out_barcode hob on decode(su.user_type,'S',su.supplier_id,hob.supplier_id) = hob.supplier_id
+		join hcs_suppliers hs on hob.supplier_id = hs.supplier_id
+		left join hcs_barcode_relation hbr on decode(hob.obarcode_type,'TP',-1,hob.obarcode_id) = hbr.inbarcode_id and hbr.enable_flag = decode(hob.obarcode_type,'TP','-1','Y')
+		left join hcs_out_barcode hob2 on hbr.outbarcode_id = hob2.obarcode_id
+		left join hcs_barcode_relation hbr2 on decode(hob.obarcode_type,'TP',-1,hob.obarcode_id) = hbr2.outbarcode_id and hbr2.enable_flag = decode(hob.obarcode_type,'TP','-1','Y')
+		left join hcs_small_barcode hsb on hbr2.inbarcode_id = hsb.sbarcode_id
+		left join hcs_barcode_relation hbr3 on hob.obarcode_id = hbr3.outbarcode_id and hbr3.enable_flag = 'Y'
+		left join hcs_delivery_ticket_h hdth on hbr3.ticket_id = hdth.ticket_id
+		left join hcm_plant hp on hob.plant_id = hp.plant_id
+		<if test="purchaseGroup != null">
+          	left join hcs_asl_control hac on hac.purchase_group = #{purchaseGroup}
+          	left join hcs_asl ha on hac.asl_id = ha.asl_id and ha.enable_flag = 'Y'
+        </if>
+	 where 1=1
+	 	and su.user_id = #{request.userId}
+	 	<if test="purchaseGroup!=null">
+			and hob.plant_id = ha.plant_id
+			and hob.supplier_id = ha.supplier_id
+		</if>
+	 	<if test = "obarcodeId != null">
+			and hob.obarcode_id = #{obarcodeId}
+		</if> 
+	 	<if test = "obarcode != null">
+			and hob.obarcode LIKE concat('%',concat(#{obarcode,jdbcType=VARCHAR},'%'))
+		</if> 
+		<if test = "obarcodeNum != null">
+			and hob.obarcode_num LIKE concat('%',concat(#{obarcodeNum,jdbcType=VARCHAR},'%'))
+		</if> 
+		<if test = "status != null">
+			and hob.status = #{status}
+		</if> 
+		<if test = "obarcodeType != null">
+			and hob.obarcode_type = #{obarcodeType}
+		</if> 
+		<if test = "ticketNumber != null">
+			and hdth.ticket_number LIKE concat('%',concat(#{ticketNumber,jdbcType=VARCHAR},'%'))
+		</if> 
+		<if test = "startTime != null">
+			and to_date(to_char(hob.creation_date ,'yyyy-mm-dd'),'yyyy-mm-dd') &gt;= to_date(#{startTime}, 'yyyy-mm-dd hh24:mi:ss')
+		</if>
+		<if test = "endTime != null">
+			and to_date(to_char(hob.creation_date ,'yyyy-mm-dd'),'yyyy-mm-dd') &lt;= to_date(#{endTime}, 'yyyy-mm-dd hh24:mi:ss')
+		</if>
+		<if test = "supplierId != null">
+			and hob.supplier_id= #{supplierId}
+		</if>
+		<if test = "plantId != null">
+			and hob.plant_id= #{plantId}
+		</if>
+		<if test = "enableFlag != null">
+			and hob.enable_flag= #{enableFlag}
+		</if>
+		<if test = "packingFlag != null">
+			and hob.packing_flag= #{packingFlag}
+		</if>
+	group by hob.obarcode_id,
+        hob.obarcode,
+        hob.obarcode_type,
+        hob.obarcode_num,
+        hob.status,
+        hob.remarks,
+        hob.creation_date,
+         hob.packing_flag,
+        hob.supplier_id,
+        hs.supplier_name,
+        hs.supplier_code,
+        hob2.obarcode_num,
+        hob2.obarcode,
+        hsb.sbarcode,
+        hsb.barcode_content,
+        hob.print_time,
+        hob.enable_flag,
+        hdth.ticket_number,
+        hob.plant_id,
+        hp.plant_code,
+        hp.descriptions
+     order by  hob.creation_date desc ,hob.obarcode desc   
+	</select>
+<!-- 	<select id="query" resultMap="BaseResultMap" parameterType="com.hand.hcs.hcs_out_barcode.dto.OutBarcode"> -->
+<!-- 		select hobc.OBARCODE_CONTROL_ID, -->
+<!-- 			   hobc.obarcode_id, -->
+<!-- 		       hob.obarcode, -->
+<!-- 		       hob.status, -->
+<!-- 		       hob.packing_size, -->
+<!-- 		       hob.packing_level, -->
+<!-- 		       hob.remarks, -->
+<!-- 		       count(hsbc.obarcode_id) COUNT_SMALL_CODE, -->
+<!-- 		       hob.print_time, -->
+<!-- 		       hob.enable_flag, -->
+<!-- 		       hobc.ticket_id, -->
+<!-- 		       hdth.ticket_number, -->
+<!-- 		       hobc.ticket_line_id, -->
+<!-- 		       hdtl.ticket_line_num, -->
+<!-- 		       hobc.po_header_id, -->
+<!-- 		       hph.po_number, -->
+<!-- 		       hobc.line_location_id, -->
+<!-- 		       hpll.shipment_num, -->
+<!-- 		       hobc.supplier_id, -->
+<!-- 		       hs.supplier_code, -->
+<!-- 		       hs.supplier_name, -->
+<!-- 		       hobc.suppliers_site_id, -->
+<!-- 		       hss.description SUPPLERS_SITE_NAME, -->
+<!-- 		       hob.creation_date -->
+<!-- 		from sys_user su -->
+<!-- 		join hcs_out_barcode_control hobc on decode(su.user_type,'S',su.supplier_id,hobc.supplier_id) = hobc.supplier_id -->
+<!-- 		join hcs_out_barcode hob on hobc.obarcode_id = hob.obarcode_id -->
+<!-- 		left join hcs_small_barcode_control hsbc on hob.obarcode_id = hsbc.obarcode_id -->
+<!-- 		left join hcs_delivery_ticket_h hdth on hobc.ticket_id = hdth.ticket_id -->
+<!-- 		left join hcs_delivery_ticket_l hdtl on hobc.ticket_line_id = hdtl.ticket_line_id -->
+<!-- 		left join hcs_po_headers hph on hobc.po_header_id = hph.po_header_id -->
+<!-- 		left join hcs_po_line_locations hpll on hobc.line_location_id = hpll.line_location_id -->
+<!-- 		join hcs_suppliers hs on hobc.supplier_id = hs.supplier_id -->
+<!-- 		left join hcs_supplier_site hss on hobc.suppliers_site_id = hss.supplers_site_id -->
+<!-- 	 where 1=1 -->
+<!-- 	 	and su.user_id = #{request.userId} -->
+<!-- 	 	<if test = "obarcodeId != null"> -->
+<!-- 			and hobc.obarcode_id = #{obarcodeId} -->
+<!-- 		</if>  -->
+<!-- 	 	<if test = "obarcode != null"> -->
+<!-- 			and hob.obarcode LIKE concat('%',concat(#{obarcode,jdbcType=VARCHAR},'%')) -->
+<!-- 		</if>  -->
+<!-- 		<if test = "status != null"> -->
+<!-- 			and hob.status = #{status} -->
+<!-- 		</if>  -->
+<!-- 		<if test = "ticketNumber != null"> -->
+<!-- 			and hdth.ticket_number LIKE concat('%',concat(#{ticketNumber,jdbcType=VARCHAR},'%')) -->
+<!-- 		</if>  -->
+<!-- 		<if test = "poNumber != null"> -->
+<!-- 			and hph.po_number LIKE concat('%',concat(#{poNumber,jdbcType=VARCHAR},'%')) -->
+<!-- 		</if>  -->
+<!-- 		<if test = "startTime != null"> -->
+<!-- 			and hob.creation_date &gt;= to_date(#{startTime}, 'yyyy-mm-dd hh24:mi:ss') -->
+<!-- 		</if> -->
+<!-- 		<if test = "endTime != null"> -->
+<!-- 			and hob.creation_date &lt;= to_date(#{endTime}, 'yyyy-mm-dd hh24:mi:ss') -->
+<!-- 		</if> -->
+<!-- 		<if test = "suppliersSiteId != null"> -->
+<!-- 			and hobc.SUPPLIER_SITE_ID = #{suppliersSiteId} -->
+<!-- 		</if> -->
+<!-- 		<if test = "supplierId != null"> -->
+<!-- 			and hobc.supplier_id= #{supplierId} -->
+<!-- 		</if> -->
+<!-- 		<if test = "enableFlag != null"> -->
+<!-- 			and hob.enable_flag= #{enableFlag} -->
+<!-- 		</if> -->
+<!-- 	group by hobc.OBARCODE_CONTROL_ID, -->
+<!--             hobc.obarcode_id, -->
+<!--            hob.obarcode, -->
+<!--            hob.status, -->
+<!--            hob.packing_size, -->
+<!--            hob.packing_level, -->
+<!--            hob.remarks, -->
+<!--            hsbc.obarcode_id, -->
+<!--            hob.print_time, -->
+<!--            hob.enable_flag, -->
+<!--            hobc.ticket_id, -->
+<!--            hdth.ticket_number, -->
+<!--            hobc.ticket_line_id, -->
+<!--            hdtl.ticket_line_num, -->
+<!--            hobc.po_header_id, -->
+<!--            hph.po_number, -->
+<!--            hobc.line_location_id, -->
+<!--            hpll.shipment_num, -->
+<!--            hobc.supplier_id, -->
+<!--            hs.supplier_code, -->
+<!--            hs.supplier_name, -->
+<!--            hobc.suppliers_site_id, -->
+<!--            hss.description, -->
+<!--            hob.creation_date	 -->
+<!--      order by  hob.creation_date desc ,hob.obarcode desc    -->
+<!-- 	</select> -->
+	<!-- 查询当天最大流水号 -->
+	<select id="selectMaxNum" resultType="java.lang.Integer" parameterType="com.hand.hcs.hcs_out_barcode.dto.OutBarcode">
+		select nvl(max(substr(hob.obarcode,-4)),0)
+	    from hcs_out_barcode hob 
+	    join hcs_out_barcode_control hobc on hob.obarcode_id = hobc.obarcode_id
+	    where 1 = 1
+	    and trunc(hob.creation_date)=trunc(sysdate)
+	    and hobc.supplier_id = #{supplierId}
+	</select>
+	
+	<!-- 查询对应类型当天最大标签编码 -->
+	<select id="selectMaxObarcode" resultType="java.lang.Integer" parameterType="com.hand.hcs.hcs_out_barcode.dto.OutBarcode">
+		select nvl(max(substr(hob.obarcode,-9,6)),0)
+	    from hcs_out_barcode hob 
+	    where 1 = 1
+	    and hob.supplier_id = #{supplierId}
+	    and hob.obarcode_type = #{obarcodeType}
+	</select>
+	
+	<!-- 查询对应类型当天最大标签编码 -->
+	<select id="selectMaxObarcodeNum" resultType="java.lang.Integer" parameterType="com.hand.hcs.hcs_out_barcode.dto.OutBarcode">
+		select nvl(max(substr(hob.obarcode_num,-6)),0)
+	    from hcs_out_barcode hob
+	    where 1 = 1
+	    and hob.supplier_id = #{supplierId}
+	    and hob.obarcode_type = #{obarcodeType}
+	</select>
+	<!-- 容器打印查询 -->
+	<select id="printQueryOutCode" resultMap="BaseResultMap" parameterType="com.hand.hcs.hcs_out_barcode.dto.OutBarcode">
+		select hob.packing_size,
+		       hob.packing_level,
+		       hob.obarcode,
+		       hs.supplier_name,
+		       hob.obarcode_id
+		from hcs_out_barcode hob 
+		join hcs_out_barcode_control hobc on hob.obarcode_id = hobc.obarcode_id
+		join hcs_suppliers hs on hobc.supplier_id = hs.supplier_id
+		where hob.obarcode_id = #{obarcodeId}
+	</select>
+	<!-- 物料标签绑定托盘标签查询 -->
+	<select id="bindQuery" resultMap="BaseResultMap" parameterType="com.hand.hcs.hcs_out_barcode.dto.OutBarcode">
+		select DISTINCT hoc.* from (select hob.*
+	    from (SELECT ho.*
+	          FROM hcs_out_barcode ho
+	         WHERE 1 = 1
+	           AND ho.enable_flag = 'Y'
+	           AND ho.status NOT IN ('FH', 'SX', 'BT')
+	           AND ho.supplier_id = #{supplierId}) hob
+         left join hcs_small_barcode hsb on hsb.sbarcode_id in(select (  case
+                  when a1.obarcode_type = 'TP' then
+                   case
+                     when b11.b1itype = 'WL' then
+                      b11.b1iid
+                     else
+                      b11.b2iid
+                   end
+                  when a1.obarcode_type = 'GS' or a1.obarcode_type = 'ZB' or
+                       a1.obarcode_type = 'ZZ' then
+                   b11.b1iid
+                  else
+                   a1.obarcode_id
+                end) sbarcode_id
+           from hcs_out_barcode a1
+           left join (select b1.inbarcode_id   b1iid,
+                             b1.outbarcode_id  b1oid,
+                             b1.inbarcode_type b1itype,
+                             b2.inbarcode_id   b2iid
+                        from hcs_barcode_relation b1
+                        left join hcs_barcode_relation b2
+                          on b1.inbarcode_id = b2.outbarcode_id and b2.enable_flag = 'Y'
+                          where 1=1 and b1.outbarcode_id = hob.obarcode_id
+                          and b1.enable_flag = 'Y'
+                          ) b11
+             on a1.obarcode_id = b11.b1oid 
+             where 1=1 and a1.obarcode_id = hob.obarcode_id)
+        where 1 = 1
+	 	AND hob.status != decode(hob.obarcode_type, 'ZZ', 'ZZ', 'GS', 'ZZ', 'ZB', 'ZZ', '-1')
+	 	and hsb.item_id = #{itemId}
+	    and hsb.plant_id = #{plantId}
+	    and hsb.item_version = #{itemVersion}
+	    and hsb.lot_code = #{lotCode}
+	 	<if test = "obarcode != null">
+			and hob.obarcode LIKE concat('%',concat(#{obarcode,jdbcType=VARCHAR},'%'))
+		</if> 
+		<if test = "obarcodeNum != null">
+			and hob.OBARCODE_NUM LIKE concat('%',concat(#{obarcodeNum,jdbcType=VARCHAR},'%'))
+		</if> 
+		<if test = "obarcodeType != null">
+			and hob.OBARCODE_TYPE = #{obarcodeType}
+		</if> 
+		<if test = "startTime != null">
+			and hob.creation_date &gt;= to_date(#{startTime}, 'yyyy-mm-dd hh24:mi:ss')
+		</if>
+		<if test = "endTime != null">
+			and hob.creation_date &lt;= to_date(#{endTime}, 'yyyy-mm-dd hh24:mi:ss')
+		</if>
+		<if test = "enableFlag != null">
+			and hob.enable_flag= #{enableFlag}
+		</if>
+		<if test = "obarcodeId != null">
+			and hob.OBARCODE_ID= #{obarcodeId}
+		</if>
+		UNION ALL
+		select hob.*
+	    from (SELECT ho.*
+	          FROM hcs_out_barcode ho
+	         WHERE 1 = 1
+	           AND ho.enable_flag = 'Y'
+	           AND ho.status NOT IN ('FH', 'SX', 'BT')
+	           AND ho.supplier_id = #{supplierId}) hob
+	    where 1 = 1
+	 	AND hob.status != decode(hob.obarcode_type, 'ZZ', 'ZZ', 'GS', 'ZZ', 'ZB', 'ZZ', '-1')   
+	 	and hob.obarcode_id = decode((select count(0)
+			                                  from hcs_barcode_relation hbr
+			                                 where hbr.outbarcode_id = hob.obarcode_id
+			                                   and hbr.enable_flag = 'Y'),
+			                                0,
+			                                hob.obarcode_id,
+			                                -1)    
+		<if test = "obarcode != null">
+			and hob.obarcode LIKE concat('%',concat(#{obarcode,jdbcType=VARCHAR},'%'))
+		</if> 
+		<if test = "obarcodeNum != null">
+			and hob.OBARCODE_NUM LIKE concat('%',concat(#{obarcodeNum,jdbcType=VARCHAR},'%'))
+		</if> 
+		<if test = "obarcodeType != null">
+			and hob.OBARCODE_TYPE = #{obarcodeType}
+		</if> 
+		<if test = "startTime != null">
+			and hob.creation_date &gt;= to_date(#{startTime}, 'yyyy-mm-dd hh24:mi:ss')
+		</if>
+		<if test = "endTime != null">
+			and hob.creation_date &lt;= to_date(#{endTime}, 'yyyy-mm-dd hh24:mi:ss')
+		</if>
+		<if test = "enableFlag != null">
+			and hob.enable_flag= #{enableFlag}
+		</if>
+		<if test = "obarcodeId != null">
+			and hob.OBARCODE_ID= #{obarcodeId}
+		</if>		) hoc
+		order by hoc.OBARCODE DESC                                
+	</select>
+	<!-- 容器绑定查询  -->
+	<select id="outBindQuery" resultMap="BaseResultMap" parameterType="com.hand.hcs.hcs_out_barcode.dto.OutBarcode">
+		select DISTINCT hoc.* from (
+			select hob.*
+			from hcs_out_barcode hob
+			left join hcs_small_barcode hsb on hsb.sbarcode_id in(select (  case
+	                     when a1.obarcode_type = 'TP' then
+	                      case
+	                        when b11.b1itype = 'WL' then
+	                         b11.b1iid
+	                        else
+	                         b11.b2iid
+	                      end
+	                     when a1.obarcode_type = 'GS' or a1.obarcode_type = 'ZB' or
+	                          a1.obarcode_type = 'ZZ' then
+	                      b11.b1iid
+	                     else
+	                      a1.obarcode_id
+	                   end) sbarcode_id
+	              from hcs_out_barcode a1
+	              left join (select b1.inbarcode_id   b1iid,
+	                                b1.outbarcode_id  b1oid,
+	                                b1.inbarcode_type b1itype,
+	                                b2.inbarcode_id   b2iid
+	                           from hcs_barcode_relation b1
+	                           left join hcs_barcode_relation b2
+	                             on b1.inbarcode_id = b2.outbarcode_id  and b2.enable_flag = 'Y'
+	                             where 1=1 
+	                             and b1.outbarcode_id = hob.obarcode_id
+                              	 and b1.enable_flag = 'Y'
+	                             ) b11
+	                on a1.obarcode_id = b11.b1oid 
+	                where 1=1 and a1.obarcode_id = hob.obarcode_id)
+			where 1=1
+			and hob.enable_flag = 'Y'
+			and hob.status not in('FH','SX','BT') 
+			and hob.obarcode_type = 'TP'
+	<!-- 		and hob.packing_flag != 'Y' -->
+			and hob.supplier_id = #{supplierId}
+			and hsb.item_id = #{itemId}
+		    and hsb.plant_id = #{plantId}
+		    and hsb.item_version = #{itemVersion}
+		    and hsb.lot_code = #{lotCode}
+		 	<if test = "obarcode != null">
+				and hob.obarcode LIKE concat('%',concat(#{obarcode,jdbcType=VARCHAR},'%'))
+			</if> 
+			<if test = "obarcodeNum != null">
+				and hob.OBARCODE_NUM LIKE concat('%',concat(#{obarcodeNum,jdbcType=VARCHAR},'%'))
+			</if> 
+			<if test = "obarcodeType != null">
+				and hob.OBARCODE_TYPE = #{obarcodeType}
+			</if> 
+			<if test = "startTime != null">
+				and hob.creation_date &gt;= to_date(#{startTime}, 'yyyy-mm-dd hh24:mi:ss')
+			</if>
+			<if test = "endTime != null">
+				and hob.creation_date &lt;= to_date(#{endTime}, 'yyyy-mm-dd hh24:mi:ss')
+			</if>
+			<if test = "enableFlag != null">
+				and hob.enable_flag= #{enableFlag}
+			</if>
+			<if test = "obarcodeId != null">
+				and hob.OBARCODE_ID= #{obarcodeId}
+			</if>
+			UNION ALL
+			select hob.*
+			  from hcs_out_barcode hob
+			 where 1 = 1
+			   and hob.enable_flag = 'Y'
+			   and hob.status not in ('FH', 'SX','BT')
+			   and hob.obarcode_type = 'TP'
+			   and hob.supplier_id = #{supplierId}
+			   and hob.obarcode_id = decode((select count(0)
+			                                  from hcs_barcode_relation hbr
+			                                 where hbr.outbarcode_id = hob.obarcode_id
+			                                   and hbr.enable_flag = 'Y'),
+			                                0,
+			                                hob.obarcode_id,
+			                                -1)
+			 <if test = "obarcode != null">
+				and hob.obarcode LIKE concat('%',concat(#{obarcode,jdbcType=VARCHAR},'%'))
+			</if> 
+			<if test = "obarcodeNum != null">
+				and hob.OBARCODE_NUM LIKE concat('%',concat(#{obarcodeNum,jdbcType=VARCHAR},'%'))
+			</if> 
+			<if test = "obarcodeType != null">
+				and hob.OBARCODE_TYPE = #{obarcodeType}
+			</if> 
+			<if test = "startTime != null">
+				and hob.creation_date &gt;= to_date(#{startTime}, 'yyyy-mm-dd hh24:mi:ss')
+			</if>
+			<if test = "endTime != null">
+				and hob.creation_date &lt;= to_date(#{endTime}, 'yyyy-mm-dd hh24:mi:ss')
+			</if>
+			<if test = "enableFlag != null">
+				and hob.enable_flag= #{enableFlag}
+			</if>
+			<if test = "obarcodeId != null">
+				and hob.OBARCODE_ID= #{obarcodeId}
+			</if> 
+		) hoc
+		                              
+		ORDER BY hoc.OBARCODE DESC                             
+	</select>
+	<!-- 托盘详情 -->
+	<select id="tpQuery" resultMap="BaseResultMap" parameterType="com.hand.hcs.hcs_out_barcode.dto.OutBarcode">
+		select     hob1.obarcode,
+           hob1.obarcode_num,
+           hob1.obarcode_type,
+           hsb1.sbarcode,
+           hi.ITEM_CODE,
+           hi.descriptions item_name,
+           hsb1.item_version,
+           hsb1.quantity,
+           hsb1.uom,
+           hsb1.lot_code,
+           hsb1.CASE_NUMBER,
+           hsb1.production_time,
+           o1.tp_obarcode,
+           o1.tp_obarcode_num
+			from (
+			select hob.obarcode tp_obarcode,
+			       hob.obarcode_num tp_obarcode_num,
+			       (case
+			         when hbr.inbarcode_type = 'WL' then
+			          (select b1.sbarcode_id
+			             from hcs_small_barcode b1
+			            where b1.sbarcode_id = hbr.inbarcode_id)
+			         when hbr.inbarcode_type = 'GS' or hbr.inbarcode_type = 'ZB' or
+			              hbr.inbarcode_type = 'ZZ' then
+			          (select b1.sbarcode_id
+			             from hcs_barcode_relation r1
+			             left join hcs_small_barcode b1
+			               on b1.sbarcode_id = r1.inbarcode_id
+			            where r1.outbarcode_id = hbr.inbarcode_id
+			            and r1.enable_flag = 'Y')
+			       end) sbarcode_id,
+			       (case
+			         when hbr.inbarcode_type = 'WL' then
+			          null
+			         when hbr.inbarcode_type = 'GS' or hbr.inbarcode_type = 'ZB' or
+			              hbr.inbarcode_type = 'ZZ' then
+			          (select ob1.obarcode_id
+			             from hcs_out_barcode ob1
+			            where ob1.obarcode_id = hbr.inbarcode_id)
+			       end) obarcode_id
+			  from hcs_out_barcode hob
+			  left join hcs_barcode_relation hbr on hob.obarcode_id = hbr.outbarcode_id
+			 where hob.obarcode_id = #{obarcodeId}
+			   and hbr.enable_flag = 'Y') o1
+			   left join hcs_out_barcode hob1 on o1.obarcode_id = hob1.obarcode_id
+			   left join hcs_small_barcode hsb1 on o1.sbarcode_id = hsb1.sbarcode_id
+			   left join hcm_item hi on hsb1.item_id = hi.ITEM_ID and hsb1.plant_id = hi.PLANT_ID
+	</select>
+	<!-- 箱子详情 -->
+	<select id="xzQuery" resultMap="BaseResultMap" parameterType="com.hand.hcs.hcs_out_barcode.dto.OutBarcode">
+		select hob.obarcode tp_obarcode,--托盘标签
+		       hob.obarcode_num tp_obarcode_num,--托盘序列号
+		       hsb.sbarcode,--物料标签序列号
+		       hi.ITEM_CODE,
+		       hi.descriptions item_name,
+		       hsb.item_version,
+		       hsb.quantity,
+		       hsb.uom,
+		       hsb.lot_code,
+		       hsb.CASE_NUMBER,
+		       hsb.production_time,
+		       hob1.obarcode,
+	           hob1.obarcode_type,
+	           hob1.obarcode_num
+		from hcs_barcode_relation hbr
+		left join hcs_small_barcode hsb on hbr.inbarcode_id = hsb.sbarcode_id
+		left join hcs_barcode_relation hbr2 on hbr.outbarcode_id = hbr2.inbarcode_id and hbr2.enable_flag = 'Y'
+		left join hcs_out_barcode hob on hbr2.outbarcode_id = hob.obarcode_id
+		left join hcm_item hi on hsb.item_id = hi.ITEM_ID and hsb.plant_id = hi.PLANT_ID
+		left join hcs_out_barcode hob1 on hbr.outbarcode_id = hob1.obarcode_id
+		where hbr.enable_flag = 'Y' 
+		and hbr.outbarcode_id = #{obarcodeId}
+	</select>
+	<!-- codeType != WL -->
+	<select id="unWlQuery" resultMap="BaseResultMap" parameterType="com.hand.hcs.hcs_out_barcode.dto.OutBarcode">
+		select      hob.obarcode_id, 
+		            hob.obarcode_num,
+		            hob.obarcode,
+		            hob.last_update_date,
+		            sum(hsb.quantity) quantity
+		    from hcs_out_barcode hob
+		    left join hcs_small_barcode hsb on hsb.sbarcode_id in 
+		    (select (  case
+		             when a1.obarcode_type = 'TP' then
+		              case
+		                when b11.b1itype = 'WL' then
+		                 b11.b1iid
+		                else
+		                 b11.b2iid
+		              end
+		             when a1.obarcode_type = 'GS' or a1.obarcode_type = 'ZB' or
+		                  a1.obarcode_type = 'ZZ' then
+		              b11.b1iid
+		             else
+		              a1.obarcode_id
+		           end) sbarcode_id
+		      from hcs_out_barcode a1
+		      left join (select b1.inbarcode_id   b1iid,
+		                        b1.outbarcode_id  b1oid,
+		                        b1.inbarcode_type b1itype,
+		                        b2.inbarcode_id   b2iid
+		                   from hcs_barcode_relation b1
+		                   left join hcs_barcode_relation b2
+		                     on b1.inbarcode_id = b2.outbarcode_id and b2.enable_flag = 'Y' 
+		                    where 1=1 and b1.outbarcode_id = hob.obarcode_id
+		                     and b1.enable_flag = 'Y'
+	                         and b1.ticket_line_id is null
+                       ) b11
+		        on a1.obarcode_id = b11.b1oid  
+		        where 1=1 and a1.obarcode_id = hob.obarcode_id and a1.obarcode_type = #{obarcodeType})
+		        where hob.packing_flag = 'N'
+		        and hob.status = 'ZZ'
+		        and hsb.item_id = #{itemId}
+				and hsb.plant_id = #{plantId}
+				<if test="obarcodeNum!=null">
+					and hob.obarcode_num LIKE concat('%',concat(#{obarcodeNum,jdbcType=VARCHAR},'%'))
+				</if>
+				<if test="obarcode!=null">
+					and hob.obarcode LIKE concat('%',concat(#{obarcode,jdbcType=VARCHAR},'%'))
+				</if>
+		        group by hob.obarcode_id, 
+		                 hob.obarcode_num,
+		                 hob.obarcode,
+		                 hob.last_update_date
+	</select>
+
+<!-- 	<select id="tpQuery" resultMap="BaseResultMap" parameterType="com.hand.hcs.hcs_out_barcode.dto.OutBarcode"> -->
+		
+<!-- 	</select> -->
+	<!-- codeType == WL -->
+	<select id="wlQuery" resultMap="BaseResultMap" parameterType="com.hand.hcs.hcs_out_barcode.dto.OutBarcode">
+		select hs.sbarcode obarcode_num,
+		       hs.barcode_content obarcode,
+		       hs.last_update_date,
+		       hs.quantity,
+		       hs.SBARCODE_ID obarcode_id
+		from hcs_small_barcode hs 
+		left join hcs_small_barcode_control hsbc on hs.sbarcode_id = hsbc.sbarcode_id
+		where hs.item_id = #{itemId}
+		and hs.plant_id = #{plantId}
+		and hs.packing_flag = 'N'
+		and hs.status in('N','P')
+		and hsbc.ticket_id is null
+		<if test="obarcodeNum!=null">
+			and hs.sbarcode LIKE concat('%',concat(#{obarcodeNum,jdbcType=VARCHAR},'%'))
+		</if>
+		<if test="obarcode!=null">
+			and hs.barcode_content LIKE concat('%',concat(#{obarcode,jdbcType=VARCHAR},'%'))
+		</if>
+	</select>
+	<!-- 已绑定标签 -->
+	<select id="queryRight" resultMap="BaseResultMap" parameterType="com.hand.hcs.hcs_out_barcode.dto.OutBarcode">
+		select hob.obarcode_id,
+       hob.obarcode_num,
+       hob.obarcode_type,
+       hob.obarcode,
+       sum(hsb.quantity) quantity
+  from hcs_out_barcode hob
+  left join hcs_small_barcode hsb
+    on hsb.sbarcode_id in
+       (select (case
+                 when a1.obarcode_type = 'TP' then
+                  case
+                    when b11.b1itype = 'WL' then
+                     b11.b1iid
+                    else
+                     b11.b2iid
+                  end
+                 when a1.obarcode_type = 'GS' or a1.obarcode_type = 'ZB' or
+                      a1.obarcode_type = 'ZZ' then
+                  b11.b1iid
+                 else
+                  a1.obarcode_id
+               end) sbarcode_id
+          from hcs_out_barcode a1
+          left join (select b1.inbarcode_id   b1iid,
+                           b1.outbarcode_id  b1oid,
+                           b1.inbarcode_type b1itype,
+                           b2.inbarcode_id   b2iid
+                      from hcs_barcode_relation b1
+                      left join hcs_barcode_relation b2
+                        on b1.inbarcode_id = b2.outbarcode_id
+                       and b2.enable_flag = 'Y'
+                     where 1 = 1
+                       and b1.outbarcode_id = hob.obarcode_id
+                       and b1.enable_flag = 'Y'
+                         ) b11
+            on a1.obarcode_id = b11.b1oid
+            where 1=1 and a1.obarcode_id = hob.obarcode_id )
+ where hob.obarcode_id  in
+       (select distinct decode(hbr3.inbarcode_id,null,hbr2.outbarcode_id,-1)  
+          from hcs_barcode_relation hbr2
+          left join hcs_barcode_relation hbr3
+            on hbr2.outbarcode_id = hbr3.inbarcode_id and hbr3.enable_flag = 'Y'
+         where hbr2.enable_flag = 'Y'
+           and hbr2.ticket_line_id = #{ticketLineId})
+ group by hob.obarcode_id,
+          hob.obarcode_num,
+          hob.obarcode,
+          hob.obarcode_type
+	union all 
+ select hsb.sbarcode_id obarcode_id,
+        hsb.sbarcode obarcode_num,
+        hsb.sbarcode_type obarcode_type,
+        hsb.barcode_content obarcode,
+        hsb.quantity
+from hcs_small_barcode_control hsbc 
+left join hcs_small_barcode hsb on hsbc.sbarcode_id = hsb.sbarcode_id
+where hsbc.ticket_line_id = #{ticketLineId}
+and hsb.packing_flag = 'N'	
+		
+<!-- 		select hob.obarcode_id, -->
+<!-- 		       hob.obarcode_num, -->
+<!-- 		       hob.obarcode_type, -->
+<!-- 		       hob.obarcode, -->
+<!-- 		       sum(hsb.quantity) quantity -->
+<!-- 		  from hcs_barcode_relation hbr -->
+<!-- 		  left join hcs_out_barcode hob on hbr.outbarcode_id = hob.obarcode_id -->
+<!-- 		  left join hcs_small_barcode hsb on hsb.sbarcode_id in (select (  case -->
+<!-- 		                 when a1.obarcode_type = 'TP' then -->
+<!-- 		                  case -->
+<!-- 		                    when b11.b1itype = 'WL' then -->
+<!-- 		                     b11.b1iid -->
+<!-- 		                    else -->
+<!-- 		                     b11.b2iid -->
+<!-- 		                  end -->
+<!-- 		                 when a1.obarcode_type = 'GS' or a1.obarcode_type = 'ZB' or -->
+<!-- 		                      a1.obarcode_type = 'ZZ' then -->
+<!-- 		                  b11.b1iid -->
+<!-- 		                 else -->
+<!-- 		                  a1.obarcode_id -->
+<!-- 		               end) sbarcode_id -->
+<!-- 		          from hcs_out_barcode a1 -->
+<!-- 		          left join (select b1.inbarcode_id   b1iid, -->
+<!-- 		                            b1.outbarcode_id  b1oid, -->
+<!-- 		                            b1.inbarcode_type b1itype, -->
+<!-- 		                            b2.inbarcode_id   b2iid -->
+<!-- 		                       from hcs_barcode_relation b1 -->
+<!-- 		                       left join hcs_barcode_relation b2 -->
+<!-- 		                         on b1.inbarcode_id = b2.outbarcode_id and b2.enable_flag = 'Y'  -->
+<!-- 		                         where 1=1 and b1.outbarcode_id = hob.obarcode_id -->
+<!-- 			                     and b1.enable_flag = 'Y') b11 -->
+<!-- 		            on a1.obarcode_id = b11.b1oid  and a1.obarcode_id = hob.obarcode_id) -->
+<!-- 		 where hbr.outbarcode_id not in -->
+<!-- 		       (select hbr2.outbarcode_id -->
+<!-- 		          from hcs_barcode_relation hbr2 -->
+<!-- 		          left join hcs_barcode_relation hbr3 -->
+<!-- 		            on hbr2.outbarcode_id = hbr3.inbarcode_id -->
+<!-- 		         where hbr2.enable_flag = 'Y' -->
+<!-- 		           and hbr3.enable_flag = 'Y') -->
+<!-- 		  and hbr.ticket_line_id = #{ticketLineId} -->
+<!-- 		  and hbr.enable_flag = 'Y' -->
+<!-- 		  group by hob.obarcode_id,  -->
+<!-- 		           hob.obarcode_num, -->
+<!-- 		           hob.obarcode, -->
+<!-- 		           hob.obarcode_type -->
+<!-- 		 union all  -->
+<!-- 		 select hsb.sbarcode_id obarcode_id, -->
+<!-- 		        hsb.sbarcode obarcode_num, -->
+<!-- 		        hsb.sbarcode_type obarcode_type, -->
+<!-- 		        hsb.barcode_content obarcode, -->
+<!-- 		        hsb.quantity -->
+<!-- 		from hcs_small_barcode_control hsbc  -->
+<!-- 		left join hcs_small_barcode hsb on hsbc.sbarcode_id = hsb.sbarcode_id -->
+<!-- 		where hsbc.ticket_line_id = #{ticketLineId} -->
+<!-- 		and hsb.packing_flag = 'N'           -->
+	</select>
+</mapper>

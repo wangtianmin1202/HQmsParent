@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.npi.npi_technology.mapper.InvalidPatternHisMapper">
+    <resultMap id="BaseResultMap" type="com.hand.npi.npi_technology.dto.InvalidPatternHis">
+        <result column="INVALID_PATTERN_ID" property="invalidPatternId" jdbcType="DECIMAL" />
+        <result column="INVALID_PATTERN_NUMBER" property="invalidPatternNumber" jdbcType="VARCHAR" />
+        <result column="INVALID_PATTERN_CONSEQUENCE" property="invalidPatternConsequence" jdbcType="VARCHAR" />
+        <result column="SPEC_DETAIL_ID" property="specDetailId" jdbcType="VARCHAR" />
+        <result column="SEV" property="sev" jdbcType="VARCHAR" />
+        <result column="INVALID_PATTERN_NAME" property="invalidPatternName" jdbcType="VARCHAR" />
+        <result column="PARENT_ID" property="parentId" jdbcType="DECIMAL" />
+        <result column="HIS_VERSION_CODE" property="hisVersionCode" jdbcType="VARCHAR" />
+        <result column="NEWEST_VERSION_CODE" property="newestVersionCode" jdbcType="VARCHAR" />
+    </resultMap>
+
+	<!-- 查询变更历史数据 -->
+	<select id="selectByLastUpdateDate" resultMap="BaseResultMap"
+		parameterType="com.hand.npi.npi_technology.dto.InvalidPatternHis">
+		SELECT t.* FROM  NPI_INVALID_PATTERN_HIS t 
+		<where>
+			<if test="invalidPatternNumber != null and invalidPatternNumber != ''">
+				and t.INVALID_PATTERN_NUMBER =#{invalidPatternNumber}
+			</if>
+			<if test="hisVersionCode != null and hisVersionCode != ''">
+				and t.HIS_VERSION_CODE =#{hisVersionCode}
+			</if>
+		</where>
+		ORDER BY t.LAST_UPDATE_DATE DESC
+	</select>
+	
+	
+</mapper>

@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_sample_use_after.mapper.SampleUseAfterMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_sample_use_after.dto.SampleUseAfter">
+        <result column="USE_ID" property="useId" jdbcType="DECIMAL" />
+        <result column="USE_DOCUMENT_CODE" property="useDocumentCode" jdbcType="VARCHAR" />
+        <result column="DOCUMENT_STATUS" property="documentStatus" jdbcType="VARCHAR" />
+        <result column="APPROVER" property="approver" jdbcType="DECIMAL" />
+        <result column="APPROVAL_DATE" property="approvalDate" jdbcType="DATE" />
+        <result column="REMARK" property="remark" jdbcType="VARCHAR" />
+        <result column="DOCUMENT_TYPE" property="documentType" jdbcType="VARCHAR" />
+        
+        <result column="CREATED_NAME" property="createdName" jdbcType="VARCHAR" />
+        <result column="APPROVER_NAME" property="approverName" jdbcType="VARCHAR" />
+        <result column="CREATION_DATE_COLUMN" property="creationDateColumn" jdbcType="DATE" />
+        <result column="SAMPLE_CODE" property="sampleCode" jdbcType="VARCHAR" />     
+        <result column="LAST_UPDATE_DATE_COLUMN" property="lastUpdateDateColumn" jdbcType="DATE" />
+    </resultMap>
+
+<select id="selectMaxNumber" resultMap="BaseResultMap"
+            parameterType="com.hand.hqm.hqm_sample_use_after.dto.SampleUseAfter">
+SELECT t.use_document_code
+  FROM hqm_sample_use t
+ WHERE 1 = 1
+   AND t.use_document_code LIKE concat(#{useDocumentCode}, '%')
+ ORDER BY t.use_document_code DESC
+</select>
+<select id="reSelect" resultMap="BaseResultMap"
+            parameterType="com.hand.hqm.hqm_sample_use_after.dto.SampleUseAfter">
+SELECT t.*,
+       he.name         AS created_name,
+       aphe.name       AS approver_name,
+       t.creation_date AS creation_date_column,
+       t.last_update_date AS last_update_date_column
+  FROM hqm_sample_use t
+  JOIN sys_user su
+    ON t.created_by = su.user_id
+  JOIN hr_employee he
+    ON su.employee_id = he.employee_id
+  LEFT JOIN sys_user apsu
+    ON t.approver = apsu.user_id
+  LEFT JOIN hr_employee aphe
+    ON apsu.employee_id = aphe.employee_id
+ WHERE 1 = 1
+ <if test="sampleGiveDateFrom != null or sampleGiveDateTo != null or  sampleId != null or sampleCode != null">
+ AND EXISTS (SELECT 1
+          FROM hqm_use_detail hud, hqm_sample_account hsa
+         WHERE hud.sample_id = hsa.sample_id
+           AND hud.use_id = t.use_id
+           <if test="sampleGiveDateFrom != null">
+		   AND hsa.sample_give_date &gt;= to_date(#{sampleGiveDateFrom},'yyyy-mm-dd hh24:mi:ss')
+		   </if>
+		   <if test="sampleGiveDateTo != null">
+		   AND hsa.sample_give_date &lt;= to_date(#{sampleGiveDateTo},'yyyy-mm-dd hh24:mi:ss')
+		   </if>
+		   <if test="sampleId != null">
+		   AND hsa.sample_id = #{sampleId}
+		   </if>
+		   <if test="sampleCode != null">
+           AND hsa.sample_code   LIKE concat('%',concat(#{sampleCode},'%'))
+           </if>   
+           )
+</if>
+   <if test="documentType != null">
+   AND t.document_type = #{documentType}
+   </if>
+   <if test="useIds != null">
+   AND t.use_id IN (${useIds})
+   </if>
+   <if test="createdByColumn != null">
+   AND t.created_by = #{createdByColumn}
+   </if>
+   <if test="useDocumentCode != null">
+   AND t.use_document_code = #{useDocumentCode}
+   </if>
+   <if test="approver != null">
+   AND t.approver = #{approver}
+   </if>
+   <if test="documentStatus != null">
+   AND t.document_status = #{documentStatus}
+   </if>
+ ORDER BY t.creation_date DESC
+</select>
+</mapper>

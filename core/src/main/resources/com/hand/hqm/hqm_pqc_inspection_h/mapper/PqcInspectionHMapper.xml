@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_pqc_inspection_h.mapper.PqcInspectionHMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_pqc_inspection_h.dto.PqcInspectionH">
+        <result column="HEADER_ID" property="headerId" jdbcType="DECIMAL" />
+        <result column="INSPECTION_NUM" property="inspectionNum" jdbcType="VARCHAR" />
+        <result column="INSPECTION_TYPE" property="inspectionType" jdbcType="VARCHAR" />
+        <result column="INSPECTION_FROM" property="inspectionFrom" jdbcType="VARCHAR" />
+        <result column="PLANT_ID" property="plantId" jdbcType="DECIMAL" />
+        <result column="PROD_LINE_ID" property="prodLineId" jdbcType="DECIMAL" />
+        <result column="INSPECTION_STATUS" property="inspectionStatus" jdbcType="VARCHAR" />
+        <result column="INSPECTION_RES" property="inspectionRes" jdbcType="VARCHAR" />
+        <result column="SHOULD_INSPECTION_DATE" property="shouldInspectionDate" jdbcType="DATE" />
+        <result column="INSPECTION_DATE" property="inspectionDate" jdbcType="DATE" />
+        <result column="INSPECTOR_ID" property="inspectorId" jdbcType="VARCHAR" />
+        <result column="NONCONFORMING_ORDER" property="nonconformingOrder" jdbcType="VARCHAR" />
+        <result column="SOURCE_INSPEC_ID" property="sourceInspecId" jdbcType="VARCHAR" />
+        <result column="REMARK" property="remark" jdbcType="VARCHAR" />
+        <result column="INSTRUCTION" property="instruction" jdbcType="VARCHAR" />
+        <result column="OK_QTY" property="okQty" jdbcType="DECIMAL" />
+        <result column="NG_QTY" property="ngQty" jdbcType="DECIMAL" />
+        <result column="INSPECTION_DES" property="inspectionDes" jdbcType="VARCHAR" />
+        <result column="INSPECTION_ITEM_IMG" property="inspectionItemImg" jdbcType="VARCHAR" />
+        <result column="INSPECTION_JUDGE" property="inspectionJudge" jdbcType="VARCHAR" />
+        <result column="APPROVAL_RESULT" property="approvalResult" jdbcType="VARCHAR" />
+        <result column="APPROVAL_ID" property="approvalId" jdbcType="VARCHAR" />
+        <result column="SOLVE_WAY" property="solveWay" jdbcType="VARCHAR" />
+        <result column="APPROVAL_DES" property="approvalDes" jdbcType="VARCHAR" />
+        <result column="SOURCE_TYPE" property="sourceType" jdbcType="VARCHAR" />
+        
+        <result column="PLANT_CODE" property="plantCode" jdbcType="VARCHAR" />
+        <result column="PROD_LINE_CODE" property="prodLineCode" jdbcType="VARCHAR" />
+        <result column="PROD_LINE_DESCRIPTIONS" property="prodLineDescriptions" jdbcType="VARCHAR" />
+        <result column="INSPECTOR_USER_NAME" property="inspectorUserName" jdbcType="VARCHAR" />
+        
+        <result column="ORDER_CODE" property="orderCode" jdbcType="VARCHAR" />
+        <result column="ORDER_ID" property="orderId" jdbcType="DECIMAL" />
+        
+        <result column="SOURCE_ORDER" property="sourceOrder" jdbcType="VARCHAR" />
+        <result column="ITEM_ID" property="itemId" jdbcType="DECIMAL" />
+        <result column="PRODUCTION_QTY" property="productionQty" jdbcType="DECIMAL" />
+        
+        <result column="ITEM_CODE" property="itemCode" jdbcType="VARCHAR" />
+        
+        <result column="ITEM_DESCRIPTIONS" property="itemDescriptions" jdbcType="VARCHAR" />
+        <result column="PRODUCTION_BATCH" property="productionBatch" jdbcType="VARCHAR" />
+        
+        <result column="CATEGORY_DESCRIPTION" property="categoryDescription" jdbcType="VARCHAR" />
+    	<!-- 业务字段 -->
+        <result column="ITEM_NAME" property="itemName" jdbcType="VARCHAR" />
+        <result column="INSPECTION_ATTRIBUTE" property="inspectionAttribute" jdbcType="VARCHAR" />
+        <result column="ATTRIBUTE_TYPE" property="attributeType" jdbcType="VARCHAR" />
+        <result column="STANDARD_TYPE" property="standardType" jdbcType="VARCHAR" />
+        <result column="QUALITY_CHARACTER_GRADE" property="qualityCharacterGrade" jdbcType="VARCHAR" />
+        <result column="SAMPLE_WAY_ID" property="sampleWayId" jdbcType="DECIMAL" />
+        <result column="DESCRIPTION" property="description" jdbcType="VARCHAR" />
+        <result column="STANDRAD_UOM" property="standradUom" jdbcType="VARCHAR" />
+        <result column="STANDRAD_FROM" property="standradFrom" jdbcType="DECIMAL" />
+        <result column="STANDRAD_TO" property="standradTo" jdbcType="DECIMAL" />
+        <result column="ATTRIBUTE_INSPECTION_RES" property="attributeInspectionRes" jdbcType="VARCHAR" />
+        <result column="LINE_ID" property="lineId" jdbcType="DECIMAL" />
+        <result column="ORDER_NUM" property="orderNum" jdbcType="VARCHAR" />
+        <result column="DATA" property="dataInfo" jdbcType="VARCHAR" />
+        <result column="JUDGEMENT" property="judgement" jdbcType="VARCHAR" />
+        <result column="INSPECTOR_EMPLOYEE_NAME" property="inspectorEmployeeName" jdbcType="VARCHAR" />
+    </resultMap>
+    <select id="selectMaxNumber" resultMap="BaseResultMap"
+            parameterType="com.hand.hqm.hqm_fqc_inspection_h.dto.FqcInspectionH">
+SELECT t.inspection_num
+  FROM hqm_pqc_inspection_h t
+ WHERE 1 = 1
+   AND t.inspection_num LIKE concat(#{inspectionNum}, '%')
+ ORDER BY t.inspection_num DESC
+</select>
+<select id="myselect" resultMap="BaseResultMap" parameterType="com.hand.hqm.hqm_pqc_inspection_h.dto.PqcInspectionH">
+	SELECT t.*,
+       hp.plant_code,
+       hpli.prod_line_code,
+       hpli.descriptions   AS prod_line_descriptions,
+       su.user_name        AS inspector_user_name,
+       he.name             AS inspector_employee_name,
+       hdo.order_code,
+       hdo.order_id,
+       hi.item_code,
+       hi.descriptions     AS item_descriptions
+  FROM hqm_pqc_inspection_h t
+  LEFT JOIN hcm_item hi
+    ON t.item_id = hi.item_id
+   AND t.plant_id = hi.plant_id
+  LEFT JOIN sys_user su
+    ON t.inspector_id = su.user_id
+  LEFT JOIN hr_employee he
+    ON su.employee_id = he.employee_id
+  LEFT JOIN hqm_8d_order hdo
+    ON t.inspection_num = hdo.source_order, hcm_production_line hpli, hcm_plant hp
+ WHERE 1 = 1
+   AND t.plant_id = hp.plant_id
+   AND t.prod_line_id = hpli.prod_line_id
+   AND t.plant_id = hpli.plant_id
+   <if test="inspectionNum != null">
+   	AND t.inspection_num LIKE concat('%',concat(#{inspectionNum},'%')) 
+   </if>
+    <choose>
+    <when test="inspectionStatus!=null and inspectionStatus == 'AUDIT'">
+      AND t.inspection_status IN ('4','5')
+    </when>
+    <when test="inspectionStatus!=null and inspectionStatus == 'INPUT'">
+      AND t.inspection_status IN ('2','3')
+    </when>
+    <when test="inspectionStatus!=null and inspectionStatus != 'AUDIT' and inspectionStatus != 'INPUT'">
+      AND t.inspection_status = #{inspectionStatus}
+    </when>
+  </choose>
+<!--    <if test="inspectionStatus!=null AND inspectionStatus == 'AUDIT'"> -->
+<!--    AND t.inspection_status IN ('4','5') -->
+<!--    </if> -->
+<!--    <if test="inspectionStatus!=null AND inspectionStatus !='AUDIT'"> -->
+<!--    AND t.inspection_status = #{inspectionStatus} -->
+<!--    </if> -->
+   <if test="headerId != null">
+   AND t.header_id = #{headerId}
+   </if>
+   <if test="ngQueryFlag != null">
+   AND t.inspection_status = #{inspectionStatus}
+   AND t.creation_date > nvl((SELECT SYSDATE - cvb.value
+                               FROM sys_code_b scb
+                               JOIN sys_code_value_b cvb
+                                 ON scb.code_id = cvb.code_id
+                              WHERE scb.code = 'HQM_IQC_LOOK_TIME'
+                                AND rownum = 1),
+                             SYSDATE)
+   </if>
+   <if test="approvalResult != null">
+   AND t.approval_result = #{approvalResult}
+   </if>
+   <if test="inspectionRes != null">
+   AND t.inspection_res = #{inspectionRes}
+   </if>
+   <if test="inspectionJudge != null">
+   AND t.inspection_judge = #{inspectionJudge}
+   </if>
+   <if test="prodLineId != null">
+   AND t.prod_line_id = #{prodLineId}
+   </if>
+   <if test="shouldInspectionDateFrom != null">
+   AND t.should_inspection_date >= to_date(#{shouldInspectionDateFrom},'yyyy-mm-dd hh24:mi:ss')
+   </if>
+   <if test="shouldInspectionDateTo != null">
+   AND t.should_inspection_date &lt;= to_date(#{shouldInspectionDateTo},'yyyy-mm-dd hh24:mi:ss')
+   </if>
+</select>
+
+<select id="wsSelect" resultMap="BaseResultMap" parameterType="com.hand.hqm.hqm_pqc_inspection_h.dto.PqcInspectionH">
+
+select 1 as HEADER_ID from dual
+</select>
+
+<select id="qmsQuery" resultMap="BaseResultMap" parameterType="com.hand.hqm.hqm_pqc_inspection_h.dto.PqcInspectionH">
+	select qmsh.header_id,
+	       qmsh.inspection_num,
+	       qmsh.inspection_status,
+	       qmsh.item_id,
+	       hi.ITEM_CODE,
+	       hi.descriptions ITEM_NAME,
+	       qmsh.creation_date,
+	       qmsh.inspection_date,
+	       qmsh.inspector_id,
+	       qmsh.production_batch,
+	       qmsh.production_qty receive_qty,
+	       qmsh.source_order,
+	       qmsh.inspection_judge,
+	       qmsh.approval_result,
+	       qmsh.solve_way,
+	       hia.inspection_attribute,
+	       hia.attribute_type,
+	       hia.standard_type,
+	       hia.quality_character_grade,
+	       qmsc.sample_way_id,
+	       hsm.description,
+	       qmsc.standrad_from,
+	       qmsc.standrad_to,
+	       qmsc.standrad_uom,
+	       qmsc.attribute_inspection_res,
+	       qmsc.line_id,
+	       qmsd.order_num,
+	       qmsd.data,
+	       qmsd.judgement
+	from hqm_pqc_inspection_h qmsh
+	left join hcm_item hi on qmsh.item_id = hi.ITEM_ID
+	left join hqm_pqc_inspection_l qmsl on qmsh.header_id = qmsl.header_id
+	left join hqm_pqc_inspection_c qmsc on qmsl.line_id = qmsc.line_id
+	left join hqm_sample_manage hsm on qmsc.sample_way_id = hsm.sample_way_id
+	left join hqm_pqc_inspection_d qmsd on qmsc.connect_id = qmsd.connect_id
+	left join hqm_inspection_attribute hia on qmsc.attribute_id = hia.attribute_id
+</select>
+
+
+<!-- 根据物料组ID 找模板 临时检验项 -->
+<select id="selectByCategoryId" resultMap="BaseResultMap"
+            parameterType="com.hand.hqm.hqm_temporary_inspection.dto.TemporaryInspection">
+SELECT t.*
+  FROM hqm_pqc_inspection_h t
+  JOIN hcm_item_category_assign hica
+    ON t.item_id = hica.item_id
+   AND t.plant_id = hica.plant_id
+ WHERE 1 = 1
+   AND t.inspection_status != '5'
+   AND t.plant_id = #{plantId}
+   AND hica.category_id = #{categoryId}
+</select>
+
+</mapper>

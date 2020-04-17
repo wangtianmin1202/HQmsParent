@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.itf.itf_delivery_receipt.mapper.DeliveryReceiptMapper">
+    <resultMap id="BaseResultMap" type="com.hand.itf.itf_delivery_receipt.dto.DeliveryReceipt">
+        <result column="DELIVERY_RECEIPT_ID" property="deliveryReceiptId" jdbcType="DECIMAL" />
+        <result column="BATCH_NUMBER" property="batchNumber" jdbcType="VARCHAR" />
+        <result column="PROCESS_STATUS" property="processStatus" jdbcType="VARCHAR" />
+        <result column="MESSAGE" property="message" jdbcType="VARCHAR" />
+        <result column="PROCESS_TIME" property="processTime" jdbcType="DATE" />
+        <result column="DELIVERY_ORDER_NO" property="deliveryOrderNo" jdbcType="VARCHAR" />
+        <result column="DELIVERY_LINE_NO" property="deliveryLineNo" jdbcType="VARCHAR" />
+        <result column="RECEIVING_QTY" property="receivingQty" jdbcType="VARCHAR" />
+        <result column="RECEIVING_DATE" property="receivingDate" jdbcType="VARCHAR" />
+        <result column="INSPECT_QTY" property="inspectQty" jdbcType="VARCHAR" />
+        <result column="QUALIFIED_QTY" property="qualifiedQty" jdbcType="VARCHAR" />
+        <result column="INSPECT_OK" property="inspectOk" jdbcType="VARCHAR" />
+        <result column="REMARK1" property="remark1" jdbcType="VARCHAR" />
+        <result column="REMARK2" property="remark2" jdbcType="VARCHAR" />
+        <result column="REMARK3" property="remark3" jdbcType="VARCHAR" />
+        <result column="REMARK4" property="remark4" jdbcType="VARCHAR" />
+        <result column="REMARK5" property="remark5" jdbcType="VARCHAR" />
+    </resultMap>
+
+
+</mapper>

@@ -1,0 +1,168 @@
+<#include "../include/header.html">
+
+<script src="${base.contextPath}/common/code?YES_NO=SYS.YES_NO" type="text/javascript"></script>
+<script src="${base.contextPath}/common/code?NPI_METERING_COUNT=NPI_METERING_COUNT"></script>
+<script src="${base.contextPath}/common/code?HQM_STANDARD_UOM=HQM_STANDARD_UOM"></script>
+
+<script type="text/javascript">
+	var BaseUrl = _basePath;
+	var id = '${RequestParameters.id!0}';
+    var viewModel = Hap.createGridViewModel(null,{
+    	model:{
+    	},
+    	closeWin:function(e) {
+    		window.parent.$("#newCauseWindow").data("kendoWindow").close();
+    	},
+    	save:function(){
+    	}
+    });
+    var viewModelDet = Hap.createGridViewModel("#detailGrid",{
+        model:{
+        },
+        save:function () {
+        },
+        remove: function () {
+                Hap.deleteGridSelection({
+                    grid: $('#detailGrid')
+                });
+        },
+    });
+</script>
+
+<body>
+
+<div id="page-content">
+
+	<div style="clear:both">
+		<div id="detailGrid"></div>
+	</div>
+	<div id="mainBottom" class="text-right" style="bottom:15px;position:fixed;float:left;padding-top:15px;border-top:1px solid #e8e1eb;
+		width:100%;background:#fff;margin-right:30px">
+		<span class="btn btn-default" data-bind="click:closeWin" type="button" style="margin-right:25px">关闭</span>
+	</div>
+	<div id='detailInfo'></div>
+	<script>
+		kendo.bind($('#mainForm'), viewModel);
+		kendo.bind($('#mainBottom'), viewModel);
+	</script>
+	<script>
+		$('#mainForm').kendoValidator({
+			messages:{
+				required:'<@spring.message "hap.validation.notempty"/>'
+			},
+			invalidMessageType:"tooltip"
+		});
+	</script>
+<script>
+    var BaseUrl = _basePath;
+   
+    var dataSourceDet = new kendo.data.DataSource({
+        transport: {
+            read: {
+            	url: BaseUrl + "/npi/invalid/pattern/queryHisData",
+	            type: "POST",
+	            dataType: "json"
+            },
+            parameterMap: function (options, type) {
+                if (type !== "read" && options.models) {
+                    var datas = Hap.prepareSubmitParameter(options, type);
+                    return kendo.stringify(datas);
+                } else if (type === "read") {
+                	viewModelDet.model.id = id
+                    return Hap.prepareQueryParameter(viewModelDet.model.toJSON(), options)
+                }
+            }
+        },
+        batch: true,
+        serverPaging: true,
+        pageSize: 20,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+            }
+        }
+    });
+
+</script>
+
+<script>
+	
+function showHisDataDetail(id){
+	var url='pfmea_his_data_detail.html?id='+id;
+	var newWindow = $("#detailInfo").kendoWindow({
+		actions:["close"],
+		width:850,
+		height:550,
+		title:'历史失效模式查看',
+		content:url,
+		iframe:true,
+		visible:false,
+		resizable:true,
+		modal:true,
+		close:function(){
+			//$("#leftGrid").data('kendoGrid').dataSource.read();
+		}
+		
+	}).data("kendoWindow");
+	newWindow.center().open();
+}
+	
+    var detailGrid = $("#detailGrid").kendoGrid({
+        dataSource: dataSourceDet,
+        resizable: true,
+        scrollable: true,
+        navigatable: false,
+        //sortable:true,
+        autoBind:true,
+        selectable: 'multiple, rowbox',
+        dataBound: function () {
+            if (parent.autoResizeIframe) {
+                parent.autoResizeIframe('${RequestParameters.functionCode!}')
+            }
+        },
+        pageable: {
+            pageSizes: [5, 10, 20, 50],
+            refresh: true,
+            buttonCount: 5
+        },
+        columns: [
+        	{
+                field: "invalidPatternNumber",
+                title: '失效模式编码',
+                width: 120
+            },
+            {
+                field: "invalidPatternName",
+                title: '失效模式',
+                width: 120
+            },
+                    {
+                field: "invalidPatternConsequence",
+                title: '失效模式后果',
+                width: 120
+            },
+            {
+                field: "versionCode",
+                title: '版本号',
+                width: 50
+            }, {
+		            title: '操作',
+		            width: 80,
+		            headerAttributes: {
+		                style: "text-align: center"
+		            },
+		            attributes: {
+		                style: "text-align: center;"
+		            },
+		            template:function (dataItem) {  
+		            	return '<a href="#" onclick="showHisDataDetail(\''+dataItem.id+'\')">查看</a>';
+		            }
+		        }  
+        ],
+        editable: false
+    }).data("kendoGrid");
+</script>
+</div>
+</body>
+</html>

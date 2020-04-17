@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.spc.repository.mapper.SubgroupStatisticRMapper">
+
+    <insert id="batchInsertRows" parameterType="java.util.List">
+    <foreach collection="list" item="item" index="index" open="begin" close=";end;" separator=";">
+        INSERT INTO pspc_subgroup_statistic (
+        tenant_id,
+        site_id,
+        sample_subgroup_id,
+        entity_code,
+        entity_version,
+        subgroup_bar,
+        subgroup_r,
+        subgroup_max,
+        subgroup_min,
+        subgroup_sigma,
+        subgroup_me,
+        subgroup_rm)VALUES(
+            #{item.tenantId},
+            #{item.siteId},
+            #{item.sampleSubgroupId},
+            #{item.entityCode},
+            #{item.entityVersion},
+            #{item.subgroupBar},
+            #{item.subgroupR},
+            #{item.subgroupMax},
+            #{item.subgroupMin},
+            #{item.subgroupSigma},
+            #{item.subgroupMe},
+            #{item.subgroupRm})
+        </foreach>
+    </insert>
+
+
+    <resultMap id="SubgroupStatisticVoList" type="com.hand.spc.repository.dto.SubgroupStatisticVo">
+
+        <result column="subgroup_statistic_id" property="subgroupStatisticId"/>
+        <result column="tenant_id" property="tenantId"/>
+        <result column="site_id" property="siteId"/>
+        <result column="sample_subgroup_id" property="sampleSubgroupId"/>
+        <result column="entity_code" property="entityCode"/>
+        <result column="entity_version" property="entityVersion"/>
+        <result column="subgroup_bar" property="subgroupBar"/>
+        <result column="subgroup_r" property="subgroupR"/>
+        <result column="subgroup_max" property="subgroupMax"/>
+        <result column="subgroup_min" property="subgroupMin"/>
+        <result column="subgroup_sigma" property="subgroupSigma"/>
+        <result column="subgroup_me" property="subgroupMe"/>
+        <result column="subgroup_rm" property="subgroupRm"/>
+        <result column="object_version_number" property="objectVersionNumber"/>
+
+        <!--<collection property="sampleSubgroupRelationList" ofType="org.spc.system.domain.entity.SampleSubgroupRelation"-->
+                    <!--javaType="java.util.List" select="selectLine" column="sample_subgroup_id" >-->
+        <!--</collection>-->
+    </resultMap>
+
+    <resultMap id="LineMap" type="com.hand.spc.repository.dto.SampleSubgroupRelationR">
+        <result column="sample_value" property="sampleValue"/>
+    </resultMap>
+
+    <select id="selectLine" parameterType="long" resultMap="LineMap">
+        select
+          sample_value
+        from
+          pspc_sample_subgroup_relation
+        where
+          sample_subgroup_id =#{sampleSubgroupId}
+    </select>
+
+    <select id="selectByCodeAndVersion" resultMap="SubgroupStatisticVoList" parameterType="com.hand.spc.repository.dto.CPKAnalyseReqDTO">
+      SELECT
+        ssc.subgroup_statistic_id,
+        ssc.tenant_id,
+        ssc.site_id,
+        ssc.sample_subgroup_id,
+        ssc.entity_code,
+        ssc.entity_version,
+        ssc.subgroup_bar,
+        ssc.subgroup_r,
+        ssc.subgroup_max,
+        ssc.subgroup_min,
+        ssc.subgroup_sigma,
+        ssc.subgroup_me,
+        ssc.subgroup_rm,
+        ssc.object_version_number,
+        ssp.sample_subgroup_time
+    FROM
+        pspc_subgroup_statistic ssc,
+--         pspc_sample_subgroup_relation ssr,
+        pspc_sample_subgroup ssp
+    WHERE
+
+            ssc.sample_subgroup_id = ssp.sample_subgroup_id
+--         AND ssr.sample_subgroup_id = ssp.sample_subgroup_id
+        AND ssp.entity_code = #{entityCode}
+        AND ssp.entity_version = #{entityVersion}
+        <if test="startDate != null">
+            AND ssp.sample_subgroup_time &gt;= #{startDate}
+        </if>
+        <if test="endDate != null">
+            AND ssp.sample_subgroup_time &lt;= #{endDate}
+        </if>
+        <if test="startDate == null and endDate == null">
+            LIMIT 0,#{size}
+
+        </if>
+    </select>
+    
+     <select id="selectByCodeAndVersionByAD" resultMap="SubgroupStatisticVoList" parameterType="com.hand.spc.repository.dto.AndersonDarlingDTO">
+        SELECT
+        ssc.subgroup_statistic_id,
+        ssc.tenant_id,
+        ssc.site_id,
+        ssc.sample_subgroup_id,
+        ssc.entity_code,
+        ssc.entity_version,
+        ssc.subgroup_bar,
+        ssc.subgroup_r,
+        ssc.subgroup_max,
+        ssc.subgroup_min,
+        ssc.subgroup_sigma,
+        ssc.subgroup_me,
+        ssc.subgroup_rm,
+        ssc.object_version_number,
+        ssp.sample_subgroup_time
+        FROM
+        pspc_subgroup_statistic ssc,
+        pspc_sample_subgroup ssp
+        WHERE
+
+        ssc.sample_subgroup_id = ssp.sample_subgroup_id
+        AND ssp.entity_code = #{entityCode}
+        AND ssp.entity_version = #{entityVersion}
+        <if test="startDate != null">
+            AND ssp.sample_subgroup_time &gt;= #{startDate}
+        </if>
+        <if test="endDate != null">
+            AND ssp.sample_subgroup_time &lt;= #{endDate}
+        </if>
+        <if test="startDate == null and endDate == null">
+            LIMIT 0,#{size}
+
+        </if>
+    </select>
+
+</mapper>

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.spc.ecr_main.mapper.EcrItemResultMapper">
+    <resultMap id="BaseResultMap" type="com.hand.spc.ecr_main.dto.EcrItemResult">
+        <result column="KID" property="kid" jdbcType="DECIMAL" />
+        <result column="ECRNO" property="ecrno" jdbcType="VARCHAR" />
+        <result column="ITEM_ID" property="itemId" jdbcType="DECIMAL" />
+        <result column="QTY" property="qty" jdbcType="DECIMAL" />
+        <result column="GROUP_ID" property="groupId" jdbcType="DECIMAL" />
+        <result column="STATUST" property="statust" jdbcType="VARCHAR" />
+        <result column="SCRAP" property="scrap" jdbcType="DECIMAL" />
+        <result column="CYCLE_DAYS" property="cycleDays" jdbcType="DECIMAL" />
+        <result column="ADVICE_CHAGE_TIME" property="adviceChageTime" jdbcType="DATE" />
+    </resultMap>
+
+	<update id="updateState">
+		update HPM_ECR_ITEM_RESULT set statust = #{statust},LAST_UPDATED_BY=#{lastUpdatedBy},LAST_UPDATE_DATE=sysdate
+		where ecrno = #{ecrno}
+		<if test="groupId != null">
+			and group_id = #{groupId} 
+		</if> 
+	</update>
+</mapper>

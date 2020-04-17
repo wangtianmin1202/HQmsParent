@@ -1,0 +1,117 @@
+<#include "../include/header.html">
+<script src="${base.contextPath}/common/code?position_codes=HPM_ECR_POSITION_NAME"></script>
+<script src="${base.contextPath}/common/code?position_types=HPM_ECR_POSITION_CATRGORY"></script>
+
+<script type="text/javascript">
+    var BaseUrl = _basePath;
+    var kid = '${RequestParameters.kid!0}';
+    var viewModel = Hap.createGridViewModel(null,{
+        model:{
+
+        },
+        closeWin:function(e) {
+            window.parent.$("#roleViewWindow").data("kendoWindow").close();
+        },
+        save:function(){
+            var data = viewModel.model.toJSON();
+            data.__status = "update";
+            var validator = $("#mainForm").data("kendoValidator");
+            if(validator.validate()) {
+                //Hap.blockUI();
+                Hap.request({
+                    url: BaseUrl + "/hcm/position/role/add",
+                    data: kendo.stringify(data),
+                    success:function(data){
+                        if(data.success){
+                            //Hap.unblockUI();
+                            viewModel.closeWin();
+                        }
+                    }
+                })
+            }
+        },
+        queryInfo:function(){
+            if(kid != 0){
+                $.ajax({
+                    url:BaseUrl+"/hcm/position/role/query?kid="+kid,
+                    success:function(data){
+                        var a0 = data.rows[0] || {};
+                        for(var k in a0){
+                            viewModel.model.set(k,a0[k]);
+                        }
+                    }
+                })
+            }
+        },
+    });
+    viewModel.queryInfo();
+</script>
+
+<body>
+
+<div id="page-content">
+    <form id = "mainForm" style="paddiing-bottom:50px;padding-top:15px" class="form-horizontal" method="post" enctype="application/json;charset=UTF-8">
+        <div class="row">
+            <div class="col-sm-9">
+                <div class="form-group" style="text-align: center">
+                    <div class="col-sm-12">
+                        <label class="col-sm-4 control-label">功能职位</label>
+                        <input style="width:50%" id="positionCode"
+                               data-bind="value:model.positionCode" data-label="功能职位名称" required >
+                        <script>
+                            $("#positionCode").kendoComboBox({
+                                dataTextField: "meaning",
+                                dataValueField: "value",
+                                valuePrimitive: true,
+                                dataSource: position_codes
+                            });
+                        </script>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-9">
+                <div class="form-group" style="text-align: center">
+                    <div class="col-sm-12">
+                        <label class="col-sm-4 control-label">职责类别</label>
+                        <input style="width:50%" id="positionType" data-label="职责类别"
+                               data-bind="value:model.positionType,text:model.positionTypeName"  required>
+                        <script>
+                            $("#positionType").kendoComboBox({
+                                dataTextField: "meaning",
+                                dataValueField: "value",
+                                valuePrimitive: true,
+                                dataSource: position_types
+                            });
+                        </script>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+    </form>
+    <div style="clear:both">
+        <div id="grid"></div>
+    </div>
+    <div id="mainBottom" class="text-right" style="bottom:15px;position:fixed;float:left;padding-top:15px;border-top:1px solid #e8e1eb;
+		width:100%;background:#fff;margin-right:30px">
+        <span class="btn btn-primary" data-bind="click:save" type="submit" style="margin-right:5px">保存</span>
+        <span class="btn btn-default" data-bind="click:closeWin" type="button" style="margin-right:25px">取消</span>
+    </div>
+    <script>
+        kendo.bind($('#mainForm'), viewModel);
+        kendo.bind($('#mainBottom'), viewModel);
+    </script>
+    <script>
+        $('#mainForm').kendoValidator({
+            messages:{
+                required:'<@spring.message "hap.validation.notempty"/>'
+            },
+            invalidMessageType:"tooltip"
+        });
+    </script>
+</div>
+</body>
+</html>

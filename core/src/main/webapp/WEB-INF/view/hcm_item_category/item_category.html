@@ -1,0 +1,200 @@
+<#include "../include/header.html">
+<script type="text/javascript">
+    var viewModel = Hap.createGridViewModel("#grid");
+</script>
+<body>
+<div id="page-content">
+    <div class="pull-left" id="toolbar-btn" style="padding-bottom:10px;">
+        <span class="btn btn-primary k-grid-add" style="float:left;margin-right:5px;" data-bind="click:create"><@spring.message "hap.new"/></span>
+        <span class="btn btn-success k-grid-save-changes" data-bind="click:save" style="float:left;margin-right:5px;"><@spring.message "hap.save"/></span>
+        <span  data-bind="click:remove" class="btn btn-danger" style="float:left;"><@spring.message "hap.delete"/></span>
+    </div>
+    <script>kendo.bind($('#toolbar-btn'), viewModel);</script>
+    <div class="pull-right" id="query-form" style="padding-bottom:10px;">
+            <input type="text" data-role="maskedtextbox" style="float:left;width:150px;margin-right:5px;" placeholder='<@spring.message "ItemCategory.categoryCode"/>'
+                   data-bind="value:model.categoryCode" class="k-textbox">
+        <span class="btn btn-primary" style="float:left;width:70px" data-bind="click:query" type="submit"><@spring.message "hap.query"/></span>
+        <div style="clear:both"></div>
+    </div>
+    <script>kendo.bind($('#query-form'), viewModel);</script>
+    <div style="clear:both">
+        <div id="grid"></div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    Hap.initEnterQuery('#query-form', viewModel.query);
+    var BaseUrl = _basePath;
+    dataSource = new kendo.data.DataSource({
+        transport: {
+            read: {
+                url: BaseUrl + "/hcm/item/category/query",
+                type: "POST",
+                dataType: "json"
+            },
+            update: {
+                url: BaseUrl + "/hcm/item/category/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            destroy: {
+                url: BaseUrl + "/hcm/item/category/remove",
+                type: "POST",
+                contentType: "application/json"
+            },
+            create: {
+                url: BaseUrl + "/hcm/item/category/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            parameterMap: function (options, type) {
+                if (type !== "read" && options.models) {
+                    var datas = Hap.prepareSubmitParameter(options, type)
+                    return kendo.stringify(datas);
+                } else if (type === "read") {
+                    return Hap.prepareQueryParameter(viewModel.model.toJSON(), options)
+                }
+            }
+        },
+        batch: true,
+        serverPaging: true,
+        pageSize: 10,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+                id: "categoryId",
+                fields: {}
+            }
+        }
+    });
+
+    $("#grid").kendoGrid({
+        dataSource: dataSource,
+        resizable: true,
+        scrollable: true,
+        navigatable: false,
+        selectable: 'multiple, rowbox',
+        dataBound: function () {
+            if (parent.autoResizeIframe) {
+                parent.autoResizeIframe('${RequestParameters.functionCode!}')
+            }
+        },
+        pageable: {
+            pageSizes: [5, 10, 20, 50],
+            refresh: true,
+            buttonCount: 5
+        },
+        columns: [
+            {
+                field: "categoryId",
+                title: '<@spring.message "itemcategory.categoryid"/>',
+                width: 120
+            },
+                    {
+                field: "categoryCode",
+                title: '<@spring.message "itemcategory.categorycode"/>',
+                width: 120
+            },
+                    {
+                field: "description",
+                title: '<@spring.message "itemcategory.description"/>',
+                width: 120
+            },
+                    {
+                field: "categorySetId",
+                title: '<@spring.message "itemcategory.categorysetid"/>',
+                width: 120
+            },
+                    {
+                field: "categorySegment1",
+                title: '<@spring.message "itemcategory.categorysegment1"/>',
+                width: 120
+            },
+                    {
+                field: "categorySegment2",
+                title: '<@spring.message "itemcategory.categorysegment2"/>',
+                width: 120
+            },
+                    {
+                field: "categorySegment3",
+                title: '<@spring.message "itemcategory.categorysegment3"/>',
+                width: 120
+            },
+                    {
+                field: "categorySegment4",
+                title: '<@spring.message "itemcategory.categorysegment4"/>',
+                width: 120
+            },
+                    {
+                field: "categorySegment5",
+                title: '<@spring.message "itemcategory.categorysegment5"/>',
+                width: 120
+            },
+                    {
+                field: "categorySegment6",
+                title: '<@spring.message "itemcategory.categorysegment6"/>',
+                width: 120
+            },
+                    {
+                field: "categorySegment7",
+                title: '<@spring.message "itemcategory.categorysegment7"/>',
+                width: 120
+            },
+                    {
+                field: "categorySegment8",
+                title: '<@spring.message "itemcategory.categorysegment8"/>',
+                width: 120
+            },
+                    {
+                field: "categorySegment9",
+                title: '<@spring.message "itemcategory.categorysegment9"/>',
+                width: 120
+            },
+                    {
+                field: "categorySegment10",
+                title: '<@spring.message "itemcategory.categorysegment10"/>',
+                width: 120
+            },
+                    {
+                field: "enableFlag",
+                title: '<@spring.message "itemcategory.enableflag"/>',
+                width: 120
+            },
+                    {
+                field: "cid",
+                title: '<@spring.message "itemcategory.cid"/>',
+                width: 120
+            },
+                    {
+                field: "inventoryItemId",
+                title: '<@spring.message "itemcategory.inventoryitemid"/>',
+                width: 120
+            },
+                    {
+                field: "organizationId",
+                title: '<@spring.message "itemcategory.organizationid"/>',
+                width: 120
+            },
+                    {
+                field: "programApplicationId",
+                title: '<@spring.message "itemcategory.programapplicationid"/>',
+                width: 120
+            },
+                    {
+                field: "programUpdateDate",
+                title: '<@spring.message "itemcategory.programupdatedate"/>',
+                width: 120
+            },
+                    {
+                field: "whUpdateDate",
+                title: '<@spring.message "itemcategory.whupdatedate"/>',
+                width: 120
+            },
+        ],
+        editable: true
+    });
+
+</script>
+</body>
+</html>

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.spc.message_config_mainten.mapper.MessageUploadConfigMapper">
+    <resultMap id="BaseResultMap" type="com.hand.spc.message_config_mainten.dto.MessageUploadConfig">
+        <result column="UPLOAD_CONFIG_ID" property="uploadConfigId" jdbcType="DECIMAL" />
+        <result column="CONFIG_CODE" property="configCode" jdbcType="VARCHAR" />
+        <result column="CONFIG_TYPE" property="configType" jdbcType="VARCHAR" />
+        <result column="CONFIG_VALUE" property="configValue" jdbcType="VARCHAR" />
+        <result column="CONFIG_COMMAND" property="configCommand" jdbcType="VARCHAR" />
+        <result column="DESCRIPTION" property="description" jdbcType="VARCHAR" />
+        <result column="TENANT_ID" property="tenantId" jdbcType="DECIMAL" />
+        <result column="SITE_ID" property="siteId" jdbcType="DECIMAL" />
+    </resultMap>
+
+    <select id="queryData" parameterType="com.hand.spc.message_config_mainten.dto.MessageUploadConfig" resultMap="BaseResultMap">
+        SELECT t.upload_config_id,
+               t.config_code,
+               t.config_type,
+               t.config_value,
+               t.config_command,
+               t.description
+          FROM pspc_message_upload_config t
+         WHERE 1 = 1
+         <if test="configCode!=null">
+             AND t.config_code LIKE concat(concat('%',#{configCode}), '%')
+         </if>
+         <if test="configType != null">
+             AND t.config_type =#{configType}
+         </if>
+         <if test="description != null">
+             AND t.description LIKE concat(concat('%',#{description}), '%')
+         </if>
+
+    </select>
+
+</mapper>

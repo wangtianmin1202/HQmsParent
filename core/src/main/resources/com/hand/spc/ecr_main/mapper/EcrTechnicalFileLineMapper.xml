@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.spc.ecr_main.mapper.EcrTechnicalFileLineMapper">
+    <resultMap id="BaseResultMap" type="com.hand.spc.ecr_main.dto.EcrTechnicalFileLine">
+        <result column="KID" property="kid" jdbcType="DECIMAL" />
+        <result column="TECHNICAL_ID" property="technicalId" jdbcType="DECIMAL" />
+        <result column="FILE_NAME" property="fileName" jdbcType="VARCHAR" />
+        <result column="CURRENT_VERSION" property="currentVersion" jdbcType="VARCHAR" />
+        <result column="EDIT_FLAG" property="editFlag" jdbcType="VARCHAR" />
+        <result column="NEW_VERSION" property="newVersion" jdbcType="VARCHAR" />
+        <result column="DUTYBY" property="dutyby" jdbcType="VARCHAR" />
+        <result column="REMARK" property="remark" jdbcType="VARCHAR" />
+        <result column="ASK_FINISHED_DATE" property="askFinishedDate" jdbcType="DATE" />
+        <result column="PLAN_FINISHED_DATE" property="planFinishedDate" jdbcType="DATE" />
+        <result column="ACT_FINISHED_DATE" property="actFinishedDate" jdbcType="DATE" />
+        <result column="ITEM_ID" property="itemId" jdbcType="DECIMAL" />
+        <result column="ITEM_CODE" property="itemCode" jdbcType="DECIMAL" />
+    </resultMap>
+
+
+</mapper>

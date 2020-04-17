@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.spc.ecr_main.mapper.EcrSolutionMapper">
+    <resultMap id="BaseResultMap" type="com.hand.spc.ecr_main.dto.EcrSolution">
+        <result column="KID" property="kid" jdbcType="DECIMAL" />
+        <result column="MATERIAL_ID" property="materialId" jdbcType="DECIMAL" />
+        <result column="ECRNO" property="ecrno" jdbcType="VARCHAR" />
+        <result column="MAIN_DUTY" property="mainDuty" jdbcType="VARCHAR" />
+        <result column="SUB_DUTY" property="subDuty" jdbcType="VARCHAR" />
+        <result column="MAIN_POSITION" property="mainPosition" jdbcType="VARCHAR" />
+        <result column="SUB_POSITION" property="subPosition" jdbcType="VARCHAR" />
+        <result column="CATEGORY_FIRST" property="categoryFirst" jdbcType="VARCHAR" />
+        <result column="CATEGORY_SECOND" property="categorySecond" jdbcType="VARCHAR" />
+        <result column="CATEGORY_THIRD" property="categoryThird" jdbcType="VARCHAR" />
+        <result column="ITEM_VERSION" property="itemVersion" jdbcType="VARCHAR" />
+        <result column="WMS_ONHAND" property="wmsOnhand" jdbcType="DECIMAL" />
+        <result column="MES_ONHAND" property="mesOnhand" jdbcType="DECIMAL" />
+        <result column="PO_QTY" property="poQty" jdbcType="DECIMAL" />
+        <result column="SUPPLIER_ONHAND" property="supplierOnhand" jdbcType="DECIMAL" />
+        <result column="SPECIAL_ONHAND" property="specialOnhand" jdbcType="DECIMAL" />
+        <result column="CALCULATE_ONHAND" property="calculateOnhand" jdbcType="DECIMAL" />
+        <result column="ONHAND_STATUS" property="onhandStatus" jdbcType="VARCHAR" />
+        <result column="ITEM_PRICE" property="itemPrice" jdbcType="DECIMAL" />
+        <result column="ITEM_QTY" property="itemQty" jdbcType="DECIMAL" />
+        <result column="SPECIAL_WIP_ONHAND" property="supplierWipOnhand" jdbcType="VARCHAR"/>
+    </resultMap>
+
+
+</mapper>

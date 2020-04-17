@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hcm.hcm_position.mapper.PositionRoleMapper">
+
+
+    <resultMap id="baseResult" type="com.hand.hcm.hcm_position.dto.PositionRole">
+        <result column="KID" property="kid" jdbcType="DECIMAL" />
+        <result column="position_code" property="positionCode" jdbcType="VARCHAR" />
+        <result column="position_name" property="positionName" jdbcType="VARCHAR" />
+        <result column="position_type" property="positionType" jdbcType="VARCHAR" />
+        <result column="position_type_name" property="positionTypeName" jdbcType="VARCHAR" />
+        <result column="category_third_id" property="categoryId" jdbcType="DECIMAL" />
+
+    </resultMap>
+
+    <select id="prQuery" parameterType="com.hand.hcm.hcm_position.dto.PositionRole"
+            resultMap="baseResult">
+select hpr.kid,hpr.position_code, a1.meaning position_name, a2.meaning position_type_name,hpr.position_type
+        from Hcm_Position_Category hpc inner join  HCM_POSITION_ROLE hpr on hpc.position_id = hpr.kid
+  left join (select scvb.value, scvb.meaning
+               from sys_code_b scb, sys_code_value_b scvb
+              where scb.code_id = scvb.code_id
+                and scb.code = 'HPM_ECR_POSITION_NAME') A1
+    ON hpr.position_code = a1.value
+  left join (select scvb.value, scvb.meaning
+               from sys_code_b scb, sys_code_value_b scvb
+              where scb.code_id = scvb.code_id
+                and scb.code = 'HPM_ECR_POSITION_CATRGORY') A2
+    on hpr.position_type = a2.value
+    <where>
+        <if test="kid != null">
+            hpr.kid = #{kid}
+        </if>
+        <if test=" categoryId != null">
+           AND hpc.category_third_id = #{categoryId}
+        </if>
+    </where>
+    </select>
+
+
+
+
+</mapper>

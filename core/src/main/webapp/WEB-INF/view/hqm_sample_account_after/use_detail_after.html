@@ -1,0 +1,441 @@
+<#include "../include/header.html">
+
+<script src="${base.contextPath}/common/code?HQM_H_SAMPLE_STATUS=HQM_H_SAMPLE_STATUS"></script>
+<script src="${base.contextPath}/common/code?HQM_USE_DOCUMENT_STATUS=HQM_USE_DOCUMENT_STATUS"></script>
+<script type="text/javascript">
+    var viewModel = Hap.createGridViewModel("#grid");
+    var useId = '${RequestParameters.useId!-1}';
+	var documentStatus = '${RequestParameters.documentStatus!"-1"}';
+	var useDocumentCode = "${RequestParameters.useDocumentCode}";
+
+	var selectAccount = {};
+</script>
+<body>
+<script type="text/javascript">
+$(function(){
+	 $('#useDocumentCode').val(useDocumentCode);
+	 $('#useDocumentCode1').val(useDocumentCode);
+})
+viewModel.add = function(){//添加
+	if($.isEmpty(selectAccount.sampleId,false)){
+		kendo.ui.showErrorDialog({
+            message: "未选择样品"
+        });
+		return;
+	}
+	var data = {
+			sampleId : selectAccount.sampleId,
+			useId : useId,
+	};
+	$.ajax({
+        url: '${base.contextPath}/hqm/use/detail/after/addone',
+        type: 'POST',
+        data: data,
+        async: false,
+        dataType: "json",
+        success: function (response) {
+            if (response.success) {
+            	grid.dataSource.fetch();
+            } else {
+            	if(response.message.indexOf("数据重复") != -1 || response.message.indexOf("Data Duplicated") != -1){
+            		response.message = "请勿添加已存在样品";
+            	}
+            	kendo.ui.showErrorDialog({
+                    message: response.message
+                });
+            }
+        }
+    });
+}
+viewModel.commit = function(){//提交
+	$.ajax({
+        url: '${base.contextPath}/hqm/use/after/commit',
+        type: 'POST',
+        data: {
+        	useId : useId,
+        },
+        async: false,
+        dataType: "json",
+        success: function (response) {
+            if (response.success) {
+            	kendo.ui.showInfoDialog({
+                    message: "提交成功"
+                });
+            	/* refreshDocumentStatus('2');
+            	refreshDocumentStatusColumn('2'); */
+            } else {
+            	kendo.ui.showErrorDialog({
+                    message: response.message
+                });
+            }
+        }
+    });
+}
+viewModel.approval = function(){//审核
+	
+	$.ajax({
+        url: '${base.contextPath}/hqm/use/after/approval',
+        type: 'POST',
+        data: {
+        	useId : useId,
+        },
+        async: false,
+        dataType: "json",
+        success: function (response) {
+            if (response.success) {
+            	kendo.ui.showInfoDialog({
+                    message: "审核成功"
+                });
+            	refreshDocumentStatus('3');
+            	refreshDocumentStatusColumn('3');
+            } else {
+            	kendo.ui.showErrorDialog({
+                    message: response.message
+                });
+            }
+        }
+    });
+}
+
+viewModel.turnDown = function(){//驳回
+	
+	$.ajax({
+        url: '${base.contextPath}/hqm/use/after/turndown',
+        type: 'POST',
+        data: {
+        	useId : useId,
+        },
+        async: false,
+        dataType: "json",
+        success: function (response) {
+            if (response.success) {
+            	kendo.ui.showInfoDialog({
+                    message: "驳回成功"
+                });
+            	/* refreshDocumentStatus('4');
+            	refreshDocumentStatusColumn('4'); */
+            } else {
+            	kendo.ui.showErrorDialog({
+                    message: response.message
+                });
+            }
+        }
+    });
+}
+viewModel.execute = function(){//执行
+	
+	$.ajax({
+        url: '${base.contextPath}/hqm/use/after/execute',
+        type: 'POST',
+        data: {
+        	useId : useId,
+        },
+        async: false,
+        dataType: "json",
+        success: function (response) {
+            if (response.success) {
+            	kendo.ui.showInfoDialog({
+                    message: "执行成功"
+                });
+            	refreshDocumentStatus('5');
+            	refreshDocumentStatusColumn('5');
+            } else {
+            	kendo.ui.showErrorDialog({
+                    message: response.message
+                });
+            }
+        }
+    });
+}
+viewModel.close = function(){//关闭
+	
+	var dialog = $("#returnSelectWindow").kendoWindow({
+		width: 1100,
+		height: 450,
+        title: '实物归还样品选择',
+        visible: false,
+        iframe: true,
+        modal: true,
+		close:function(){
+        	$("#grid").data("kendoGrid").dataSource.fetch();
+        },
+        content: './use_detail_return_select.html?useId='+ useId
+    }).data("kendoWindow");
+    dialog.center().open();
+}
+function refreshDocumentStatus(dS){
+	documentStatus = dS;
+	if(documentStatus=='2'||documentStatus=='3'||documentStatus=='5'||documentStatus == '6'){
+		$('#btn-save').hide();
+		$('#btn-commit').hide();
+		$('#btn-remove').hide();
+		$('#toolbar-btn-2').hide();
+		//$('.k-grid-toolbar').hide();
+		$('#toolbar-new').show();
+		$('#btn-approval').show();
+		$('#btn-turnDown').show();
+		$('#btn-execute').show();
+		$('#btn-close').show();
+	}else{
+		$('#btn-approval').hide();
+		$('#btn-turnDown').hide();
+		$('#btn-execute').hide();
+		$('#btn-close').hide();
+		$('#toolbar-new').hide();
+		$('#btn-save').show();
+		$('#btn-commit').show();
+		$('#btn-remove').show();
+		$('#toolbar-btn-2').show();
+		//$('.k-grid-toolbar').show();
+	}
+}
+	function refreshDocumentStatusColumn(dS){
+		if(documentStatus == '2'||documentStatus == '3'||documentStatus == '5'||documentStatus == '6'){
+			grid.showColumn(5);
+			grid.showColumn(6);
+			grid.showColumn(7);
+		}else{
+			grid.hideColumn(5);
+			grid.hideColumn(6);
+			grid.hideColumn(7);
+		}
+	}
+	
+	 Dremove =function(useLineId){
+	       	
+		 	var data = {useLineId : useLineId}
+			 	console.log(data);		 
+				  {
+					  $.ajax({
+				        url: '${base.contextPath}/hqm/use/detail/delete/row',
+				        type: 'POST',
+				        data: data,
+				        async: false,
+				        dataType: "json",
+				        success: function (response) {
+				            if (response.success) {
+				            	$("#grid").data("kendoGrid").dataSource.fetch();
+				            } else {
+				            	kendo.ui.showErrorDialog({
+				                    message: response.message
+				                });
+				            }
+				        }
+				    });  
+				}
+	   }
+</script>
+<div id="returnSelectWindow"></div>
+	<div class="row" id="toolbar-btn" style="margin:5px;">
+        <span id="btn-save" class="btn btn-success" data-bind="click:save" style="float:left;margin-right:5px;"><@spring.message "hap.save"/></span>
+        <span id="btn-commit" class="btn btn-primary" style="float:left;margin-right:5px;" data-bind="click:commit"><@spring.message "hap.commit"/></span>
+<!--         <span id="btn-remove"  data-bind="click:remove" class="btn btn-danger" style="margin-right:5px;float:left;"><@spring.message "hap.delete"/></span>
+ -->        <span id="btn-approval" class="btn btn-primary" style="float:left;margin-right:5px;" data-bind="click:approval"><@spring.message "hap.approval"/></span>
+        <span id="btn-turnDown"  data-bind="click:turnDown" class="btn btn-danger" style="margin-right:5px;float:left;"><@spring.message "hap.turn.down"/></span>
+        <span id="btn-execute"  data-bind="click:execute" class="btn btn-success" style="margin-right:5px;float:left;"><@spring.message "hap.execute"/></span>
+        <span id="btn-close" class="btn btn-default" data-bind="click:close" style="float:left;margin-right:5px;"><@spring.message "hap.close"/></span>
+    </div>
+    <script>kendo.bind($('#toolbar-btn'), viewModel);</script>
+    <div class="row" id="toolbar-btn-2" style="margin:5px;">
+    <div class="col-sm-2"></div>
+    <div class="col-sm-8">
+            <label style="margin-right:5px;"><@spring.message '当前领用单号'/></label><input  id="useDocumentCode1" class="k-textbox" style="margin-right:5px;"> 
+    
+        <label style="margin-right:5px;"><@spring.message 'sampleaccount.samplemodel'/></label><input  id="sampleModel" style="margin-right:5px;"> 
+        <label style="margin-right:5px;"><@spring.message 'hqm.qc.item'/></label><input  id="itemCode" style="margin-right:5px;"> 
+        <span id="btn-add" data-bind="click:add" class="btn btn-primary"><@spring.message "hap.add"/></span>
+    </div>
+    </div>
+         <div class="row" id="toolbar-new" style="margin:5px;">
+    <div class="col-sm-2"></div>
+    <div class="col-sm-8">
+        <label style="margin-right:5px;"><@spring.message '当前领用单号'/></label><input  id="useDocumentCode" class="k-textbox" style="margin-right:5px;"> 
+    </div>
+    </div>
+    <script>
+    kendo.bind($('#toolbar-btn-2'), viewModel);
+    kendo.bind($('#toolbar-new'), viewModel);
+
+    $("#sampleModel").kendoLov($.extend
+    	    (<@lov"SAMPLE_ACCOUNT_SAMPLE_MODEL"/>, {
+    	        textField: 'sampleModel',
+    	        valueField:'sampleId',
+    	        query : function(e){
+    	        	e.param.sampleType = '2';
+    	        },
+    	        change : function(e){
+    	        	selectAccount = this._dataItem;
+    	        	$('#itemCode').siblings('span').children('input').val(selectAccount.itemCode);
+    	        }
+    	    }));
+    $("#itemCode").kendoLov($.extend
+    	    (<@lov"SAMPLE_ACCOUNT_ITEM_CODE"/>, {
+    	        textField: 'itemCode',
+    	        valueField:'sampleId',
+    	        query : function(e){
+    	        	e.param.sampleType = '2';
+    	        },
+    	        change : function(e){
+    	        	selectAccount = this._dataItem;
+    	        	$('#sampleModel').siblings('span').children('input').val(selectAccount.sampleModel);
+    	        }
+    	    }));	
+    
+    </script>
+<!-- </div> -->
+<div style="clear:both">
+        <div id="grid" style="height:500px;"></div>
+</div>
+<script type="text/javascript">
+    var BaseUrl = _basePath;
+    dataSource = new kendo.data.DataSource({
+        transport: {
+            read: {
+                url: BaseUrl + "/hqm/use/detail/after/query",
+                type: "POST",
+                dataType: "json"
+            },
+            update: {
+                url: BaseUrl + "/hqm/use/detail/after/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            destroy: {
+                url: BaseUrl + "/hqm/use/detail/after/remove",
+                type: "POST",
+                contentType: "application/json"
+            },
+            create: {
+                url: BaseUrl + "/hqm/use/detail/after/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            parameterMap: function (options, type) {
+                if (type !== "read" && options.models) {
+                    var datas = Hap.prepareSubmitParameter(options, type);
+                    return kendo.stringify(datas);
+                } else if (type === "read") {
+                	var queryModel = {
+                			useId : useId,
+                	};
+                    return Hap.prepareQueryParameter(queryModel, options);
+                }
+            }
+        },
+        batch: true,
+        serverPaging: true,
+        pageSize: 20,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+                id: "useLineId",
+                fields: {}
+            }
+        }
+    });
+
+   var grid = $("#grid").kendoGrid({
+        dataSource: dataSource,
+        resizable: true,
+        scrollable: true,
+        navigatable: false,
+        selectable: 'multiple, rowbox',
+        dataBound: function () {
+            if (parent.autoResizeIframe) {
+                parent.autoResizeIframe('${RequestParameters.functionCode!}')
+            }
+        },
+        pageable: {
+            pageSizes: [5, 10, 20, 50],
+            refresh: true,
+            buttonCount: 5
+        },
+        columns: [
+        	{
+                field: "sampleModel",
+                title: '<@spring.message "usedetailafter.samplemodel"/>',
+            },
+            {
+                field: "sampleCode",
+                title: '<@spring.message "sampleaccount.samplecode"/>',
+            },
+            {
+                field: "sealingSampleStatus",
+                title: '<@spring.message "usedetailafter.sealingsamplestatus"/>',
+                template : function(dataItem) {
+					var v = dataItem.sealingSampleStatus ? dataItem.sealingSampleStatus : "";
+					$.each(HQM_H_SAMPLE_STATUS,function(i, n) {
+						if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+							v = n.meaning;
+							return v;
+						}
+					});
+					return v;
+				},
+            },
+            {
+                field: "sampleGiveDate",
+                title: '<@spring.message "usedetailafter.samplegivedate"/>',
+                width: 180
+            },
+            {
+                field: "createdName",
+                title: '<@spring.message "usedetailafter.createdname"/>',
+            },
+            {
+                field: "creationDateColumn",
+                title: '<@spring.message "usedetailafter.creationdatecolumn"/>',
+                width: 180
+            },
+                    {
+                field: "documentStatus",
+                title: '<@spring.message "usedetailafter.documentstatus"/>',
+                template : function(dataItem) {
+					var v = dataItem.documentStatus ? dataItem.documentStatus : "";
+					$.each(HQM_USE_DOCUMENT_STATUS,function(i, n) {
+						if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+							v = n.meaning;
+							return v;
+						}
+					});
+					return v;
+				},
+            },
+            {
+          	  title: '<@spring.message "操作"/>',
+                width: 120,
+                attributes: {style: "text-align:center"},
+                headerAttributes: {style: "text-align:center"},    
+                template : function (rowdata) {          	
+                   return '<a href="#"  onclick="Dremove(\''+rowdata.useLineId+'\')"><@spring.message "删除"/></a>'                 		
+               	   }
+            }
+        ],
+        editable: false
+    }).data('kendoGrid');
+
+</script>
+<script>
+$(function(){
+	if(documentStatus=='2'||documentStatus=='3'||documentStatus=='5'||documentStatus=='6'){
+		$('#btn-save').hide();
+		$('#btn-commit').hide();
+		$('#btn-remove').hide();
+		$('#toolbar-btn-2').hide();
+		//$('.k-grid-toolbar').hide();
+	}else{//1 or 4
+		$('#btn-approval').hide();
+		$('#btn-turnDown').hide();
+		$('#btn-execute').hide();
+		$('#btn-close').hide();
+		$('#toolbar-new').hide();
+		
+		grid.hideColumn(5);
+		grid.hideColumn(6);
+		grid.hideColumn(7);
+	}
+});
+</script>
+</body>
+</html>

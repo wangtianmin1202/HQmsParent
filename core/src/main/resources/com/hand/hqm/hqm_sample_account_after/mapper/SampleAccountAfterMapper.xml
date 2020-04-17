@@ -1,0 +1,374 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_sample_account_after.mapper.SampleAccountAfterMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_sample_account_after.dto.SampleAccountAfter">
+        <result column="SAMPLE_ID" property="sampleId" jdbcType="DECIMAL" />
+        <result column="SAMPLE_TYPE" property="sampleType" jdbcType="VARCHAR" />
+        <result column="PLANT_ID" property="plantId" jdbcType="DECIMAL" />
+        <result column="SAMPLE_MODEL" property="sampleModel" jdbcType="VARCHAR" />
+        <result column="ITEM_ID" property="itemId" jdbcType="DECIMAL" />
+        <result column="SEALING_SAMPLE_VERSON" property="sealingSampleVerson" jdbcType="VARCHAR" />
+        <result column="DESCRIPTION" property="description" jdbcType="VARCHAR" />
+        <result column="SEALING_SAMPLE_POSITION_STATUS" property="sealingSamplePositionStatus" jdbcType="VARCHAR" />
+        <result column="SEALING_SAMPLE_STATUS" property="sealingSampleStatus" jdbcType="VARCHAR" />
+        <result column="SEALING_SAMPLE_PRINCIPAL" property="sealingSamplePrincipal" jdbcType="DECIMAL" />
+        <result column="REGISTRATION_BY" property="registrationBy" jdbcType="DECIMAL" />
+        <result column="STORAGE_LOCATION" property="storageLocation" jdbcType="VARCHAR" />
+        <result column="SUPPLIER_ID" property="supplierId" jdbcType="DECIMAL" />
+        <result column="SAMPLE_GIVER" property="sampleGiver" jdbcType="DECIMAL" />
+        <result column="SAMPLE_GIVE_DATE" property="sampleGiveDate" jdbcType="DATE" />
+        <result column="SAMPLE_USER" property="sampleUser" jdbcType="DECIMAL" />
+        <result column="SAMPLE_USE_DATE" property="sampleUseDate" jdbcType="DATE" />
+        <result column="SAMPLE_USE_DEPARTMENT" property="sampleUseDepartment" jdbcType="VARCHAR" />
+        <result column="ENABLE_FLAG" property="enableFlag" jdbcType="VARCHAR" />
+        <result column="INVALID_DATE" property="invalidDate" jdbcType="DATE" />
+        <result column="SCRAPPED_FLAG" property="scrappedFlag" jdbcType="VARCHAR" />
+        <result column="SCRAPPED_DATE" property="scrappedDate" jdbcType="DATE" />
+        <result column="SCRAPPED_DOCUMENT" property="scrappedDocument" jdbcType="VARCHAR" />
+        <result column="AFTERSALE_SAMPLE_TYPE" property="aftersaleSampleType" jdbcType="VARCHAR" />
+        <result column="DEALER" property="dealer" jdbcType="VARCHAR" />
+        <result column="PRODUCTION_DATE" property="productionDate" jdbcType="DATE" />
+        <result column="RETURN_STATUS" property="returnStatus" jdbcType="VARCHAR" />
+        <result column="TEST_CODE" property="testCode" jdbcType="DECIMAL" />
+        <result column="SAMPLE_ATTRIBUTE" property="sampleAttribute" jdbcType="VARCHAR" />
+        <result column="COMPETING_BRAND" property="competingBrand" jdbcType="VARCHAR" />
+        <result column="AVAILABLE_STATUS" property="availableStatus" jdbcType="VARCHAR" />
+        <result column="KEEP_BY" property="keepBy" jdbcType="VARCHAR" />
+        <result column="TEST_BY" property="testBy" jdbcType="VARCHAR" />
+        <result column="SAMPLE_CODE" property="sampleCode" jdbcType="VARCHAR" /> 
+        <result column="PLANT_CODE" property="plantCode" jdbcType="VARCHAR" />
+        <result column="ITEM_CODE" property="itemCode" jdbcType="VARCHAR" />
+        <result column="ITEM_DESCRIPTIONS" property="itemDescriptions" jdbcType="VARCHAR" />
+        <result column="ITEM_TYPE" property="itemType" jdbcType="VARCHAR" />
+        <result column="CREATED_NAME" property="createdName" jdbcType="VARCHAR" />
+        <result column="SUPPLIER_CODE" property="supplierCode" jdbcType="VARCHAR" />
+        <result column="SUPPLIER_NAME" property="supplierName" jdbcType="VARCHAR" />
+        <result column="SAMPLE_GIVER_NAME" property="sampleGiverName" jdbcType="VARCHAR" />
+        <result column="APPLICANT_DOCUMENT_CODE" property="applicantDocumentCode" jdbcType="VARCHAR" />
+        <result column="SAMPLE_USER_NAME" property="sampleUserName" jdbcType="VARCHAR" />
+        <result column="USE_DOCUMENT_CODE" property="useDocumentCode" jdbcType="VARCHAR" />
+        <result column="PLANT_DESCRIPTIONS" property="plantDescriptions" jdbcType="VARCHAR" />
+       
+        <result column="SCRAPPED_IDS" property="scrappedIds" jdbcType="VARCHAR" />
+        <result column="USE_IDS" property="useIds" jdbcType="VARCHAR" />
+        
+         <result column="MACHINE_COMPONENT" property="machineComponent" jdbcType="VARCHAR" />
+         <result column="APPEAL_NUNBER" property="appealNunber" jdbcType="VARCHAR" />
+         <result column="PRODUCT_TYPE" property="productType" jdbcType="VARCHAR" />
+         <result column="RETURN_REASON" property="returnReason" jdbcType="VARCHAR" />
+         <result column="ANALYSIS_RESULT" property="analysisResult" jdbcType="VARCHAR" />
+         <result column="BAD_COMPONENT" property="badComponent" jdbcType="VARCHAR" />
+         <result column="ANALYST" property="analyst" jdbcType="DECIMAL" />
+         <result column="ANALYST_NAME" property="analystName" jdbcType="VARCHAR" />
+         <result column="DEAL_RESULT" property="dealResult" jdbcType="VARCHAR" />
+         <result column="ANALYSIS_DATE" property="analysisDate" jdbcType="DATE" /> 
+            
+         <result column="PRODUCT_ISSUE" property="productIssue" jdbcType="VARCHAR" />          
+         <result column="BAD_ELEMENT" property="badElement" jdbcType="VARCHAR" />     
+         
+        <!-- 新增字段 -->
+        <result column="ANALYSIS_STATUS" property="analysisStatus" jdbcType="VARCHAR" />  
+        <result column="PROCESSING_METHOD" property="processingMethod" jdbcType="VARCHAR" />  
+        <result column="REWORK_STATUS" property="reworkStatus" jdbcType="VARCHAR" />  
+        <result column="RETURN_SUPPLIER_STATUS" property="returnSupplierStatus" jdbcType="VARCHAR" />  
+        <result column="SCRAP_STATUS" property="scrapStatus" jdbcType="VARCHAR" />  
+        <result column="USER_ID" property="userId" jdbcType="VARCHAR" />  
+        <result column="USE_DEPARTMENT" property="useDepartment" jdbcType="VARCHAR" />      
+    </resultMap>
+    
+<select id="reSelect" resultMap="BaseResultMap" parameterType="com.hand.hqm.hqm_sample_account_after.dto.SampleAccountAfter">
+SELECT t.*,
+       hp.plant_code,
+       hp.descriptions             AS plant_descriptions,
+       (select hi.item_code from hcm_item hi where hi.item_id =t.item_id and t.plant_id =hi.plant_id) as item_code , 
+       (select hi.descriptions from hcm_item hi where hi.item_id =t.item_id and t.plant_id =hi.plant_id) as item_Descriptions ,    
+       he.name                     AS created_name,
+       hs.supplier_code,
+       hs.supplier_name,
+       hegive.name                 AS sample_giver_name,
+       hss.applicant_document_code, 
+       hss.scrapped_ids,
+       heuse.name AS sample_user_name,
+       ob.name AS sample_use_department,
+       hsu.use_document_code,
+       hsu.use_ids,
+       he2.name    as   analystName
+  FROM hqm_sample_account t
+
+  LEFT JOIN sys_user su
+    ON t.created_by = su.user_id
+   LEFT JOIN hr_employee he2
+    ON t.analyst = he2.employee_id
+  LEFT JOIN hr_employee he
+    ON su.employee_id = he.employee_id
+  LEFT JOIN hcs_suppliers hs
+    ON t.supplier_id = hs.supplier_id
+  LEFT JOIN sys_user sugive 
+    ON t.sample_giver = sugive.user_id
+  LEFT JOIN hr_employee hegive
+    ON sugive.employee_id = hegive.employee_id
+  LEFT JOIN (SELECT hcd.sample_id,
+                    MAX(hssi.applicant_document_code) AS applicant_document_code, 
+                    MAX(hssi.scrapped_id) AS scrapped_ids
+               FROM hqm_sample_scrapped hssi, hqm_scrapped_detail hcd
+              WHERE hssi.scrapped_id = hcd.scrapped_id
+                AND hssi.document_type = '2'
+              GROUP BY hcd.sample_id) hss
+    ON t.sample_id = hss.sample_id
+  LEFT JOIN sys_user suuse
+    ON t.sample_user = suuse.user_id
+  LEFT JOIN hr_employee heuse
+    ON T.user_id = heuse.employee_id
+  LEFT JOIN hr_org_unit_b ob
+    ON T.use_department = ob.unit_id
+  LEFT JOIN (SELECT hud.sample_id,
+                    listagg(hsui.use_document_code, ',') within GROUP(ORDER BY hud.creation_date) AS use_document_code,
+                    listagg(hsui.use_id, ',') within GROUP(ORDER BY hud.creation_date) AS use_ids
+               FROM hqm_sample_use hsui, hqm_use_detail hud
+              WHERE hsui.use_id = hud.use_id
+                AND hsui.document_type = '2'
+              GROUP BY hud.sample_id) hsu
+    ON t.sample_id = hsu.sample_id, hcm_plant hp 
+ WHERE t.plant_id = hp.plant_id
+
+   <if test="sampleModel != null">
+   AND t.sample_model LIKE concat('%',concat(#{sampleModel},'%'))
+   </if>
+   <if test="sampleType != null">
+   AND t.sample_type = #{sampleType}
+   </if>
+   <if test="itemCode != null">
+   AND hib.item_code = #{itemCode}
+   </if>
+   <if test="sealingSamplePositionStatus != null">
+   AND t.SEALING_SAMPLE_POSITION_STATUS = #{sealingSamplePositionStatus}   
+   </if>
+   <if test="sealingSampleStatus != null">
+   AND t.sealing_sample_status = #{sealingSampleStatus}
+   </if>
+   <if test="dealer != null">
+   AND t.dealer LIKE concat('%',concat(#{dealer},'%'))
+   </if>   
+     <if test="sampleCode != null">
+     AND t.sample_code   LIKE concat('%',concat(#{sampleCode},'%'))
+   </if>   
+   <if test="sampleGiver != null">
+   AND t.sample_giver = #{sampleGiver}  
+   </if>
+   <if test="scrappedFlag != null">
+   AND t.scrapped_flag = #{scrappedFlag}
+   </if>
+   <if test="supplierId != null">
+   AND t.supplier_id = #{supplierId}
+   </if>
+   <if test="sampleGiveDateFrom != null"> 
+   AND t.sample_give_date &gt;= to_date(#{sampleGiveDateFrom},'yyyy-mm-dd hh24:mi:ss')
+   </if>
+   <if test="sampleGiveDateTo != null">
+   AND t.sample_give_date &lt;= to_date(#{sampleGiveDateTo},'yyyy-mm-dd hh24:mi:ss')
+   </if>
+   <if test="description != null">
+   AND t.description = #{description}
+   </if>
+   order by t.creation_date desc   
+</select>
+
+
+<select id="selectBf" resultMap="BaseResultMap" parameterType="com.hand.hqm.hqm_sample_account_after.dto.SampleAccountAfter">
+SELECT t.*,
+       hp.plant_code,
+       hp.descriptions             AS plant_descriptions,
+       (select hi.item_code from hcm_item hi where hi.item_id =t.item_id and t.plant_id =hi.plant_id) as item_code , 
+       (select hi.descriptions from hcm_item hi where hi.item_id =t.item_id and t.plant_id =hi.plant_id) as item_Descriptions ,    
+       he.name                     AS created_name,
+       hs.supplier_code,
+       hs.supplier_name,
+       hegive.name                 AS sample_giver_name,
+       hss.applicant_document_code, 
+       hss.scrapped_ids,
+       heuse.name                  AS sample_user_name,
+       ob.name AS sample_use_department,
+       hsu.use_document_code,
+       hsu.use_ids,
+       he2.name    as   analystName
+  FROM hqm_sample_account t
+
+  LEFT JOIN sys_user su
+    ON t.created_by = su.user_id
+   LEFT JOIN hr_employee he2
+    ON t.analyst = he2.employee_id
+  LEFT JOIN hr_employee he
+    ON su.employee_id = he.employee_id
+  LEFT JOIN hcs_suppliers hs
+    ON t.supplier_id = hs.supplier_id
+  LEFT JOIN sys_user sugive 
+    ON t.sample_giver = sugive.user_id
+  LEFT JOIN hr_employee hegive
+    ON sugive.employee_id = hegive.employee_id
+  LEFT JOIN (SELECT hcd.sample_id,
+                    MAX(hssi.applicant_document_code) AS applicant_document_code, 
+                    MAX(hssi.scrapped_id) AS scrapped_ids
+               FROM hqm_sample_scrapped hssi, hqm_scrapped_detail hcd
+              WHERE hssi.scrapped_id = hcd.scrapped_id
+                AND hssi.document_type = '2'
+              GROUP BY hcd.sample_id) hss
+    ON t.sample_id = hss.sample_id
+  LEFT JOIN sys_user suuse
+    ON t.sample_user = suuse.user_id
+  LEFT JOIN hr_employee heuse
+    ON T.user_id = heuse.employee_id
+  LEFT JOIN hr_org_unit_b ob
+    ON T.use_department = ob.unit_id
+  LEFT JOIN (SELECT hud.sample_id,
+                    listagg(hsui.use_document_code, ',') within GROUP(ORDER BY hud.creation_date) AS use_document_code,
+                    listagg(hsui.use_id, ',') within GROUP(ORDER BY hud.creation_date) AS use_ids
+               FROM hqm_sample_use hsui, hqm_use_detail hud
+              WHERE hsui.use_id = hud.use_id
+                AND hsui.document_type = '2'
+              GROUP BY hud.sample_id) hsu
+    ON t.sample_id = hsu.sample_id, hcm_plant hp 
+ WHERE t.plant_id = hp.plant_id
+   AND t.scrap_status != 1
+   <if test="processingMethod != null">
+   AND t.processing_method = #{processingMethod}
+   </if>    
+   <if test="sampleModel != null">
+   AND t.sample_model LIKE concat('%',concat(#{sampleModel},'%'))
+   </if>
+   <if test="sampleType != null">
+   AND t.sample_type = #{sampleType}
+   </if>
+   <if test="itemCode != null">
+   AND hib.item_code = #{itemCode}
+   </if>
+   <if test="sealingSamplePositionStatus != null">
+   AND t.SEALING_SAMPLE_POSITION_STATUS = #{sealingSamplePositionStatus}   
+   </if>
+   <if test="sealingSampleStatus != null">
+   AND t.sealing_sample_status = #{sealingSampleStatus}
+   </if>
+   <if test="dealer != null">
+   AND t.dealer LIKE concat('%',concat(#{dealer},'%'))
+   </if>   
+     <if test="sampleCode != null">
+     AND t.sample_code   LIKE concat('%',concat(#{sampleCode},'%'))
+   </if>   
+   <if test="sampleGiver != null">
+   AND t.sample_giver = #{sampleGiver}  
+   </if>
+   <if test="scrappedFlag != null">
+   AND t.scrapped_flag = #{scrappedFlag}
+   </if>
+   <if test="supplierId != null">
+   AND t.supplier_id = #{supplierId}
+   </if>
+   <if test="sampleGiveDateFrom != null"> 
+   AND t.sample_give_date &gt;= to_date(#{sampleGiveDateFrom},'yyyy-mm-dd hh24:mi:ss')
+   </if>
+   <if test="sampleGiveDateTo != null">
+   AND t.sample_give_date &lt;= to_date(#{sampleGiveDateTo},'yyyy-mm-dd hh24:mi:ss')
+   </if>
+   <if test="description != null">
+   AND t.description = #{description}
+   </if>
+   order by t.creation_date desc   
+</select>
+
+
+<select id="selectLy" resultMap="BaseResultMap" parameterType="com.hand.hqm.hqm_sample_account_after.dto.SampleAccountAfter">
+SELECT t.*,
+       hp.plant_code,
+       hp.descriptions             AS plant_descriptions,
+       (select hi.item_code from hcm_item hi where hi.item_id =t.item_id and t.plant_id =hi.plant_id) as item_code , 
+       (select hi.descriptions from hcm_item hi where hi.item_id =t.item_id and t.plant_id =hi.plant_id) as item_Descriptions ,    
+       he.name                     AS created_name,
+       hs.supplier_code,
+       hs.supplier_name,
+       hegive.name                 AS sample_giver_name,
+       hss.applicant_document_code, 
+       hss.scrapped_ids,
+       heuse.name                  AS sample_user_name,
+       hsu.use_document_code,
+       hsu.use_ids,
+       he2.name    as   analystName
+  FROM hqm_sample_account t
+
+  LEFT JOIN sys_user su
+    ON t.created_by = su.user_id
+   LEFT JOIN hr_employee he2
+    ON t.analyst = he2.employee_id
+  LEFT JOIN hr_employee he
+    ON su.employee_id = he.employee_id
+  LEFT JOIN hcs_suppliers hs
+    ON t.supplier_id = hs.supplier_id
+  LEFT JOIN sys_user sugive 
+    ON t.sample_giver = sugive.user_id
+  LEFT JOIN hr_employee hegive
+    ON sugive.employee_id = hegive.employee_id
+  LEFT JOIN (SELECT hcd.sample_id,
+                    MAX(hssi.applicant_document_code) AS applicant_document_code, 
+                    MAX(hssi.scrapped_id) AS scrapped_ids
+               FROM hqm_sample_scrapped hssi, hqm_scrapped_detail hcd
+              WHERE hssi.scrapped_id = hcd.scrapped_id
+                AND hssi.document_type = '2'
+              GROUP BY hcd.sample_id) hss
+    ON t.sample_id = hss.sample_id
+  LEFT JOIN sys_user suuse
+    ON t.sample_user = suuse.user_id
+  LEFT JOIN hr_employee heuse
+    ON suuse.employee_id = heuse.employee_id
+  LEFT JOIN (SELECT hud.sample_id,
+                    listagg(hsui.use_document_code, ',') within GROUP(ORDER BY hud.creation_date) AS use_document_code,
+                    listagg(hsui.use_id, ',') within GROUP(ORDER BY hud.creation_date) AS use_ids
+               FROM hqm_sample_use hsui, hqm_use_detail hud
+              WHERE hsui.use_id = hud.use_id
+                AND hsui.document_type = '2'
+              GROUP BY hud.sample_id) hsu
+    ON t.sample_id = hsu.sample_id, hcm_plant hp 
+ WHERE t.plant_id = hp.plant_id
+
+   <if test="sampleModel != null">
+   AND t.sample_model LIKE concat('%',concat(#{sampleModel},'%'))
+   </if>
+   <if test="sampleType != null">
+   AND t.sample_type = #{sampleType}
+   </if>
+   <if test="itemCode != null">
+   AND hib.item_code = #{itemCode}
+   </if>
+   <if test="sealingSamplePositionStatus != null">
+   AND t.SEALING_SAMPLE_POSITION_STATUS = #{sealingSamplePositionStatus}   
+   </if>
+   <if test="sealingSampleStatus != null">
+   AND t.sealing_sample_status = #{sealingSampleStatus}
+   </if>
+   <if test="dealer != null">
+   AND t.dealer LIKE concat('%',concat(#{dealer},'%'))
+   </if>   
+     <if test="sampleCode != null">
+     AND t.sample_code   LIKE concat('%',concat(#{sampleCode},'%'))
+   </if>   
+   <if test="sampleGiver != null">
+   AND t.sample_giver = #{sampleGiver}  
+   </if>
+   <if test="scrappedFlag != null">
+   AND t.scrapped_flag = #{scrappedFlag}
+   </if>
+   <if test="supplierId != null">
+   AND t.supplier_id = #{supplierId}
+   </if>
+   <if test="sampleGiveDateFrom != null"> 
+   AND t.sample_give_date &gt;= to_date(#{sampleGiveDateFrom},'yyyy-mm-dd hh24:mi:ss')
+   </if>
+   <if test="sampleGiveDateTo != null">
+   AND t.sample_give_date &lt;= to_date(#{sampleGiveDateTo},'yyyy-mm-dd hh24:mi:ss')
+   </if>
+   <if test="description != null">
+   AND t.description = #{description}
+   </if>
+   order by t.creation_date desc   
+</select>
+
+
+</mapper>

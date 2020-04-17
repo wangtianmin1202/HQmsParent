@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.spc.repository.mapper.MessageTypeRMapper">
+
+
+    <select id="selectMessageUploadConfig" resultType="com.hand.spc.repository.dto.MessageTypeUploadRelDTO">
+        SELECT
+            pmtur.rel_id,
+            pmtur.upload_config_id,
+            pmtur.message_type_id,
+            pmtur.object_version_number,
+            pmuc.config_code,
+            pmuc.config_type,
+            pmuc.config_value,
+            pmuc.config_command,
+            pmuc.description
+        FROM pspc_message_type pms
+        LEFT JOIN pspc_message_type_upload_rel pmtur ON pmtur.message_type_id = pms.message_type_id
+        LEFT JOIN pspc_message_upload_config pmuc ON pmtur.upload_config_id = pmuc.upload_config_id
+        WHERE 1 = 1
+            AND pmtur.tenant_id = #{tenantId}
+            AND pmtur.site_id = #{siteId}
+            AND pms.message_type_code = #{messageTypeCode}
+    </select>
+
+    <select id="selectMessageUploadConfigById" resultType="com.hand.spc.repository.dto.MessageTypeUploadRelDTO">
+        SELECT
+            pmtur.rel_id,
+            pmtur.upload_config_id,
+            pmtur.message_type_id,
+            pmtur.object_version_number,
+            pmuc.config_code,
+            pmuc.config_type,
+            pmuc.config_value,
+            pmuc.config_command,
+            pmuc.description
+        FROM pspc_message_type pms
+        LEFT JOIN pspc_message_type_upload_rel pmtur ON pmtur.message_type_id = pms.message_type_id
+        LEFT JOIN pspc_message_upload_config pmuc ON pmtur.upload_config_id = pmuc.upload_config_id
+        WHERE 1 = 1
+            AND pmtur.tenant_id = #{tenantId}
+            AND pmtur.site_id = #{siteId}
+            AND pms.message_type_id = #{messageTypeId}
+    </select>
+
+<!--    selectByTypeCode-->
+    <select id="selectByTypeCode" resultType="com.hand.spc.repository.dto.MessageTypeR">
+        SELECT
+           	pms.message_type_code,
+	        pms.description,
+	        pms.message_type_status
+        FROM pspc_message_type pms
+        WHERE 1 = 1
+            AND pms.tenant_id = #{tenantId}
+            AND pms.site_id = #{siteId}
+            AND pms.message_type_code = #{messageTypeCode}
+    </select>
+</mapper>

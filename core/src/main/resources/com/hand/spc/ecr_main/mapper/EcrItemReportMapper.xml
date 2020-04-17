@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.spc.ecr_main.mapper.EcrItemReportMapper">
+    <resultMap id="BaseResultMap" type="com.hand.spc.ecr_main.dto.EcrItemReport">
+        <result column="WMS_ONHAND" property="wmsOnhand" jdbcType="DECIMAL" />
+        <result column="MES_ONHAND" property="mesOnhand" jdbcType="DECIMAL" />
+        <result column="PO_QTY" property="poQty" jdbcType="DECIMAL" />
+        <result column="SUPPLIER_ONHAND" property="supplierOnhand" jdbcType="DECIMAL" />
+        <result column="SPECIAL_ONHAND" property="specialOnhand" jdbcType="DECIMAL" />
+        <result column="CALCULATE_ONHAND" property="calculateOnhand" jdbcType="DECIMAL" />
+        <result column="ECRNO" property="ecrno" jdbcType="VARCHAR" />
+        <result column="REPORT_ID" property="reportId" jdbcType="DECIMAL" />
+        <result column="TASK_DATE" property="taskDate" jdbcType="DATE" />
+        <result column="BUYER" property="buyer" jdbcType="VARCHAR" />
+        <result column="BUYER_QTY" property="buyerQty" jdbcType="DECIMAL" />
+        <result column="PLAN_QTY" property="planQty" jdbcType="DECIMAL" />
+        <result column="ITEM_ID" property="item_id" jdbcType="VARCHAR" />
+        <result column="SPECIAL_WIP_ONHAND" property="specialWipOnhand" jdbcType="VARCHAR"/>
+    </resultMap>
+
+
+<resultMap id="HeadResultMap" type="com.hand.spc.ecr_main.view.EcrItemReportV0">
+        <result column="item_ecr_id" property="itemId" jdbcType="VARCHAR" />
+        <result column="ITEM_CODE" property="itemCode" jdbcType="VARCHAR" />
+        <result column="descriptions" property="itemDesc" jdbcType="VARCHAR" />
+        <result column="user_name" property="buyer" jdbcType="VARCHAR" /> 
+    </resultMap>
+ <select id="getReportItems" resultMap="HeadResultMap">
+		select  t.item_ecr_id,su.user_name,hi.ITEM_CODE,hi.descriptions
+		  from hpm_ecr_solution_sku_relation t,
+		       hpm_ecr_solution_sku          hess,
+		       hcs_asl                       ha,
+		       hcs_asl_control               hac,
+		       srm_user_purchase_group       supg,
+		       sys_user                      su,
+		       hcm_item hi
+		 where hess.item_sku_kid = t.item_sku_id
+		   and t.item_change_type not in ('INSTEAD', 'SUB', 'CHANGED') 
+		   and ha.item_id = t.item_ecr_id
+		   and hac.asl_id = ha.asl_id
+		   and su.user_id = supg.user_id
+		   and ha.item_id = t.item_ecr_id
+		   and hi.ITEM_ID=t.item_ecr_id
+		   and supg.purchase_group_code = hac.purchase_group
+		   and hess.ecrno = #{ecrno}
+		 group by t.item_ecr_id,su.user_name,hi.ITEM_CODE,hi.descriptions
+ </select>
+
+	<select id="getPoOnlineQty" resultType="java.lang.Float">
+			 select sum(nvl(hpl.quantity,0) - nvl(hpl.receive_qty,0))
+	    from hcs_po_headers hph, hcs_po_lines hpl
+	   where hph.po_header_id = hpl.po_header_id
+	     and hpl.line_status = 'A'
+	     and hph.supplier_id = #{supplierId}
+	     and hpl.item_id = #{itemId}		
+	</select>
+	
+	  <resultMap id="SupplierQtyMap" type="com.hand.spc.ecr_main.view.EcrItemReportV2">
+        <result column="stock_qty" property="supplierOnhand" jdbcType="DECIMAL" />
+        <result column="wip_qty" property="supplierWipOnhand" jdbcType="DECIMAL" /> 
+    </resultMap>
+	<select id="getSupplierQty" resultMap="SupplierQtyMap">
+			select nvl(sum(nvl(hsiv.stock_qty,0)),0) stock_qty,nvl(sum(nvl(hsiv.wip_qty,0)),0) wip_qty
+       from hcs_supplier_item_version hsiv
+      where  hsiv.enable_flag = 'Y'
+        and hsiv.supplier_id = #{supplierId}
+        and hsiv.item_id = #{itemId}
+        and nvl(hsiv.item_version, '-1') = nvl(#{itemVersion}, '-1')	
+	</select>
+	
+	  <resultMap id="BomQtyMap" type="com.hand.spc.ecr_main.view.EcrItemReportV2">
+        <result column="st_qty" property="specialOnhand" jdbcType="DECIMAL" />
+        <result column="ot_qty" property="calculateOnhand" jdbcType="DECIMAL" /> 
+    </resultMap>
+	<select id="getBomQtys" resultMap="BomQtyMap">
+		select nvl(max(sum(hsiv.stock_qty * hsoq.bom_usage / hsbc.bom_usage)), 0) st_qty,
+		       nvl(max(sum(hsiv.out_order_qty * hsoq.bom_usage / hsbc.bom_usage)) ,
+		           0) ot_qty
+		  from hcs_supplier_onhand_quantities hsoq,
+		       hcs_supplier_bom               hsb,
+		       hcs_supplier_bom_components    hsbc,
+		       hcs_supplier_item_version      hsiv
+		 where hsoq.item_id = hsb.item_id
+		   and hsb.bom_id = hsbc.bom_id
+		   and hsbc.item_id = hsiv.item_id
+		   and hsoq.supplier_id = hsb.supplier_id
+		   and hsb.supplier_id = hsbc.supplier_id
+		   and hsbc.supplier_id = hsiv.supplier_id
+		   and hsiv.enable_flag = 'Y'
+		   and nvl(hsiv.item_version, '-1') = nvl(#{itemVersion}, '-1')	
+		   and hsb.item_id = #{itemId}
+		   and hsb.supplier_id = #{supplierId}
+		 group by hsbc.item_id, hsbc.supplier_id
+	</select>
+	
+	<select id="getPlanBomUse" >
+		select   hess.sku_id,nmd.quantity/nvl(nmm.base_qty,1) useAge
+			 	 from hpm_ecr_solution_sku          hess,
+			       hpm_ecr_solution_sku_relation hessr,
+			       npi_mbom_main                 nmm,
+			       npi_mbom_detail               nmd
+			 where hess.item_sku_kid = hessr.item_sku_id
+			   and nmm.item_id = hess.sku_id
+			   and nmm.sku_id = nmd.sku_id
+			   and hess.ecrno = #{ecrno}
+			   and hessr.item_ecr_id = #{itemId}		
+	</select>
+	
+	<resultMap id="DemandQtyMap" type="com.hand.spc.ecr_main.view.EcrItemReportV3">
+        <result column="plan_qty" property="demandQty" jdbcType="DECIMAL" />
+        <result column="plan_date" property="demandDate" jdbcType="DATE" /> 
+    </resultMap>
+	
+	 <select id="getDemandQty" resultMap="DemandQtyMap" >
+ 	    select nvl(sum(hfd.forecast_quantity),0) plan_qty ,trunc(hfd.demand_date,'mm') plan_date
+       from HPS_FORECAST_DEMAND hfd
+      where hfd.demand_date &gt;= trunc(sysdate, 'mm')
+        and hfd.demand_date &lt; #{demandDate}
+        and hfd.item_id= #{itemId}
+        and nvl(hfd.item_version,'-1')= nvl(#{itemVersion} ,'-1')       
+        group by trunc(hfd.demand_date,'mm')
+        order by trunc(hfd.demand_date,'mm')        
+ 	</select>
+	
+	
+	<resultMap id="BomSkuItemsMap" type="com.hand.spc.ecr_main.dto.EcrItemReportDetail">
+        <result column="sku_id" property="skuId" jdbcType="DECIMAL" />
+        <result column="sku_code" property="skuCode" jdbcType="VARCHAR" />
+        <result column="use_age" property="bomUse" jdbcType="VARCHAR" />  
+    </resultMap>
+	<select id="getBomSkuItems" resultMap="BomSkuItemsMap">
+		select hess.sku_id,hess.sku_code,
+				nmd.quantity||'/'||nvl(nmm.base_qty,1) use_age
+			  from hpm_ecr_solution_sku          hess,
+			       hpm_ecr_solution_sku_relation hessr,
+			       npi_mbom_main                 nmm,
+			       npi_mbom_detail               nmd
+			 where hess.item_sku_kid = hessr.item_sku_id
+			   and nmm.item_id = hess.sku_id
+			   and nmm.sku_id = nmd.sku_id
+			   and hess.ecrno = #{ecrno}
+			   and hessr.item_ecr_id = #{itemId}   
+	</select>
+</mapper>

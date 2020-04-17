@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.file_upload.mapper.FileUploadMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.file_upload.dto.FileUpload">
+        <result column="FILE_UPLOAD_ID" property="fileUploadId" jdbcType="DECIMAL" />
+        <result column="APPLICANT" property="applicant" jdbcType="DECIMAL" />
+        <result column="APPLICATION_TIME" property="applicationTime" jdbcType="DATE" />
+        <result column="PROCESS_NUMBER" property="processNumber" jdbcType="VARCHAR" />
+        <result column="DOCUMENT_NUMBER" property="documentNumber" jdbcType="VARCHAR" />
+        <result column="PCI_NUMBER" property="pciNumber" jdbcType="VARCHAR" />
+        <result column="MATERIAL_NUMBER" property="materialNumber" jdbcType="VARCHAR" />
+        <result column="APPLICATION_NUMBER" property="applicationNumber" jdbcType="VARCHAR" />
+        <result column="SOFT_NUMBER" property="softNumber" jdbcType="VARCHAR" />
+        <result column="FILE_NAME" property="fileName" jdbcType="VARCHAR" />
+        <result column="FILE_TYPE_ID" property="fileTypeId" jdbcType="DECIMAL" />
+        <result column="BORROWED_SUPPLIER" property="borrowedSupplier" jdbcType="DECIMAL" />
+        <result column="IS_PURCHASE" property="isPurchase" jdbcType="VARCHAR" />
+        <result column="RELATED_ITEMS" property="relatedItems" jdbcType="VARCHAR" />
+        <result column="FILE_ID_LIST" property="fileIdList" jdbcType="VARCHAR" />
+        <result column="VERSION_NUMBER" property="versionNumber" jdbcType="VARCHAR" />
+        <result column="DOCUMENT_URL" property="documentUrl" jdbcType="VARCHAR" />
+        <result column="REVISION_HISTORY" property="revisionHistory" jdbcType="VARCHAR" />
+        <result column="QUERY_RECORD" property="queryRecord" jdbcType="VARCHAR" />
+        <result column="PRODUCT_CATEGORY" property="productCategory" jdbcType="VARCHAR" />
+        <result column="STATUS" property="status" jdbcType="VARCHAR" />
+        <result column="FILE_DOWNLOAD_URL" property="fileDownloadUrl" jdbcType="VARCHAR" />
+        <result column="BUSINESS_KEY" property="businessKey" jdbcType="VARCHAR" />
+        <result column="PROCESS_START_TIME" property="processStartTime" jdbcType="DATE" />
+        <result column="PROCESS_END_TIME" property="processEndTime" jdbcType="DATE" />
+        <result column="PROCESS_INSTANCE_ID" property="processInstanceId" jdbcType="VARCHAR" />
+        <result column="PROCESS_STATUS" property="processStatus" jdbcType="VARCHAR" />
+        <result column="file_type_code" property="fileTypeCode" jdbcType="VARCHAR" />
+        <result column="file_type_name" property="fileTypeName" jdbcType="VARCHAR" />
+        <result column="borrowed_supplier_name" property="borrowedSupplierName" jdbcType="VARCHAR" />
+        <result column="applicant_name" property="applicantName" jdbcType="VARCHAR" />
+    </resultMap>
+
+	<select id="queryByCondition" resultMap="BaseResultMap" parameterType="com.hand.hqm.file_upload.dto.FileUpload">
+		select 
+			fu.*,
+			ft.file_type_name as file_type_name,
+			ft.file_type_code as file_type_code,
+			hs.supplier_name as borrowed_supplier_name,
+			he.name as applicant_name
+		from file_upload fu
+		left join file_type ft on ft.file_type_id = fu.file_type_id
+		left join hcs_suppliers hs on fu.borrowed_supplier = hs.supplier_id
+		left join hr_employee he on he.employee_id = fu.applicant
+		<where>
+			<if test="fileUploadId != null and fileUploadId != ''">
+				and fu.FILE_UPLOAD_ID = #{fileUploadId}
+			</if>
+			<if test="processInstanceId != null and processInstanceId != ''">
+				and fu.PROCESS_INSTANCE_ID = #{processInstanceId}
+			</if>
+			<if test="businessKey != null and businessKey != ''">
+				and fu.BUSINESS_KEY = #{businessKey}
+			</if>
+		</where>
+		order by fu.FILE_UPLOAD_ID desc
+	</select>
+</mapper>

@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<!--
+  description  证书、ppap、人员认证审批表单
+  @author KOCE3G3 2020/03/27 11:29 AM 
+-->
+<#include "../include/header.html">
+<script src="${base.contextPath}/lib/bootstrap-3.3.7/js/bootstrap.min.js"></script>
+
+<style>
+    button.btn{
+        width: 140px;
+        height: 66px;
+        text-align: center;
+    }
+    td{
+        border: #aaaaaa solid 1px;
+    }
+</style>
+<script type="text/javascript">
+    var BaseUrl = _basePath;
+    var businessKey = '${RequestParameters.businessKey}';
+    var processName = '${RequestParameters.processName}';
+    var attachment=null;
+
+    if(businessKey != null){
+        var certificateId = businessKey.toString().split(":")[0].toString();
+        var certificateType = businessKey.toString().split(":")[1].toString();
+    }
+    var viewModel = Hap.createGridViewModel(null,{
+        model: {},
+        save:function(){
+            var data = viewModel.model.toJSON();
+            var startDate = $("#issueDateItem").val();
+            var endDate = $("#disabledDateItem").val();
+            data.certificateId=certificateId;
+            data.startDate=startDate;
+            data.endDate=endDate;
+            var validator = $("#mainForm").data("kendoValidator");
+            if(validator.validate()) {
+                Hap.request({
+                    url: BaseUrl + "/hcs/certificate/update",
+                    data: kendo.stringify(data),
+                    success:function(data){
+                        if(data.success){
+                            kendo.ui.showInfoDialog({
+                                title:$l('hap.tip.info'),
+                                message:'<@spring.message "hap.tip.success"/>'
+                            })
+                        }
+                    }
+                })
+            }
+        },
+    })
+
+    $.ajax({
+        url: BaseUrl + '/hcs/certificate/currentQuery?certificateId='+certificateId,
+        success: function (result) {
+            if (result.success === false) {
+                kendo.ui.showErrorDialog({
+                    title: $l('hap.error'),
+                    message: result.message
+                })
+                return;
+            }
+            if(result.rows.length>0){
+                if(result.rows[0].attachment != null){
+                    attachment = result.rows[0].attachment.split('/')[result.rows[0].attachment.split('/').length-1];
+                }
+
+                if(certificateType == 'CER'){
+                    $("#cerSupplierCode").text(result.rows[0].supplierCode || '');
+                    $("#cerSupplierName").text(result.rows[0].supplierName ||'');
+                    $("#cerFirstCategory").text(result.rows[0].itemCode || '');
+                    $("#cerSecondCategory").text(result.rows[0].secondCategory || '');
+                    $("#cerItemCode").text(result.rows[0].itemCode || '');
+                    $("#cerItemName").text(result.rows[0].itemDescription || '');
+                    $("#issueDateItem").val(result.rows[0].startDate || '');
+                    $("#disabledDateItem").val(result.rows[0].endDate || '');
+                }else if(certificateType == 'PER'){
+                    $("#perSupplierCode").text(result.rows[0].supplierCode || '');
+                    $("#perSupplierName").text(result.rows[0].supplierName || '');
+                    $("#perItemCode").text(result.rows[0].itemCode || '');
+                    $("#perItemName").text(result.rows[0].itemDescription || '');
+                    $("#perTypeValue").text(result.rows[0].typeValue || '');
+
+                }else if(certificateType == 'PPAP') {
+                    $("#ppapSupplierCode").text(result.rows[0].supplierCode || '');
+                    $("#ppapSupplierName").text(result.rows[0].supplierName || '');
+                    $("#ppapTypeValue").text(result.rows[0].typeValue || '');
+                    $("#ppapLevels").text(result.rows[0].levels || '');
+                    $("#ppapItemCode").text(result.rows[0].itemCode || '');
+                    $("#ppapItemDescription").text(result.rows[0].itemDescription || '');
+                }
+
+            }
+        }
+    })
+
+
+    //下载文件
+    function fileDownloadFunction(attachment){
+        window.open(attachment);
+    }
+    //删除文件
+    function fileRemove(certificateId){
+        kendo.ui.showConfirmDialog({
+            title: '<@spring.message "hap.tip.info"/>',
+            message: '<@spring.message "hap.tip.delete_confirm"/>'
+        }).done(function(e){
+            if(e.button=='OK'){
+                var jsonList = [{
+                    "certificateId":certificateId
+                }]
+                $.ajax({
+                    url: BaseUrl + "/hcs/certificate/deleteFile",
+                    type: "POST",
+                    contentType: "application/json",
+                    data: kendo.stringify(jsonList),
+                    success: function(resultData){
+                        if(resultData.success){
+                            Hap.showToast({
+                                type:'success',
+                                "positionClass": "toast-bottom-right",
+                                message:'<@spring.message "hap.mesg_delete"/>',
+                                hideDuration:10*1000
+                            })
+                            $("#filesContentDiv").html('');
+                        }else{
+                            kendo.ui.showErrorDialog({
+                                title: '<@spring.message "hap.error"/>',
+                                message: resultData.message
+                            })
+                        }
+                    }
+                })
+            }
+        })
+    }
+
+    //上传文件传入证书ID
+    var upFileData = {
+        certificateId: certificateId,
+    };
+
+</script>
+<body style="height: 400px">
+    <form id="mainForm" style="paddiing-bottom:50px;padding-top:15px" class="form-horizontal" method="post" enctype="application/json;charset=UTF-8">
+        <!--ppap-->
+        <div id="panel-ppap" class="col-lg-8" style="width: 55%;display: none" >
+            <table style="width: 100%; font-size: 16px; font-color: #000;text-align: center;">
+                <tr>
+                    <td style="width: 20%;">供应商</td>
+                    <td id="ppapSupplierCode"  style="width: 40%;"></td>
+                    <td id="ppapSupplierName"  style="width: 40%;"></td>
+                </tr>
+                <tr>
+                    <td>版本</td>
+                    <td id="ppapTypeValue" colspan="2"></td>
+                </tr>
+                <tr>
+                    <td>级别</td>
+                    <td id="ppapLevels" colspan="2"></td>
+                </tr>
+                <tr>
+                    <td style="width: 20%;">物料</td>
+                    <td id="ppapItemCode"  style="width: 40%;"></td>
+                    <td id="ppapItemDescription"  style="width: 40%;"></td>
+                </tr>
+            </table>
+            <!-- 文件提交的表单 -->
+            <div class="row" id="ppapDiv" style="margin-top: 5px; display: none">
+                <div class="col-sm-16">
+                    <div class="col-sm-13  demo-section k-content">
+                        <input name="files" id="filesPpap" type="file" aria-label="files" />
+                    </div>
+                    <input name="certificateId" id="certificateIdPpap" type="text" style="display: none;" />
+                </div>
+                <script>
+                    //文件上传
+                    $("#filesPpap").kendoUpload({
+                        async: {
+                            saveUrl: "${base.contextPath}/certificate/file/submit/upload?${_csrf.parameterName}=${_csrf.token}",
+                            autoUpload: true,
+                        },
+                        multiple:false,
+                        showFileList:true,
+                        upload: function(e){
+                            e.data = upFileData;
+                        },
+                        success: function(e){
+                            var response = e.response;
+                            if(response.success){
+                                Hap.showToast({
+                                    type:'success',
+                                    "positionClass": "toast-bottom-right",
+                                    message:'<@spring.message "qcfiles.uploadsuccess"/>',
+                                    hideDuration:10*1000
+                                })
+                            }else{
+                                kendo.ui.showErrorDialog({
+                                    message: response.message,
+                                });
+                            }
+                        },
+                    });
+
+                </script>
+            </div>
+        </div>
+        <!--证书-->
+        <div id="panel-cer" class="col-lg-8" style="width: 55%;display: none" >
+            <table style="width: 100%; font-size: 16px; font-color: #000;text-align: center;" >
+                <tr>
+                    <td style="width: 20%;">供应商</td>
+                    <td id="cerSupplierCode" style="width: 40%;"></td>
+                    <td id="cerSupplierName" style="width: 40%;"></td>
+                </tr>
+                <td rowspan="2">类型</td>
+                <td id="cerFirstCategory" colspan="2"></td>
+                <tr>
+                    <td id="cerSecondCategory" colspan="2"></td>
+                </tr>
+                <tr>
+                    <td style="width: 20%;">物料</td>
+                    <td id="cerItemCode" style="width: 40%;"></td>
+                    <td id="cerItemName" style="width: 40%;"></td>
+                </tr>
+            </table>
+            <!-- 两个时间输入框 -->
+            <div class="row" id="timeDiv" style="margin-top: 5px;text-align: center;">
+                <div class="col-sm-6">
+                    <input id="issueDateItem" required
+                           placeholder="<@spring.message '颁发时间'/>"  style="width: 150px;margin-right:5px;" />
+                    <script>
+                        var issueDateItem= $("#issueDateItem").kendoDatePicker({
+                            format : "yyyy-MM-dd",
+                        }).data("kendoDatePicker").enable(false);
+                    </script>
+                </div>
+                <div class="col-sm-6">
+                    <input id="disabledDateItem" required
+                           placeholder="<@spring.message '失效时间'/>" style="width: 150px;margin-right:5px;" />
+                    <script>
+                       var disabledDateItem= $("#disabledDateItem").kendoDatePicker({
+                            format : "yyyy-MM-dd",
+                        }).data("kendoDatePicker").enable(false);
+                    </script>
+                </div>
+            </div>
+            <!-- 文件提交的表单 -->
+            <div class="row" id="cerDiv" style="margin-top: 5px;">
+                <div class="col-sm-16">
+                    <div class="col-sm-13  demo-section k-content">
+                        <input name="files" id="filesItem" type="file" style="height: 200px" aria-label="files" />
+                    </div>
+                    <input name="certificateId" id="certificateIdItem" type="text" style="display: none;"/>
+                    <input name="issueDate" id="issueDate" type="text"  style="display: none;"/>
+                    <input name="disabledDate" id="disabledDate" type="text" style="display: none;" />
+                </div>
+                <script>
+                    //文件上传
+                    $("#filesItem").kendoUpload({
+                        async: {
+                            saveUrl: "${base.contextPath}/certificate/file/submit/upload?${_csrf.parameterName}=${_csrf.token}",
+                            autoUpload: true,
+                        },
+                        multiple:false,
+                        showFileList:true,
+                        upload: function(e){
+                            e.data = upFileData;
+                        },
+                        success: function(e){
+                            var response = e.response;
+                            if(response.success){
+                                Hap.showToast({
+                                    type:'success',
+                                    "positionClass": "toast-bottom-right",
+                                    message:'<@spring.message "qcfiles.uploadsuccess"/>',
+                                    hideDuration:10*1000
+                                })
+                            }else{
+                                kendo.ui.showErrorDialog({
+                                    message: response.message,
+                                });
+                            }
+                        },
+                    });
+
+                </script>
+            </div>
+            <div id="mainBottom" >
+                <span class="btn btn-primary" data-bind="click:save" type="submit" style="margin-left:45%;margin-top: 10px">保存</span>
+
+            </div>
+        </div>
+        <!--人员认证-->
+        <div id="panel-per" class="col-lg-8 k-hidden" style="width: 55%;display: none" >
+            <table style="width: 100%; font-size: 16px; font-color: #000;text-align: center;" >
+                <tr>
+                    <td  style="width: 20%;">供应商</td>
+                    <td  id="perSupplierCode" style="width: 40%;"></td>
+                    <td  id="perSupplierName" style="width: 40%;"></td>
+                </tr>
+                <tr>
+                    <td>类型</td>
+                    <td id="perTypeValue" colspan="2"></td>
+                </tr>
+                <tr>
+                    <td style="width: 20%;">物料</td>
+                    <td id="perItemCode" style="width: 40%;"></td>
+                    <td id="perItemName" style="width: 40%;"></td>
+                </tr>
+            </table>
+            <!-- 文件提交的表单 -->
+            <div class="row" id="perDiv" style="margin-top: 5px;">
+                <div class="col-sm-16">
+                    <div class="col-sm-13  demo-section k-content">
+                        <input name="files" id="filesPer" type="file" readonly aria-label="files" />
+                    </div>
+                    <input name="certificateId" id="certificateIdPer" type="text" style="display: none;" />
+                </div>
+                <script>
+                    //文件上传
+                    $("#filesPer").kendoUpload({
+                        async: {
+                            saveUrl: "${base.contextPath}/certificate/file/submit/upload?${_csrf.parameterName}=${_csrf.token}",
+                            autoUpload: true,
+                        },
+                        multiple:false,
+                        showFileList:true,
+                        upload: function(e){
+                            e.data = upFileData;
+                        },
+                        success: function(e){
+                            var response = e.response;
+                            if(response.success){
+                                Hap.showToast({
+                                    type:'success',
+                                    "positionClass": "toast-bottom-right",
+                                    message:'<@spring.message "qcfiles.uploadsuccess"/>',
+                                    hideDuration:10*1000
+                                })
+                            }else{
+                                kendo.ui.showErrorDialog({
+                                    message: response.message,
+                                });
+                            }
+                        },
+                    });
+
+                </script>
+            </div>
+        </div>
+    </form>
+
+    <script>
+        kendo.bind($('#mainForm'), viewModel);
+        kendo.bind($('#mainBottom'), viewModel);
+        $('#mainForm').kendoValidator({
+            messages:{
+                required:'<@spring.message "hap.validation.notempty"/>'
+            },
+            invalidMessageType:"tooltip"
+        });
+    </script>
+    <script>
+        //根据类型不同显示三种表单
+        if(certificateType == 'CER'){
+            $("#panel-cer").show()
+            $("#cerDiv").show()
+            $("#timeDiv").show()
+        }else if(certificateType == 'PER'){
+            $("#panel-per").show()
+            $("#perDiv").show()
+        }else if(certificateType == 'PPAP') {
+            $("#panel-ppap").show()
+            $("#ppapDiv").show()
+        }
+
+
+        //如果被拒绝需要重新上传文件，时间可编辑
+        if(processName == "供应商重新上传文件"){
+            if(certificateType == "CER"){
+                issueDateItem.enable(true)
+                disabledDateItem.enable(true)
+            }
+        }
+
+        //存在附件显示附件名、下载、删除
+        if(attachment == ""){
+            $("#filesContentDiv").html('');
+        }else{
+            $("#filesContentDiv").html('');
+            var appStr = '' +
+                '<span style="font-size:12px;">' + attachment + '</span>' +
+                '<span class="fa fa-trash" style="font-size:16px;cursor:pointer;margin-left:5px;" onclick="fileRemove(\''+certificateId+'\')"></span>' +
+                '<span class="fa fa-download" style="font-size:16px;cursor:pointer;margin-left:5px;" onclick="fileDownloadFunction(\''+attachment+'\')"></span><br>';
+            $("#filesContentDiv").append(appStr);
+        }
+
+        $("div .k-dropzone").append('<div id="filesContentDiv" class="row"></div>');
+        $("div .k-dropzone").css("margin-bottom","5px");
+
+    </script>
+</body>
+</html>

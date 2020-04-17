@@ -1,0 +1,768 @@
+<#include "../include/header.html">
+<link rel="stylesheet" href="${base.contextPath}/lib/zTree_v3/css/metroStyle/metroStyle.css" type="text/css"/>
+<script type="text/javascript" src="${base.contextPath}/lib/zTree_v3/js/jquery.ztree.core.js"></script>
+<script type="text/javascript" src="${base.contextPath}/lib/zTree_v3/js/jquery.ztree.excheck.js"></script>
+<script type="text/javascript" src="${base.contextPath}/lib/zTree_v3/js/jquery.ztree.exedit.js"></script>
+
+<style type="text/css">
+     .highlight_red {color: #eb1c3d;}
+     
+     html, body {
+         height: 100%;
+     }
+     
+     span.required:before {
+            content: "*";
+            color: red;
+            padding-right: 3px;
+        }
+ </style>
+    
+<script type="text/javascript">
+debugger;
+	var IDMark_A = "_a";
+	var required =  '<span class="required"></span>';
+    var viewModel = Hap.createGridViewModel("#grid",{
+        model:{
+        	field:{
+        	}        	
+        },
+        save:function () {
+        },
+        remove: function () {
+                Hap.deleteGridSelection({
+                    grid: $('#detailGrid')
+                });
+        },
+    });
+    var settingSyncEntity = {
+            view: {
+                addHoverDom: false,
+                removeHoverDom: false,
+                addDiyDom: false
+            },
+            edit: {
+                enable: false,
+                showRenameBtn: false,
+                showRemoveBtn: false
+            },
+            data: {
+                keep: {
+                    parent:true,
+                    leaf:true
+                },
+                simpleData: {
+                    enable: true
+                }
+            },
+            callback: {
+                beforeDrag: false,
+                beforeDrop: false,
+                onRemove: false,
+                onClick: onClick
+            }
+        };
+    
+    var settingSyncBr = {
+            view: {
+                addHoverDom: false,
+                removeHoverDom: false,
+                addDiyDom: addDiyDomBranch
+            },
+            edit: {
+                enable: false,
+                showRenameBtn: false,
+                showRemoveBtn: false
+            },
+            data: {
+                keep: {
+                    parent:true,
+                    leaf:true
+                },
+                simpleData: {
+                    enable: true
+                }
+            },
+            callback: {
+                beforeDrag: false,
+                beforeDrop: false,
+                onRemove: false,
+                onClick: zTreeOnClick
+            }
+        };
+    
+    	//点击树触发事件
+	    function zTreeOnClick(event, treeId, treeNode) {
+    		debugger;
+    		if(treeNode.id == -1){
+    			newWindowClickDraft();
+    		}else if(treeNode.id == -2){
+    			newWindowClickDe();
+    		}
+    			return true;
+	    }; 
+	    
+	  //树点击事件
+		function onClick(event, treeId, treeNode) {
+			viewModel.reset();
+			viewModel.model.set("specId", treeNode.id);
+			viewModel.model.set("changeType", "动态加载");
+			viewModel.query();
+		}
+	    
+	    
+	    //配置总对分树节点数据
+	    function setEntityOrgTreeNodeByLevelData(obj,node){
+	        obj.id = node.specId;
+	        obj.pId = node.parentSpecId;
+	        obj.name = node.specDescription;
+	        obj.nodeType = node.levelNum;
+	    }
+	
+	    $(function () {
+	    	debugger;
+            kendo.ui.progress($('#page-content'), true);
+            $.ajax({
+                url : '${base.contextPath}/plm/spec/product/detail/queryTreeDatas',
+                async: false,
+                success : function(args) {
+                    kendo.ui.progress($('#page-content'), false);
+                    if(args.success){	
+                        var treeData = new Array();
+                        for(var i=0;i<args.rows.length;i++){
+                            var obj = new Object();
+                            setEntityOrgTreeNodeByLevelData(obj, args.rows[i]);
+                            treeData.push(obj);
+                        }
+                        $.fn.zTree.init($("#treeSyncEntity"), settingSyncEntity, treeData);
+                    }else {
+                        kendo.ui.showErrorDialog({
+                            message: args.message
+                        });
+                    }
+                }
+            });
+            
+            queryDraft();
+            hisCount();
+        });
+	    //初始化的数据
+	    var zNodes =[
+            { specId:-1,parentSpecId:null,specDescription:"草稿", levelNum:1, isParent:true},
+            { specId:-2,parentSpecId:null,specDescription:"已废止的条款", levelNum:1, isParent:true}
+ 
+        ];
+
+       $(function () {
+    	   var treeData = new Array();
+           for(var i=0;i<zNodes.length;i++){
+               var obj = new Object();
+               setEntityOrgTreeNodeByLevelData(obj, zNodes[i]);
+               treeData.push(obj);
+           } 
+           $.fn.zTree.init($("#treeSyncBranch"), settingSyncBr, treeData);
+        }); 
+       
+       function addDiyDomBranch(treeId, treeNode) {
+           var aObj = $("#" + treeNode.tId + IDMark_A);
+           var editStr ="<lable id='branchBtn_" +treeNode.id+ "'/>";
+         /*   var editStr = "<select id='branchBtn_" +treeNode.id+ "'><option value='Y'>控制</option><option selected='selected' value='N'>不控制</option></select>"; */
+           aObj.after(editStr);
+    /*        var btn = $("#branchBtn_"+treeNode.id);
+           if(treeNode.isChecked == 'Y'){
+               btn.attr("disabled",true).css("background", "#EEEEEE");
+           }
+           if(treeNode.isChecked){
+               btn.val(treeNode.isChecked);
+           }
+           if (btn) btn.bind("change", function(e){
+               treeObjEntity = $.fn.zTree.getZTreeObj("treeBranch");
+               var nodeList = treeObjEntity.transformToArray(treeNode);
+               $.each(nodeList, function(i, v) {
+                   //控制有改变时，所有子代也跟着改变
+                   v.isChecked = e.currentTarget.value;
+               });
+           }); */
+       }
+</script>
+<body>
+<div id="newWindow"></div>
+<div id="page-content">
+    <div class="pull-left" id="toolbar-btn" style="padding-bottom:10px;">
+        <div class="k-query-simple" id="query-form">
+				<input type="text" data-role="maskedtextbox" style="width:150px;margin-right:5px;" placeholder='<@spring.message "条款查询"/>'
+               data-bind="value:model.tmp" class="k-textbox">
+        </div>
+        <script>kendo.bind($('#toolbar-btn'), viewModel);</script>
+        <div style="clear:both"></div>
+    </div>
+    <script>
+    $('#toolbar-btn').kendoQueryPanel({
+        queryFunction: function () {
+            viewModel.query();
+        },
+        resetFunction: function () {
+        	viewModel.reset();
+            $("#grid").data("kendoGrid").dataSource.page(1);
+        }
+    });
+    </script>
+    
+    <div class="pull-right" id="query-form" style="padding-bottom:10px;padding-right: 33px;">
+    	<span class="btn btn-primary k-grid-save-changes" onclick="newWindowAdd()" style="float:left;margin-right:5px"><@spring.message "hap.new"/></span>  
+		<span class="btn btn-primary k-grid-save-changes" onclick="newWindowUpdate()" style="float:left;margin-right:5px;"><@spring.message "修改"/></span>
+        <span class="btn btn-primary k-grid-save-changes"  onclick="newWindowCopy()"  style="float:left;margin-right:5px;"><@spring.message "复制利用"/></span>  
+        <span class="btn btn-primary k-grid-save-changes" onclick="deleteData()" style="float:left;margin-right:5px;"><@spring.message "条款废止"/></span>
+        <span class="btn btn-primary k-grid-save-changes" onclick="exportExcelFun()" style="float:left;margin-right:5px;"><@spring.message "文件导出"/></span>
+    </div>
+    <script>kendo.bind($('#query-form'), viewModel);</script>
+    
+   <!-- 侧面加分层 -->
+   <div class="row" style="width: 100%;height: 100%;margin-top: 10px;">
+   <div class="col-sm-12" style="height: 100%">
+   <div class="col-sm-3" style="height: 100%;border: 2px solid #EEEEEE;border-radius:10px;">
+   <div style="clear:both;	height: 700px">
+        <!-- <div id="gridTree"style="height: 700px"></div> -->
+        		<div class="column" style="height:80%">
+                    <div class="panel" style="height:95%;margin-top: 10px">
+                        <div style="width: 46%; height: 16px; background-color:#1D92AF;color: white; float: left; margin-top: -8px; margin-left: 5px; text-align: center;">
+                            	基础信息
+                        </div>
+                        <div style="height:100%;margin-top: 16px">
+                            <ul id="treeSyncEntity" class="ztree" style="width:100%;height:100%;overflow:auto;"></ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="column" style="height:20%">
+                    <div class="panel" style="height:95%;margin-top: 3px">
+                        <div style="width: 46%; height: 16px; background-color:#1D92AF;color: white; float: left; margin-top: -8px; margin-left: 5px; text-align: center;">
+                           	 变更信息
+                        </div>
+                        <div style="height:100%;margin-top: 16px">
+                            <ul id="treeSyncBranch" class="ztree" style="width:100%;height:100%;overflow:auto;"></ul>
+                        </div>
+                    </div>
+                </div>
+    		</div>
+   		</div>
+   <div class="col-sm-9" >
+    <div style="clear:both">
+        <div id="grid"style="height: 700px;weight:200%"></div>
+    </div>
+    </div>
+     </div>
+</div>
+<div></div>
+<script type="text/javascript">
+debugger;
+$("#classifyLov").kendoLov($.extend
+	    (<@lov"LOV_USER"/>, {
+	        textField: 'userName',
+	        valueField:'userId',
+	    }));
+    Hap.initEnterQuery('#query-form', viewModel.query);
+    var BaseUrl = _basePath;
+    dataSource = new kendo.data.DataSource({
+        transport: {
+            read: {
+                url: BaseUrl + "/plm/spec/product/detail/queryAll",
+                type: "POST",
+                dataType: "json"
+            },
+            update: {
+                url: BaseUrl + "/plm/spec/product/detail/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            destroy: {
+                url: BaseUrl + "/plm/spec/product/detail/remove",
+                type: "POST",
+                contentType: "application/json"
+            },
+            create: {
+                url: BaseUrl + "/plm/spec/product/detail/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            parameterMap: function (options, type) {
+            	debugger;
+                if (type !== "read" && options.models) {
+                    var datas = Hap.prepareSubmitParameter(options, type)
+                    return kendo.stringify(datas);
+                } else if (type === "read") {
+                    return Hap.prepareQueryParameter(viewModel.model.toJSON(), options)
+                }
+            }
+        },
+        batch: true,
+        serverPaging: true,
+        pageSize: 20,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+                id: "fileId",
+                fields: {
+                }
+            }
+        }
+    });
+
+    $("#grid").kendoGrid({
+        dataSource: dataSource,
+        resizable: true,
+        scrollable: true,
+        navigatable: false,
+        selectable: 'multiple, rowbox',
+        sortable:true,
+        dataBound: function () {
+            if (parent.autoResizeIframe) {
+                parent.autoResizeIframe('${RequestParameters.functionCode!}')
+            }
+        },
+       /*  pageable: {
+            pageSizes: [5, 10, 20, 50],
+            refresh: true,
+            buttonCount: 5
+        }, */
+        columns: [
+            {
+                field: "specDescription01",
+                title: '<@spring.message "产品品类"/>',
+                headerTemplate: '<span style="color:red" >*</span><span><@spring.message "产品品类"/></span>', 
+                width: 120,
+                headerAttributes: {style: "text-align: center"},
+                attributes: {style: "text-align:center"},
+
+            },
+                    {
+                field: "specDescription02",
+                title: '<@spring.message "功能大类"/>',
+                headerTemplate: '<span style="color:red" >*</span><span><@spring.message "功能大类"/></span>',
+                width: 120,
+                headerAttributes: {style: "text-align: center"},
+                attributes: {style: "text-align:center"},
+            },
+                    {
+                field: "specDescription03",
+                title: '<@spring.message "功能小类"/>',
+                headerTemplate: '<span style="color:red" >*</span><span><@spring.message "功能小类"/></span>',
+                width: 120,
+                headerAttributes: {style: "text-align: center"},
+                attributes: {style: "text-align:center"},
+            },
+              		{
+                field: "specDescription04",
+                title: '<@spring.message "功能分类"/>',
+                headerTemplate: '<span style="color:red" >*</span><span><@spring.message "功能/分类"/></span>',
+                width: 120,
+                headerAttributes: {style: "text-align: center"},
+                attributes: {style: "text-align:center"},
+            },
+          	{
+                field: "demandMsg",
+                title: '<@spring.message "要求明细"/>',
+                headerTemplate: '<span style="color:red" >*</span><span><@spring.message "要求明细"/></span>',
+                width: 120,
+                headerAttributes: {style: "text-align: center"},
+                attributes: {style: "text-align:center"},
+            },
+                    {
+                field: "attachment",
+                title: '<@spring.message "特性分类"/>',
+                width: 120,
+                headerAttributes: {style: "text-align: center"},
+                attributes: {style: "text-align:center"},
+            },
+                    {
+                field: "stdTestMethod",
+                title: '<@spring.message "标准/测试方法"/>',
+                width: 120,
+                headerAttributes: {style: "text-align: center"},
+                attributes: {style: "text-align:center"},
+            },
+             {
+                field: "specCode",
+                title: '<@spring.message "Spec代码"/>',
+                width: 120,
+                headerAttributes: {style: "text-align: center"},
+                attributes: {style: "text-align:center"},
+            },
+                    {
+                field: "countType",
+                title: '<@spring.message "计量/计数"/>',
+                headerTemplate: '<span style="color:red" >*</span><span><@spring.message "计量/计数"/></span>',
+                width: 120,
+                headerAttributes: {style: "text-align: center"},
+                attributes: {style: "text-align:center"},
+            },
+                    {
+                field: "minValue",
+                title: '<@spring.message "下限"/>',
+                width: 60,
+                headerAttributes: {style: "text-align: center"},
+                attributes: {style: "text-align:center"},
+            },
+                    {
+                field: "maxValue",
+                title: '<@spring.message "上限"/>',
+                width: 60,
+                headerAttributes: {style: "text-align: center"},
+                attributes: {style: "text-align:center"},
+            },
+                    {
+                field: "uom",
+                title: '<@spring.message "单位"/>',
+                width: 60,
+                headerAttributes: {style: "text-align: center"},
+                attributes: {style: "text-align:center"},
+            },
+                    {
+                field: "approvalStatus",
+                title: '<@spring.message "审批状态"/>',
+                width: 60,
+                headerAttributes: {style: "text-align: center"},
+                attributes: {style: "text-align:center"},
+            },
+                    {
+                field: "version",
+                title: '<@spring.message "版本"/>',
+                width: 60,
+                headerAttributes: {style: "text-align: center"},
+                attributes: {style: "text-align:center"},
+            }
+        ],
+        editable: false  
+    });
+
+	  //新建
+	  function newWindowAdd() {
+	 		var title = "新增SPEC数据库"; 
+	 		var url='spec_product_detail_edit_add.html';
+	 		var newWindow = $("#newWindow").kendoWindow({
+	                 actions: ["Close"],
+	                 animation: {
+	                     close: {
+	                         effects: "fadeOut zoom:out",
+	                         duration: 300
+	                     },
+	                     open: {
+	                         effects: "fadeIn zoom:in",
+	                         duration: 300
+	                     }
+	                 },
+	                 width: '90%',
+	                 height: '50%',
+	                 visible: false,
+	                 iframe: true,
+	                 modal: true,
+	                 content: url,
+	                 close:function(){
+		 	 				queryDraft();
+		 	 				hisCount();
+		 	 			}
+	             }).data("kendoWindow");
+	 		newWindow.title(title);
+	 		newWindow.center().open();
+	 }
+	  
+
+	  //更新
+	  function newWindowUpdate() {
+		 var grid = $("#grid").data("kendoGrid");
+		 var selections = grid.selectedDataItems();
+		 var specLineIds = '';
+		 var title = "修改SPEC数据库"; 
+		
+		 //修改跟复制需要选择数据
+			if(selections.length == 0){
+		 		kendo.ui.showWarningDialog({
+		 			message: "请选择一条数据！"
+		 		});
+		 		return;
+		 	}
+	 		//修改、复制将选中的specLineId作为字符串，传送过去。
+	 		var datas = [];
+	 		jQuery.each(selections, function(i, v){
+	 			datas.push(v.specLineId);
+	 		});
+	 		specLineIds = datas.join(';');
+	 		var	url='spec_product_detail_edit_update.html?specLineIds='+ specLineIds;
+	 		var newWindow = $("#newWindow").kendoWindow({
+	                 actions: ["Close"],
+	                 animation: {
+	                     close: {
+	                         effects: "fadeOut zoom:out",
+	                         duration: 300
+	                     },
+	                     open: {
+	                         effects: "fadeIn zoom:in",
+	                         duration: 300
+	                     }
+	                 },
+	                 width: '90%',
+	                 height: '50%',
+	                 visible: false,
+	                 iframe: true,
+	                 modal: true,
+	                 content: url,
+	                 close:function(){
+	 	 				queryDraft();
+	 	 				hisCount();
+	 	 			}
+	             }).data("kendoWindow");
+	 		newWindow.title(title);
+	 		newWindow.center().open();
+	 }
+	  
+
+	  //复制利用
+	  function newWindowCopy() {
+		 var grid = $("#grid").data("kendoGrid");
+		 var selections = grid.selectedDataItems();
+		 var specLineIds = '';
+		 var title = "复制SPEC数据库"; 
+		
+		 //修改跟复制需要选择数据
+			if(selections.length == 0){
+		 		kendo.ui.showWarningDialog({
+		 			message: "请选择一条数据！"
+		 		});
+		 		return;
+		 	}
+	 		//修改、复制将选中的specLineId作为字符串，传送过去。
+	 		var datas = [];
+	 		jQuery.each(selections, function(i, v){
+	 			datas.push(v.specLineId);
+	 		});
+	 		specLineIds = datas.join(';');
+	 		var	url='spec_product_detail_edit_copy.html?specLineIds='+ specLineIds;
+	 		var newWindow = $("#newWindow").kendoWindow({
+	                 actions: ["Close"],
+	                 animation: {
+	                     close: {
+	                         effects: "fadeOut zoom:out",
+	                         duration: 300
+	                     },
+	                     open: {
+	                         effects: "fadeIn zoom:in",
+	                         duration: 300
+	                     }
+	                 },
+	                 width: '90%',
+	                 height: '50%',
+	                 visible: false,
+	                 iframe: true,
+	                 modal: true,
+	                 content: url,
+	                 close:function(){
+	 	 				queryDraft();
+	 	 				hisCount();
+	 	 			}
+	             }).data("kendoWindow");
+	 		newWindow.title(title);
+	 		newWindow.center().open();
+	 }
+	  
+	  
+	  //草稿界面
+	  function newWindowClickDraft() {
+		  debugger;
+			 //用数字1-3动态控制弹窗标题弹窗按钮展示
+		 	 var title = "草稿";
+	 		//修改specId作为字符串，传送过去。
+	 		var url='spec_product_detail_edit_draft.html';
+	 		var newWindow = $("#newWindow").kendoWindow({
+	 			actions:["close"],
+	 			width:1100,
+	 			height:400,
+	 			content:url,
+	 			iframe:true,
+	 			visible:false,
+	 			resizable:true,
+	 			modal:true,
+	 			close:function(){
+	 				queryDraft();
+	 				hisCount();
+	 			}
+	 			
+	 		}).data("kendoWindow");
+	 		newWindow.title(title);
+	 		newWindow.center().open();
+	 }
+	  
+	  //废止界面
+	  function newWindowClickDe() {
+		 	 var title = "已废止的条款";
+	 		var url='spec_product_detail_edit.html';
+	 		var newWindow = $("#newWindow").kendoWindow({
+	 			actions:["close"],
+	 			width:1100,
+	 			height:400,
+	 			content:url,
+	 			iframe:true,
+	 			visible:false,
+	 			resizable:true,
+	 			modal:true,
+	 			close:function(){
+	 				queryDraft();
+	 				hisCount();
+	 			}
+	 			
+	 		}).data("kendoWindow");
+	 		newWindow.title(title);
+	 		newWindow.center().open();
+	 }
+	  
+	
+	 //条款废止
+	 function deleteData(){
+ 	 	var grid = $("#grid").data("kendoGrid");
+ 	 	var obj;
+ 	 	var datas = [];
+ 	    var selections = grid.selectedDataItems();
+ 	  	if(selections.length == 0){
+	 		kendo.ui.showWarningDialog({
+	 			message: "请选择一条数据！"
+	 		});
+	 		return;
+	 	}
+		 kendo.ui.showConfirmDialog({
+	            title:$l('hap.tip.info'),
+	            message: '是否废止当前数据？'
+	        }).done(function (event) {
+	            if (event.button == 'OK') {
+	                jQuery.each(selections,function (i,v) {
+	                        obj = {};
+	                        //头表
+	                        obj['specLineId'] = v.specLineId;
+	                        obj['specId'] = v.specId;
+	                        obj['specDescription01'] = v.specDescription01;
+	                        obj['specDescription04'] = v.specDescription04;
+	                        obj['changeType'] = '废止';
+	                        /* obj['changeMsg'] = v.changeMsg;
+	                        obj['changeType'] = '废止';
+	                        obj['approvalStatus'] = 'DRAFT';
+	                        //行表
+	                        obj['demandMsg'] = v.demandMsg;
+	                        obj['attachment'] = v.attachment;
+	                        obj['stdTestMethod'] = v.stdTestMethod;
+	                        obj['specCode'] = v.specCode;
+	                        obj['countType'] = v.countType;
+	                        obj['minValue'] = v.minValue;
+	                        obj['maxValue'] = v.maxValue;
+	                        obj['uom'] = v.uom;
+	                        obj['version'] = v.version; */
+	                        datas.push(obj);
+	                });
+	                
+	                jQuery.ajax({
+                        type : 'POST',
+                        url : '${base.contextPath}/plm/spec/product/detail/updateSpecLineIdStatus',
+                        contentType: 'application/json',
+                        data: kendo.stringify(datas),
+                        success : function(res) {
+                            if (res.success) {
+                            	viewModel.query();
+                            } else {
+                                kendo.ui.showErrorDialog({
+                                    message : res.message
+                                });
+                            }
+                        },
+                        error: function(e) {
+                            kendo.ui.progress(jQuery('#page-content'), false);
+                            kendo.ui.showErrorDialog({
+                                message: e.message
+                            });
+                        }
+                    });
+	            }
+	        })
+	 }
+	
+	 /**
+	  * 导出
+	  */
+	 function exportExcelFun() {
+		 var grid = $("#grid").data("kendoGrid");
+		 var selected = grid._data;
+		 if (selected.length){
+			 kendo.ui.showConfirmDialog({
+		          title: $l('提示：'),
+		          message: $l('确定导出吗？')
+		      }).done(function (event) {
+		          if (event.button == 'OK') {
+		              var data = viewModel.model.toJSON();
+		              var hidden = '';
+		              for (v in data) {
+		                  if (data[v] != '' && data[v] != null) {
+		                      hidden += '<input type="hidden" name="' + v + '" value="' + data[v] + '" />'
+		                  }
+		              }
+		              var form = $('<form method="GET" action="${base.contextPath}/plm/spec/product/detail/exportCheckData?specLineIds='+ viewModel.model.tmp +'" target="_blank" ></form>');
+		              form.append(hidden);
+		              form.appendTo('body').submit().remove();
+		          }
+		      })
+		 }else {
+				 kendo.ui.showInfoDialog({
+	             title: '<@spring.message "提示"/>',
+	             message: '<@spring.message "当前界面无数据，请查询！"/>'
+	         	});   
+		 }
+	 }
+	 
+	 //查询草稿数量
+	    var draftCount=0;
+	    var draftCount1=0
+	    function queryDraft(){
+	        var lineData = new Array();
+	        $.ajax({
+	            url: BaseUrl + "/plm/spec/product/detail/query",
+	            type: "POST",
+	            dataType: "json",
+	            async: true,
+	            data: {
+	                page: 1,
+	                pageSize: 10000
+	            },
+	            success: function (data) {
+	                if (data.success) {
+	                	draftCount = data.rows.length;
+	                	$('#branchBtn_-1').text(draftCount);
+	                }
+	            }
+	        });
+	    }
+	    queryDraft();
+	    console.log('草稿数：'+draftCount);
+	    
+	    $('#branchBtn_-2').text(draftCount1);
+	    
+ 	    //查询草稿数量
+	    var draftCount1=0;
+	    function hisCount(){
+	        var lineData = new Array();
+	        $.ajax({
+	            url: BaseUrl + "/plm/spec/product/detail/hisCount",
+	            type: "POST",
+	            dataType: "json",
+	            async: true,
+	            data: {
+	                page: 1,
+	                pageSize: 10000
+	            },
+	            success: function (data) {
+	                if (data.success) {
+	                	draftCount1 = data.total;
+	                	$('#branchBtn_-2').text(draftCount1);
+	                }
+	            }
+	        });
+	    }
+	    hisCount();
+	    console.log('草稿数：'+draftCount); 
+</script>
+</body>
+</html>

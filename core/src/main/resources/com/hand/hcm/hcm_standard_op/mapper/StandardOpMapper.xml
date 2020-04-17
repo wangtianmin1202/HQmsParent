@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hcm.hcm_standard_op.mapper.StandardOpMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hcm.hcm_standard_op.dto.StandardOp">
+        <result column="STANDARD_OP_ID" property="standardOpId" jdbcType="DECIMAL" />
+        <result column="PLANT_ID" property="plantId" jdbcType="DECIMAL" />
+        <result column="CODE" property="code" jdbcType="VARCHAR" />
+        <result column="KEY_OP_FLAG" property="keyOpFlag" jdbcType="VARCHAR" />
+        <result column="MOVE_TYPE" property="moveType" jdbcType="VARCHAR" />
+        <result column="INSPECT_TYPE" property="inspectType" jdbcType="VARCHAR" />
+        <result column="CHARGE_TYPE" property="chargeType" jdbcType="VARCHAR" />
+        <result column="ENABLE_FLAG" property="enableFlag" jdbcType="VARCHAR" />
+        <result column="PROCESS_TIME" property="processTime" jdbcType="DECIMAL" />
+        <result column="STANDARD_WORK_TIME" property="standardWorkTime" jdbcType="DECIMAL" />
+        <result column="OPERATION_DOCUMENT" property="operationDocument" jdbcType="VARCHAR" />
+        <result column="PROCESS_PROGRAM" property="processProgram" jdbcType="VARCHAR" />
+        <result column="CID" property="cid" jdbcType="DECIMAL" />
+        <result column="PROD_LINE" property="prodLine" jdbcType="VARCHAR" />
+        <result column="DEPARTMENT_ID" property="departmentId" jdbcType="DECIMAL" />
+        <result column="VERSION" property="version" jdbcType="VARCHAR" />
+        <result column="SPECIAL_PROCESS_FLAG" property="specialProcessFlag" jdbcType="VARCHAR" />
+        <result column="IQ_FLAG" property="iqFlag" jdbcType="VARCHAR" />
+        <result column="DESCRIPTION" property="description" jdbcType="VARCHAR" />
+        <result column="LANGUAGE" property="language" jdbcType="VARCHAR" />
+    </resultMap>
+
+<select id="reSelect" resultMap="BaseResultMap" parameterType="com.hand.hcm.hcm_standard_op.dto.StandardOp">
+SELECT t.* FROM hcm_standard_operations t
+WHERE 1=1
+<if test="code!=null">
+t.code LIKE concat('%',concat(#{code},'%'))
+</if>
+<if test="description!=null">
+t.description LIKE concat('%',concat(#{description},'%'))
+</if>
+</select>
+
+</mapper>

@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_msa_plan.mapper.MsaPlanMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_msa_plan.dto.MsaPlan">
+        <result column="MSA_PLAN_ID" property="msaPlanId" jdbcType="DECIMAL" />
+        <result column="MSA_PLAN_NUM" property="msaPlanNum" jdbcType="VARCHAR" />
+        <result column="MEASURE_TOOL_NUM" property="measureToolNum" jdbcType="VARCHAR" />
+        <result column="MSA_TYPE" property="msaType" jdbcType="VARCHAR" />
+        <result column="MEASURE_CHARACTER" property="measureCharacter" jdbcType="VARCHAR" />
+        <result column="ANALYZED_BY" property="analyzedBy" jdbcType="DECIMAL" />
+        <result column="MEASURED_BY" property="measuredBy" jdbcType="VARCHAR" />
+        <result column="EXPECTED_DETERIORATION" property="expectedDeterioration" jdbcType="DECIMAL" />
+        <result column="SAMPLE_DESCRIPTION" property="sampleDescription" jdbcType="VARCHAR" />
+        <result column="CONFIDENCE" property="confidence" jdbcType="DECIMAL" />
+        <result column="PLANT_ID" property="plantId" jdbcType="DECIMAL" />
+        <result column="TOLERANCE" property="tolerance" jdbcType="DECIMAL" />
+        <result column="REMARK" property="remark" jdbcType="VARCHAR" />
+        <result column="CREATION_DATE" property="creationDate" jdbcType="TIMESTAMP" />
+        <result column="MEASURE_PLAN_STATUS" property="measurePlanStatus" jdbcType="VARCHAR" />
+        <result column="ESTIMATED_FINISH_TIME" property="estimatedFinishTime" jdbcType="TIMESTAMP" />
+        
+        
+        <!-- 业务字段 -->
+        <result column="PLANT_NAME" property="plantName" jdbcType="VARCHAR"/>
+        <result column="PLANT_CODE" property="plantCode" jdbcType="VARCHAR"/>
+        <result column="MEASURE_TOOL_NAME" property="measureToolName" jdbcType="VARCHAR"/>
+        <result column="ANALYZED_NAME" property="analyzedName" jdbcType="VARCHAR"/>
+        <result column="START_TIME" property="startTime" jdbcType="VARCHAR" />
+        <result column="END_TIME" property="endTime" jdbcType="VARCHAR" />
+        <result column="USER_NAME" property="userName" jdbcType="VARCHAR" />
+        <result column="USER_ID" property="userId" jdbcType="DECIMAL" />
+		<result column="measuring_range" property="measuringRange" jdbcType="VARCHAR" />
+		<result column="JUDGEMENT_STANDARD" property="judgementStandard" jdbcType="VARCHAR" />
+		<result column="POSITION_TITLE" property="positionTitle" jdbcType="VARCHAR" />
+		<result column="NUM_FLAG" property="numFlag" jdbcType="VARCHAR" />
+		<result column="MEASURE_TOOL_TYPE" property="measureToolType" jdbcType="VARCHAR" />
+    </resultMap>
+	
+	<!-- MSA计划制定查询 -->
+	<select id="query" resultMap="BaseResultMap" parameterType="com.hand.hqm.hqm_msa_plan.dto.MsaPlan">
+		select hmp.msa_plan_id,
+		       hmp.msa_plan_num,
+		       hmp.plant_id,
+		       hp.plant_code,
+		       hp.descriptions PLANT_NAME,
+		       hmp.measure_tool_num,
+		       hmt.descriptions MEASURE_TOOL_NAME,
+		       hmt.MEASURE_TOOL_TYPE,
+		       hmp.msa_type,
+		       hmp.measure_character,
+		       hmp.sample_description,
+		       hmp.analyzed_by,
+		       su.user_name,
+		       hmp.measured_by,
+		       hmp.creation_date,
+		       hmp.remark,
+		       hmp.EXPECTED_DETERIORATION,
+		       hmt.measuring_range,
+           	   hmp.tolerance,
+           	   hmp.MEASURE_PLAN_STATUS,
+           	   hmp.ESTIMATED_FINISH_TIME,
+           	   hmt.JUDGEMENT_STANDARD,
+           	   hmt.position_title
+		from hqm_msa_plan hmp
+		join hcm_plant hp on hmp.plant_id = hp.plant_id
+		left join hqm_measure_tool hmt on hmp.measure_tool_num = hmt.measure_tool_num
+		join sys_user su on hmp.analyzed_by = su.user_id
+		where 1=1
+		<if test="msaPlanId != null">
+			and hmp.msa_plan_id = #{msaPlanId}
+		</if>
+		<if test="plantId != null">
+			and hmp.plant_id = #{plantId}
+		</if>
+		<if test="measureToolNum != null and numFlag == 'H'.toString()">
+			and hmp.measure_tool_num = #{measureToolNum}
+		</if>
+		<if test="msaPlanNum != null">
+			and hmp.msa_plan_num like concat('%',concat(#{msaPlanNum},'%'))
+		</if>
+		<if test="measureToolNum != null and numFlag != 'H'.toString()">
+			and hmp.measure_tool_num like concat('%',concat(#{measureToolNum},'%'))
+		</if>
+		<if test="msaType != null">
+			and hmp.msa_type = #{msaType}
+		</if>
+		<if test = "startTime != null">
+			and hmp.ESTIMATED_FINISH_TIME &gt;= to_date(#{startTime}, 'yyyy-mm-dd hh24:mi:ss')
+		</if>
+		<if test = "endTime != null">
+			and hmp.ESTIMATED_FINISH_TIME &lt;= to_date(#{endTime}, 'yyyy-mm-dd hh24:mi:ss')
+		</if>
+		<if test="measurePlanStatus != null">
+			and hmp.MEASURE_PLAN_STATUS = #{measurePlanStatus}
+		</if>
+		<if test="measurePlanStatus == null and cancleFlag != null">
+			and hmp.MEASURE_PLAN_STATUS != #{cancleFlag}
+		</if>
+		
+		<if test="positionTitle != null">
+			and hmt.position_title = #{positionTitle}
+		</if>
+		<if test="userId != null">
+			and su.user_id = #{userId}
+		</if>
+		<if test="measureToolName != null">
+			and hmt.descriptions = #{measureToolName}
+		</if>
+		<if test="measureCharacter != null">
+			and hmp.measure_character = #{measureCharacter}
+		</if>
+		<if test="sampleDescription != null">
+			and hmp.sample_description = #{sampleDescription}
+		</if>
+		order by hmp.creation_date desc
+	</select>
+	<!-- 用户Lov -->
+	<select id="sysUserLov" resultMap="BaseResultMap" parameterType="com.hand.hqm.hqm_msa_plan.dto.MsaPlan">
+		select user_name,
+			   user_id
+		from sys_user
+		where 1=1
+		<if test="userName!=null">
+			and user_name like concat('%',concat(#{userName},'%'))
+		</if>
+		<if test="userId!=null">
+			and sys_user = #{userId}
+		</if>
+	</select>
+	
+	<!-- 用户Lov 筛选供应商类型不为s的 -->
+	<select id="sysUserTypeNoS" resultMap="BaseResultMap" parameterType="com.hand.hqm.hqm_msa_plan.dto.MsaPlan">
+		select user_name,
+			   user_id
+		from sys_user
+		where 1=1
+		and user_type is null
+		and start_active_date &lt;= sysdate
+		and nvl(end_active_date,sysdate) &gt;= sysdate
+		and status = 'ACTV'
+		<if test="userName!=null">
+			and user_name like concat('%',concat(#{userName},'%'))
+		</if>
+		<if test="userId!=null">
+			and sys_user = #{userId}
+		</if>
+	</select>
+	
+	<!-- 获取当天最大流水号 -->
+	<select id="queryMaxNum" resultType="java.lang.Integer" parameterType="com.hand.hqm.hqm_msa_plan.dto.MsaPlan">
+		select nvl(max(substr(hmp.msa_plan_num,-5)),0)
+	    from hqm_msa_plan hmp 
+	    where 1 = 1
+	    and trunc(hmp.creation_date)=trunc(sysdate)
+	</select>
+</mapper>

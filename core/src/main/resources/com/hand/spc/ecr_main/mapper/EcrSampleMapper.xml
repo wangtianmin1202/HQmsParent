@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.spc.ecr_main.mapper.EcrSampleMapper">
+    <resultMap id="BaseResultMap" type="com.hand.spc.ecr_main.dto.EcrSample">
+        <result column="KID" property="kid" jdbcType="DECIMAL" />
+        <result column="SAMPLE_ID" property="sampleId" jdbcType="DECIMAL" />
+        <result column="ECRNO" property="ecrno" jdbcType="VARCHAR" />
+    </resultMap>
+
+<resultMap id="basequeryMap" type="com.hand.spc.ecr_main.view.EcrSampleV0">
+        <result column="KID" property="kid" jdbcType="DECIMAL" />
+        <result column="name" property="name" jdbcType="VARCHAR" />
+        <result column="sample_id" property="sampleId" jdbcType="VARCHAR" />
+        <result column="sample_number" property="sampleNumber" jdbcType="VARCHAR" />
+        <result column="meaning" property="meaning" jdbcType="VARCHAR" />    
+        <result column="attachment" property="attachment" jdbcType="VARCHAR" />
+
+    </resultMap>
+
+    <select id="baseQuery" parameterType="com.hand.spc.ecr_main.dto.EcrSample"
+            resultMap="basequeryMap"> 
+          select
+           hes.kid,
+           hes.attachment,
+           hs.sample_number,
+                        (SELECT hu.user_name
+                           FROM sys_user hu
+                          WHERE hu.user_id = hs.sample_user) AS name,
+                        ccv.meaning,hes.sample_id
+                   from sys_code_value_b ccv, sys_code_b scb, hqm_sample hs,hpm_ecr_sample hes
+                  where scb.code_id = ccv.code_id
+                    and scb.code = 'HQM_SAMPLE_STATUS'
+                    and hs.sample_status = ccv.value(+)
+                    and hes.sample_id=hs.sample_id
+                    and hes.ecrno=#{ecrno}
+    </select>
+
+</mapper>

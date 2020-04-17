@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.spc.pspc_subgroup_statistic.mapper.SubgroupStatisticMapper">
+    <resultMap id="BaseResultMap" type="com.hand.spc.pspc_subgroup_statistic.dto.SubgroupStatistic">
+        <result column="SUBGROUP_STATISTIC_ID" property="subgroupStatisticId" jdbcType="DECIMAL" />
+        <result column="TENANT_ID" property="tenantId" jdbcType="DECIMAL" />
+        <result column="SITE_ID" property="siteId" jdbcType="DECIMAL" />
+        <result column="SAMPLE_SUBGROUP_ID" property="sampleSubgroupId" jdbcType="DECIMAL" />
+        <result column="ENTITY_CODE" property="entityCode" jdbcType="VARCHAR" />
+        <result column="ENTITY_VERSION" property="entityVersion" jdbcType="VARCHAR" />
+        <result column="SUBGROUP_BAR" property="subgroupBar" jdbcType="DECIMAL" />
+        <result column="SUBGROUP_R" property="subgroupR" jdbcType="DECIMAL" />
+        <result column="SUBGROUP_MAX" property="subgroupMax" jdbcType="DECIMAL" />
+        <result column="SUBGROUP_MIN" property="subgroupMin" jdbcType="DECIMAL" />
+        <result column="SUBGROUP_SIGMA" property="subgroupSigma" jdbcType="DECIMAL" />
+        <result column="SUBGROUP_ME" property="subgroupMe" jdbcType="DECIMAL" />
+        <result column="SUBGROUP_RM" property="subgroupRm" jdbcType="DECIMAL" />
+    </resultMap>
+    <resultMap id="VoResultMap" type="com.hand.spc.pspc_subgroup_statistic.vo.SubgroupStatisticVo">
+        <result column="SUBGROUP_STATISTIC_ID" property="subgroupStatisticId" jdbcType="DECIMAL" />
+        <result column="TENANT_ID" property="tenantId" jdbcType="DECIMAL" />
+        <result column="SITE_ID" property="siteId" jdbcType="DECIMAL" />
+        <result column="SAMPLE_SUBGROUP_ID" property="sampleSubgroupId" jdbcType="DECIMAL" />
+        <result column="ENTITY_CODE" property="entityCode" jdbcType="VARCHAR" />
+        <result column="ENTITY_VERSION" property="entityVersion" jdbcType="VARCHAR" />
+        <result column="SUBGROUP_BAR" property="subgroupBar" jdbcType="DECIMAL" />
+        <result column="SUBGROUP_R" property="subgroupR" jdbcType="DECIMAL" />
+        <result column="SUBGROUP_MAX" property="subgroupMax" jdbcType="DECIMAL" />
+        <result column="SUBGROUP_MIN" property="subgroupMin" jdbcType="DECIMAL" />
+        <result column="SUBGROUP_SIGMA" property="subgroupSigma" jdbcType="DECIMAL" />
+        <result column="SUBGROUP_ME" property="subgroupMe" jdbcType="DECIMAL" />
+        <result column="SUBGROUP_RM" property="subgroupRm" jdbcType="DECIMAL" />
+        <result column="sample_subgroup_time" property="sampleSubgroupTime" jdbcType="TIMESTAMP" />
+    </resultMap>
+    <select id="selectByCodeAndVersion" resultMap="VoResultMap"
+            parameterType="com.hand.spc.pspc_cpk_analysis.dto.CPKAnalyseReqDTO">
+        SELECT
+        ssc.subgroup_statistic_id,
+        ssc.tenant_id,
+        ssc.site_id,
+        ssc.sample_subgroup_id,
+        ssc.entity_code,
+        ssc.entity_version,
+        ssc.subgroup_bar,
+        ssc.subgroup_r,
+        ssc.subgroup_max,
+        ssc.subgroup_min,
+        ssc.subgroup_sigma,
+        ssc.subgroup_me,
+        ssc.subgroup_rm,
+        ssc.object_version_number,
+        ssp.sample_subgroup_time
+        FROM
+        pspc_subgroup_statistic ssc,
+        --         pspc_sample_subgroup_relation ssr,
+        pspc_sample_subgroup ssp
+        WHERE
+
+        ssc.sample_subgroup_id = ssp.sample_subgroup_id
+        --         AND ssr.sample_subgroup_id = ssp.sample_subgroup_id
+        AND ssp.entity_code = #{entityCode}
+        AND ssp.entity_version = #{entityVersion}
+        <if test="startDate != null">
+            AND ssp.sample_subgroup_time &gt;= #{startDate}
+        </if>
+        <if test="endDate != null">
+            AND ssp.sample_subgroup_time &lt;= #{endDate}
+        </if>
+        <if test="startDate == null and endDate == null">
+            AND rownum &lt;= #{size}
+
+        </if>
+    </select>
+
+
+</mapper>

@@ -1,0 +1,214 @@
+<#include "../include/header.html">
+    <script src="${base.contextPath}/common/code?SRM_BARCODE_STATUS=SRM_BARCODE_STATUS"></script>
+    <script src="${base.contextPath}/common/code?yesorno=SRM_YES_NO"></script>
+    <script src="${base.contextPath}/common/code?SRM_PACKING_MODE=SRM_PACKING_MODE"></script>
+    <script src="${base.contextPath}/common/code?SRM_YES_NO=SRM_YES_NO"></script>
+    <script src="${base.contextPath}/lib/prints/JsBarcode.all.min.js" type="text/javascript"></script>
+    <script src="${base.contextPath}/lib/prints/jquery-barcode.js" type="text/javascript"></script>
+    <script src="${base.contextPath}/lib/prints/jquery-qrcode.min.js" type="text/javascript"></script>
+    <script src="${base.contextPath}/lib/prints/qrcode.js" type="text/javascript"></script>
+    <script src="${base.contextPath}/lib/prints/doc_print.js" type="text/javascript" charset="UTF-8"></script>
+
+    <script>
+        var dataList = window.parent.dataList;
+    </script>
+    <script>
+        function formatDate(date) {
+            var d = new Date(date),
+                month = '' + (d.getMonth() + 1),
+                day = '' + d.getDate(),
+                year = d.getFullYear();
+
+            if (month.length < 2) month = '0' + month;
+            if (day.length < 2) day = '0' + day;
+
+            return [year, month, day].join('-');
+        }
+
+        function getMeaning(value, dataSource) {
+            var v = value ? value : "";
+            $.each(dataSource, function(i, n) {
+                if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                    v = n.meaning;
+                }
+            });
+            return v;
+        }
+    </script>
+
+    <body style="width: 210mm">
+        <div id="printWindow" style="width: 100%;"></div>
+        <script>
+            $(function() {
+            	//return;
+                $.ajax({ //ajax请求更新打印时间
+                    url: "${base.contextPath}/hcs/small/barcode/updatePrintTime",
+                    type: "POST",
+                    data: JSON.stringify(dataList),
+                    contentType: "application/json",
+                    success: function(e) {}
+                });
+                var pageCount = Math.ceil(dataList.length / 8); //一共需要多少页A4纸
+                for (var i = 0; i < pageCount; i++) { //纸张绘制
+                    var array = new Array();
+                    array.push('<div id="page-content-' + i + '" style="width: 100%;">'); //单个A4整页div
+                    array.push('<div id="card-content-left-' + i + '" style="float: left;width: 49%;">');
+                    array.push('</div>');
+                    array.push('<div style="float: left;width: 2%;">');
+                    array.push('&nbsp;')
+                    array.push('</div>');
+                    array.push('<div id="card-content-right-' + i + '" style="float: left;width: 49%;">');
+                    array.push('</div>');
+                    array.push('</div>');//page-break-after:always;
+                    array.push('<div style="clear: both; page-break-after: always;"></div>');
+                    $('#printWindow').append(array.join(" "));
+                }
+                var qrCodeList = new Array();
+                $.each(dataList, function(i, v) {
+                    qrCodeList.push({
+                        code: v.barcodeContent,
+                        id: "qrcode" + i
+                    });
+                    var meaning = getMeaning(v.packingLevel ? v.packingLevel : "", SRM_PACKING_MODE);
+                    var array = new Array();
+                    array.push('<div id="card-' + i + '" style="clear: both;width: 100%;height: 60mm;border:1px solid;margin-top:12px;padding-left: 3pt;padding-bottom: 3px;font-family: 宋体;">'); //单个卡片div
+                    
+//                     array.push("<div>");
+//                     array.push("<div class='rows' style='text-align: center;width: 100%;'>");
+//                     array.push("<div style='float:right;width:30%;padding-bottom:0px'  id='qrcode" + i + "'></div>"); //二维码位置
+//                     array.push("</div>");
+//                     array.push("</div>");
+					array.push("<div style='width: 100%;margin-top: 9pt;'>");
+					array.push("<div style='width: 65%;float: left;'>");
+					
+                    array.push("<div style='width: 100%;'>");
+                    array.push("<lable  style='margin-top: 9pt;width: 70%;font-size: 9pt;padding-left: 9pt;'><b>NO.&nbsp;" + v.sbarcode + "</b></lable>");
+                    array.push("</div>");
+
+                    array.push("<div style='text-align: left;width: 100%;margin-top: 5pt;'>");
+                    array.push("<lable style='width: 80%;font-size: 11pt;padding-left: 9pt;'> <b>上海科勒电子科技有限公司</b></lable>");
+                    array.push("</div>");
+
+                    //str += "<div class='rows' style='width: 100%;margin-top:2%'>"
+                    array.push("<div style='width: 100%; margin-top: 5pt;font-size: 9pt;padding-bottom: 3pt;'>");
+                    array.push("<span class='col-sm-12' style='padding:0px;'>");
+                    array.push("<span class='col-sm-12' style='padding-left: 9pt;padding-right: 0px;'>");
+                    array.push("<@spring.message 'smallbarcodeprint.itemdesc'/>");
+                    array.push("" + v.itemDesc.substr(0,13) + "</span>"); //物料描述/物料名称 最长为15 避免换行影响布局
+                    array.push("</span>");
+                    array.push("</div>");
+
+                    array.push("<div style='width: 100%;margin-top: 12pt;font-size: 9pt;padding-bottom: 3pt;'>");
+                    array.push("<span class='col-sm-12' style='padding:0px'>");
+                    array.push("<span class='col-sm-5' style='padding-left: 9pt;padding-right: 0px;'>");
+                    array.push("<@spring.message 'smallbarcodeprint.itemcode'/></span>");
+                    array.push("<span>" + v.itemCode + "</span>"); //物料编码
+                    array.push("</span>");
+                    array.push("</div>");
+
+                    array.push("<div style='width: 100%;margin-top: 12pt;font-size: 9pt;padding-bottom: 3pt;'>");
+                    array.push("<span class='col-sm-12' style='padding:0px'>");
+                    array.push("<span class='col-sm-5' style='padding-left: 9pt;padding-right: 0px;'><@spring.message 'smallbarcodeprint.lotcode'/></span>");
+                    array.push("<span>" + v.lotCode + "</span>"); //物料批次号
+                    array.push("</span>");
+                    array.push("</div>");
+
+                    array.push("<div style='width: 100%;margin-top: 12pt;font-size: 9pt;padding-bottom: 3pt;'>");
+                    array.push("<span class='col-sm-12' style='padding:0px'>");
+                    array.push("<span class='col-sm-5' style='padding-left: 9pt;padding-right: 0px;'><@spring.message 'smallbarcodeprint.productiontime'/></span>");
+                    array.push("<span>" + formatDate(v.productionTime) + "</span>"); //生产日期
+                    array.push("</span>");
+                    array.push("</div>");
+                    
+                    array.push("</div>");//左div结束
+                    
+                    array.push("<div style='width: 35%;float: left;'>");//二维码DIV
+                    array.push("<div style='padding-top: 2pt;' id='qrcode" + i + "'></div>"); //二维码位置
+                    array.push("</div>");
+                    
+                    array.push("</div>");
+
+                    array.push("<div style='width: 100%;margin-top: 12pt;font-size: 9pt;marign-bottom: 3pt;'>");
+                    array.push("<span class='col-sm-6' style='padding-left: 9pt;'>");
+                    array.push("<span class='col-sm-4' style='padding:0px'><@spring.message 'smallbarcodeprint.quantity'/></span>");
+                    array.push("<span class='col-sm-3' style='padding:0px;'>" + nvl(v.quantity, '') + "</span>"); //数量
+                    array.push("</span>");
+                    array.push("<span class='col-sm-6'>");
+                    array.push("<span class='col-sm-4' style='padding:0px;'><@spring.message 'smallbarcodeprint.packingSize'/></span>");
+                    array.push("<span style='padding-left:0px'>" + nvl(v.packingSize, '') + "</span>"); //规格
+                    array.push("</span>");
+                    array.push("</div>");
+
+                    
+                    array.push("<div style='width: 100%;margin-top: 5pt;font-size: 9pt;padding-bottom: 3pt;'>");
+                    array.push("<span class='col-sm-7' style='padding:0px;'>");
+                    array.push("<span class='col-sm-5' style='padding-left: 9pt;padding-right: 0px;'><@spring.message 'smallbarcodeprint.poNumberPrint'/></span>");
+                    array.push("<span>" + nvl(v.poNumberPrint, '') + "</span>"); //采购订单号
+                    array.push("</span>");
+                    array.push("<span class='col-sm-5' style='padding:0px'>");
+                    array.push("<span class='col-sm-5' style='padding:0px'><@spring.message 'smallbarcodeprint.packinglevel'/></span>");
+                    array.push("<span>" + nvl(meaning, '') + "</span>"); //包装方式
+                    array.push("</span>");
+                    array.push("</div>");
+
+                    array.push("<div style='width: 100%;margin-top: 12pt;font-size: 9pt;padding-bottom: 3pt;'>");
+                    array.push("<span class='col-sm-12' style='padding:0px;'>");
+                    array.push("<span class='col-sm-2' style='padding-left: 9pt;padding-right: 0px;'><@spring.message 'smallbarcodeprint.spreading'/></span>");
+                    array.push("<span class='col-sm-2' style='padding: 0px;'>" + nvl(v.spreading, '') + "</span>"); //挡位
+                    array.push("<span class='col-sm-2' style='padding: 0px;'><@spring.message 'smallbarcodeprint.itemversion'/></span>");
+                    array.push("<span class='col-sm-1' style='padding: 0px;padding-right: 0px;'>" + nvl(v.itemVersion, '') + "</span>"); //版本号
+                    array.push("<span class='col-sm-2' style='padding-right: 0px;'><@spring.message 'smallbarcodeprint.caseNumber'/></span>");
+                    array.push("<span class='col-sm-1' style='padding: 0px;padding-right: 0px;'>" + v.caseNumber + "</span>"); //箱号
+                    array.push("</span>");
+                    array.push("</div>");
+
+                    array.push("<div style='width: 100%;padding-top: 3pt;font-size: 9pt;padding-bottom: 3pt;'>");
+                    array.push("<span class='col-sm-6' style='padding:0px'>");
+                    array.push("<span class='col-sm-5' style='padding-left: 9pt;padding-right: 0px;'><@spring.message 'smallbarcodeprint.productionRegion'/></span>");
+                    array.push("<span class='col-sm-6' style='padding: 0px;'>" + nvl(v.productionRegion, '') + "</span>");//生产区域
+                    array.push("</span>");
+                    array.push("<span class='col-sm-6' style='padding: 0px;'>");
+                    array.push("<span class='col-sm-5' style='padding: 0px;'><@spring.message 'smallbarcodeprint.productionEquipment'/></span>");
+                    array.push("<span class='col-sm-7' style='padding: 0px;'>" + nvl(v.productionEquipment, '') + "</span>");//生产设备
+                    array.push("</span>");
+                    array.push("</div>");
+                    
+                    array.push("<div style='width: 100%;margin-top: 0pt;font-size: 9pt;'>");
+                    array.push("<b><lable style='width: 80%;font-size: 9pt;padding-left: 3pt;'></lable>");
+                    array.push("<lable style='width: 20%;padding-left:12%;font-size: 9pt;'></lable></b>");
+                    array.push("</div>");
+                    
+                    array.push("<div style='width: 100%;margin-top: 0pt;font-size: 11pt;margin-bottom: 9pt;'>");
+                    array.push("<b><lable style='width: 97%;padding-left: 11pt;'><@spring.message 'smallbarcodeprint.suppliercode'/>" + nvl(v.supplierCode, '') + "</lable>");
+                    array.push("<lable style='width: 3%;padding-left:12%;font-size: 11pt;'><span style='text-align:right;'>I4.0</span></lable></b>");
+                    array.push("</div>");
+                    
+                    array.push('</div>'); //card div结束
+                    if (i % 8 < 4) { //放到左边
+                        $('#card-content-left-' + Math.floor(i / 8)).append(array.join(' '));
+                    } else { //放到右边
+                        $('#card-content-right-' + Math.floor(i / 8)).append(array.join(' '));
+                    }
+                });
+
+                for (var k = 0; k < qrCodeList.length; k++) { //对card产生二维码QR码
+                    var qrcode = new QRCode(qrCodeList[k].id, {
+                        text: qrCodeList[k].code,
+                        width: 100,
+                        height: 100,
+                        colorDark: '#000000',
+                        colorLight: '#ffffff',
+                        correctLevel: QRCode.CorrectLevel.H
+                    });
+                }
+                window.print();
+                setTimeout(function() {
+                    window.parent.viewModel.refresh();
+                    window.parent.$('#printWindowA4').data('kendoWindow').close();
+                    parent.location.reload();
+                }, 300);
+            });
+        </script>
+    </body>
+
+    </html>

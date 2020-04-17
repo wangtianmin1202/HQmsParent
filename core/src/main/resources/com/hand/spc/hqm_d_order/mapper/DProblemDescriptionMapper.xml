@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.spc.hqm_d_order.mapper.DProblemDescriptionMapper">
+    <resultMap id="BaseResultMap" type="com.hand.spc.hqm_d_order.dto.DProblemDescription">
+        <result column="STEP" property="step" jdbcType="DECIMAL" />
+        <result column="PROBLEM_ID" property="problemId" jdbcType="DECIMAL" />
+        <result column="ORDER_ID" property="orderId" jdbcType="DECIMAL" />
+        <result column="ITEM_ID" property="itemId" jdbcType="DECIMAL" />
+        <result column="ITEM_ID_COMPONENT" property="itemIdComponent" jdbcType="DECIMAL" />
+        <result column="OCCUR_TIME" property="occurTime" jdbcType="DATE" />
+        <result column="OCCUR_PLACE" property="occurPlace" jdbcType="VARCHAR" />
+        <result column="PROD_LINE_ID" property="prodLineId" jdbcType="DECIMAL" />
+        <result column="NG_GROUP_ID" property="ngGroupId" jdbcType="DECIMAL" />
+        <result column="NG_MEMBER_ID" property="ngMemberId" jdbcType="DECIMAL" />
+        <result column="PROBLEM_QTY" property="problemQty" jdbcType="DECIMAL" />
+        <result column="PROBLEM_DESCRIPTION" property="problemDescription" jdbcType="VARCHAR" />
+        <result column="PROBLEM_SOURCE" property="problemSource" jdbcType="VARCHAR" />
+        <result column="PROBLEM_LEVEL" property="problemLevel" jdbcType="VARCHAR" />
+        <result column="SUPPLIER_ID" property="supplierId" jdbcType="DECIMAL" />
+    </resultMap>
+
+
+</mapper>

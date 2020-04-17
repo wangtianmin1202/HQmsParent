@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.srm.srm_user_purchase_group.mapper.UserPurchaseGroupMapper">
+    <resultMap id="BaseResultMap" type="com.hand.srm.srm_user_purchase_group.dto.UserPurchaseGroup">
+        <result column="PURCHASE_GROUP_ID" property="purchaseGroupId" jdbcType="DECIMAL" />
+        <result column="PURCHASE_GROUP_CODE" property="purchaseGroupCode" jdbcType="VARCHAR" />
+        <result column="USER_ID" property="userId" jdbcType="DECIMAL" />
+        <result column="ENABLE_FLAG" property="enableFlag" jdbcType="VARCHAR" />
+        
+        <!-- 业务字段 -->
+        <result column="user_name" property="userName" jdbcType="VARCHAR" />
+        <result column="employee_id" property="employeeId" jdbcType="DECIMAL" />
+        <result column="employee_code" property="employeeCode" jdbcType="VARCHAR" />
+        <result column="name" property="name" jdbcType="VARCHAR" />
+        <result column="ROLE_FAST_CODE" property="roleFastCode" jdbcType="VARCHAR"/>
+        <result column="email" property="email" jdbcType="VARCHAR"/>
+    </resultMap>
+
+	<!-- 用户采购组关系查询 -->
+	<select id="query" resultMap="BaseResultMap" parameterType="com.hand.srm.srm_user_purchase_group.dto.UserPurchaseGroup">
+		SELECT supg.purchase_group_id,
+       supg.purchase_group_code,
+       supg.enable_flag,
+       supg.user_id,
+       su.user_name,
+       su.employee_id,
+       he.employee_code,
+       he.name,
+       su.email
+  FROM srm_user_purchase_group supg
+  LEFT JOIN sys_user su
+    ON supg.user_id = su.user_id
+  LEFT JOIN hr_employee he
+    ON su.employee_id = he.employee_id
+ WHERE 1 = 1
+		<if test="purchaseGroupCode!=null">
+			and supg.purchase_group_code like concat('%',concat(#{purchaseGroupCode},'%'))
+		</if>
+		<if test="userName!=null">
+			and su.user_name like concat('%',concat(#{userName},'%'))
+		</if>
+		<if test="name!=null">
+			and he.name like concat('%',concat(#{name},'%'))
+		</if>
+		<if test="employeeCode!=null">
+			and he.employee_code like concat('%',concat(#{employeeCode},'%'))
+		</if>
+		<if test="purchaseGroupId!=null">
+			and supg.purchase_group_id = #{purchaseGroupId}
+		</if>
+		order by supg.creation_date desc
+	</select>
+	<!-- 用户LOV -->
+	<select id="userPurchaseLov" resultMap="BaseResultMap" parameterType="com.hand.srm.srm_user_purchase_group.dto.UserPurchaseGroup">
+		select su.user_id,
+		       su.user_name,
+		       su.employee_id, 
+		       he.employee_code,
+		       he.name
+		from sys_user su
+		left join hr_employee he on su.employee_id = he.employee_id
+		where 1=1
+		<if test="roleFastCode!=null">
+			and su.user_id in (
+			    select distinct sus.user_id 
+	            from sys_user sus
+	            left join sys_user_role sur on sus.user_id = sur.user_id
+	            left join sys_role_b srb on sur.role_id = srb.role_id
+	            where srb.role_code in (
+	                select scvb.DESCRIPTION from sys_code_b scb
+	                left join sys_code_value_b scvb on scb.code_id = scvb.code_id
+	                where scb.code = #{roleFastCode}
+		    	)
+		    )
+		</if>
+		<if test="userName!=null">
+			and su.user_name like concat('%',concat(#{userName},'%'))
+		</if>
+		<if test="name!=null">
+			and he.name like concat('%',concat(#{name},'%'))
+		</if>
+		<if test="employeeCode!=null">
+			and he.employee_code like concat('%',concat(#{employeeCode},'%'))
+		</if>
+	</select>
+</mapper>

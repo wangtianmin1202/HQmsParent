@@ -1,0 +1,242 @@
+<#include "../include/header.html">
+<script src="${base.contextPath}/common/code?SRM_DOC_ADJUSTMENT_TYPE=SRM_DOC_ADJUSTMENT_TYPE"></script>
+<script src="${base.contextPath}/common/code?SRM_QUALITY_DEDUCTION_TAX=SRM_QUALITY_DEDUCTION_TAX"></script>
+<script type="text/javascript">
+    var viewModel = Hap.createGridViewModel("#grid");
+    //网上发票id
+    var webInvoiceId = window.parent.webInvoiceId;
+    //调整行号
+    var rowNum;
+	function checkStr(str){
+		if(str == null || str === '' ||typeof(str) == "undefined"){
+    		return false;
+    	}
+		return true;
+    }
+	
+</script>
+<body>
+<div id="page-content">
+    <div class="pull-left" id="toolbar-btn" style="padding-bottom:10px;">
+        <span class="btn btn-primary k-grid-excel" style="float:left;margin-right:5px;" data-bind="click:exportExcel">
+							    	<i class="fa fa-file-excel-o" style="margin-right:3px"></i><@spring.message "srm.exportexcel"/></span>
+    </div>
+    <script>kendo.bind($('#toolbar-btn'), viewModel);</script>
+    <div class="pull-right" id="query-form" style="padding-bottom:10px;">
+
+        <div style="clear:both"></div>
+    </div>
+    <script>kendo.bind($('#query-form'), viewModel);</script>
+    <div style="clear:both">
+        <div id="grid"></div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    Hap.initEnterQuery('#query-form', viewModel.query);
+    var BaseUrl = _basePath;
+    dataSource = new kendo.data.DataSource({
+        transport: {
+            read: {
+                url: BaseUrl + "/hcs/doc/adjustment/query",
+                type: "POST",
+                dataType: "json"
+            },
+            update: {
+                url: BaseUrl + "/hcs/doc/adjustment/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            destroy: {
+                url: BaseUrl + "/hcs/doc/adjustment/remove",
+                type: "POST",
+                contentType: "application/json"
+            },
+            create: {
+                url: BaseUrl + "/hcs/doc/adjustment/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            parameterMap: function (options, type) {
+                if (type !== "read" && options.models) {
+                    var datas = Hap.prepareSubmitParameter(options, type)
+                    $.each(datas,function(i,n){
+                    	n.webInvoiceId = window.parent.webInvoiceId;
+                    })
+                    return kendo.stringify(datas);
+                } else if (type === "read") {
+                	viewModel.model.webInvoiceId = window.parent.webInvoiceId;
+                    return Hap.prepareQueryParameter(viewModel.model.toJSON(), options)
+                }
+            }
+        },
+        batch: true,
+        serverPaging: true,
+        pageSize: 10,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+                id: "docAdjustmentId",
+                fields: {
+                	docAdjustmentNum :{
+                		//editable: false,
+                	},
+                	webInvoiceId :{
+                		defaultValue: window.parent.viewModel.model.webInvoiceId
+                	},
+                	currency :{
+                		//editable: false,
+                		defaultValue: window.parent.viewModel.model.currency
+                	},
+                	adjustAmount:{
+			        	type:'number',
+                        validation: {
+                            required: true,
+                        },
+			        },
+			        remarks:{
+			        },
+                },
+                editable: function(col){
+                	if(col == 'docAdjustmentNum' || col == 'currency'){
+                		return false;
+                	}else if(col == 'adjustAmount' || col == 'remarks' || col == 'docAdjustmentType'){
+	                	if(checkStr(this.docAdjustmentId)||(!this.isNew())){
+	                		return false;
+	                	}	
+                	}
+                	return true;
+                }
+            }
+        }
+    });
+
+    $("#grid").kendoGrid({
+    	excel: {
+    		fileName:'<@spring.message "doc.adjustment"/>.xlsx',
+    		filterable: true,
+    	},
+    	excelExport: function(e){
+    		var rows = e.workbook.sheets[0].rows;
+    		var datas = e.data;
+    		
+    		for(var i=1;i<rows.length; i++){
+    			rows[i].cells[1].value = Hap.getCodeMeaning(SRM_DOC_ADJUSTMENT_TYPE,datas[i-1].docAdjustmentType);
+    			rows[i].cells[4].value = Hap.getCodeMeaning(SRM_QUALITY_DEDUCTION_TAX,datas[i-1].taxCode);
+    		}
+    	},
+        dataSource: dataSource,
+        resizable: true,
+        scrollable: true,
+        sortable:true,
+        navigatable: false,
+        dataBound: function () {
+            if (parent.autoResizeIframe) {
+                parent.autoResizeIframe('${RequestParameters.functionCode!}')
+            }
+        },
+        pageable: {
+            pageSizes: [5, 10, 20, 50],
+            refresh: true,
+            buttonCount: 5
+        },
+        columns: [
+                    {
+                field: "docAdjustmentNum",
+                title: '<@spring.message "docadjustment.docadjustmentnum"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+                    {
+                field: "docAdjustmentType",
+                title: '<@spring.message "docadjustment.docadjustmenttype"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+                template: function (dataItem) {
+                    var v = dataItem.docAdjustmentType ? dataItem.docAdjustmentType : "";
+                    $.each(SRM_DOC_ADJUSTMENT_TYPE, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return v;
+                        }
+                    });
+                    return v;
+                },
+                editor: function (container, options) {
+                    $('<input required name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            dataTextField: "meaning",
+                            dataValueField: "value",
+                            valuePrimitive: true,
+                            dataSource:SRM_DOC_ADJUSTMENT_TYPE,
+                            index: -1
+                        });
+                }
+            },
+                    {
+                field: "adjustAmount",
+                title: '<@spring.message "docadjustment.adjustamount"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+                    {
+                field: "currency",
+                title: '<@spring.message "docadjustment.currency"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+            {
+                field: "taxCode",
+                title: '<@spring.message "docsettlement.taxcode"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+                template: function (dataItem) {
+                    var v = dataItem.taxCode ? dataItem.taxCode : "";
+                    $.each(SRM_QUALITY_DEDUCTION_TAX, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return v;
+                        }
+                    });
+                    return v;
+                },
+                editor: function (container, options) {
+                    $('<input required name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            dataTextField: "meaning",
+                            dataValueField: "value",
+                            valuePrimitive: true,
+                            dataSource:SRM_QUALITY_DEDUCTION_TAX
+                        });
+                }
+            },  
+            {
+                field: "remarks",
+                title: '<@spring.message "docadjustment.remarks"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+            {
+                field: "webInvoiceId",
+                title: '<@spring.message "docadjustment.webInvoiceId"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+                hidden: true
+            },
+        ],
+        editable: true
+    });
+    Hap.autoResizeGrid('#grid');
+</script>
+</body>
+</html>

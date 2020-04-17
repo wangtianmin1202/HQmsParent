@@ -1,0 +1,880 @@
+<#include "/include/header.html">
+<link rel="stylesheet" href="${base.contextPath}/lib/zTree_v3/css/metroStyle/metroStyle.css" type="text/css"/>
+<script type="text/javascript" src="${base.contextPath}/lib/zTree_v3/js/jquery.ztree.core.js"></script>
+<script type="text/javascript" src="${base.contextPath}/lib/zTree_v3/js/jquery.ztree.excheck.js"></script>
+<script type="text/javascript" src="${base.contextPath}/lib/zTree_v3/js/jquery.ztree.exedit.js"></script>
+<script src="${base.contextPath}/common/code?PLM_DOC_STATUS=PLM_DOC_STATUS"></script>
+<script src="${base.contextPath}/common/code?PLM_PROD_DESIGN_STANDARD=PLM_PROD_DESIGN_STANDARD"></script>
+
+
+
+
+<style type="text/css">
+     .highlight_red {color: #eb1c3d;}
+     html, body {
+         height: 100%;
+     }
+ </style>
+    
+<script type="text/javascript">
+	var BaseUrl = "${base.contextPath}";	
+    var viewModel = Hap.createGridViewModel("#grid",{
+        model:{
+        	designStandardIdList:""
+        },
+    });
+
+	function queryTree(){
+		kendo.ui.progress($('#page-content'), true);
+        $.ajax({
+            url : '${base.contextPath}/plm/product/design/standard/queryTreeDatas',
+            async: false,
+            success : function(args) {
+                kendo.ui.progress($('#page-content'), false);
+                if(args.success){
+                    $.fn.zTree.init($("#treeSyncEntity"), settingSyncEntity, args.rows);
+		            $("#grid").data('kendoGrid').dataSource.data(new Array());
+                }else {
+                    kendo.ui.showErrorDialog({
+                        message: args.message
+                    });
+                }
+            }
+        });
+		viewModel.reset();
+	}
+	
+    $(function () {
+    	queryTree();
+    	viewModel.query();
+    });
+    var settingSyncEntity = {
+            view: {
+				addHoverDom: addHoverDom,
+				removeHoverDom: removeHoverDom,
+                addDiyDom: false
+            },
+            edit: {
+                enable: true,
+				showRemoveBtn: showRemoveBtn,
+				showRenameBtn: showRenameBtn
+            },
+            data: {
+       			       //父子节点是否保持状态，开启，则父子处于锁定状态，子节点无法新增，父节点下没有子节点也无法新增 
+       			keep: {
+                	 
+                    //parent:true,
+                    //leaf:true
+                },  
+                simpleData: {
+                    enable: true
+                }
+            },
+            callback: {
+                beforeDrag: false,
+                beforeDrop: false,
+                onRemove: onRemove,
+				beforeRemove: beforeRemove,
+				beforeRename:beforeRename,
+				onRename:onRename,
+				beforeEditName:beforeEditName, 
+				onClick: onClick,
+                onCheck:onCheck,
+            },
+            check: {
+				enable: true
+			},
+        };
+    
+	
+		//树点击事件
+		function onClick(event, treeId, treeNode, clickFlag) {
+			console.log(treeNode);
+			viewModel.reset();
+            $("#grid").data('kendoGrid').dataSource.data(new Array());
+            if(Number(treeNode.level)==0){
+            	viewModel.query();
+            }else{
+            	if(treeNode.isParent){
+    		    	var list = [];
+    		    	var data=treeNode.children;
+    		    	for(var i=0;i<data.length;i++){
+    		    		if(data[i].pId!=null&&data[i].pId!=""){
+    		    			list.push(data[i].id);
+    		    		}
+    		    	}
+    		    	if(list.length>0){
+    			    	viewModel.model.set("designStandardIdList", list.toString());
+    		            viewModel.query();
+    		        }else{
+    		            $("#grid").data('kendoGrid').dataSource.data(new Array());
+    		        }
+    			}else{
+    				viewModel.model.set("designStandardId", treeNode.id);
+    				viewModel.query();
+    			}
+            }
+			
+			viewModel.reset();
+		}	 
+		//树新增事件
+		function onCheck(event, treeId, treeNode) {
+			viewModel.reset();
+            $("#grid").data('kendoGrid').dataSource.data(new Array());
+
+			var zTree = $.fn.zTree.getZTreeObj("treeSyncEntity");
+		    var	checkCount = zTree.getCheckedNodes(true).length;
+		    var checkData=zTree.getCheckedNodes(true);
+		    if(checkCount>0){
+		    	var list = [];
+		    	for(var i=0;i<checkCount;i++){
+		    		if(checkData[i].pId!=null&&checkData[i].pId!=""){
+		    			list.push(checkData[i].id);
+		    		}
+		    	}
+		    	if(list.length>0){
+			    	viewModel.model.set("designStandardIdList", list.toString());
+		            //viewModel.query();
+		        }else{
+		            //$("#grid").data('kendoGrid').dataSource.data(new Array());
+		        }
+		    	viewModel.query();
+		    }else{
+		        var formData = viewModel.model.toJSON();
+		        for (var k in formData) {
+		        	viewModel.model.set(k, null);
+		        }
+	            //$("#grid").data('kendoGrid').dataSource.data(new Array());
+		        viewModel.query();
+		    }
+			console.log(zTree.getCheckedNodes(true));
+			viewModel.reset();
+		}
+		
+		//新增数按钮
+		var newCount = 1;
+		function addHoverDom(treeId, treeNode) {
+			//只允许顶层树和第一层树新显示新增按钮
+			if(Number(treeNode.level)>=3){
+				return;
+			}
+			
+			var sObj = $("#" + treeNode.tId + "_span");
+			if (treeNode.editNameFlag || $("#addBtn_"+treeNode.tId).length>0) return;
+			var addStr = "<span class='button add' id='addBtn_" + treeNode.tId
+				+ "' title='add node' onfocus='this.blur();'></span>";
+			sObj.after(addStr);
+			var btn = $("#addBtn_"+treeNode.tId);
+			if (btn) btn.bind("click", function(){
+				var zTree = $.fn.zTree.getZTreeObj("treeSyncEntity");
+				var newTreeNode=zTree.addNodes(treeNode, {id:(100 + newCount), pId:treeNode.id, name:"new node" + (newCount++),nodeType:"add"});
+				/* console.log(newTreeNode);
+				console.log(newTreeNode[0]);
+				$.ajax({
+		            type: "POST",
+		            url: BaseUrl + "/plm/product/design/standard/addTree",
+		            contentType:"application/json",
+		            datatype: "json",
+		            cache:false,
+		            data:JSON.stringify(newTreeNode[0]),
+		            async: false,
+		            success: function (data) {
+		                if (data.success) {
+		                	newTreeNode=data.rows[0];
+		                }else{
+		    	            kendo.ui.showErrorDialog({
+		    	            	message: data.message
+		    	            	});
+		    	            queryTree();
+		    	            return false;
+		                }
+		            }
+		        });
+				queryTree();
+				if(newTreeNode!=null){
+					var tree = $.fn.zTree.getZTreeObj("treeSyncEntity");
+					tree.editName(newTreeNode);
+				} */
+				zTree.editName(newTreeNode[0]);
+				return false;
+			});
+		};
+		//移除新增按钮
+		function removeHoverDom(treeId, treeNode) {
+			$("#addBtn_"+treeNode.tId).unbind().remove();
+		};
+		//删除按钮
+		function showRemoveBtn(treeId, treeNode) {
+			if(Number(treeNode.level)>1){
+				return true;
+			}else{
+				return false;
+			}
+		}
+		
+		//是否显示修改按钮
+		function showRenameBtn(treeId, treeNode) {
+			if(Number(treeNode.level)<=1){
+				return false;
+			}else{
+				var data=treeNode.children;
+				if(data!=null && data.length>0){
+					return false;
+				}else{
+					return !checkHavingDetail(treeNode.id);
+				}
+			}
+		}
+		
+		var log, className = "dark";
+		//删除之前校验
+		function beforeRemove(treeId, treeNode) {
+			if(Number(treeNode.level)==0){
+	            kendo.ui.showErrorDialog({message: "不允许删除根目录！"});
+	            return false;
+			}
+			var data=treeNode.children;
+			if(data!=null && data.length>0){
+	            kendo.ui.showErrorDialog({message: treeNode.name+"  下存在子目录，不允许删除！"});
+	            return false;
+			}
+			className = (className === "dark" ? "":"dark");
+			showLog("[ "+getTime()+" beforeRemove ]&nbsp;&nbsp;&nbsp;&nbsp; " + treeNode.name);
+			var zTree = $.fn.zTree.getZTreeObj("treeSyncEntity");
+			zTree.selectNode(treeNode);
+			return confirm("确认删除 节点 -- " + treeNode.name + " 吗？");
+		}
+		
+		function onRemove(e, treeId, treeNode) {
+			//showLog("[ "+getTime()+" onRemove ]&nbsp;&nbsp;&nbsp;&nbsp; " + treeNode.name);
+			$.ajax({
+	            type: "POST",
+	            url: BaseUrl + "/plm/product/design/standard/removeTree",
+	            contentType:"application/json",
+	            datatype: "json",
+	            data:JSON.stringify(treeNode),
+	            async: false,
+	            success: function (data) {
+	                if (data.success) {
+						
+	                }else{
+	    	            kendo.ui.showErrorDialog({
+	    	            	message: data.message
+	    	            	});
+	    	            return false;
+	                }
+	            }
+	        }); 
+			queryTree();
+			return true;
+		}
+		
+		function beforeEditName(treeId, treeNode) {
+			className = (className === "dark" ? "":"dark");
+			showLog("[ "+getTime()+" beforeEditName ]&nbsp;&nbsp;&nbsp;&nbsp; " + treeNode.name);
+			var zTree = $.fn.zTree.getZTreeObj("treeSyncEntity");
+			zTree.selectNode(treeNode);
+			setTimeout(function() {
+				if (confirm("进入节点 -- " + treeNode.name + " 的编辑状态吗？")) {
+					setTimeout(function() {
+						zTree.editName(treeNode);
+					}, 0);
+				}
+			}, 0);
+			return false;
+		}
+		
+		function beforeRename(treeId, treeNode, newName, isCancel)  {
+			className = (className === "dark" ? "":"dark");
+			showLog((isCancel ? "<span style='color:red'>":"") + "[ "+getTime()+" beforeRename ]&nbsp;&nbsp;&nbsp;&nbsp; " + treeNode.name + (isCancel ? "</span>":""));
+			if (newName.length == 0) {
+				setTimeout(function() {
+					var zTree = $.fn.zTree.getZTreeObj("treeSyncEntity");
+					zTree.cancelEditName();
+					alert("节点名称不能为空.");
+				}, 0);
+				return false;
+			}
+			return true;
+		}
+		
+	    function onRename(e,treeId,treeNode){
+	        //alert("修改节点的id为："+treeNode.id+"\n修改后的名称为："+treeNode.name);
+	        console.log(treeNode);
+ 	        $.ajax({
+	            type: "POST",
+	            url: BaseUrl + "/plm/product/design/standard/renameTree",
+	            contentType:"application/json",
+	            datatype: "json",
+	            data:JSON.stringify(treeNode),
+	            async: false,
+	            cache:false,
+	            success: function (data) {
+	                if (data.success) {
+						return true;
+	                }else{
+	    	            kendo.ui.showErrorDialog({
+	    	            	message: data.message
+	    	            	});
+	    	            return false;
+	                }
+	            }
+	        }); 
+ 	       queryTree();
+	    }
+		
+		function showLog(str) {
+			if (!log) log = $("#log");
+			log.append("<li class='"+className+"'>"+str+"</li>");
+			if(log.children("li").length > 8) {
+				log.get(0).removeChild(log.children("li")[0]);
+			}
+		}
+		function getTime() {
+			var now= new Date(),
+			h=now.getHours(),
+			m=now.getMinutes(),
+			s=now.getSeconds(),
+			ms=now.getMilliseconds();
+			return (h+":"+m+":"+s+ " " +ms);
+		}
+	
+		
+	    function keySubmit() {
+	        var evt = window.event;
+	        if (evt.keyCode == 13){
+	        	queryDetail();
+	        }
+	    }
+	    
+	    //查询草稿数量
+	    var draftCount=0;
+	    function queryDraft(){
+	        var lineData = new Array();
+	        $.ajax({
+	            url: BaseUrl + "/plm/prod/design/standard/draft/query",
+	            type: "POST",
+	            dataType: "json",
+	            async: true,
+	            cache:false,
+	            data: {
+	                status: "DRAFT",
+	                page: 1,
+	                pageSize: 10000
+	            },
+	            success: function (data) {
+	                if (data.success) {
+	                	draftCount = data.rows.length;
+	                	$('#draft').text("草稿数："+draftCount);
+	                }
+	            }
+	        });
+	        return draftCount;
+	    }
+	    queryDraft();
+	    console.log('草稿数：'+draftCount);
+	    
+	    
+	    function queryDetail(){
+        	if($('#param').val()!=null && $('#param').val()!=""){
+        		viewModel.model.set("name", $('#param').val());
+        	}else{
+        		viewModel.reset();
+        	}
+        	viewModel.query();
+	    }
+	    
+	    function checkHavingDetail(designStandardId){
+	    	var count=0;
+	        $.ajax({
+	            url: BaseUrl + "/plm/prod/design/standard/detail/queryAll",
+	            type: "POST",
+	            dataType: "json",
+	            async: false,
+	            data: {
+	            	designStandardId:designStandardId,
+	                page: 1,
+	                pageSize: 10000
+	            },
+	            success: function (data) {
+	                if (data.success) {
+	                	count=data.rows.length;
+	                }
+	            }
+	        });
+	   		 if(count>0){
+				 return true;
+			 }else{
+				 return false;
+			 }
+	    }
+	    
+	    var invalidCount=0;
+	    function queryInvalidData(){
+	        var lineData = new Array();
+	        $.ajax({
+	            url: BaseUrl + "/plm/prod/design/standard/detail/query",
+	            type: "POST",
+	            dataType: "json",
+	            async: true,
+	            data: {
+	                status: "INVALID",
+	                page: 1,
+	                pageSize: 10000
+	            },
+	            success: function (data) {
+	                if (data.success) {
+	                	invalidCount = data.rows.length;
+	                	$('#invalid').text("已废止的设计规范："+invalidCount);
+	                }
+	            }
+	        });
+	    }
+	    queryInvalidData(); 
+</script>
+<body>
+<div id="newWindow"></div>
+<div id="page-content">
+    <div class="pull-left" id="toolbar-btn" style="padding-bottom:10px;margin-left:6px;">
+        <div class="k-query-simple" id="query-param">
+				<input type="text" id="param" data-role="maskedtextbox" style="width:150px;margin-right:5px;" placeholder='<@spring.message "查询"/>'
+            onkeydown="keySubmit()"   data-bind="value:model.param" class="k-textbox">
+        </div>
+        <script>kendo.bind($('#toolbar-btn'), viewModel);</script>
+        <div style="clear:both"></div>
+    </div>    
+    <script>
+    $('#toolbar-btn').kendoQueryPanel({
+        queryFunction: function () {
+        	console.log("1111");
+        	queryDetail();
+        },
+        resetFunction: function () {
+        	//viewModel2.reset();
+        	viewModel.reset();
+        	queryDetail();
+        }
+    });
+    </script>
+    
+    <div class="pull-right" id="query-form" style="padding-bottom:10px;">
+    	<span class="btn btn-primary k-grid-save-changes" onclick="addWindow()" style="float:left;margin-right:5px"><@spring.message "hap.new"/></span>  
+		<span class="btn btn-primary k-grid-save-changes" onclick="updateClick()" style="float:left;margin-right:5px;"><@spring.message "修改"/></span>
+        <span class="btn btn-primary k-grid-save-changes"  onclick="invalidClick()"  style="float:left;margin-right:22px;"><@spring.message "废止"/></span>
+    </div>
+    <script>kendo.bind($('#query-form'), viewModel);</script>
+    
+   <!-- 侧面加分层 -->
+   <div class="row" style="width: 100%;height: 100%;margin-top: 10px;">
+   <div class="col-sm-12" style="height: 100%">
+   <div class="col-sm-3" style="height: 100%;border: 2px solid #EEEEEE;border-radius:10px;">
+   <div style="clear:both; 	height: 694px" id="tree-panle">
+        		<div class="column" style="height:80%">
+                    <div class="panel" style="height:95%;margin-top: 10px">
+                        <div style="height:100%;margin-top: 16px">
+                            <ul id="treeSyncEntity" class="ztree" style="width:100%;height:100%;overflow:auto;"></ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="column" style="height:20%">
+                    <div class="panel" style="height:95%;margin-top: 3px">
+                        <div style="width: 46%; height: 16px; background-color:#1D92AF;color: white; float: left; margin-top: -8px; margin-left: 5px; text-align: center;">
+                           	 草稿
+                        </div>
+                        <div style="height:100%;margin-top: 16px">
+                            <ul id="draft-ul" class="nav-item start"  style="width:100%;height:100%;overflow:auto;">
+                            <li style="margin-top:20px;">
+                                 <i class="icon-home"></i><span class="title"><lable id="draft" onclick="draftPage()"/></span>
+                          	</li>
+                          	<li style="margin-top:20px;">
+                            	<i class="icon-home"></i><span class="title"><lable id="invalid"   onclick="invalidPage()"/></span>
+                          	</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+    		</div>
+   		</div>
+   <div class="col-sm-9" style="height: 100%;border: 2px solid #EEEEEE;border-radius:10px;">
+	    <div style="clear:both">
+	        <div id="grid"style="height: 700px;weight:200%"></div>
+	    </div>
+    </div>
+ </div>
+</div>
+</div>
+<script type="text/javascript">
+    Hap.initEnterQuery('#query-form', viewModel.query);
+    var BaseUrl = _basePath;
+    dataSource = new kendo.data.DataSource({
+        transport: {
+            read: {
+                url: BaseUrl + "/plm/prod/design/standard/detail/queryAll",
+                type: "POST",
+                dataType: "json"
+            },
+            parameterMap: function (options, type) {
+                if (type !== "read" && options.models) {
+                    var datas = Hap.prepareSubmitParameter(options, type)
+                    return kendo.stringify(datas);
+                } else if (type === "read") {
+			    	viewModel.model.set("status", "EFFECTIVE");
+                    return Hap.prepareQueryParameter(viewModel.model.toJSON(), options)
+                }
+            }
+        },
+        batch: true,
+        serverPaging: true,
+        pageSize: 20,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+                id: "fileId",
+                fields: {}
+            }
+        }
+    });
+
+    $("#grid").kendoGrid({
+        dataSource: dataSource,
+        resizable: true,
+        scrollable: true,
+        navigatable: false,
+        autoBind:false,
+        selectable: 'multiple, rowbox',
+        sortable: {
+        	mode: "multiple"
+        },
+        dataBound: function () {
+            if (parent.autoResizeIframe) {
+                parent.autoResizeIframe('${RequestParameters.functionCode!}')
+            }
+        },
+         pageable: {
+            //pageSizes: [5, 10, 20, 50],
+            refresh: true,
+            buttonCount: 5
+        }, 
+        columns: [
+            {
+                field: "detailId",
+                title: '<@spring.message "detailId"/>',
+                hidden:true,
+            },
+             {
+                field: "productName",
+                title: '<@spring.message "产品功品类"/>',
+                width: 120,
+               
+            },
+           {
+                field: "structureModule",
+                title: '<@spring.message "结构模组"/>',
+                width: 120
+            },
+            {
+                field: "partName",
+                title: '<@spring.message "零件名称"/>',
+                width: 120
+            },
+            {
+                field: "desionDimension",
+                title: '<@spring.message "设计规范维度"/>',
+                width: 100,
+                template: function (datatem) {
+                    var v = datatem.desionDimension || '';
+                    $.each(PLM_PROD_DESIGN_STANDARD, function (i, n)
+                    {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return v;
+                        }
+                    })
+                    return v;
+                },
+                editor  : function (container, options) {
+                    $('<input required name="' + options.field + '"/>')
+                        .appendTo(container).kendoDropDownList({
+                        dataTextField: 'meaning',
+                        dataValueField: 'value',
+                        dataSource: PLM_PROD_DESIGN_STANDARD,
+                        valuePrimitive: true,
+                    })
+                }
+            },
+            {
+                field: "relatedParts",
+                title: '<@spring.message "与哪个零件关联"/>',
+                width: 120
+            },
+            {
+                field: "designStandardDescription",
+                title: '<@spring.message "规则描述"/>',
+                width: 250
+            },
+            {
+                field: "graphicCode",
+                title: '<@spring.message "图示"/>',
+                width: 100
+            },
+            {
+                field: "checker",
+                title: '<@spring.message "审核人"/>',
+                width: 250
+            },
+            {
+                field: "status",
+                title: '<@spring.message "状态"/>',
+                width: 100,
+                headerAttributes: {style: "text-align: center"},
+                attributes: {style: "text-align:center"},
+                template: function (dataItem) {
+                    var v = dataItem.status;
+                    $.each(PLM_DOC_STATUS, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return v;
+                        }
+                    })
+                    return v;
+                },
+                editor: function (container, options) {
+                    $('<input name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoComboBox({
+                            //autoBind: false,            //自动绑定
+                            valuePrimitive: true,
+                            dataTextField: "meaning",   //显示的文本
+                            dataValueField: "value",    //实际的值
+                            dataSource: PLM_DOC_STATUS
+                        });
+                }
+            },
+          	{
+                field: "version",
+                title: '<@spring.message "版本"/>',
+                width: 100,
+                headerAttributes: {style: "text-align: center"},
+                attributes: {style: "text-align:center"},
+            },
+        ],
+        editable: false  
+    });
+    
+	    $('#treeSyncEntity').on('dblclick', 'tr', function () {
+	        var rowIndex = $(this).index();
+	        var data = gridTree.dataSource.data()[rowIndex];
+	         console.log(rowIndex);
+	         console.log(data.classifyId);
+	         var classifyid = data.classifyId;
+	         viewModel.model.classifyId = classifyid;
+	         console.log(classifyid);
+	         viewModel.query();
+	  	});
+
+	 
+	    //新建
+		  function addWindow(type) {
+				var zTree = $.fn.zTree.getZTreeObj("treeSyncEntity");
+				console.log(zTree.getSelectedNodes())
+				
+				var selectedNodes=zTree.getSelectedNodes();
+				if(selectedNodes==null||selectedNodes.length==0){
+			         kendo.ui.showErrorDialog({message: "请选择产品结构树下的零件！"});
+			         return;
+				}
+				
+				if(selectedNodes[0].level!="3"){
+			         kendo.ui.showErrorDialog({message: "请选择产品结构树模块下的具体零件！"});
+			         return;
+				}
+	    	
+				
+				
+			
+		 		var url='add.html?designStandardId='+ selectedNodes[0].id+"&name="+selectedNodes[0].name;
+		 		var newWindow = $("#newWindow").kendoWindow({
+		 			actions:["close"],
+		 			width:1000,
+		 			height:400,
+		 			content:url,
+		 			iframe:true,
+		 			visible:false,
+		 			resizable:true,
+		 			modal:true,
+		 			close:function(){
+		 			    queryDraft();
+		 			   queryInvalidData(); 
+		 			}
+		 			
+		 		}).data("kendoWindow");
+		 		newWindow.title("新增设计规范");
+		 		newWindow.center().open();
+		 }
+	    
+	    
+	    function draftPage(){
+/* 	    	queryDraft();
+	    	
+	    	if(draftCount==0){
+	            kendo.ui.showErrorDialog({message: "暂无草稿 数据！"});
+	            return;
+	    	}else if(draftCount>0){
+	    		var url = 'draft.html';
+	            var newWindow = $("#newWindow").kendoWindow({
+	                actions: ["close"],
+	                width:  '80%',
+	                height: '70%',
+	                content: url,
+	                iframe: true,
+	                visible: false,
+	                resizable: true,
+	                modal: true,
+	                close: function () {
+	                    queryDraft();
+	                    queryInvalidData(); 
+	                }
+
+	            }).data("kendoWindow");
+	            newWindow.title("草稿明细");
+	            newWindow.center().open();
+	    	} */
+	    	
+	    	
+    		var url = 'draft.html';
+            var newWindow = $("#newWindow").kendoWindow({
+                actions: ["close"],
+                width:  '80%',
+                height: '70%',
+                content: url,
+                iframe: true,
+                visible: false,
+                resizable: true,
+                modal: true,
+                close: function () {
+                    queryDraft();
+                    queryInvalidData(); 
+                }
+
+            }).data("kendoWindow");
+            newWindow.title("草稿明细");
+            newWindow.center().open();
+	    }
+	    
+	    //修改
+	    function updateClick() {
+            var select = $("#grid").data("kendoGrid").selectedDataItems();
+            if (select == null || select.length == 0) {
+                kendo.ui.showErrorDialog({message: "请选择要修改的数据"});
+                return;
+            }
+
+            var array = [];
+            for (var i = 0; i < select.length; i++) {
+                var detailId = select[i].detailId;
+                array.push(detailId);
+            }
+
+
+            var url = 'update.html?detailIds=' + array.join(',');
+            var newWindow = $("#newWindow").kendoWindow({
+                actions: ["close"],
+                width: 1000,
+                height: 400,
+                content: url,
+                iframe: true,
+                visible: false,
+                resizable: true,
+                modal: true,
+                close: function () {
+                    queryDraft();
+                    queryInvalidData(); 
+                }
+
+            }).data("kendoWindow");
+            newWindow.title("修改设计规范");
+            newWindow.center().open();
+        }
+	    
+	    
+	    
+	    
+	    function invalidClick(){
+	    	var select = $("#grid").data("kendoGrid").selectedDataItems();
+	        console.log(select);
+	        if (select == null || select.length == 0) {
+	            kendo.ui.showErrorDialog({message: "请选择要废止的数据"});
+	            return;
+	        }
+
+	        
+			 kendo.ui.showConfirmDialog({
+		          title: $l('提示：'),
+		          message: $l('确定废止选择的数据吗？')
+		      }).done(function (event) {
+		          if (event.button == 'OK') {
+		        	var list = [];
+		  	    	for(var i=0;i<select.length;i++){
+		  	            var kid = select[i].detailId;
+		  	            list.push(kid);
+		  	    	}
+		  	    	$.ajax({
+		  	            url: BaseUrl + "/plm/prod/design/standard/detail/invalid",
+		  	            type: "POST",
+		  	            dataType: "json",
+		  	            contentType: "application/json;charset=UTF-8",
+		  	            data: JSON.stringify(list),
+		  	            async: true,
+		  	            success: function (result) {
+		  	                if (!result.success) {
+		  	                    kendo.ui.showErrorDialog({
+		  	                        title: '错误',
+		  	                        message: result.message
+		  	                    });
+		  	                    return;
+		  	                }
+		  	                else{
+		  	                	//draftPage();
+		  	                }
+		  	            }
+		  	        });
+		  	    	draftPage();
+		          }
+		      });
+			 
+	    }
+	    
+	    function invalidPage() {
+            var url = 'invalid_page.html'
+            var newWindow = $("#newWindow").kendoWindow({
+                actions: ["close"],
+                width: 1000,
+                height: 400,
+                content: url,
+                iframe: true,
+                visible: false,
+                resizable: true,
+                modal: true,
+                close: function () {
+                    queryDraft();
+                    queryInvalidData(); 
+                }
+
+            }).data("kendoWindow");
+            newWindow.title("已废止的设计规范");
+            newWindow.center().open();
+        }
+	    
+</script>
+<!-- <script>	
+	//var bodyHeight=window.parent.$('body').innerHeight();
+	var bodyHeight=window.innerHeight;
+	var toolbarHeight=$('#query-form').outerHeight(true);
+	
+	var height = bodyHeight-toolbarHeight;
+	$("#tree-panle").css('height',height-20);
+	$("#grid").css('height',height-20);
+</script> -->
+</body>
+</html>

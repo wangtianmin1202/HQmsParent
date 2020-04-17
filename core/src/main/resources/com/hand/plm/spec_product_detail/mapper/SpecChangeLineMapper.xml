@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.plm.spec_product_detail.mapper.SpecChangeLineMapper">
+    <resultMap id="BaseResultMap" type="com.hand.plm.spec_product_detail.dto.SpecChangeLine">
+        <result column="CHANGE_ORDER_ID" property="changeOrderId" jdbcType="DECIMAL" />
+        <result column="LINE_ID" property="lineId" jdbcType="VARCHAR" />
+        <result column="SPEC_LINE_ID" property="specLineId" jdbcType="VARCHAR" />
+        <result column="DEMAND_MSG" property="demandMsg" jdbcType="VARCHAR" />
+        <result column="ATTACHMENT" property="attachment" jdbcType="VARCHAR" />
+        <result column="STD_TEST_METHOD" property="stdTestMethod" jdbcType="VARCHAR" />
+        <result column="SPEC_CODE" property="specCode" jdbcType="VARCHAR" />
+        <result column="COUNT_TYPE" property="countType" jdbcType="VARCHAR" />
+        <result column="MIN_VALUE" property="minValue" jdbcType="DECIMAL" />
+        <result column="MAX_VALUE" property="maxValue" jdbcType="DECIMAL" />
+        <result column="UOM" property="uom" jdbcType="VARCHAR" />
+        <result column="APPROVAL_STATUS" property="approvalStatus" jdbcType="VARCHAR" />
+        <result column="VERSION" property="version" jdbcType="VARCHAR" />
+        <result column="STATUS" property="status" jdbcType="VARCHAR" />
+    </resultMap>
+
+
+</mapper>

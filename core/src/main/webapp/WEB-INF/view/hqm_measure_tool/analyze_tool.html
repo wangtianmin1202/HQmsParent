@@ -1,0 +1,83 @@
+<#include "../include/header.html">
+<script src="${base.contextPath}/common/code?HQM_MSA_ANALYSIS_CONTENT=HQM_MSA_ANALYSIS_CONTENT"></script>
+<script src="${base.contextPath}/lib/prints/doc_print.js" type="text/javascript" charset="UTF-8"></script>
+<body>
+<script type="text/javascript">
+	var viewModel = kendo.observable({
+		model: {
+		},
+		closeWin: function(e){
+			window.parent.$("#analyzeWindow").data("kendoWindow").close();
+		},
+        confirm: function(){
+        	if($("input[name='check']:checked").size() === 0) {
+    			kendo.ui.showInfoDialog({
+        			title: "提示",
+        			message: "请选择报表类型"
+        		})
+        		return;
+    		}
+        	var meaning = $("input[name='check']:checked").val();
+        	if(meaning == "A"){
+                openWindow('<@spring.message "购买日期报表"/>','purchaseDateReport','purchaseDateReport.html')
+        	}else if(meaning == "B"){
+        		openWindow('<@spring.message "检验报表"/>','checkReport','checkReport.html')
+        	}else if(meaning == "C"){
+        		openWindow('<@spring.message "部门使用报表"/>','departmentUsageReport','departmentUsageReport.html')
+        	}else if(meaning == "D"){
+        		openWindow('<@spring.message "MSA报表"/>','msaReport','msaReport.html')
+        	}
+        }
+	});	
+	//报表详细界面
+	function openWindow(title,id,url){
+		var selectFunction = window.parent.$("#" + id).kendoWindow({
+			actions: ["Close"],
+			width: 1400,
+			height: 950,
+			title: title,
+			visible: false,
+			iframe: true,
+			modal: true,
+			content: url
+		}).data("kendoWindow");
+		selectFunction.center().open();
+	}
+</script>
+<div id="page-content">
+	<div style=" height:255px; overflow:scroll;">
+		<table  style='color: black;width: 100%;table-layout: fixed;font-size: small;text-align: center;border-color:#697882;overflow-y:scroll' border='2px'>
+			<tr>
+				<th style="width:20%"></th>
+				<th style="text-align: center;width:80%"><@spring.message "报表类型"/></th>
+			</tr>
+			<tr>
+				<td style="width:20%"><input type="radio" name="check" value="A" style="margin-top:5%"></td>
+				<td style="width:80%"><@spring.message "购买日期报表"/></td>
+			</tr>
+			<tr>
+				<td style="width:20%"><input type="radio" name="check" value="B" style="margin-top:5%"></td>
+				<td style="width:80%"><@spring.message "校验报表"/></td>
+			</tr>
+			<tr>
+				<td style="width:20%"><input type="radio" name="check" value="C" style="margin-top:5%"></td>
+				<td style="width:80%"><@spring.message "部门使用报表"/></td>
+			</tr>
+			<tr>
+				<td style="width:20%"><input type="radio" name="check" value="D" style="margin-top:5%"></td>
+				<td style="width:80%"><@spring.message "MSA报表"/></td>
+			</tr>
+		</table>
+	</div>
+</div>
+<div id="mainBottom" class="text-center" style="bottom: 15px;position: fixed;  float: left;padding-top:15px;border-top:1px solid #ebebeb;width:100%; background: #fff;">
+	    <span class="btn btn-danger" style="float:right;margin-right:30px;" data-bind="click:closeWin"><i class="fa fa-trash-o" style="margin-right:3px;"></i><@spring.message "msaplan.cancel"/></span>
+        <span class="btn btn-success k-grid-save-changes fa fa-check" data-bind="click:confirm" style="float:right;margin-right:5px;"><@spring.message " hap.confirm "/></span>
+</div>
+
+<script type="text/javascript">
+    kendo.bind($('#mainBottom'),viewModel);
+	kendo.bind($('#mainform'), viewModel);
+</script>
+</body>
+</html>

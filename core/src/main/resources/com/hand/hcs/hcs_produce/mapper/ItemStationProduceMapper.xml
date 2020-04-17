@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hcs.hcs_produce.mapper.ItemStationProduceMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hcs.hcs_produce.dto.ItemStationProduce">
+        <result column="PRODUCE_ID" property="produceId" jdbcType="DECIMAL" />
+        <result column="ITEM_STATION_ID" property="itemStationId" jdbcType="DECIMAL" />
+        <result column="PRODUCE_NUMBER" property="produceNumber" jdbcType="VARCHAR" />
+        <result column="PRODUCT_DATE" property="productDate" jdbcType="DATE" />
+        <result column="PRODUCT_LOTS" property="productLots" jdbcType="VARCHAR" />
+        <result column="PRODUCT_VERSION" property="productVersion" jdbcType="VARCHAR" />
+        <result column="PRODUCT_QTY" property="productQty" jdbcType="DECIMAL" />
+        <result column="NG_QTY" property="ngQty" jdbcType="DECIMAL" />
+        <result column="RTY" property="rty" jdbcType="VARCHAR" />
+        <result column="STATUS" property="status" jdbcType="VARCHAR" />
+        <result column="SUPPLIER_CODE" property="supplierCode" jdbcType="VARCHAR" />
+        <result column="SUPPLIER_NAME" property="supplierName" jdbcType="VARCHAR" />
+        <result column="ITEM_CODE" property="itemCode" jdbcType="VARCHAR" />
+        <result column="DESCRIPTIONS" property="itemDescription" jdbcType="VARCHAR" />
+        <result column="station_name" property="stationName" jdbcType="VARCHAR" />
+        <!--查询条件-->
+        <result column="supplier_id" property="supplierId" jdbcType="DECIMAL" />
+        <result column="item_id" property="itemId" jdbcType="DECIMAL" />
+    </resultMap>
+
+    <select id="listQuery" parameterType="com.hand.hcs.hcs_produce.dto.ItemStationProduce" resultMap="BaseResultMap">
+        select
+       hisp.produce_id,
+       hs.supplier_code,
+       hs.supplier_name,
+       hi.ITEM_CODE,
+       hi.descriptions,
+       hisp.produce_number,
+       hisp.product_date,
+       hisp.product_lots,
+       hisp.product_version,
+       hisp.product_qty,
+       hisp.ng_qty,
+       round(((hisp.product_qty-hisp.ng_qty)/hisp.product_qty),2)*100 rty,
+       hisp.status,
+       hsis.station_name
+  from hcs_item_station_produce hisp
+  left join hcs_supplier_item_station hsis
+    on hisp.item_station_id = hsis.item_station_id
+  left join hcs_suppliers hs
+    on hsis.supplier_id = hs.supplier_id
+  left join hcm_item hi
+    on hsis.item_id = hi.ITEM_ID
+    <where>
+        <if test="produceId != null">
+            hisp.produce_id =#{produceId}
+        </if>
+        <if test="supplierId != null">
+           and  hs.supplier_id = #{supplierId}
+        </if>
+        <if test="itemId != null">
+           and  hsis.item_id = #{itemId}
+        </if>
+        <if test="productDateFrom != null">
+            and  hisp.product_date &gt;= #{productDateFrom}
+        </if>
+        <if test="productDateTo != null">
+            and  hisp.product_date &lt;= #{productDateTo}
+        </if>
+    </where>
+    </select>
+
+    <select id="listExistNg" resultMap="BaseResultMap">
+        select distinct hisp.*
+  from HCS_ITEM_STATION_PRODUCE hisp
+ inner join HCS_ITEM_STATION_PRODUCE_LINE hispl
+    on hisp.produce_id = hispl.produce_id
+    </select>
+
+    <select id="listNotExistNg" resultMap="BaseResultMap">
+        select distinct hisp.*
+  from HCS_ITEM_STATION_PRODUCE hisp
+ left join HCS_ITEM_STATION_PRODUCE_LINE hispl
+    on hisp.produce_id = hispl.produce_id
+    where hispl.produce_id is null
+    </select>
+
+</mapper>

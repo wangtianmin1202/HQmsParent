@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_mes_ng_recorde.mapper.MesNgRecordeMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_mes_ng_recorde.dto.MesNgRecorde">
+        <result column="TASK_ID" property="taskId" jdbcType="DECIMAL" />
+        <result column="PLANT_ID" property="plantId" jdbcType="DECIMAL" />
+        <result column="TASK_NUMBER" property="taskNumber" jdbcType="VARCHAR" />
+        <result column="TASK_TYPE" property="taskType" jdbcType="VARCHAR" />
+        <result column="NUMBER_8D" property="number8d" jdbcType="VARCHAR" />
+        <result column="PROD_LINE_ID" property="prodLineId" jdbcType="DECIMAL" />
+        <result column="WORKSTATIONS_ID" property="workstationsId" jdbcType="DECIMAL" />
+        <result column="ITEM_ID" property="itemId" jdbcType="DECIMAL" />
+        <result column="EVENT_TIME" property="eventTime" jdbcType="DECIMAL" />
+    </resultMap>
+
+
+</mapper>

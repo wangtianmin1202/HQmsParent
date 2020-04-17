@@ -1,0 +1,1072 @@
+
+<#include "../include/header.html">
+<script src="${base.contextPath}/lib/bootstrap-3.3.7/js/bootstrap.min.js"></script>
+<script src="${base.contextPath}/common/code?yesNo=SYS.YES_NO"></script>
+<script src="${base.contextPath}/common/code?hqmIqcSamplePlanType=HQM_IQC_SAMPLE_PLAN_TYPE"></script>
+<script src="${base.contextPath}/common/code?hqmIqcSampleStandardType=HQM_IQC_SAMPLE_STANDARD_TYPE"></script>
+<script src="${base.contextPath}/common/code?hqmIqcSampleSizeCodeLevel=HQM_IQC_SAMPLE_SIZE_CODE_LEVEL"></script>
+<script src="${base.contextPath}/common/code?hqmIqcAql=HQM_IQC_AQL"></script>
+<script src="${base.contextPath}/common/code?HQM_ITEM_PLATFORM=HQM_ITEM_PLATFORM"></script>
+<body>
+<script>
+	function ifNotNull(e) {
+	    if(e!=null&&e!=undefined&&e!=''){
+	        return true;
+	    }
+	    return false;
+	}
+	function getDataSource(uri,value){
+		var array = new Array();
+	    $.ajax({
+	        url: _basePath + uri,
+	        type: "GET",
+	        dataType: "json",
+	        data:{
+	        	value:value
+	        },
+	        async: false,
+	        success: function (data) {
+	            if (data.success)
+	            {
+	                array = data.rows;
+	            }else{
+	                
+	            }
+	        }
+	    });
+		return array;
+	}
+	function liClick(target){
+		//eval("grid" + target + ".autoResize();");
+		if(target == "c")
+			gridc.dataSource.fetch();
+		else if(target == "b")
+			grid.dataSource.fetch();
+		else
+			gridb.dataSource.fetch();
+	}
+</script>
+<script type="text/javascript">
+	var tab = "${RequestParameters.tab!0}"
+	var BaseUrl = _basePath;
+    var viewModel = Hap.createGridViewModel("#grid");
+    var viewModelb = Hap.createGridViewModel("#gridb");
+    var viewModelc = Hap.createGridViewModel("#gridc");
+    var sampleStandardType = getDataSource('/hqm/sample/size/code/letter/standard','');
+</script>
+
+	<div class="col-sm-12" style="margin-top: 10px;">
+		<ul class="nav nav-tabs" id="mytab">
+			<li id="tab3" class="active"><a href="#div3" onclick="liClick('c')" data-toggle="tab"><@spring.message "成品量产"/></a></li>
+			<li id="tab1" class=""><a href="#div1" onclick="liClick('b')" data-toggle="tab"><@spring.message "GB2828"/></a></li>
+			<li id="tab2" class=""><a href="#div2" onclick="liClick('')" data-toggle="tab"><@spring.message "C=0"/></a></li>
+		</ul>
+		<div id="tabContent" class="tab-content">
+			<div id="div3" class="tab-pane fade in active" style="margin-top: 10px;">
+				<div id="page-contentc">
+				    <div class="pull-left" id="toolbar-btnc" style="padding-bottom:10px;">
+				        <span class="btn btn-primary k-grid-add" style="float:left;margin-right:5px;" data-bind="click:create"><@spring.message "hap.new"/></span>
+				        <span class="btn btn-success k-grid-save-changes" data-bind="click:save" style="float:left;margin-right:5px;"><@spring.message "hap.save"/></span>				        
+				    </div>
+				    <script>kendo.bind($('#toolbar-btnc'), viewModelc);</script>
+				    <div id="queryPanelc" class="pull-right" style="margin-right:5px;padding-bottom:10px;">
+				    	<div class="k-query-simple" id="query-formc">
+				    	<input id="samplePlanTypeComboBoxc"   placeholder="<@spring.message 'samplescheme.sampleplantype'/>"
+				                       style="width:150px;margin-right:5px;" data-bind="value:model.samplePlanType">
+				        <input  id="enableFlagComboBoxc" placeholder="<@spring.message 'samplescheme.enableflag'/>" style="width:150px;" data-bind="value:model.enableFlag" >
+				                       
+<!-- 				                <input id="sampleSizeCodeLetterComboBoxb" placeholder="<@spring.message 'samplescheme.samplesizecodeletter'/>" -->
+<!-- 				                       style="width:150px;" data-bind="value:model.sampleSizeCodeLetter"> -->
+<!-- 				                <input id="acceptanceQualityLimitComboBoxc" placeholder="<@spring.message 'samplescheme.acceptancequalitylimit'/>" -->
+<!-- 				                       style="width:150px;" data-bind="value:model.acceptanceQualityLimit"> -->
+				        </div>
+				        <script>kendo.bind($('#query-formc'), viewModelc);</script>
+				    </div>
+				    <div style="clear:both">
+				        <div id="gridc"></div>
+				    </div>
+				</div>
+				<script type="text/javascript">
+	$("#enableFlagComboBoxc").kendoComboBox({
+	    dataTextField: "meaning",
+	    dataValueField: "value",
+	    valuePrimitive: true,
+	    dataSource: yesNo
+	});
+	$("#samplePlanTypeComboBoxc").kendoComboBox({
+	    dataTextField: "meaning",
+	    dataValueField: "value",
+	    valuePrimitive: true,
+	    dataSource: hqmIqcSamplePlanType
+	});
+	
+	$("#sampleSizeCodeLetterComboBoxc").kendoComboBox({
+	    dataTextField: "meaning",
+	    dataValueField: "value",
+	    valuePrimitive: true,
+	    dataSource: hqmIqcSampleSizeCodeLevel
+	});
+	$("#acceptanceQualityLimitComboBoxc").kendoComboBox({
+	    dataTextField: "meaning",
+	    dataValueField: "value",
+	    valuePrimitive: true,
+	    dataSource: hqmIqcAql
+	});
+	$('#queryPanelc').kendoQueryPanel({
+	    queryFunction: function () {
+	    	viewModelc.query();
+	    },
+	    resetFunction: function () {
+	    	viewModelc.reset();
+	    }
+	});
+	Hap.initEnterQuery('#query-formc', viewModelc.query);
+    dataSourcec = new kendo.data.DataSource({
+        transport: {
+            read: {
+                url: BaseUrl + "/hqm/sample/scheme/query",
+                type: "POST",
+                dataType: "json"
+            },
+            update: {
+                url: BaseUrl + "/hqm/sample/scheme/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            destroy: {
+                url: BaseUrl + "/hqm/sample/scheme/remove",
+                type: "POST",
+                contentType: "application/json"
+            },
+            create: {
+                url: BaseUrl + "/hqm/sample/scheme/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            parameterMap: function (options, type) {
+                if (type !== "read" && options.models) {
+                    var datas = Hap.prepareSubmitParameter(options, type);
+                    $.each(datas,function(i,o){
+                    	o.sampleProcedureType="3";
+                    });
+                    return kendo.stringify(datas);
+                } else if (type === "read") {
+                	viewModelc.model.sampleProcedureType="3";
+                    return Hap.prepareQueryParameter(viewModelc.model.toJSON(), options)
+                }
+            }
+        },
+        batch: true,
+        serverPaging: true,
+        pageSize: 20,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+                id: "schemeId",
+                fields: {
+                    attribute3:{
+                    	validation: {
+                            required: true,
+                            required: {message: "必输"},
+                        },
+                    },
+                    attribute4:{
+                    	validation: {
+                            required: true,
+                            required: {message: "必输"},
+                        },
+                    },
+                    sampleProcedureType:{
+                    	defaultValue: "3",
+                    },
+                    enableFlag:{
+                    	type:"boolean",
+                    	defaultValue: "Y",
+                    	checkedValue:"Y",
+                    	uncheckedValue:"N",
+                    }
+                },
+                editable:function(column){
+                	if(column=='sampleProcedureType'){
+                		return false;
+                	}
+                	if(column=='samplePlanType'||column=='sampleSizeCodeLetter'){
+                		if(ifNotNull(this.id) || !this.isNew()){
+                			return false;
+                		}
+                		return true;
+                	}
+                	return true;
+                }
+            }
+        }
+    });
+
+    var gridc = $("#gridc").kendoGrid({
+        dataSource: dataSourcec,
+        resizable: true,
+        scrollable: true,
+        autoBind: false,
+        navigatable: false,
+        selectable: 'multiple, rowbox',
+        dataBound: function () {
+        	Hap.autoResizeGrid('#gridc');
+            if (parent.autoResizeIframe) {
+                parent.autoResizeIframe('${RequestParameters.functionCode!}')
+            }
+        },
+        pageable: {
+            pageSizes: [5, 10, 20, 50],
+            refresh: true,
+            buttonCount: 5
+        },
+        columns: [
+                    
+            {
+                field: "samplePlanType",
+                title: '<@spring.message "samplescheme.sampleplantype"/>',
+                width: 120,
+                template: function (dataItem) {
+                    var v = dataItem.samplePlanType ? dataItem.samplePlanType : "";
+                    $.each(hqmIqcSamplePlanType, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return v;
+                        }
+                    });
+                    return v;
+                },
+                editor: function (container, options) {
+                    $('<input name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            dataTextField: "meaning",
+                            dataValueField: "value",
+                            valuePrimitive: true,
+                            dataSource: hqmIqcSamplePlanType
+                        });
+                },
+                attributes: {style: "text-align:center"},
+                headerAttributes: {style: "text-align:center"}
+            },
+            {
+                field: "sampleProcedureType",
+                title: '<@spring.message "samplescheme.sampleproceduretype"/>',
+                width: 120,
+                template: function (dataItem) {
+                    var v = dataItem.sampleProcedureType ? dataItem.sampleProcedureType : "";
+                    $.each(hqmIqcSampleStandardType, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return v;
+                        }
+                    });
+                    return v;
+                },
+                editor: function (container, options) {
+                    $('<input name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            dataTextField: "meaning",
+                            dataValueField: "value",
+                            valuePrimitive: true,
+                            dataSource: sampleStandardType
+                        });
+                }
+            },
+            {
+                field: "attribute3",
+                title: '<@spring.message "samplescheme.attribute3"/>',
+                width: 80,
+                template: function (dataItem) {
+                    var v = dataItem.attribute3 ? dataItem.attribute3 : "";
+                    $.each(HQM_ITEM_PLATFORM, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return v;
+                        }
+                    });
+                    return v;
+                },
+                editor: function (container, options) {
+                    $('<input name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            dataTextField: "meaning",
+                            dataValueField: "value",
+                            valuePrimitive: true,
+                            dataSource: HQM_ITEM_PLATFORM
+                        });
+                }
+                
+                
+            },
+            {
+                field: "attribute4",
+                title: '<@spring.message "samplescheme.attribute4"/>',
+                width: 80,
+                editor: function(container,options){
+                	$('<input required name="' + options.field + '"/>')
+                    .appendTo(container)
+                    .kendoNumericTextBox({
+                    	min : 0,
+                    	max : 1,
+                    	step: 0.01
+                    });
+                }
+                
+            },
+                    {
+                field: "enableFlag",
+                title: '<@spring.message "samplescheme.enableflag"/>',
+                width: 80,
+                attributes: {style: "text-align:center"},
+                headerAttributes: {style: "text-align:center"},
+                template: function (dataItem) {
+                    var v = dataItem.enableFlag ? dataItem.enableFlag : "";
+                    $.each(yesNo, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return v;
+                        }
+                    });
+                    return v;
+                },
+                editor: function (container, options) {
+                    $('<input name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            dataTextField: "meaning",
+                            dataValueField: "value",
+                            valuePrimitive: true,
+                            dataSource: yesNo
+                        });
+                }
+            },
+                    
+        ],
+        editable: true
+    }).data('kendoGrid');
+    Hap.autoResizeGrid('#gridc');
+</script>
+			</div>
+			<div id="div1" class="tab-pane fade" style="margin-top: 10px;">
+				<div id="page-content">
+				    <div class="pull-left" id="toolbar-btn" style="padding-bottom:10px;">
+				        <span class="btn btn-primary k-grid-add fa fa-plus-square" style="float:left;margin-right:5px;" data-bind="click:create">&nbsp;<@spring.message "hap.new"/></span>
+				        <span class="btn btn-success k-grid-save-changes fa fa-save" data-bind="click:save" style="float:left;margin-right:5px;">&nbsp;<@spring.message "hap.save"/></span>
+				        <!-- 
+				        <span  data-bind="click:remove" class="btn btn-danger" style="float:left;"><@spring.message "hap.delete"/></span>
+				         -->
+				    </div>
+				    <script>kendo.bind($('#toolbar-btn'), viewModel);</script>
+				    <div id="queryPanel" class="pull-right" style="margin-right:5px;padding-bottom:10px;">
+				    	<div class="k-query-simple" id="query-form">
+				    	<input id="samplePlanTypeComboBox"  placeholder="<@spring.message 'samplescheme.sampleplantype'/>"
+				                       style="width:150px;margin-right:5px;" data-bind="value:model.samplePlanType">
+				                
+				                <input id="sampleSizeCodeLetterComboBox" placeholder="<@spring.message 'samplescheme.samplesizecodeletter'/>"
+				                       style="width:150px;margin-right:5px;" data-bind="value:model.sampleSizeCodeLetter">
+				                <input id="acceptanceQualityLimitComboBox" placeholder="<@spring.message 'samplescheme.acceptancequalitylimit'/>"
+				                       style="width:150px;" data-bind="value:model.acceptanceQualityLimit">
+				           
+				        </div>
+				        <script>kendo.bind($('#query-form'), viewModel);</script>
+				        <div class="k-query-detail" id="query-form2">
+				            <div class="rows">
+				                 <input  id="enableFlagComboBox" placeholder="<@spring.message 'samplescheme.enableflag'/>" style="width:150px;" data-bind="value:model.enableFlag" >
+				            </div>
+				        </div>
+				        <script>kendo.bind($('#query-form2'), viewModel);</script>
+				    </div>
+				    <div style="clear:both">
+				        <div id="grid"></div>
+				    </div>
+				</div>
+				<script type="text/javascript">
+	
+	$("#enableFlagComboBox").kendoComboBox({
+	    dataTextField: "meaning",
+	    dataValueField: "value",
+	    valuePrimitive: true,
+	    dataSource: yesNo
+	});
+	$("#samplePlanTypeComboBox").kendoComboBox({
+	    dataTextField: "meaning",
+	    dataValueField: "value",
+	    valuePrimitive: true,
+	    dataSource: hqmIqcSamplePlanType
+	});
+	
+	$("#sampleSizeCodeLetterComboBox").kendoComboBox({
+	    dataTextField: "meaning",
+	    dataValueField: "value",
+	    valuePrimitive: true,
+	    dataSource: hqmIqcSampleSizeCodeLevel
+	});
+	$("#acceptanceQualityLimitComboBox").kendoComboBox({
+	    dataTextField: "meaning",
+	    dataValueField: "value",
+	    valuePrimitive: true,
+	    dataSource: hqmIqcAql
+	});
+	$('#queryPanel').kendoQueryPanel({
+	    queryFunction: function () {
+	        viewModel.query();
+	    },
+	    resetFunction: function () {
+	        viewModel.reset();
+	    }
+	});
+	Hap.initEnterQuery('#query-form', viewModel.query);
+    dataSource = new kendo.data.DataSource({
+        transport: {
+            read: {
+                url: BaseUrl + "/hqm/sample/scheme/select",
+                type: "POST",
+                dataType: "json"
+            },
+            update: {
+                url: BaseUrl + "/hqm/sample/scheme/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            destroy: {
+                url: BaseUrl + "/hqm/sample/scheme/remove",
+                type: "POST",
+                contentType: "application/json"
+            },
+            create: {
+                url: BaseUrl + "/hqm/sample/scheme/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            parameterMap: function (options, type) {
+                if (type !== "read" && options.models) {
+                    var datas = Hap.prepareSubmitParameter(options, type);
+                    $.each(datas,function(i,o){
+                    	o.sampleProcedureType="0";
+                    });
+                    return kendo.stringify(datas);
+                } else if (type === "read") {
+                	viewModel.model.sampleProcedureType="0";
+                    return Hap.prepareQueryParameter(viewModel.model.toJSON(), options)
+                }
+            }
+        },
+        batch: true,
+        serverPaging: true,
+        pageSize: 20,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+                id: "schemeId",
+                fields: {
+                	sampleSize: {
+                        type: 'number',
+                        format: "{0:0}",
+                        defaultValue: 0,
+                        validation: {
+                            min: 0,
+                            required: true,
+                            NoValidation:function(input){
+                                if (input.is("[name='sampleSize']") && input.val() != "") {
+                                   if((input.val())%1 !== 0){
+                                     input.attr("data-NoValidation-msg", "请输入整数");
+                                        return false;
+                                    }
+                                }
+                                return true;
+                           },
+                            required: {message: "抽样数量为必输项"},
+                        },
+                    },
+                    sampleProcedureType:{
+                    	defaultValue: "0",
+                    },
+                    acValue: {
+                        type: 'number',
+                        format: "{0:0}",
+                        defaultValue: 0,
+                        validation: {
+                        	min: 0,
+                            required: true,
+                            required: {message: "AC值为必输项"},
+                        },
+                    },
+                    reValue: {
+                        type: 'number',
+                        format: "{0:0}",
+                        defaultValue: 0,
+                        validation: {
+                            min: 0,
+                            required: true,
+                            required: {message: "RE值为必输项"},
+                        },
+                    },
+                    enableFlag:{
+                    	type:"boolean",
+                        defaultValue:"Y",
+                        checkedValue: 'Y',
+                        uncheckedValue: 'N',
+                    },
+                },
+                editable:function(column){
+                	if(column=='sampleProcedureType'){
+                		return false;
+                	}
+                	if(column=='samplePlanType'||column=='sampleSizeCodeLetter'){
+                		if(ifNotNull(this.id) || !this.isNew()){
+                			return false;
+                		}
+                		return true;
+                	}
+                	return true;
+                }
+            }
+        }
+    });
+
+    var grid = $("#grid").kendoGrid({
+        dataSource: dataSource,
+        resizable: true,
+        scrollable: true,
+        autoBind: false,
+        navigatable: false,
+        selectable: 'multiple, rowbox',
+        dataBound: function () {
+        	Hap.autoResizeGrid('#grid');
+            if (parent.autoResizeIframe) {
+                parent.autoResizeIframe('${RequestParameters.functionCode!}')
+            }
+        },
+        pageable: {
+            pageSizes: [5, 10, 20, 50],
+            refresh: true,
+            buttonCount: 5
+        },
+        columns: [
+           
+                    {
+                field: "samplePlanType",
+                title: '<@spring.message "samplescheme.sampleplantype"/>',
+                width: 120,
+                template: function (dataItem) {
+                    var v = dataItem.samplePlanType ? dataItem.samplePlanType : "";
+                    $.each(hqmIqcSamplePlanType, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return v;
+                        }
+                    });
+                    return v;
+                },
+                editor: function (container, options) {
+                    $('<input name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            dataTextField: "meaning",
+                            dataValueField: "value",
+                            valuePrimitive: true,
+                            dataSource: hqmIqcSamplePlanType
+                        });
+                },
+                attributes: {style: "text-align:center"},
+                headerAttributes: {style: "text-align:center"}
+            },
+                    {
+                field: "sampleProcedureType",
+                title: '<@spring.message "samplescheme.sampleproceduretype"/>',
+                width: 120,
+                template: function (dataItem) {
+                    var v = dataItem.sampleProcedureType ? dataItem.sampleProcedureType : "";
+                    $.each(hqmIqcSampleStandardType, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return v;
+                        }
+                    });
+                    return v;
+                },
+                editor: function (container, options) {
+                    $('<input name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            dataTextField: "meaning",
+                            dataValueField: "value",
+                            valuePrimitive: true,
+                            dataSource: sampleStandardType
+                        });
+                },
+                attributes: {style: "text-align:center"},
+                headerAttributes: {style: "text-align:center"}
+            },
+                    {
+                field: "sampleSizeCodeLetter",
+                title: '<@spring.message "samplescheme.samplesizecodeletter"/>',
+                width: 120,
+                template: function (dataItem) {
+                    var v = dataItem.sampleSizeCodeLetter ? dataItem.sampleSizeCodeLetter : "";
+                    $.each(hqmIqcSampleSizeCodeLevel, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return v;
+                        }
+                    });
+                    return v;
+                },
+                editor: function (container, options) {
+                    $('<input name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            dataTextField: "meaning",
+                            dataValueField: "value",
+                            valuePrimitive: true,
+                            dataSource: getDataSource('/hqm/sample/size/code/letter/codelevel',options.model.sampleProcedureType)
+                        });
+                },
+                attributes: {style: "text-align:center"},
+                headerAttributes: {style: "text-align:center"}
+            },
+                    {
+                field: "acceptanceQualityLimit",
+                title: '<@spring.message "samplescheme.acceptancequalitylimit"/>',//
+                width: 120,
+                template: function (dataItem) {
+                    var v = dataItem.acceptanceQualityLimit ? dataItem.acceptanceQualityLimit : "";
+                    $.each(hqmIqcAql, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return v;
+                        }
+                    });
+                    return v;
+                },
+                editor: function (container, options) {
+                    $('<input name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            dataTextField: "meaning",
+                            dataValueField: "value",
+                            valuePrimitive: true,
+                            dataSource: hqmIqcAql
+                        });
+                },
+                attributes: {style: "text-align:center"},
+                headerAttributes: {style: "text-align:center"}
+            },
+                    {
+                field: "sampleSize",
+                title: '<@spring.message "samplescheme.samplesize"/>',
+                width: 80,
+                attributes: {style: "text-align:center"},
+                headerAttributes: {style: "text-align:center"}
+            },
+                    {
+                field: "acValue",
+                title: '<@spring.message "samplescheme.acvalue"/>',
+                width: 80,
+                attributes: {style: "text-align:center"},
+                headerAttributes: {style: "text-align:center"}
+            },
+                    {
+                field: "reValue",
+                title: '<@spring.message "samplescheme.revalue"/>',
+                width: 80,
+                attributes: {style: "text-align:center"},
+                headerAttributes: {style: "text-align:center"}
+            },
+                    {
+                field: "enableFlag",
+                title: '<@spring.message "samplescheme.enableflag"/>',
+                width: 120,
+                attributes: {style: "text-align:center"},
+                headerAttributes: {style: "text-align:center"}
+                /* template: function (dataItem) {
+                    var v = dataItem.enableFlag ? dataItem.enableFlag : "";
+                    $.each(yesNo, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return v;
+                        }
+                    });
+                    return v;
+                },
+                editor: function (container, options) {
+                    $('<input name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            dataTextField: "meaning",
+                            dataValueField: "value",
+                            valuePrimitive: true,
+                            dataSource: yesNo
+                        });
+                } */
+            },
+                    
+        ],
+        editable: true
+    }).data('kendoGrid');
+    Hap.autoResizeGrid('#grid');
+</script>
+				
+			</div>
+			<div id="div2" class="tab-pane fade" style="margin-top: 10px;">
+				<div id="page-contentb">
+				    <div class="pull-left" id="toolbar-btnb" style="padding-bottom:10px;">
+				        <span class="btn btn-primary k-grid-add" style="float:left;margin-right:5px;" data-bind="click:create"><@spring.message "hap.new"/></span>
+				        <span class="btn btn-success k-grid-save-changes" data-bind="click:save" style="float:left;margin-right:5px;"><@spring.message "hap.save"/></span>
+				        <span  data-bind="click:remove" class="btn btn-danger" style="float:left;"><@spring.message "hap.delete"/></span>
+				        
+				    </div>
+				    <script>kendo.bind($('#toolbar-btnb'), viewModelb);</script>
+				    <div id="queryPanelb" class="pull-right" style="margin-right:5px;padding-bottom:10px;">
+				    	<div class="k-query-simple" id="query-formb">
+<!-- 				    	<input id="samplePlanTypeComboBoxb"  placeholder="<@spring.message 'samplescheme.sampleplantype'/>" -->
+<!-- 				                       style="width:150px;" data-bind="value:model.samplePlanType"> -->
+<!-- 				                <input id="sampleSizeCodeLetterComboBoxb" placeholder="<@spring.message 'samplescheme.samplesizecodeletter'/>" -->
+<!-- 				                       style="width:150px;" data-bind="value:model.sampleSizeCodeLetter"> -->
+				                <input id="acceptanceQualityLimitComboBoxb" placeholder="<@spring.message 'samplescheme.acceptancequalitylimit'/>"
+				                       style="width:150px;" data-bind="value:model.acceptanceQualityLimit">
+				        </div>
+				        <script>kendo.bind($('#query-formb'), viewModelb);</script>
+				        <div class="k-query-detail" id="query-form2b">
+				            <div class="rows">
+				             <input  id="enableFlagComboBoxb" placeholder="<@spring.message 'samplescheme.enableflag'/>" style="width:150px;" data-bind="value:model.enableFlag" >
+				            </div>
+				        </div>
+				        <script>kendo.bind($('#query-form2b'), viewModelb);</script>
+				    </div>
+				    <div style="clear:both">
+				        <div id="gridb"></div>
+				    </div>
+				</div>
+				<script type="text/javascript">
+	$("#enableFlagComboBoxb").kendoComboBox({
+	    dataTextField: "meaning",
+	    dataValueField: "value",
+	    valuePrimitive: true,
+	    dataSource: yesNo
+	});
+	$("#samplePlanTypeComboBoxb").kendoComboBox({
+	    dataTextField: "meaning",
+	    dataValueField: "value",
+	    valuePrimitive: true,
+	    dataSource: hqmIqcSamplePlanType
+	});
+	
+	$("#sampleSizeCodeLetterComboBoxb").kendoComboBox({
+	    dataTextField: "meaning",
+	    dataValueField: "value",
+	    valuePrimitive: true,
+	    dataSource: hqmIqcSampleSizeCodeLevel
+	});
+	$("#acceptanceQualityLimitComboBoxb").kendoComboBox({
+	    dataTextField: "meaning",
+	    dataValueField: "value",
+	    valuePrimitive: true,
+	    dataSource: hqmIqcAql
+	});
+	$('#queryPanelb').kendoQueryPanel({
+	    queryFunction: function () {
+	    	viewModelb.query();
+	    },
+	    resetFunction: function () {
+	    	viewModelb.reset();
+	    }
+	});
+	Hap.initEnterQuery('#query-formb', viewModelb.query);
+    dataSourceb = new kendo.data.DataSource({
+        transport: {
+            read: {
+                url: BaseUrl + "/hqm/sample/scheme/query",
+                type: "POST",
+                dataType: "json"
+            },
+            update: {
+                url: BaseUrl + "/hqm/sample/scheme/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            destroy: {
+                url: BaseUrl + "/hqm/sample/scheme/remove",
+                type: "POST",
+                contentType: "application/json"
+            },
+            create: {
+                url: BaseUrl + "/hqm/sample/scheme/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            parameterMap: function (options, type) {
+                if (type !== "read" && options.models) {
+                    var datas = Hap.prepareSubmitParameter(options, type);
+                    $.each(datas,function(i,o){
+                    	o.sampleProcedureType="1";
+                    });
+                    return kendo.stringify(datas);
+                } else if (type === "read") {
+                	viewModelb.model.sampleProcedureType="1";
+                    return Hap.prepareQueryParameter(viewModelb.model.toJSON(), options)
+                }
+            }
+        },
+        batch: true,
+        serverPaging: true,
+        pageSize: 20,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+                id: "schemeId",
+                fields: {
+                	sampleSize: {
+                        type: 'number',
+                        format: "{0:0}",
+                        defaultValue: 0,
+                        validation: {
+                            min: -1,
+                            required: true,
+                            NoValidation:function(input){
+                                if (input.is("[name='sampleSize']") && input.val() != "") {
+                                   if((input.val())%1 !== 0){
+                                     input.attr("data-NoValidation-msg", "请输入整数");
+                                        return false;
+                                    }
+                                }
+                                return true;
+                           },
+                            required: {message: "抽样数量为必输项"},
+                        },
+                    },
+                    attribute1:{
+                    	type: 'number',
+                        format: "{0:0}",
+                        defaultValue: 0,
+                    },
+                    attribute2:{
+                    	type: 'number',
+                        format: "{0:0}",
+                        defaultValue: 0,
+                    },
+                    sampleProcedureType:{
+                    	defaultValue: "1",
+                    },
+                    acValue: {
+                        type: 'number',
+                        format: "{0:0}",
+                        defaultValue: 0,
+                        validation: {
+                        	min: 0,
+                            required: true,
+                            required: {message: "AC值为必输项"},
+                        },
+                    },
+                    reValue: {
+                        type: 'number',
+                        format: "{0:0}",
+                        defaultValue: 0,
+                        validation: {
+                            min: 0,
+                            required: true,
+                            required: {message: "RE值为必输项"},
+                        },
+                    },
+                    enableFlag:{
+                    	type:"boolean",
+                    	checkedValue:"Y",
+                    	uncheckedValue:"N",
+                    }
+                },
+                editable:function(column){
+                	if(column=='sampleProcedureType'){
+                		return false;
+                	}
+                	if(column=='samplePlanType'||column=='sampleSizeCodeLetter'){
+                		if(ifNotNull(this.id) || !this.isNew()){
+                			return false;
+                		}
+                		return true;
+                	}
+                	return true;
+                }
+            }
+        }
+    });
+
+    var gridb = $("#gridb").kendoGrid({
+        dataSource: dataSourceb,
+        resizable: true,
+        autoBind: false,
+        scrollable: true,
+        navigatable: false,
+        selectable: 'multiple, rowbox',
+        dataBound: function () {
+        	Hap.autoResizeGrid('#gridb');
+            if (parent.autoResizeIframe) {
+                parent.autoResizeIframe('${RequestParameters.functionCode!}')
+            }
+        },
+        pageable: {
+            pageSizes: [5, 10, 20, 50],
+            refresh: true,
+            buttonCount: 5
+        },
+        columns: [
+                    {
+                field: "sampleProcedureType",
+                title: '<@spring.message "samplescheme.sampleproceduretype"/>',
+                width: 120,
+                template: function (dataItem) {
+                    var v = dataItem.sampleProcedureType ? dataItem.sampleProcedureType : "";
+                    $.each(hqmIqcSampleStandardType, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return v;
+                        }
+                    });
+                    return v;
+                },
+                editor: function (container, options) {
+                    $('<input name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            dataTextField: "meaning",
+                            dataValueField: "value",
+                            valuePrimitive: true,
+                            dataSource: sampleStandardType
+                        });
+                }
+            },
+            {
+                field: "samplePlanType",
+                title: '<@spring.message "samplescheme.sampleplantype"/>',
+                width: 120,
+                hidden: true,
+                template: function (dataItem) {
+                    var v = dataItem.samplePlanType ? dataItem.samplePlanType : "";
+                    $.each(hqmIqcSamplePlanType, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return v;
+                        }
+                    });
+                    return v;
+                },
+                editor: function (container, options) {
+                    $('<input name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            dataTextField: "meaning",
+                            dataValueField: "value",
+                            valuePrimitive: true,
+                            dataSource: hqmIqcSamplePlanType
+                        });
+                },
+                attributes: {style: "text-align:center"},
+                headerAttributes: {style: "text-align:center"}
+            },
+            {
+                field: "attribute1",
+                title: '<@spring.message "hqm.qc.upperlimit"/>',
+                width: 80,
+                
+            },
+            {
+                field: "attribute2",
+                title: '<@spring.message "hqm.qc.lowerlimit"/>',
+                width: 80,
+                
+            },
+                    {
+                field: "acceptanceQualityLimit",
+                title: '<@spring.message "samplescheme.acceptancequalitylimit"/>',//
+                width: 120,
+                template: function (dataItem) {
+                    var v = dataItem.acceptanceQualityLimit ? dataItem.acceptanceQualityLimit : "";
+                    $.each(hqmIqcAql, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return v;
+                        }
+                    });
+                    return v;
+                },
+                editor: function (container, options) {
+                    $('<input name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            dataTextField: "meaning",
+                            dataValueField: "value",
+                            valuePrimitive: true,
+                            dataSource: hqmIqcAql
+                        });
+                }
+            },
+                    {
+                field: "sampleSize",
+                title: '<@spring.message "samplescheme.samplesize"/>',
+                width: 80,
+                template:function(item){
+                	if(item.sampleSize=="-1"){
+                		return "全检";
+                	}else{
+                		return item.sampleSize;
+                	}
+                }
+            },
+                    {
+                field: "enableFlag",
+                title: '<@spring.message "samplescheme.enableflag"/>',
+                width: 80,
+                attributes: {style: "text-align:center"},
+                headerAttributes: {style: "text-align:center"},
+                template: function (dataItem) {
+                    var v = dataItem.enableFlag ? dataItem.enableFlag : "";
+                    $.each(yesNo, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return v;
+                        }
+                    });
+                    return v;
+                },
+                editor: function (container, options) {
+                    $('<input name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            dataTextField: "meaning",
+                            dataValueField: "value",
+                            valuePrimitive: true,
+                            dataSource: yesNo
+                        });
+                }
+            },
+                    
+        ],
+        editable: true
+    }).data('kendoGrid');
+    Hap.autoResizeGrid('#gridb');
+</script>
+			</div>
+		</div>
+	</div>
+<script>
+$(function(){
+	if(tab == 3){
+		$("#tab1").hide();
+		$("#tab2").hide();
+		gridc.dataSource.fetch();
+	}else if (tab == 12){
+		$('#tab1 a').tab('show');
+		$("#tab3").hide();
+		grid.dataSource.fetch();
+	}else{
+		gridc.dataSource.fetch();
+	}
+});
+</script>
+</body>
+</html>

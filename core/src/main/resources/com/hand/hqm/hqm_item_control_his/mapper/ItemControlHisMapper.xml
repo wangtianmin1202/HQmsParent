@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_item_control_his.mapper.ItemControlHisMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_item_control_his.dto.ItemControlHis">
+        <result column="EVENT_ID" property="eventId" jdbcType="DECIMAL" />
+        <result column="EVENT_BY" property="eventBy" jdbcType="DECIMAL" />
+        <result column="EVENT_TIME" property="eventTime" jdbcType="DATE" />
+        <result column="PLANT_ID" property="plantId" jdbcType="DECIMAL" />
+        <result column="ITEM_ID" property="itemId" jdbcType="DECIMAL" />
+        <result column="RECHECK_CYCLE" property="recheckCycle" jdbcType="DECIMAL" />
+        <result column="CHECK_PLACE" property="checkPlace" jdbcType="VARCHAR" />
+    </resultMap>
+
+
+</mapper>

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_item_type_tests.mapper.ItemTypeTestsMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_item_type_tests.dto.ItemTypeTests">
+        <result column="KID" property="kid" jdbcType="DECIMAL" />
+        <result column="PLANT_ID" property="plantId" jdbcType="DECIMAL" />
+        <result column="TEST_TYPE" property="testType" jdbcType="VARCHAR" />
+        <result column="ITEM_ID" property="itemId" jdbcType="DECIMAL" />
+        <result column="CATEGORY_ID" property="categoryId" jdbcType="DECIMAL" />
+        <result column="TRIGGER_NUM" property="triggerNum" jdbcType="DECIMAL" />
+        <result column="TYPE_CHANGE_TIME" property="typeChangeTime" jdbcType="DECIMAL" />
+        <result column="ENABLE_FLAG" property="enableFlag" jdbcType="VARCHAR" />
+        <result column="TOTAL_QTY" property="totalQty" jdbcType="DECIMAL" />
+        <result column="LAST_TIME" property="lastTime" jdbcType="DATE" />
+        <result column="PLANT_CODE" property="plantCode" jdbcType="VARCHAR" />
+        <result column="ITEM_CODE" property="itemCode" jdbcType="VARCHAR" />
+        <result column="ITEM_DESCRIPTIONS" property="itemDescriptions" jdbcType="VARCHAR" />
+        <result column="CATEGORY_CODE" property="categoryCode" jdbcType="VARCHAR" />
+    </resultMap>
+<!-- 基础查询 -->
+<select id="reSelect" resultMap="BaseResultMap" parameterType="com.hand.hqm.hqm_item_type_tests.dto.ItemTypeTests">
+SELECT t.*,
+       hp.plant_code,
+       hi.item_code,
+       hi.descriptions AS item_descriptions,
+       hic.category_code
+  FROM hqm_item_type_tests t
+  JOIN hcm_plant hp
+    ON t.plant_id = hp.plant_id
+  LEFT JOIN hcm_item hi
+    ON t.plant_id = hi.plant_id
+   AND t.item_id = hi.item_id
+  LEFT JOIN hcm_item_category hic
+    ON t.category_id = hic.category_id
+ WHERE 1 = 1
+<if test="itemId != null">
+AND t.item_id = #{itemId}
+</if>
+<if test="plantId != null">
+AND t.plant_id = #{plantId}
+</if>
+<if test="categoryId != null">
+AND t.category_id = #{categoryId}
+</if>
+<if test="testType != null">
+AND t.test_type = #{testType}
+</if>
+<if test="itemType != null">
+AND hi.item_type = #{itemType}
+</if>
+</select>
+
+</mapper>

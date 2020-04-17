@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.npi.npi_technology.mapper.ComposeProductMaterielAttrMapper">
+    <resultMap id="BaseResultMap" type="com.hand.npi.npi_technology.dto.ComposeProductMaterielAttr">
+        <result column="ASS_ITEM_ATTR_REF_ID" property="assItemAttrRefId" jdbcType="DECIMAL" />
+        <result column="ASS_MAT_REF_ID" property="assMatRefId" jdbcType="DECIMAL" />
+        <result column="MAT_ATTR_ID" property="matAttrId" jdbcType="DECIMAL" />
+    </resultMap>
+
+
+</mapper>

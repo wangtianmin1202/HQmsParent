@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_scrapped_detail_after.mapper.ScrappedDetailAfterMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_scrapped_detail_after.dto.ScrappedDetailAfter">
+        <result column="SCRAPPED_LINE_ID" property="scrappedLineId" jdbcType="DECIMAL" />
+        <result column="SCRAPPED_ID" property="scrappedId" jdbcType="DECIMAL" />
+        <result column="SAMPLE_ID" property="sampleId" jdbcType="DECIMAL" />
+        <result column="REASON" property="reason" jdbcType="VARCHAR" />
+        
+        <result column="SAMPLE_MODEL" property="sampleModel" jdbcType="VARCHAR" />
+        <result column="ITEM_CODE" property="itemCode" jdbcType="VARCHAR" />
+        <result column="SEALING_SAMPLE_STATUS" property="sealingSampleStatus" jdbcType="VARCHAR" />
+        <result column="SAMPLE_GIVE_DATE" property="sampleGiveDate" jdbcType="DATE" />
+        <result column="CREATED_NAME" property="createdName" jdbcType="VARCHAR" />
+        <result column="CREATION_DATE_COLUMN" property="creationDateColumn" jdbcType="DATE" />
+        <result column="DOCUMENT_STATUS" property="documentStatus" jdbcType="VARCHAR" />
+    </resultMap>
+
+<select id="reSelect" resultMap="BaseResultMap" parameterType="com.hand.hqm.hqm_scrapped_detail_after.dto.ScrappedDetailAfter">
+SELECT t.*,
+       hsa.sample_model,
+       
+       hsa.sealing_sample_status,
+       hsa.sample_give_date,
+       he.name AS created_name,
+       hss.creation_date AS creation_date_column,
+       hss.document_status
+  FROM hqm_scrapped_detail t, hqm_sample_account hsa, hqm_sample_scrapped hss
+  JOIN sys_user su
+    ON hss.created_by = su.user_id
+  JOIN hr_employee he
+    ON su.employee_id = he.employee_id
+ WHERE t.sample_id = hsa.sample_id
+   AND t.scrapped_id = hss.scrapped_id
+   <if test="scrappedId != null">
+   AND t.scrapped_id = #{scrappedId}
+   </if>
+   <if test="sampleId != null">
+   AND t.sample_id = #{sampleId}
+   </if>
+   ORDER BY t.creation_date DESC
+</select>
+</mapper>

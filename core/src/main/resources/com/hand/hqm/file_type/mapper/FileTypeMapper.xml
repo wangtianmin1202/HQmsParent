@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.file_type.mapper.FileTypeMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.file_type.dto.FileType">
+        <result column="FILE_TYPE_ID" property="fileTypeId" jdbcType="DECIMAL" />
+        <result column="FILE_TYPE_NAME" property="fileTypeName" jdbcType="VARCHAR" />
+        <result column="FILE_TYPE_CODE" property="fileTypeCode" jdbcType="VARCHAR" />
+        <result column="OWNER" property="owner" jdbcType="VARCHAR" />
+        <result column="FILE_URL" property="fileUrl" jdbcType="VARCHAR" />
+        <result column="IS_AUTO_APPROVAL" property="isAutoApproval" jdbcType="VARCHAR" />
+        <result column="CALCULATION_RULE" property="calculationRule" jdbcType="VARCHAR" />
+        <result column="APPLICANT" property="applicant" jdbcType="DECIMAL" />
+        <result column="APPROVER_ONE" property="approverOne" jdbcType="DECIMAL" />
+        <result column="APPROVER_TWO" property="approverTwo" jdbcType="DECIMAL" />
+        <result column="APPROVER_THREE" property="approverThree" jdbcType="DECIMAL" />
+        <result column="REMARK" property="remark" jdbcType="VARCHAR" />
+        <result column="approver_one_name" property="approverOneName" jdbcType="VARCHAR" />
+        <result column="approver_two_name" property="approverTwoName" jdbcType="VARCHAR" />
+        <result column="approver_three_name" property="approverThreeName" jdbcType="VARCHAR" />
+    </resultMap>
+
+	<select id="queryByCondition" resultMap="BaseResultMap" parameterType="com.hand.hqm.file_type.dto.FileType">
+		select 
+			ft.*,
+			he1.name as approver_one_name,
+			he2.name as approver_two_name,
+			he3.name as approver_three_name
+		from file_type ft
+		left join hr_employee he1 on he1.employee_id = ft.APPROVER_ONE
+		left join hr_employee he2 on he2.employee_id = ft.APPROVER_TWO
+		left join hr_employee he3 on he3.employee_id = ft.APPROVER_THREE
+		<where>
+			<if test="fileTypeId != null and fileTypeId != ''">
+				and ft.FILE_TYPE_ID = #{fileTypeId}
+			</if>
+			<if test="fileTypeName != null and fileTypeName != ''">
+				and ft.FILE_TYPE_NAME = #{fileTypeName}
+			</if>
+			<if test="fileTypeCode != null and fileTypeCode != ''">
+				and ft.FILE_TYPE_CODE = #{fileTypeCode}
+			</if>
+		</where>
+		order by ft.FILE_TYPE_ID
+	</select>
+
+	<select id="queryFileTypeName" parameterType="string" resultType="com.hand.wfl.util.DropDownListDto">
+		select 
+			ft.FILE_TYPE_ID as value,
+			ft.FILE_TYPE_NAME as text
+		from file_type ft
+		<where>
+			<if test="fileTypeName != null and fileTypeName != ''">
+				and ft.FILE_TYPE_NAME = #{fileTypeName}
+			</if>
+		</where>
+		order by ft.FILE_TYPE_ID
+	</select>
+</mapper>

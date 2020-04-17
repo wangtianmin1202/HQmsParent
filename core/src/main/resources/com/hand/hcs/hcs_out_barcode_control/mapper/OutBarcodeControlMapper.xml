@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hcs.hcs_out_barcode_control.mapper.OutBarcodeControlMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hcs.hcs_out_barcode_control.dto.OutBarcodeControl">
+        <result column="OBARCODE_ID" property="obarcodeId" jdbcType="DECIMAL" />
+        <result column="SUPPLIER_ID" property="supplierId" jdbcType="DECIMAL" />
+        <result column="SUPPLIERS_SITE_ID" property="suppliersSiteId" jdbcType="DECIMAL" />
+        <result column="TICKET_ID" property="ticketId" jdbcType="DECIMAL" />
+        <result column="TICKET_LINE_ID" property="ticketLineId" jdbcType="DECIMAL" />
+        <result column="PO_HEADER_ID" property="poHeaderId" jdbcType="DECIMAL" />
+        <result column="PO_LINE_ID" property="poLineId" jdbcType="DECIMAL" />
+        <result column="LINE_LOCATION_ID" property="lineLocationId" jdbcType="DECIMAL" />
+        <result column="REFUND_ORDER_ID" property="refundOrderId" jdbcType="DECIMAL" />
+        <result column="OBARCODE_CONTROL_ID" property="obarcodeControlId" jdbcType="DECIMAL" />
+    </resultMap>
+
+
+</mapper>

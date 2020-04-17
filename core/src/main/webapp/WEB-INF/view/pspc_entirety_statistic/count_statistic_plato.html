@@ -1,0 +1,871 @@
+<#include "../include/header.html">
+<script src="${base.contextPath}/resources/lib/echarts/echarts.js"></script>
+<script src="${base.contextPath}/resources/lib/utils/sys_util.js"></script>
+
+
+<style>
+    /*table{
+        table table-bordered;
+    }*/
+
+    /*th{
+      !*font-size: 40px;*!
+        color: #000000;
+    }
+
+
+    .myTitle{
+        background-color: #d9d9d9;
+    }
+
+
+    html body{
+        width: 100%;
+    }*/
+
+</style>
+
+<style type="text/css">
+    .k-dirty {
+        border-width: 0px;
+    }
+
+    td .k-checkbox {
+        margin: 8px 0px;
+    }
+
+    .data-table {
+        width: 100%;
+        text-align: center;
+        border-color: #DDDDDD;
+    }
+
+    .data-thead {
+        color: #758697;
+        background-color: #F5F5F5;
+    }
+
+    .data-table .data-thead tr {
+        height: 40px;
+    }
+
+    .data-table .data-thead th {
+        padding: 0px;
+        text-align: center;
+        font-weight: bold;
+        font-family: "Helvetica Neue", "Luxi Sans", "DejaVu Sans", Tahoma, "Microsoft Yahei", "Hiragino Sans GB", sans-serif;
+        font-size: 12px;
+    }
+
+    .data-table .data-thead th div {
+        width: 100%;
+        height: 100%;
+        padding: 10px;
+        position: relative;
+        background-color: #F5F5F5;
+    }
+
+    .data-tbody {
+        font-weight: 100;
+        color: #758697;
+        font-family: "Helvetica Neue", "Luxi Sans", "DejaVu Sans", Tahoma, "Microsoft Yahei", "Hiragino Sans GB", sans-serif;
+        font-size: 12px;
+    }
+
+    .data-tbody tr{
+        height: 35px;
+    }
+
+    .data-tbody td{
+        padding: 5px 10px;
+    }
+</style>
+
+
+
+<script type="text/javascript">
+
+    var exportThead ;
+    var exportTbody ;
+
+
+    var viewModel = Hap.createGridViewModel("#grid");
+
+    function ifNotNull(data) {
+        if(data != null && data != "" && data != undefined){
+            return true;
+        }
+        return false;
+    }
+
+
+    function myAjax(url,data){
+        var resultData;
+        $.ajax({
+            type:"POST",
+            contentType:"application/json;charset=UTF-8",
+            //contentType用于整个对象的传参，控制层以@RequestBody Dto dto获取
+            url:_basePath+url,
+            data:data,
+            dataType:'json',
+            async:false,
+            success:function (result) {
+                if(result.success){
+                    resultData = result;
+                    return resultData;
+                }else{
+                    return kendo.ui.showErrorDialog({message:'ERROR:'+result.message});
+                }
+            }
+        })
+        return resultData;
+    }
+
+
+    //查询
+    viewModel.query = function () {
+
+        //初始化全局变量，用于导出
+        exportThead  = '';
+        exportTbody  = '';
+
+        if (!ifNotNull(viewModel.model.entityId)){
+            return kendo.ui.showErrorDialog({message:'ERROR:实体控制图不能为空'});
+        }
+
+        createView();
+    }
+
+
+    //重置
+    viewModel.resetForm = function() {
+        var formData = viewModel.model.toJSON();
+        for ( var k in formData) {
+            viewModel.model.set(k, null);
+        }
+    }
+
+
+    //导出
+    viewModel.exportExcel = function () {
+        var $inputToken=$('<input>').attr({name:"${_csrf.parameterName}",value:"${_csrf.token}",type:"hidden"});
+
+        var imgURL = myChart.getDataURL({
+            pixelRatio:1,
+            type:"png",
+            backgroundColor:"white"
+        });
+
+
+
+        /*下面这几个是查询条件*/
+
+        var ceGroupId = null;
+        var ceParameterId = null;
+        var attachmentGroupId = null;
+        var entityId = null;
+        var chartId = null;
+        var releaseTimeBegin = null;
+        var queryRelaeseTimeEnd = null;
+
+
+
+
+
+        if (ifNotNull(viewModel.model.ceGroupId)){
+            ceGroupId = viewModel.model.ceGroupId;
+        }
+        if (ifNotNull(viewModel.model.ceParameterId)){
+            ceParameterId = viewModel.model.ceParameterId;
+        }
+        if (ifNotNull(viewModel.model.attachmentGroupId)){
+            attachmentGroupId = viewModel.model.attachmentGroupId;
+        }
+        if (ifNotNull(viewModel.model.entityId)){
+            entityId = viewModel.model.entityId;
+        }
+        if (ifNotNull(viewModel.model.chartId)){
+            chartId = viewModel.model.chartId;
+        }
+        if (ifNotNull(viewModel.model.releaseTimeBegin)){
+            releaseTimeBegin = viewModel.model.releaseTimeBegin;
+        }
+        if (ifNotNull(viewModel.model.queryRelaeseTimeEnd)){
+            queryRelaeseTimeEnd = viewModel.model.queryRelaeseTimeEnd;
+        }
+
+
+        /*将这些查询条件赋值给对应变量*/
+        var ceGroupId =$('<input>').attr({name:"ceGroupId",value:ceGroupId,type:"hidden"});
+        var ceParameterId =$('<input>').attr({name:"ceParameterId",value:ceParameterId,type:"hidden"});
+        var attachmentGroupId =$('<input>').attr({name:"attachmentGroupId",value:attachmentGroupId,type:"hidden"});
+        var entityId =$('<input>').attr({name:"entityId",value:entityId,type:"hidden"});
+        var chartId =$('<input>').attr({name:"chartId",value:chartId,type:"hidden"});
+        var releaseTimeBegin =$('<input>').attr({name:"releaseTimeBegin",value:releaseTimeBegin,type:"hidden"});
+        var queryRelaeseTimeEnd =$('<input>').attr({name:"queryRelaeseTimeEnd",value:queryRelaeseTimeEnd,type:"hidden"});
+
+        var img=$('<input>').attr({name:"img",value:imgURL,type:"hidden"});
+
+        var $form = $("<form>");
+
+        $form.attr({
+            target: 'id_iframe',//注意这个对应的是下面的div   id=iframe的那个框
+            method: 'post',
+            action: '${base.contextPath}/pspc/count/statistic/exportExcel/ui'
+        });
+
+
+        $form.append($inputToken);
+        $form.append(ceGroupId);
+        $form.append(ceParameterId);
+        $form.append(attachmentGroupId);
+        $form.append(entityId);
+        $form.append(chartId);
+        $form.append(releaseTimeBegin);
+        $form.append(queryRelaeseTimeEnd);
+        $form.append(img);
+
+
+        $form.id='smbForm';
+        $("#batchDiv").empty().append($form);//这个对应的是div    batchDiv
+        $($form).submit();
+        $("#batchDiv").empty();
+
+    }
+
+
+    //导出exportExcel
+    function exportExcel() {
+        if(exportThead == null || exportThead === '' || exportTbody == null || exportTbody === '') {
+            Hap.showToast({
+                type:'error',  //1.success 2.error
+                message: '请先查询再导出',
+                hideDuration:2000
+            });
+            return;
+        }
+
+        var url = '/pspc/entity/export/excel/single/graph';
+
+        //拼接其他参数
+        var otherParams = [];
+        otherParams.push({paramName:'thead', paramValue:exportThead});
+        otherParams.push({paramName:'tbody', paramValue:exportTbody});
+        otherParams.push({paramName:'title', paramValue:'柏拉图'});
+        otherParams.push({paramName:'exportFileName', paramValue:'plato'});
+        otherParams.push({paramName:'rowEnd', paramValue:23});
+        otherParams.push({paramName:'colEnd', paramValue:13});
+        otherParams.push({paramName:'${_csrf.parameterName}', paramValue:'${_csrf.token}'});
+        otherParams.push({paramName:'${_csrf.parameterName}', paramValue:'${_csrf.token}'});
+        exportExcelWithEcharts(myChart, url, otherParams);
+    }
+
+
+
+    // 重置 实体控制图
+    function resetLov() {
+        $('#entityId').data('kendoLov').value(null);
+        $('#entityId').data("kendoLov").text("");
+    }
+</script>
+<body>
+
+<div id="batchDiv" style="display: none">
+</div>
+<iframe id="id_iframe" name="id_iframe" style="display:none;width: 0px;height: 0px"></iframe>
+
+
+<div id="page-content">
+
+    <div class="pull-right" id="toolbar-btn" style="padding-bottom:10px;">
+        <!--<span class="btn btn-primary k-grid-excel" style="float:left;margin-right:5px;" data-bind="click:exportExcel">-->
+        <span class="btn btn-primary k-grid-excel" style="float:left;margin-right:5px;" onclick="exportExcel()">
+            <i class="fa fa-file-excel-o" style="margin-right:3px;"></i><@spring.message "hap.exportexcel"/>
+        </span>
+    </div>
+
+    <script>kendo.bind($('#toolbar-btn'), viewModel);</script>
+
+
+    <div id="queryPanel" class="pull-right"  style="margin-right:5px;padding-bottom:10px;">
+        <div class="k-query-simple" id="query-form">
+            <input type="text" id="ceGroupId" style="width:150px;margin-right:5px;" placeholder='<@spring.message "pspcparetochart.cegroup"/>'
+                   data-bind="value:model.ceGroupId">
+            <script>
+                $("#ceGroupId").kendoLov($.extend(<@lov"PSPC_PSPC_CE_GROUP"/>, {
+                    textField: 'ceGroup',
+                    valueField:'ceGroupId',
+                    query:function (e) {
+                        // resetLov();
+                    },
+                    select: function () {
+                        resetLov();
+                    }
+
+                }));
+            </script>
+
+
+            <input id="ceParameterId" type="text" style="width:150px;margin-right:5px;" placeholder='<@spring.message "pspcparetochart.ceparameter"/>'
+                   data-bind="value:model.ceParameterId" >
+            <script>
+                $("#ceParameterId").kendoLov($.extend(<@lov"PSPC_PSPC_CE_PARAMETER"/>, {
+                    textField: 'ceParameter',
+                    valueField:'ceParameterId',
+                    query:function (e) {
+                        // alert(viewModel.model.ceGroupId);
+                        e.param['ceGroupId'] = viewModel.model.ceGroupId;
+                    },
+                    select: function () {
+                        resetLov();
+                    }
+                }));
+            </script>
+
+            <!---->
+            <input id="attachmentGroupId" type="text"  style="width:150px;margin-right:5px;" placeholder='<@spring.message "pspcparetochart.attachmentgroup"/>'
+                   data-bind="value:model.attachmentGroupId" >
+            <script>
+                $("#attachmentGroupId").kendoLov($.extend(<@lov"PSPC_PSPC_ATTACHMENT_GROUP_PRO"/>, {
+                    textField: 'attachmentGroupDescription',
+                    valueField:'attachmentGroupId',
+
+                    query:function (e) {
+                        // alert(viewModel.model.ceGroupId);
+                        // e.param['ceGroupId'] = viewModel.model.ceGroupId;
+                        e.param.ceGroupId = viewModel.model.ceGroupId;
+                    },
+
+                    select: function () {
+                        resetLov();
+                    }
+                }));
+            </script>
+
+            <!--PSPC_PSPC_ENTITY-->
+            <input id="entityId" required type="text" style="width:150px;margin-right:5px;" placeholder='<@spring.message "pspcparetochart.entitycode"/>'
+                   data-bind="value:model.entityId">
+            <script>
+                // $("#entityId").kendoLov($.extend(<@lov"PSPC_PSPC_ENTITY_COUNT"/>, {
+                //     textField: 'entityCode',
+                //     valueField:'entityId',
+                //     query:function (e) {
+                //
+                //         e.param['ceGroupId'] = viewModel.model.ceGroupId;
+                //         e.param['ceParameterId'] = viewModel.model.ceParameterId;
+                //         e.param['attachmentGroupId'] = viewModel.model.attachmentGroupId;
+                //         e.param['chartId'] = viewModel.model.chartId;
+                //     },
+                //     change:function (e) {
+                //         // console.info(e);
+                //     }
+                // }));
+
+                var pspcEntity = $("#entityId").kendoLov($.extend(<@lov "PSPC_PSPC_ENTITY"/>,{
+                    textField: 'entityCode',
+                    valueField:'entityId',
+                    select:function (e) {
+                        // viewModel.chartId = e.item.chartId;
+                    },
+                    query:function (e) {
+                        e.param.ceGroupId = viewModel.model.ceGroupId;
+                        e.param.attachmentGroupId = viewModel.model.attachmentGroupId;
+                        e.param.ceParameterId = viewModel.model.ceParameterId;
+                        e.param.chartId = viewModel.model.chartId;
+                    }
+                })).data("kendoLov");
+            </script>
+
+
+
+            <input id="chartId" type="text"  style="width:150px;margin-right:5px;" placeholder='<@spring.message "pspcparetochart.chartcode"/>'
+                   data-bind="value:model.chartId" >
+
+            <script>
+                $("#chartId").kendoLov($.extend(<@lov"PSPC_PSPC_CHART"/>, {
+                    textField: 'description',
+                    valueField:'chartId',
+                    query:function (e) {
+                    },
+                    change:function (e) {
+                        // console.info(e);
+                    },
+                    select: function () {
+                        resetLov();
+                    }
+                }));
+            </script>
+
+
+        </div>
+        <script>kendo.bind($('#query-form'), viewModel);</script>
+        <!--更多查询-->
+        <div class="k-query-detail" id="query-form2">
+            <!--第一行-->
+            <div class="rows">
+
+                <input style="width:200px;" id="releaseTimeBegin" data-bind="value:model.releaseTimeBegin"
+                       placeholder='<@spring.message "pspcparetochart.recordingtimefrom"/>'/>
+
+                <input style="width:200px;" id="releaseTimeEnd" data-bind="value:model.queryRelaeseTimeEnd"
+                       placeholder='<@spring.message "pspcparetochart.recordingtimeto"/>'/>
+                 
+                <script>
+                    //设置下发时间选择范围
+                    function startChange3() {
+                        var startDate = start3.value(),
+                            endDate = end3.value();
+
+                        if (startDate) {
+                            startDate = new Date(startDate);
+                            startDate.setDate(startDate.getDate());
+                            end3.min(startDate);
+                        } else if (endDate) {
+                            start3.max(new Date(endDate));
+                        } else {
+                            endDate = new Date();
+                            start3.max(endDate);
+                            end3.min(endDate);
+                        }
+                    }
+
+                    function endChange3() {
+                        var endDate = end3.value(),
+                            startDate = start3.value();
+
+                        if (endDate) {
+                            endDate = new Date(endDate);
+                            endDate.setDate(endDate.getDate());
+                            start3.max(endDate);
+                        } else if (startDate) {
+                            end3.min(new Date(startDate));
+                        } else {
+                            endDate = new Date();
+                            start3.max(endDate);
+                            end3.min(endDate);
+                        }
+                    }
+                    var start3 = $("#releaseTimeBegin").kendoDateTimePicker({
+                        //format: "yyyy-MM-dd HH:mm:ss",
+                        format: "yyyy-MM-dd HH:mm:ss",
+                        interval: 15,//时间下拉框的时间隔15分钟
+                        dataInput:true,
+                        change: startChange3
+                    }).data("kendoDateTimePicker");
+                    var end3 = $("#releaseTimeEnd").kendoDateTimePicker({
+                        format: "yyyy-MM-dd HH:mm:ss",
+                        interval: 15,//时间下拉框的时间隔15分钟
+                        dataInput:true,
+                        change: endChange3
+                    }).data("kendoDateTimePicker");
+                    start3.max(end3.value());
+                    end3.min(start3.value());
+                </script>
+
+
+            </div>
+            <!--第二行-->
+            <div class="rows" style="margin-top: 10px;">
+            </div>
+        </div>
+        <script>kendo.bind($('#query-form2'), viewModel);</script>
+    </div>
+    <script>
+        $('#queryPanel').kendoQueryPanel({
+            queryFunction:function(){
+                viewModel.query();
+            },
+            resetFunction:function(){
+                viewModel.resetForm();//重写reset方法
+            }
+        })
+    </script>
+
+
+    <div id="myEchars" style="width: 1400px;height: 400px;margin-left: 8%;">
+
+    </div>
+    <!--<div style="clear:both; margin-top: 36px">
+        <div id="grid" class="row pre-scrollable" style="width:99%; margin-left: 15px;margin-right: 15px">
+            <table id="myTable" class="table table-bordered " style="width: 100%;" >
+
+
+
+
+
+
+            </table>
+        </div>
+    </div>-->
+
+
+
+    <div style="margin-top: 45px; width: 100%">
+        <div id="dataTableDiv" style="height: 500px; margin-left: 5%; overflow-y: scroll;">
+            <table id="dataTable" border="1" cellpadding="0px" cellspacing="0px" class="data-table">
+                <thead id="dataThead" class="data-thead"></thead>
+                <tbody id="dataTbody" class="data-tbody"></tbody>
+            </table>
+        </div>
+    </div>
+
+
+</div>
+
+<script type="text/javascript">
+    Hap.initEnterQuery('#query-form', viewModel.query);
+    //查询，。生成页面
+    function createView() {
+        var result = myAjax('/pspc/count/statistic/query/report',JSON.stringify(viewModel.model));
+        var resultList = result.rows;
+        // console.info(resultList);
+
+        //region  生成表格
+
+        //region生成标题头
+
+        var htmlHead = '<tr>\n' +
+            '                    <th style="text-align: center;color: #000000"><div>序号</div></th>\n' +
+            '                    <th style="text-align: center;color: #000000"><div>样本时间</div></th>\n' +
+            '                    <th style="text-align: center;color: #000000"><div>抽检数</div></th>\n' +
+            '                    <th style="text-align: center;color: #000000"><div>不合格数</div></th>';
+        exportThead += "样本时间,";
+        exportThead += "抽检数,";
+        exportThead += "不合格数,";
+        for (var i = 0; i < resultList.length; i++) {
+            var obj = resultList[i];
+            //动态列1
+            var listWc1 = obj.listWc1;
+            //动态列2
+            var listWc2 = obj.listWc2;
+            if (i == 0){
+
+                //处理动态列1
+                for (var j = 0; j < listWc1.length; j+=2) {
+                    htmlHead+='<th style="text-align: center;color: #000000"><div>'+listWc1[j]+'</div></th>';
+                    exportThead += listWc1[j] + ","
+                }
+                //处理动态列2
+                for (var j = 0; j < listWc2.length; j+=2) {
+                    htmlHead+='<th style="text-align: center;color: #000000"><div>'+listWc2[j]+'</div></th>';
+                    exportThead += listWc2[j] + ","
+                }
+                exportThead += "状态,";
+                exportThead += "不合格率%";
+                htmlHead+='<th style="text-align: center;color: #000000"><div>状态</div></th>'
+                htmlHead+='<th style="text-align: center;color: #000000"><div>不合格率%</div></th>'
+                htmlHead+='</tr>';
+            }
+        }
+        //endregion
+
+        //region判断表格是否超过界面宽度，如果没超过重新设置宽度
+        if($('#dataThead').width() < $('#dataThead').parent().parent().parent().width()) {
+            $('#dataTable').parent().css({'width': '90%'});
+
+            htmlHead = '<tr>\n' +
+                '                    <th style="text-align: center;color: #000000"><div>序号</div></th>\n' +
+                '                    <th style="text-align: center;color: #000000"><div>样本时间</div></th>\n' +
+                '                    <th style="text-align: center;color: #000000"><div>抽检数</div></th>\n' +
+                '                    <th style="text-align: center;color: #000000"><div>不合格数</div></th>';
+
+            for (var i = 0; i < resultList.length; i++) {
+                var obj = resultList[i];
+                var listWc1 = obj.listWc1;
+                var listWc2 = obj.listWc2;
+                if (i == 0){
+                    for (var j = 0; j < listWc1.length; j+=2) {
+                        htmlHead+='<th style="text-align: center;color: #000000"><div>'+listWc1[j]+'</div></th>';
+                    }
+                    for (var j = 0; j < listWc2.length; j+=2) {
+                        htmlHead+='<th style="text-align: center;color: #000000"><div>'+listWc2[j]+'</div></th>';
+                    }
+                    htmlHead+='<th style="text-align: center;color: #000000"><div>状态</div></th>'
+                    htmlHead+='<th style="text-align: center;color: #000000"><div>不合格率%</div></th>'
+                    htmlHead+='</tr>';
+                }
+            }
+            htmlHead += '</tr>';
+        }
+        //endregion
+
+
+
+        //region  生成体
+
+        var html = "";
+        for (var i = 0; i < resultList.length; i++) {
+            var obj = resultList[i];
+            var listWc1 = obj.listWc1;
+            var listWc2 = obj.listWc2;
+            //region生成body体
+
+            //生成body体
+            html+='<tr >\n' +
+                '                    <th style="color: #000000;text-align: center">'+(i+1)+'</th>\n' +
+                '                    <th style="color: #000000;text-align: center">'+obj.sampleTime+'</th>\n' +
+                '                    <th style="color: #000000;text-align: center">'+obj.sampleValueCount+'</th>\n' +
+                '                    <th style="color: #000000;text-align: center">'+obj.unqualifiedQuantity+'</th>';
+
+            exportTbody += ( i + 1 ) + ',';
+            exportTbody += obj.sampleTime + ',';
+            exportTbody += obj.sampleValueCount + ',';
+            exportTbody += obj.unqualifiedQuantity + ',';
+            //region动态列
+            //动态列1
+            for (var j = 0; j+1 < listWc1.length; j+=2) {
+                html+='<th style="color: #000000;text-align: center">'+listWc1[j+1]+'</th>';
+                exportTbody += listWc1[j+1] + ',';
+
+            }
+            //动态列2
+            for (var j = 0; j+1 < listWc2.length; j+=2) {
+                html+='<th style="color: #000000;text-align: center">'+listWc2[j+1]+'</th>';
+                exportTbody += listWc2[j+1] + ',';
+
+            }
+            //endregion
+
+            //region状态
+            var occStatus = obj.occStatus;
+            exportTbody += occStatus + ',';
+
+            if (occStatus == '正常' || occStatus == '已处理'){
+                html+='<th style="background-color: #339900;color: #000000;text-align: center">'+occStatus+'</th>';
+            }else {
+                html+='<th style="background-color: #ff0000;color: #000000;text-align: center">'+occStatus+'</th>';
+            }
+            //endregion
+
+            //region不合格率
+            exportTbody += obj.unqualifiedPercent + "#";
+
+            html+='<th style="color: #000000;text-align: center">'+obj.unqualifiedPercent+'</th>';
+            html+='</tr>';
+            //endregion
+            //endregion
+
+        }
+
+        //赋值table
+
+        $('#dataThead').html(htmlHead);
+        $('#dataTbody').html(html);
+        /*$("#myTable").html(html);
+        $("#myTable").attr("class" , "table table-bordered");*/
+
+        //endregion
+
+
+        //endregion
+
+        var listUnqualified = resultList[0].listUnqualified;
+
+        initCharts(listUnqualified)
+
+    }
+
+    var myChart = echarts.init(document.getElementById('myEchars'));
+
+    // initCharts();
+    function initCharts(listUnqualified) {
+
+        //region 生成图表
+        // console.info(listUnqualified);
+        var legendData = ['不良品数量','不良品率'];
+
+
+
+        // 不合格数量
+        var uqNum = [];
+        // 不合格率（累计）
+        var uqPercent = [];
+        // 不合格率(不累计)
+        var uqPercentNoAccumulation = [];
+        //x轴信息
+        var titleInfo = [];
+
+        //前三个显示蓝色，后面的全部都显示为白色
+        var colorsBar = ['#00d6ff','#00d6ff','#00d6ff','#fffdfe','#fffdfe']
+
+
+        //生成 不合格数量&& x轴信息
+        for (var i = 0; i < listUnqualified.length; i++) {
+            if (i%2 == 0){
+                // titleInfo.push(listUnqualified[i])
+            }else {
+                uqNum.push(listUnqualified[i]);
+            }
+        }
+
+        //生成 不合格率（累计） && 不合格率(不累计)
+        var sum = 0;
+        for (var i = 0; i < uqNum.length; i++) {
+            sum+= Number(uqNum[i]);
+        }
+
+        var tempPerc = 0;
+        for (var i = 0; i < uqNum.length; i++) {
+
+            //不合格率（累计）
+            var perc = (uqNum[i]/sum) * 100;
+            perc = perc.toFixed(2);
+            tempPerc =Number(tempPerc)+Number(perc) ;
+            // console.info(tempPerc);
+            if (i< uqNum.length - 1) {
+                uqPercent.push(tempPerc.toFixed(2));
+            } else {
+                uqPercent.push("100.00");
+            }
+
+            //不合格率(不累计)
+            uqPercentNoAccumulation.push(perc);
+
+        }
+
+        //生成x轴信息
+        var count = 0;
+        for (var i = 0; i < listUnqualified.length; i++) {
+            if (i%2 == 0){
+                titleInfo.push(listUnqualified[i] +" \n\n "+"("+ uqPercentNoAccumulation[count] + "%)");
+                count++;
+            }
+        }
+
+
+        var max1 = 0;
+        var max2 = 0;
+        for (var i = 0; i < uqNum.length; i++) {
+            var obj = uqNum[i];
+            if (Number(max1) < Number(obj)){
+                max1 = obj;
+            }
+        }
+
+        max1 = Math.ceil((max1 * 1.1));
+
+        option = {
+            legend: {
+                show: true,
+                data: ['不合格分类项', '累计百分比']
+            },
+            xAxis: {
+                type: 'category',
+                data: titleInfo
+            },
+            yAxis: [
+                {
+                    type: 'value',
+                    max:max1,
+                    min:0,
+
+                    splitLine:{
+                        show:false
+                    }
+                },
+                {
+                    type: 'value',
+                    max: 100,
+                    min:0,
+
+                    interval: Math.ceil(100 / 5),   //  平均分为5份
+                    axisLabel: {
+                        formatter: '{value} %'
+                    },
+                    splitLine:{
+                        show:false
+                    }
+                },
+            ],
+            series: [
+                {
+                    data: uqNum,
+                    type: 'bar',
+                    name:'不合格分类项',
+                    barMaxWidth : 60,//柱图宽度
+                    // borderColor:"#0b1014",
+                    // borderWidth: 10,
+                    itemStyle: {
+
+                        borderColor:"#00d6ff",//柱状图边框
+                        borderWidth: 1,
+
+                        color: function(params) {
+                            return colorsBar[params.dataIndex];
+                        },
+                    },
+
+                    label: {
+                        show: true,		//开启显示
+                        position: 'top',	//在上方显示
+                        textStyle: {	    //数值样式
+                            color: '#00d6ff',
+                            fontSize: 18
+                        }
+                    }
+                },
+
+                {
+                    data: uqPercent,
+                    type: 'line',
+                    yAxisIndex:1,
+                    color: '#000000',
+                    name:'累计百分比',
+                    itemStyle: {
+                        normal: {
+                            label: {
+                                show: true,		//开启显示
+                                position: 'top',	//在上方显示
+                                textStyle: {	    //数值样式
+                                    color: '#000000',
+                                    fontSize: 18
+                                }
+                            }
+                        }
+                    }
+
+                }
+            ]
+        };
+
+        myChart.setOption(option);
+
+
+        //endregion
+
+    }
+
+
+
+    //绑定table外层div滚动事件
+    $('#dataTableDiv').on('scroll', tableScrollHandle);
+
+    //表格滚动时固定表头
+    function tableScrollHandle() {
+        //获取table外层DIV的滚动值
+        var scrollTop = $('#dataTableDiv').scrollTop();
+
+        //当滚动距离大于0时设置top及相应的样式
+        if (scrollTop > 0) {
+            $('#dataThead').children('tr').children('th').children('div').css({
+                "top": (scrollTop-1) + 'px',
+                "border-bottom": "1px solid #DDDDDD",
+                "border-top": "1px solid #898989",
+                "height": "41px"
+            });
+        } else {
+            // 当滚动距离小于0时设置top及相应的样式
+            $('#dataThead').children('tr').children('th').children('div').css({
+                "top": scrollTop + 'px',
+                "border-bottom": "0px solid #DDDDDD",
+                "border-top": "0px solid #898989",
+                "height": "39px"
+            });
+        }
+    }
+
+
+
+</script>
+</body>
+</html>

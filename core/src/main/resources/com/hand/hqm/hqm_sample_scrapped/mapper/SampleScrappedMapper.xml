@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_sample_scrapped.mapper.SampleScrappedMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_sample_scrapped.dto.SampleScrapped">
+        <result column="SCRAPPED_ID" property="scrappedId" jdbcType="DECIMAL" />
+        <result column="APPLICANT" property="applicant" jdbcType="DECIMAL" />
+        <result column="APPLICANT_DATE" property="applicantDate" jdbcType="DATE" />
+        <result column="DOCUMENT_STATUS" property="documentStatus" jdbcType="VARCHAR" />
+        <result column="APPROVER" property="approver" jdbcType="DECIMAL" />
+        <result column="APPROVAL_DATE" property="approvalDate" jdbcType="DATE" />
+        <result column="APPLICANT_DOCUMENT_CODE" property="applicantDocumentCode" jdbcType="DECIMAL" />
+        
+        <result column="APPLICANT_NAME" property="applicantName" jdbcType="VARCHAR" />
+        <result column="APPROVER_NAME" property="approverName" jdbcType="VARCHAR" />
+        <result column="DOCUMENT_TYPE" property="documentType" jdbcType="VARCHAR" />
+        
+        <result column="ITEM_ID" property="itemId" jdbcType="DECIMAL" />
+        <result column="SAMPLE_GIVE_DATE_START" property="sampleGiveDateStart" jdbcType="DATE" />
+        <result column="SAMPLE_MODEL" property="sampleModel" jdbcType="VARCHAR" />       
+        <result column="SAMPLE_GIVE_DATE_END" property="sampleGiveDateEnd" jdbcType="DATE" />
+        <result column="SAMPLE_CODE" property="sampleCode" jdbcType="VARCHAR" />       
+    
+    </resultMap>
+
+
+    <select id="selectMaxNumber" resultMap="BaseResultMap" parameterType="com.hand.hqm.hqm_sample_scrapped.dto.SampleScrapped">
+select h.applicant_document_code
+ from hqm_sample_scrapped h
+ where  1=1  
+and h.applicant_document_code  LIKE concat(#{applicantDocumentCode}, '%')
+ order by h.applicant_document_code desc
+</select> 
+       
+       
+     <select id="myselect" resultMap="BaseResultMap"  parameterType="com.hand.hqm.hqm_sample_scrapped.dto.SampleScrapped">   
+       SELECT t.applicant_document_code
+			,t.approver
+			,t.created_by AS applicant
+			,hr1.name AS applicant_name
+			,t.creation_date AS applicantdate
+			,hr2.name AS approver_name
+			,t.approval_date
+			,t.scrapped_id
+			,t.document_status
+	FROM hqm_sample_scrapped t, hr_employee hr1, hr_employee hr2,hqm_scrapped_detail hcd,hqm_sample_account hsa
+ WHERE t.created_by = hr1.employee_id(+)
+	 AND t.approver = hr2.employee_id(+)
+   and t.scrapped_id= hcd.scrapped_id(+)
+   and hcd.sample_id =hsa.sample_id(+)
+	 AND t.document_type = '1'
+      <if test="applicantDocumentCode != null">
+     AND t.applicant_document_code  LIKE concat('%',concat(#{applicantDocumentCode},'%'))
+   </if>
+   
+   <if test="applicant != null">
+     AND t.created_by =#{applicant} 
+   </if>
+   
+   <if test="approver != null">
+     AND t.approver = #{approver} 
+   </if>
+   
+    <if test="documentStatus != null"> 
+     AND t.document_status = #{documentStatus}
+   </if> 
+      <if test="sampleGiveDateStart != null">
+     AND hsa.sample_give_date &gt;= #{sampleGiveDateStart} 
+   </if>
+   
+   <if test="sampleGiveDateEnd != null">
+     AND hsa.sample_give_date &lt;= #{sampleGiveDateEnd}
+   </if>   
+    <if test="itemId != null">
+     AND hsa.item_id = #{itemId}
+   </if>
+   
+   <if test="sampleModel != null">
+     AND hsa.sample_model LIKE concat('%',concat(#{sampleModel},'%'))  
+   </if>   
+    
+     </select> 
+     
+       
+     <select id="myselectforcs" resultMap="BaseResultMap"  parameterType="com.hand.hqm.hqm_sample_scrapped.dto.SampleScrapped">   
+      SELECT t.applicant_document_code
+			,t.approver
+			,t.created_by AS applicant
+			,hr1.name AS applicant_name
+			,t.creation_date AS applicantdate
+			,hr2.name AS approver_name
+			,t.approval_date
+			,t.scrapped_id
+			,t.document_status
+	FROM hqm_sample_scrapped t, hr_employee hr1, hr_employee hr2,hqm_scrapped_detail hcd,hqm_sample_account hsa
+ WHERE t.created_by = hr1.employee_id(+)
+	 AND t.approver = hr2.employee_id(+)
+   and t.scrapped_id= hcd.scrapped_id(+)
+   and hcd.sample_id =hsa.sample_id(+)
+	 AND t.document_type = '3'
+      <if test="applicantDocumentCode != null">
+     AND t.applicant_document_code  LIKE concat('%',concat(#{applicantDocumentCode},'%'))
+   </if> 
+   <if test="applicant != null">
+     AND t.created_by = #{applicant}
+   </if>
+     
+   <if test="approver != null">
+     AND t.approver =  #{approver}
+   </if>
+   
+    <if test="documentStatus != null">
+     AND t.document_status = #{documentStatus}
+   </if> 
+     <if test="sampleGiveDateStart != null">
+     AND hsa.sample_give_date &gt;= #{sampleGiveDateStart} 
+   </if>
+    
+   <if test="sampleGiveDateEnd != null">
+     AND hsa.sample_give_date &lt;= #{sampleGiveDateEnd}
+   </if>
+    <if test="itemId != null">
+     AND hsa.item_id = #{itemId}
+   </if>
+    <if test="sampleCode != null">
+     AND hsa.sample_code   LIKE concat('%',concat(#{sampleCode},'%'))
+   </if>
+   <if test="sampleModel != null">
+     AND hsa.sample_model LIKE concat('%',concat(#{sampleModel},'%'))
+   </if>           
+     </select>   
+</mapper>  

@@ -1,0 +1,218 @@
+<#include "../include/header.html">
+<script src="${base.contextPath}/common/code?ANDON_ACTION_TYPE=ANDON_ACTION_TYPE" type="text/javascript"></script>
+<script src="${base.contextPath}/common/code?SYS_YES_NO=SYS.YES_NO" type="text/javascript"></script>
+<script src="${base.contextPath}/common/code?PO_STATUS=SRM_PO_STATUS"></script>
+<script src="${base.contextPath}/common/code?PO_ORDER_TYPE=SRM_PO_TYPE"></script>
+<script src="${base.contextPath}/common/code?URGENT_STATUS=SRM_URGENT_STATUS"></script>
+<script src="${base.contextPath}/common/code?SRM_PURCHASE_GROUP=SRM_PURCHASE_GROUP"></script>
+<script src="${base.contextPath}/lib/bootstrap-3.3.7/js/bootstrap.min.js"></script>
+<script src="${base.contextPath}/lib/prints/doc_print.js" type="text/javascript" charset="UTF-8"></script>
+
+<script type="text/javascript">
+    var viewModel = Hap.createGridViewModel("#grid");
+</script>
+ <style type="text/css">	
+   .checking{
+    	position: absolute;
+		top: 0px;
+		right: 0px;
+		width: 0;
+		height: 0;
+		display: block;
+		border-top: 6px solid #fff;
+		 
+	border-left: 30px solid transparent;
+    border-right: 30px solid transparent;
+    border-bottom: 15px solid red;
+    }
+    .panel-collapse .collapse:target  .checking{
+		  border-left: 50px solid transparent;
+    border-right: 50px solid transparent;
+    border-top: 100px solid red;
+	}
+ 
+ 	.bor{
+ 		border:none;
+ 	} 
+	div[role=tooltip].k-tooltip{
+        padding: 2px;
+        background: #5c9acf;
+    }
+    .k-tooltip-content{
+        padding: 4px;
+        text-align: left;
+        background: #fff;
+        color: #666;
+    }
+    .k-callout {
+        border-bottom-color: #5c9acf;
+    }
+      #vertical {
+                    height: 380px;
+                    margin: 0 auto;
+                }
+
+                #middle-pane { color: #000; background-color: #ccc; }
+                #bottom-pane { color: #000; background-color: #aaa; }
+                #left-pane, #center-pane, #right-pane  { color: #000; background-color: #eee; }
+
+                .pane-content {
+                    padding: 0 10px;
+    }
+ .panel {
+    /* border-radius: 0; */
+    border: 1px solid #e7ecf1;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.17);
+    margin-bottom: 0;
+   a { 
+    text-decoration: none;
+    color: 	#000000;
+    outline: 0 ;
+    font-size:12px; 
+    outline: 0;
+}
+.panel-title {
+    padding: 0 20px 0 20px;
+    font-size: 12px;
+    line-height: 40px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis; 
+}
+}
+</style>
+<body> 
+<script type="text/javascript">
+function ontest(id){
+	$("#"+id).css("color","black");	
+}
+</script>
+<div id="openWindow"></div>
+<div id="page-content">
+	
+	<!-- ECR 发送给你的任务信息 -->
+	<div class="panel panel-default">
+		<div class="panel-heading">
+			<h1 class="panel-title" style="font-size:12px">
+				<a data-toggle="collapse" data-parent="#accordion"
+					href="" onclick="onMulLoad('taskFrame')"> 
+					<div class="row" style="width:100%;">
+						<div class="col-xs-10"><span>ECR 发送给你的任务信息</span></div>
+					</div>
+				</a>
+			</h1>
+		</div>
+		<div id="collapse1" class="panel-collapse collapse"> 
+			<iframe id="taskFrame" style="width:100%;frameborder=no;border:none;display:none" 
+				url="${base.contextPath}/pspc_ecr_platform/pspc_ecr_order_create.html?ecrno=1">
+			</iframe> 
+		</div>
+	</div>
+	
+	<!-- ECR 信息 -->
+	<div class="panel panel-default">
+		<div class="panel-heading">
+			<h1 class="panel-title" style="font-size:12px">
+				<a data-toggle="collapse" data-parent="#accordion"
+					href="" onclick="onMulLoad('ecrFrame')"> 
+					<div class="row" style="width:100%;">
+						<div class="col-xs-10"><span>ECR 信息</span></div>
+					</div>
+				</a>
+			</h1>
+		</div>
+		<div id="collapse2" class="panel-collapse collapse"> 
+			<iframe id="ecrFrame" style="width:100%;frameborder=no;border:none;display:none" 
+				url="${base.contextPath}/pspc_ecr_platform/pspc_ecr_order_create.html?ecrno=1">
+			</iframe> 
+		</div>
+	</div>
+</div>
+
+<script type="text/javascript">
+var ecrno = "${RequestParameters.ecrno!}";
+var taskType = "${RequestParameters.taskType!}";
+var id = "${RequestParameters.businessKey!}";
+var dutyby = "${RequestParameters.dutyby!}";
+var enable = "${RequestParameters.enable!}";
+
+viewModel.model.set("taskFrame","${base.contextPath}/pspc_ecr_platform/ecr_task_process.html?ecrno=");
+viewModel.model.set("ecrFrame","${base.contextPath}/pspc_ecr_platform/pspc_ecr_order_create.html?ecrno=");
+
+viewModel.model.set("taskFrame"+"ct","collapse1");
+viewModel.model.set("ecrFrame"+"ct","collapse2");
+
+//屏幕可用高度，折算一个可用比例作为部分区域的高度
+var webWidth=window.screen.availHeight; 
+$('#taskFrame').css("height",webWidth*0.35);
+$('#ecrFrame').css("height",webWidth*0.5);
+$('#page-content').css("height",webWidth*0.8);
+
+// 折叠
+function onMulLoad(name){
+	 if($("#"+name).css("display")=="none"){
+		$("#"+name).attr('src',viewModel.model.get(name) + ecrno + "&taskType=" + taskType + "&id=" + id + "&dutyby=" + dutyby + "&enable=" + enable) ;
+		$("#"+name).css("display",'table');	
+		$('#'+viewModel.model.get(name+"ct")).collapse('show');
+	 } else {
+		    $("#"+name).attr('src',viewModel.model.get(name)+ ecrno + "&taskType=" + taskType + "&id=" + id + "&dutyby=" + dutyby) ;
+			$("#"+name).css("display",'none');	
+			$('#'+viewModel.model.get(name+"ct")).collapse('hide');
+	 }
+}
+
+onMulLoad("taskFrame");
+onMulLoad("ecrFrame");
+
+//文本超出提示
+var toolTipOpt = {
+	    show: function(e){
+	        if($.trim(this.content.text()) !=""){
+	            $('[role="tooltip"]').css("visibility", "visible");
+	        }
+	    },
+	    hide: function(){
+	        $('[role="tooltip"]').css("visibility", "hidden");
+	    },
+	    filter: "td:nth-child(n+3)",
+	    content: function(e){
+	        var element = e.target[0];
+	        if(element.offsetWidth < element.scrollWidth){
+	            var text = $(e.target).text();
+	            return '<div style="min-width:100px;max-width: 1000px;">' + text + '</div>';
+	        }else{
+	            //解决鼠标一开始放在上面出现空模块
+	            $('[role="tooltip"]').css("visibility", "hidden");
+	            return "";
+	        }
+	    }
+	};
+	
+console.log(123); 
+/**
+ * 审批操作
+ * 更新 hpm_ecr_main 字段是否 QTP，VTP 要做
+ */
+var executeWorkFlowTask = function(actionCallBack,p){
+	console.log(123); 
+	 // 保存
+	if(p.approveResult == 'APPROVED'){
+		var url = "${base.contextPath}/hpm/ecr/rfq/task/process/updateIsNeed";
+		url = url + "?ecrno=" + ecrno + "&taskType=" + taskType
+				+ "&id=" + id + "&dutyby=" + dutyby;
+		$.ajax({
+			url: url,
+			success: function(args){
+				// 审批
+				actionCallBack.call(window.parent,p);
+		  	}
+		})		
+	} else{
+		// 审批
+		actionCallBack.call(window.parent,p);
+	}
+}
+	
+</script>
+</body>
+</html>

@@ -1,0 +1,446 @@
+ <#include "../include/header.html">
+<!--
+ * @description: 分配
+ * @author: ruifu.jiang
+ * @date: 20190923
+ -->
+ <script src="${base.contextPath}/common/code?hqmAttributeCategory=HQM_IQC_ATTRIBUTE_CATEGORY"></script>
+ <script src="${base.contextPath}/common/code?hqmStandardType=HQM_IQC_STANDARD_TYPE"></script>
+ <script src="${base.contextPath}/common/code?hqminspectiontype=HQM_SOURCE_TYPE_TEMP"></script>
+  <script src="${base.contextPath}/common/code?hqmgroupdistributetype=HQM_GROUP_DISTRIBUTE_TYPE"></script>
+    <script src="${base.contextPath}/common/code?HQM_IQC_SOURCE_TYPE=HQM_IQC_SOURCE_TYPE"></script>
+      <script src="${base.contextPath}/common/code?HQM_FQC_SOURCE_TYPE=HQM_FQC_SOURCE_TYPE"></script>
+<style>
+ span{
+ font-size:14px;
+ }
+</style>
+<script type="text/javascript">
+	var groupId = "${RequestParameters.groupId!'-1'}";
+    var viewModel = Hap.createGridViewModel("#grid");
+    var selectedDates = new Array();
+    var RESULT = [];
+    
+    viewModel.save = function(){
+    //	console.log($("#msaContent").data("kendoMultiSelect").value())
+    	var selected = selectedDates;
+    	if(selected.length == 0){
+    		 kendo.ui.showInfoDialog({message: "请选择物料！"});
+    		 return;
+    	}
+    	var atrributeMain = '';
+		var itemId = '';
+		for(var i=0;i<selectedDates.length;i++){			
+				itemId = itemId+ "," + selectedDates[i].itemId;
+		}
+		console.log('111+='+itemId)
+		var msaContentList = $("#msaContent").data("kendoMultiSelect").value();
+		for(var i=0;i<msaContentList.length;i++){	
+			atrributeMain = atrributeMain+ "," + msaContentList[i];
+		}
+		console.log('222+='+atrributeMain)
+		if(atrributeMain==''||atrributeMain==null||atrributeMain==undefined)
+			{
+			 kendo.ui.showInfoDialog({message: "请选择来源类型！"});
+    		 return;
+			}
+		if(viewModel.model.type==''||viewModel.model.type==null||viewModel.model.type==undefined)
+		{
+		 kendo.ui.showInfoDialog({message: "请选择检验类型！"});
+		 return;
+		}
+		if(viewModel.model.style==''||viewModel.model.style==null||viewModel.model.style==undefined)
+		{
+		 kendo.ui.showInfoDialog({message: "请选择覆盖方式！"});
+		 return;
+		}
+		if(viewModel.model.timeLimit==''||viewModel.model.timeLimit==null||viewModel.model.timeLimit==undefined)
+		{
+		 kendo.ui.showInfoDialog({message: "请填写时效！"});
+		 return;
+		}
+		viewModel.model.itemId=itemId.substr(1,itemId.length-1);
+		viewModel.model.atrributeMain=atrributeMain.substr(1,atrributeMain.length-1);
+		console.log(viewModel.model)
+		
+		if (!(/(^[1-9]\d*$)/.test(viewModel.model.timeLimit))) { 
+　　　　　     　   kendo.ui.showInfoDialog({message: "时效请填写正整数！"});
+　　　　　  　  return;}
+		
+		var data2= viewModel.model.toJSON();  
+		console.log(data2);
+		
+		$.ajax({
+		        url: '${base.contextPath}/hqm/inspection/group/h/distribute',
+		        type: 'POST',
+		        data: data2,
+		        async: false,
+		        dataType: "json",
+		        success: function (response) {
+		            if (response.success) {			            	           
+		            	kendo.ui.showInfoDialog({
+		                      message: "分配成功"
+		               });  	
+		                
+		            } else {
+		            	kendo.ui.showWarningDialog({
+		                    message: response.message
+		                });
+		            }
+		        }
+		    });
+		
+		
+		
+    }
+
+</script>
+<body>
+<div id="page-content">
+     <div id="toolbar-top" style="padding-bottom:10px;padding-top:10px;">
+    	<div class="row">
+        <span class="btn btn-primary" data-bind="click:save" type="submit" style="margin-left:10px"><@spring.message "hap.save"/></span>
+        <span class="btn btn-default" data-bind="click:refresh" type="button" style="margin-right:25px;"><@spring.message "hap.cancel"/></span>
+        </div>
+	</div>
+   <form id="mainform1"  class="form-horizontal"  method="post" enctype="application/json;charset=UTF-8"> 
+    		<div class="form-group">
+				<div class="col-sm-12"style="margin-top: 5px;">
+					<label class="col-sm-2 control-label"><@spring.message "hqm.qc.inspectiontype"/>:</label>
+				 	<div class="col-sm-10">
+                        <input  id="type" required  style="width:90%" data-bind="value:model.type">		
+					</div>
+				</div>
+			</div>
+    		<div class="form-group">
+				<div class="col-sm-12"style="margin-top: 5px;">
+					<label class="col-sm-2  control-label"><@spring.message "hqm.qc.sourcetype"/>:</label>
+					<div id="msa" class="col-sm-10">
+			  			<select class="msaContent"  multiple="multiple" style="width:90%" id="msaContent" ></select>
+<!-- 		    	    	 <input class="msaContent" disabled id="msaContent"> -->
+	    				 <script type="text/javascript">
+						        $(".msaContent").kendoMultiSelect({
+						            dataTextField: "meaning",
+						            dataValueField: "value",
+						            dataSource: hqminspectiontype //只在初始界面加载一次
+						        }).data('kendoMultiSelect');
+						        $("#msaContent").siblings('div').css("background","#EDEDED");
+						        $("#msaContent").siblings('div').children('input').removeAttr('style')
+						        $("#msaContent").siblings('div').children('input').attr('style','width:100%')
+						</script>
+						
+		    		</div>    
+				</div>
+			</div>
+			<div class="form-group">	
+				<div class="col-sm-12"style="margin-top: 5px;">
+					<label class="col-sm-2 control-label"><@spring.message "hqm.qc.inspectiontime"/>:</label>
+					<div class="col-sm-10">
+                        <input  id="timeLimit"  required class="k-textbox" style="width:90%"placeholder="<@spring.message 'hqm.qc.unithour'/>" 
+                        
+                        
+                        
+                        
+                         data-bind="value:model.timeLimit">		
+					</div>
+				</div>				
+			</div>
+		 </form>        
+      
+      <div class="row" style="width: 100%;height: 11%;margin-top: 5px">
+    			<div class="col-sm-12" style="padding-left:10%;">
+    			
+    				<div id="approvalResultRadio" style="margin-top:5px;"  data-bind="enabled: isEnabled,value:model.style"></div>
+    				<script>
+    				            kendo.bind($('#approvalResultRadio'), viewModel);
+                                $("#approvalResultRadio").kendoRadio({
+                                    layout: '',//vertical
+                                    readonly: false,
+                                    items: [{
+                                        label: '<span  style="color:#ffb01f"><@spring.message "hqm.qc.overlayfullsync"/></span>',
+                                        value: "A"
+                                    }, {
+                                        label: '<span style="color:#ffb01f"><@spring.message "保留已有项无属性同步"/></span>',
+                                        value: "B"
+                                    }/* ,{
+                                        label: '<span>覆盖式无属性同步</span>',
+                                        value: "C"
+                                    } *//* , {
+                                        label: '<span>保留已有项无属性同步</span>',
+                                        value: "D"
+                                    } */],
+                                    change: function (e) {
+                                    	
+                                    }
+                                });
+
+                      </script>
+    			</div>
+      </div>
+
+    <div id="toolbar-btn" style="padding-bottom:10px;padding-top:10px;">
+    	<div class="row">
+    		<div class="col-xs-2">
+    		<span id="querySpan" class="btn btn-primary" style="float:left;margin-right:5px;" data-bind="click:query"><@spring.message "hap.query"/></span>
+    		</div>
+    	</div>
+     </div>	
+    	<form id="mainform"  class="form-horizontal" method="post" enctype="application/json;charset=UTF-8"> 
+    		<div class="form-group">
+				<div class="col-sm-6"style="margin-top: 5px;">
+					<label class="col-sm-3 control-label"><@spring.message "asliqccontrol.item"/>:</label>
+					<div class="col-sm-9">
+                        <input  id="itemCode"  class="k-textbox" style="width:80%" data-bind="value:model.itemCode">		
+					</div>
+				</div>
+				<div class="col-sm-6"style="margin-top: 5px;">
+					<label class="col-sm-3 control-label"><@spring.message "asliqccontrol.itemDescriptions"/>:</label>
+					<div class="col-sm-9">
+                        <input  id="itemDesc"  class="k-textbox" style="width:80%" data-bind="value:model.itemDesc">		
+					</div>
+				</div>				
+			</div>
+		 </form>         
+ 
+    <div class="text-left" style="border: 2px solid #EEEEEE;border-radius:10px;width:90%;margin-left:5%">
+		<span><@spring.message "hqm.qc.selectedmaterial"/></span><br>
+		<div id="checkedUserPanel">
+        	
+        </div>
+	</div>
+     <script>kendo.bind($('#toolbar-top'), viewModel);</script>
+      <script>kendo.bind($('#toolbar-btn'), viewModel);</script>
+     <script>kendo.bind($('#mainform'), viewModel);</script>
+     <script>kendo.bind($('#mainform1'), viewModel);</script>
+    <div style="clear:both">
+        <div id="grid"style="width:90%;margin-left:5%"></div>
+    </div>
+
+</div>
+
+<script type="text/javascript">
+$("#type").kendoComboBox({
+    dataTextField: "meaning",
+    dataValueField: "value",
+    valuePrimitive: true,
+    dataSource: hqmgroupdistributetype,
+    change:function(e){	
+    	if(viewModel.model.type== 'IQC'){
+    		//iqc
+    		RESULT = HQM_IQC_SOURCE_TYPE
+    	}else if(viewModel.model.type== 'FQC'){
+    		 //fqc
+    		RESULT = HQM_FQC_SOURCE_TYPE
+    	}
+    	$("#msa").empty();
+    	//var str = '<input class="msaContent" id="msaContent">';
+    	var str = '<select id="msaContent" class="msaContent"style="width:90%" multiple="multiple">';
+    	$("#msa").append(str);
+    	$("#msaContent").kendoMultiSelect({
+            dataTextField: "meaning",
+            dataValueField: "value",
+            dataSource: RESULT
+        });
+    	var multiselect = $("#msaContent").data("kendoMultiSelect");
+		$("#msaContent").attr("required",true)
+		$("#msaContent").siblings('div').css("background","#FFF8C5");
+		$("#msaContent").siblings('div').children('input').attr('style','width:100%')
+		/* if(this._old == 2){
+			//clear filter
+        	multiselect.dataSource.filter({});
+        	//set value
+        	multiselect.value([RESULT[0].value]);
+    	}  */
+    }
+});	
+
+	$(document).keydown(function(event){
+		if (event.keyCode == 13) {
+			viewModel.model.inspectionAttribute = $("#inspectionAttribute").val();
+			viewModel.model.attributeType = $("#attributeType").val();
+			viewModel.query();
+		}
+	});
+	kendo.bind($('#mainBottom'),viewModel);
+    Hap.initEnterQuery('#query-form', viewModel.query);
+    var BaseUrl = _basePath;
+    dataSource = new kendo.data.DataSource({
+        transport: {
+        	read: {
+                url: BaseUrl + "/hqm/inspection/group/h/itemselect",
+                type: "POST",
+                dataType: "json"
+            },
+            update: {
+                url: BaseUrl + "/hqm/inspection/attribute/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            destroy: {
+                url: BaseUrl + "/hqm/inspection/attribute/remove",
+                type: "POST",
+                contentType: "application/json"
+            },
+            create: {
+                url: BaseUrl + "/hqm/inspection/attribute/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            parameterMap: function (options, type) {
+                if (type !== "read" && options.models) {
+                    var datas = Hap.prepareSubmitParameter(options, type)
+                    return kendo.stringify(datas);
+                } else if (type === "read") {
+                	viewModel.model.groupId =groupId;
+                    return Hap.prepareQueryParameter(viewModel.model.toJSON(), options)
+                }
+            }
+        },
+        batch: true,
+        serverPaging: true,
+        pageSize: 10,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+                id: "groupId",
+                fields: {},
+                editable:function(col){
+                	return false;
+                }
+            }
+        }
+    });
+
+    var grid = $("#grid").kendoGrid({
+        dataSource: dataSource,
+        resizable: true,
+        autoBind: true,
+        scrollable: true,
+        navigatable: false,
+        //selectable: 'multiple,rowbox',
+        dataBound: function () {
+            if (parent.autoResizeIframe) {
+                parent.autoResizeIframe('${RequestParameters.functionCode!}')
+            }
+        },
+        pageable: {
+            pageSizes: [5,10,20,50],
+            refresh: false,
+            buttonCount: 5
+        },
+        columns: [
+        	
+        	{
+                field: "itemCode",
+                title: '<@spring.message "asliqccontrol.item"/>',//物料
+                width: 120,
+                sortable: false,
+                template: function (Item) {
+                    return Item['itemCode'] || ''
+               },
+                editor: function (container, options) {
+                    $('<input required name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoLov($.extend(<@lov "LOV_ITEM"/> ,{
+                        query: function (e) {
+                            e.param['enableFlag'] = 'Y'
+                        },
+                        textField: 'itemCode',
+                        model: options.model,
+                        select:function(e) {
+                            var v = this.value();
+                            if (v == undefined  || v == ""){
+
+                            }else{
+                                options.model.itemCode = e.item.itemCode;
+                                options.model.itemId = e.item.itemId;
+                                options.model.set('itemDesc',e.item.itemDescriptions);
+                            }
+                        }
+                    }));
+                }
+            },
+            {
+                field: "itemDesc",
+                title: '<@spring.message "asliqccontrol.itemDescriptions"/>',//描述
+                width: 180,
+                sortable: false,
+                editor: function (container, options) {
+                    $('<span data-bind="text:itemDesc"></span>').appendTo(container);
+                }
+    },             
+            {
+                field: "plantCode",
+                title: '<@spring.message "standardopinspectionh.plantid"/>',//工厂
+                width: 120,
+                template: function (Item) {
+                    return Item['plantCode'] || ''
+                },
+                editor: function (container, options) {
+                    $('<input name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoLov($.extend(<@lov "LOV_STAN_OP_INS_H"/>, {
+                        query: function (e) {
+                            e.param['enableFlag'] = 'Y'
+                        },
+                        textField: 'plantCode',
+                        model: options.model,
+                        change:function() {
+                            var v = this.value();
+                            if (v == undefined  || v == ""){
+                                options.model.set('plantCode', "");
+                                options.model.set('plantId', "");
+                            }else{
+                                options.model.plantCode =  this._dataItem.plantCode;
+                                options.model.plantId =  this._dataItem.plantId;          
+                            }
+                        }
+                    }));
+                }
+            },
+            
+        ],
+        editable: true
+    }).data("kendoGrid");
+
+</script>
+<script>
+//var selection = $('#chooseGrid').data('kendoGrid').selectedDataItems();
+function judgeHave(itemId){
+	var count = 0;
+	$.each(selectedDates,function(i,v){
+		if(v.itemId == itemId)count++;
+	});
+	if(count>0)return true;
+	return false;
+}
+function removeHaved(itemId){
+	$.each(selectedDates,function(i,v){
+		if(v.itemId == itemId){
+			selectedDates.splice(selectedDates.indexOf(v),1);
+			return false;
+		}
+	});
+}
+$('#grid').on('click', 'td', function () {
+		var rowIndex = $(this).parent().index();
+        var data = grid.dataSource.data()[rowIndex];
+        if(!judgeHave(data.itemId)){
+        	selectedDates.push(data);
+	        $("#checkedUserPanel").append('<span class="fa fa-user" style="margin-right:10px;background-color:#7AEBBE;border-radius:5px;">&nbsp'+data.itemCode+
+	        '<span user-id="'+data.itemId+'" class="fa fa-trash" style="margin-left:5px;cursor:pointer;font-size:16px;"></span></span>');
+	        $('span[user-id="'+data.itemId+'"]').on('click',function(){
+	        	removeHaved($(this).attr("user-id"));
+	        	$(this).parent().remove();
+	        });
+        }
+    });
+/* $(function(){
+	if(parentParameter!="-1"){
+		
+	}
+}); */
+</script>
+</body>
+</html>

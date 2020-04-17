@@ -1,0 +1,302 @@
+<#include "../activiti/approve_header.html">
+<script src="${base.contextPath}/common/code?WORKFLOW_STATUS=SYS_WORKFLOW_STATUS" type="text/javascript"></script>
+<script type="text/javascript">
+	var BaseUrl = _basePath;
+	//var status = '${RequestParameters.status!0}',
+	var busiViewModel = Hap.createGridViewModel(null, {
+	    model: {
+	        processInstanceId: '${RequestParameters.processInstanceId!0}',
+	        businessKey: '${RequestParameters.businessKey!}' || null,
+	        isCanEditor:true
+	    },
+		queryInfo:function(){
+			if(${RequestParameters.processInstanceId!0} != 0){
+				$.ajax({
+					url:BaseUrl+"/hqm/measure/tool/scrap/queryByCondition?processInstanceId=${RequestParameters.processInstanceId!0}",
+					success:function(data){
+						var a0 = data.rows[0] || {};
+						for(var k in a0){
+							busiViewModel.model.set(k,a0[k]);
+						}
+					}
+				})
+			}
+		},
+		save:function(){
+    		var data = busiViewModel.model.toJSON();
+    		data.__status = "update";
+    		
+    		var validator = $("#mainForm").data("kendoValidator");
+    		if(validator.validate()) {
+    			Hap.blockUI();
+    			Hap.request({
+    				url: BaseUrl + "/hqm/measure/tool/scrap/add",
+    				data: kendo.stringify(data),
+    				success:function(data){
+    					if(data.success){
+    						Hap.unblockUI();
+    						//刷新待办页和业务数据页的数据
+    						reQueryTaskListTab();
+    						//busiViewModel.closeWin();
+    					}
+    				}
+    			})
+    		}
+    	},
+	});
+	busiViewModel.queryInfo();
+	
+</script>
+<div class="approve-block" style="width: 1000px;">
+    <h3>审批表单</h3>
+    <!--<iframe id="includeFrame" style="width:100%" name="includeFrame" onLoad="onIncludeFrameLoad()"></iframe>-->
+
+    <form id = "mainForm" style="paddiing-bottom:50px;padding-top:15px" class="form-horizontal" method="post" enctype="application/json;charset=UTF-8">
+		<div class="row">
+			<div class="col-sm-12">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-2 control-label">报废单号</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="scrapNumber"  data-role="maskedtextbox" class="k-textbox"
+								data-bind="value:model.scrapNumber" disabled>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-sm-12">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-2 control-label">量具编号</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="measureToolId"  data-label="量具编号" required
+								data-bind="enabled:model.isCanEditor,value:model.measureToolId,text:model.measureToolNum">
+						</div>
+						<script>
+							//选择量具
+							$("#measureToolId").kendoLov($.extend(<@lov "LOV_HQM_MEASURE_TOOL_REPAIR"/>,{
+								change:function(e){
+									busiViewModel.model.set("descriptions",e.sender._dataItem.descriptions);
+									busiViewModel.model.set("measuringRange",e.sender._dataItem.measuringRange);
+									busiViewModel.model.set("measureToolType",e.sender._dataItem.measureToolType);
+								},
+							}));
+						</script>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-sm-12">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-2 control-label">量具名称</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="descriptions"  data-role="maskedtextbox" class="k-textbox"
+								data-bind="value:model.descriptions" disabled>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-sm-12">
+					<div class="form-group">
+						<div class="col-sm-12">
+							<label class="col-sm-2 control-label">规格</label>
+							<div class="col-sm-8">
+								<input style="width:100%" id="measuringRange"  data-role="maskedtextbox" class="k-textbox"
+									data-bind="value:model.measuringRange" disabled>
+							</div>
+						</div>
+					</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-sm-12">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-2 control-label">型号</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="measureToolType"  data-role="maskedtextbox" class="k-textbox"
+								data-bind="value:model.measureToolType" disabled>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-sm-12">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-2 control-label">申请日期</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="applicationDate"  data-role="datepicker" class="k-datepicker"
+								data-bind="value:model.applicationDate" disabled>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-sm-12">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-2 control-label">报废原因</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="reason"  data-role="maskedtextbox" class="k-textbox"
+								data-bind="enabled:model.isCanEditor,value:model.reason" required>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</form>
+	<span id="btn-save" class="btn btn-primary" data-bind="click:save" type="submit" >保存</span>
+	
+	<script type="text/javascript">
+		kendo.bind($('#mainForm'), busiViewModel);
+		kendo.bind($('#btn-save'), busiViewModel);
+		
+		if('${RequestParameters.status!0}' != "单据修改"){
+			busiViewModel.model.set("isCanEditor",false);
+			$('#btn-save').hide();
+		};
+		
+		$('#mainForm').kendoValidator({
+			messages:{
+				required:'<@spring.message "hap.validation.notempty"/>'
+			},
+			invalidMessageType:"tooltip"
+		});
+	</script>
+</div>
+<#include "../activiti/approve_footer.html">
+
+<script type="text/javascript">
+	//覆盖具体审批操作
+	function actionCallBack(p) {
+	    p = p || {};
+	    p.action = p.action || 'complete'
+	    if ('pending' == currentTaskInfo.delegationState && 'delegate' != p.action) {
+	        p.action = 'resolve'
+	    }
+	    var variables = [];
+	    if (p.action != 'delegate') {
+	        var formVars = {};
+	        // if (includeFrame.getFormProperties) {
+	        //     formVars = includeFrame.getFormProperties() || {};
+	        // }
+	
+	        //TODO 必输内容校验；仅传递定义过的属性
+	        formVars.approveResult = p.approveResult;
+	        formVars.comment = $("#ta-comment").val();
+	        $.each(formVars, function (k, v) {
+	            variables.push({name: k, value: v});
+	        })
+	    }
+	
+	    var carbonCopyUsers = "";
+	    var usersDate = dataSourceCC.data();
+	    for (var i = 0; i < usersDate.length; i++) {
+	        if (i == 0) {
+	            carbonCopyUsers = usersDate[i].employeeCode;
+	        } else {
+	            carbonCopyUsers = carbonCopyUsers + "," + usersDate[i].employeeCode;
+	        }
+	    }
+	
+	    var param = {
+	        assignee: p.targetUser || null,
+	        action: p.action,
+	        comment: $("#ta-comment").val(),
+	        variables: variables,
+	        jumpTarget: p.jumpTarget || null,
+	        carbonCopyUsers: carbonCopyUsers,
+	        currentTaskId: '${RequestParameters.taskId!0}',
+	    };
+	
+	    var dtoData = busiViewModel.model.toJSON();
+	    dtoData.__status = 'update';
+	    
+	    var data = {
+	        actionRequest: param,
+	        //list: $("#busiGrid").data("kendoGrid").dataSource.data()
+	        dto:dtoData,
+	    };
+	    Hap.blockUI();
+	    $.ajax({
+	        url: contextPath_ + '/wfl/runtime/<#if isAdmin!false>admin/</#if>tasks/' + currentTaskId,
+	        //url: contextPath_ + '/hqm/measure/tool/scrap/approveProcess?processInstanceId=${RequestParameters.processInstanceId!0}' + "&flowNum=${RequestParameters.flowNum!0}",
+	        type: 'POST',
+	        contentType: 'application/json',
+	        data: kendo.stringify(param),
+	        success: function (args) {
+	            if (args.success === false) {
+	                kendo.ui.showErrorDialog({
+	                    title: $l('hap.error'),
+	                    message: args.message
+	                });
+	            } else {
+	                if (p.callback) {
+	                    p.callback(args);
+	                } else {
+	                    closeCurrentWin()
+	//                            kendo.ui.showInfoDialog({
+	//                                title: $l('hap.tip.info'),
+	//                                message: '操作完成!'
+	//                            }).done(function () {
+	//                                closeCurrentWin()
+	//                            });
+	                }
+	            }
+	        }, error: function (args) {
+	            kendo.ui.showInfoDialog({
+	                title: $l('hap.error'),
+	                message: kendo.stringify(args)
+	            });
+	        },
+	        complete: function () {
+	            Hap.unblockUI();
+	        }
+	    })
+	}
+	
+	//覆盖具体的关闭tab页签操作
+	function closeCurrentWin() {
+        if (window.top.closeTab) {
+            reQueryTaskListTab();
+            window.top.closeTab('PROCESS_TASK_' +　currentTaskId);
+            return;
+        }
+        window.close();
+    }
+
+	//覆盖具体的刷新父tab页签数据的操作
+    function reQueryTaskListTab() {
+        var mainTab = window.top.$("#mainTab").data("kendoTabStrip");
+        //根据功能维护界面里的功能代码字段，刷新打开了的tab页签
+        var idx = jQuery.inArray('WFL_TASK', mainTab.tabids);
+        var WFL_TASK = mainTab.contentElements[idx];
+        if(WFL_TASK){
+            var iframe = $(WFL_TASK).find('iframe')[0];
+            iframe.contentWindow.doQuery();
+        }
+        idx = jQuery.inArray('WFL_MY_TASK', mainTab.tabids);
+        var WFL_MY_TASK = mainTab.contentElements[idx];
+        if(WFL_MY_TASK){
+            var iframe = $(WFL_MY_TASK).find('iframe')[0];
+            iframe.contentWindow.doQuery();
+        }
+        idx = jQuery.inArray('HQM_MEASURE_TOOL_SCRAP', mainTab.tabids);
+        var HQM_MEASURE_TOOL_SCRAP = mainTab.contentElements[idx];
+        if(HQM_MEASURE_TOOL_SCRAP){
+            var iframe = $(HQM_MEASURE_TOOL_SCRAP).find('iframe')[0];
+            iframe.contentWindow.doQuery();
+        }
+    }
+
+</script>
+</html>

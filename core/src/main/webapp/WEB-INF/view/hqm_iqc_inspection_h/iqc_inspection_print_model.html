@@ -1,0 +1,472 @@
+<#include "../include/header.html">
+<!-- 
+tianmin.wang:2019-07-22
+ -->
+<script src="${base.contextPath}/common/code?yesNo=SYS.YES_NO"></script><!-- 是否 -->
+<script src="${base.contextPath}/common/code?hqmIqcInspectionType=HQM_INSPECTION_TYPE"></script><!-- 检验类型 -->
+<script src="${base.contextPath}/common/code?hqmIqcSamplePlanType=HQM_IQC_SAMPLE_PLAN_TYPE"></script><!-- 抽样方案(抽样计划类型) -->
+<script src="${base.contextPath}/common/code?hqmIqcSolveStatus=HQM_INSPECTION_TASK_STATUS"></script>
+<script src="${base.contextPath}/common/code?hqmInspectionResult=HQM_INSPECTION_RESULT"></script>
+<script src="${base.contextPath}/common/code?hqmIqcSourceType=HQM_IQC_SOURCE_TYPE"></script>
+<script src="${base.contextPath}/common/code?hqmInspectionSolveWay=HQM_INSPECTION_SOLVE_WAY"></script>
+<script src="${base.contextPath}/common/code?hqmIqcAttributeCategory=HQM_IQC_ATTRIBUTE_CATEGORY"></script><!-- 检验项类别 -->
+<script src="${base.contextPath}/common/code?hqmIqcSampleStandardType=HQM_IQC_SAMPLE_STANDARD_TYPE"></script><!-- 抽样标准类型 -->
+<script src="${base.contextPath}/common/code?hqmIqcInspectionLevels=HQM_IQC_INSPECTION_LEVELS"></script><!-- 检验水平 -->
+<script src="${base.contextPath}/common/code?hqmIqcAql=HQM_IQC_AQL"></script><!-- AQL(质量接收限制) -->
+<script src="${base.contextPath}/common/code?hqmIqcStandardType=HQM_IQC_STANDARD_TYPE"></script>
+ <style> 
+	div{
+	font-size:12px;
+	} 
+	span{
+	font-size:10px;
+	}
+	td{
+	font-size:10px;
+	}
+	th{
+	font-size:12px;
+	text-align:center;
+	}
+</style> 
+<script type="text/javascript">
+	
+	var inspectionNum = "${RequestParameters.inspectionNum!'E'}";
+	var printFlag = "${RequestParameters.printFlag!'N'}";
+	var ngOk = [{meaning:"OK",value:"OK"},{meaning:"NG",value:"NG"}];
+	var headData;
+	var lineData;
+    var viewModel = kendo.observable({
+        model: {
+        }
+    });
+    viewModel.model.inspectionNum = inspectionNum;
+</script>
+<script type="text/javascript">
+	function getInspectionHeadInfo(){
+		var data = {"inspectionNum":viewModel.model.inspectionNum};
+		$.ajax({
+            url: '${base.contextPath}/hqm/iqc/inspection/h/select',
+            type: 'POST',
+            data: data,
+            async: false,
+//             contentType: "application/json",
+            dataType: "json",
+            success: function (response) {
+                if (response.success) {
+                	if(response.rows!=undefined&&response.rows.length!=0){
+                		headData = response.rows[0];
+                	}else{
+                		kendo.ui.showWarningDialog({
+                            message: "无对应检验单信息"
+                        });
+                	}
+                } else {
+                	kendo.ui.showWarningDialog({
+                        message: "检验单信息获取失败"
+                    });
+                }
+            }
+        });
+	}
+	function getInspectionLineInfo(){
+		var data = {"headerId":headData.headerId};
+		$.ajax({
+            url: '${base.contextPath}/hqm/iqc/inspection/l/query',
+            type: 'POST',
+            data: data,
+            async: false,
+//             contentType: "application/json",
+            dataType: "json",
+            success: function (response) {
+                if (response.success) {
+                	if(response.rows!=undefined&&response.rows.length!=0){
+                		lineData = response.rows;
+                	}else{
+                		kendo.ui.showWarningDialog({
+                            message: "无对应检验项信息"
+                        });
+                	}
+                } else {
+                	kendo.ui.showWarningDialog({
+                        message: "检验项信息获取失败"
+                    });
+                }
+            }
+        });
+	}
+</script>
+<body>
+<div id="pageDiv" style="width:100%">
+
+</div>
+
+<script type="text/javascript">
+	function initHead(){
+		var array = new Array();
+        array.push("<table class='headTable' style='width: 100%;height: 5%;color: black;'>");
+        array.push("<tr style='width: 100%'>");
+        array.push("<td style='width: 33.3%';text-align:center;>");
+        array.push("</td>");
+        array.push("<td style='width: 33.3%';>");
+        array.push("<span style='font-size:16px;text-align:center;'>"+headData.itemCategoryDescription+"IQC检验报告</span>");
+        array.push("</td>");
+        array.push("<td style='width: 33.3%';text-align:center;>");
+        array.push("</td>");
+        array.push("</tr>");
+        array.push(" </table>");
+        $('#pageDiv').append(array.join(''));
+	}
+	function initTitle(){
+		var array = new Array();
+        array.push("<table class='titleTable' style='width: 100%;height: 30px;color: black;'>");
+        array.push("<tr style='width: 100%'>");
+        array.push("<td style='width: 70%;text-align:center;border-top: 1px solid blue;border-left: 1px solid blue;'>");
+        array.push("</td>");
+        array.push("<td style='width: 30%;border-top: 1px solid blue;border-right: 1px solid blue;'>");
+        array.push("<span>检验单编号:"+headData.inspectionNum+"</span>");
+        array.push("</td>");
+        array.push("</tr>");
+        array.push("</table>");
+        array.push("<table class='titleTable' style='width: 100%;color: black;'>");
+        //row1
+        array.push("<tr style='width: 100%'>");
+        array.push("<td style='width: 10%;text-align:center;border-top: 1px solid blue;border-left: 1px solid blue;border-right: 1px solid blue;'>");
+        array.push("<span>检验类型:</span>");
+        array.push("</td>");
+        array.push("<td style='width: 15%;text-align:center;border-top: 1px solid blue;border-right: 1px solid blue;'>");
+        array.push("<span>"+getMeaningByValue(headData.inspectionType,hqmIqcInspectionType)+"</span>");
+        array.push("</td>");
+        array.push("<td style='width: 10%;text-align:center;border-top: 1px solid blue;border-right: 1px solid blue;'>");
+        array.push("<span>工厂:</span>");
+        array.push("</td>");
+        array.push("<td style='width: 15%;text-align:center;border-top: 1px solid blue;border-right: 1px solid blue;'>");
+        array.push("<span>"+headData.plantCode+"</span>");
+        array.push("</td>");
+        array.push("<td style='width: 10%;text-align:center;border-top: 1px solid blue;border-right: 1px solid blue;'>");
+        array.push("<span>送货单:</span>");
+        array.push("</td>");
+        array.push("<td style='width: 15%;text-align:center;border-top: 1px solid blue;border-right: 1px solid blue;'>");
+        array.push("<span>"+headData.sourceOrder+"</span>");
+        array.push("</td>");
+        array.push("<td style='width: 10%;text-align:center;border-top: 1px solid blue;border-right: 1px solid blue;'>");
+        array.push("<span>说明:</span>");
+        array.push("</td>");
+        array.push("<td style='width: 15%;text-align:center;border-top: 1px solid blue;border-right: 1px solid blue;'>");
+        array.push("<span>"+headData.instruction?headData.instruction:""+"</span>");
+        array.push("</td>");
+        
+        array.push("</tr>");
+        //row2
+        array.push("<tr style='width: 100%'>");
+        array.push("<td style='width: 10%;text-align:center;border-top: 1px solid blue;border-left: 1px solid blue;border-right: 1px solid blue;'>");
+        array.push("<span>供应商编码	:</span>");
+        array.push("</td>");
+        array.push("<td style='width: 15%;text-align:center;border-top: 1px solid blue;border-right: 1px solid blue;'>");
+        array.push("<span>"+headData.supplierCode+"</span>");
+        array.push("</td>");
+        array.push("<td style='width: 10%;text-align:center;border-top: 1px solid blue;border-right: 1px solid blue;'>");
+        array.push("<span>物料编码:</span>");
+        array.push("</td>");
+        array.push("<td style='width: 15%;text-align:center;border-top: 1px solid blue;border-right: 1px solid blue;'>");
+        array.push("<span>"+headData.itemCode+"</span>");
+        array.push("</td>");
+        array.push("<td style='width: 10%;text-align:center;border-top: 1px solid blue;border-right: 1px solid blue;'>");
+        array.push("<span>批次号:</span>");
+        array.push("</td>");
+        array.push("<td style='width: 15%;text-align:center;border-top: 1px solid blue;border-right: 1px solid blue;'>");
+        array.push("<span>"+headData.productionBatch+"</span>");
+        array.push("</td>");
+        array.push("<td style='width: 10%;text-align:center;border-top: 1px solid blue;border-right: 1px solid blue;'>");
+        array.push("<span>到货日期:</span>");
+        array.push("</td>");
+        array.push("<td style='width: 15%;text-align:center;border-top: 1px solid blue;border-right: 1px solid blue;'>");
+        array.push("<span>"+(headData.receiveDate?headData.receiveDate.substr(0,10):"")+"</span>");
+        array.push("</td>");
+        array.push("</tr>");
+        //row3
+        array.push("<tr style='width: 100%'>");
+        array.push("<td style='width: 10%;text-align:center;border-top: 1px solid blue;border-left: 1px solid blue;border-right: 1px solid blue;'>");
+        array.push("<span>供应商名称	:</span>");
+        array.push("</td>");
+        array.push("<td style='width: 15%;text-align:center;border-top: 1px solid blue;border-right: 1px solid blue;'>");
+        array.push("<span>"+headData.supplierName+"</span>");
+        array.push("</td>");
+        array.push("<td style='width: 10%;text-align:center;border-top: 1px solid blue;border-right: 1px solid blue;'>");
+        array.push("<span>物料描述:</span>");
+        array.push("</td>");
+        array.push("<td style='width: 15%;text-align:center;border-top: 1px solid blue;border-right: 1px solid blue;'>");
+        array.push("<span>"+headData.itemDescriptions+"</span>");
+        array.push("</td>");
+        array.push("<td style='width: 10%;text-align:center;border-top: 1px solid blue;border-right: 1px solid blue;'>");
+        array.push("<span>抽样数量:</span>");
+        array.push("</td>");
+        array.push("<td style='width: 15%;text-align:center;border-top: 1px solid blue;border-right: 1px solid blue;'>");
+        array.push("<span>"+headData.sampleSize+"</span>");
+        array.push("</td>");
+        array.push("<td style='width: 10%;text-align:center;border-top: 1px solid blue;border-right: 1px solid blue;'>");
+        array.push("<span>检验日期:</span>");
+        array.push("</td>");
+        array.push("<td style='width: 15%;text-align:center;border-top: 1px solid blue;border-right: 1px solid blue;'>");
+        array.push("<span>"+(headData.inspectionDate?headData.inspectionDate.substr(0,10):"")+"</span>");
+        array.push("</td>");
+        array.push("</tr>");
+        //row4
+        array.push("<tr style='width: 100%'>");
+        array.push("<td style='width: 10%;text-align:center;border-top: 1px solid blue;border-right: 1px solid blue;border-left: 1px solid blue;'>");
+        array.push("<span>来源类型:</span>");
+        array.push("</td>");
+        array.push("<td style='width: 15%;text-align:center;border-top: 1px solid blue;border-right: 1px solid blue;'>");
+        array.push("<span>"+getMeaningByValue(headData.sourceType,hqmIqcSourceType)+"</span>");
+        array.push("</td>");
+        array.push("<td style='width: 10%;text-align:center;border-top: 1px solid blue;border-right: 1px solid blue;'>");
+        array.push("<span>物料类别:</span>");
+        array.push("</td>");
+        array.push("<td style='width: 15%;text-align:center;border-top: 1px solid blue;border-right: 1px solid blue;'>");
+        array.push("<span>"+headData.itemCategoryDescription+"</span>");
+        array.push("</td>");
+        array.push("<td style='width: 10%;text-align:center;border-top: 1px solid blue;border-right: 1px solid blue;'>");
+        array.push("<span>抽样方案:</span>");
+        array.push("</td>");
+        array.push("<td style='width: 15%;text-align:center;border-top: 1px solid blue;border-right: 1px solid blue;'>");
+        array.push("<span>"+getMeaningByValue(headData.samplePlan,hqmIqcSamplePlanType)+"</span>");
+        array.push("</td>");
+        array.push("<td style='width: 10%;text-align:center;border-top: 1px solid blue;border-right: 1px solid blue;'>");
+        array.push("<span>接收人:</span>");
+        array.push("</td>");
+        array.push("<td style='width: 15%;text-align:center;border-top: 1px solid blue;border-right: 1px solid blue;'>");
+        array.push("<span>"+headData.recipientUserName?headData.recipientUserName:""+"</span>");
+        array.push("</td>");
+        array.push("</tr>");
+        //row5
+        array.push("<tr style='width: 100%'>");
+        array.push("<td style='width: 10%;text-align:center;border-top: 1px solid blue;border-right: 1px solid blue;border-left: 1px solid blue;'>");
+        array.push("<span>是否加急:</span>");
+        array.push("</td>");
+        array.push("<td style='width: 15%;text-align:center;border-top: 1px solid blue;border-right: 1px solid blue;'>");
+        array.push("<span>"+getMeaningByValue(headData.isUrgency,yesNo)+"</span>");
+        array.push("</td>");
+        array.push("<td style='width: 10%;text-align:center;border-top: 1px solid blue;border-right: 1px solid blue;'>");
+        array.push("<span>来料数量:</span>");
+        array.push("</td>");
+        array.push("<td style='width: 15%;text-align:center;border-top: 1px solid blue;border-right: 1px solid blue;'>");
+        array.push("<span>"+headData.receiveQty+"</span>");
+        array.push("</td>");
+        array.push("<td style='width: 10%;text-align:center;border-top: 1px solid blue;border-right: 1px solid blue;'>");
+        array.push("<span>检验单版本:</span>");
+        array.push("</td>");
+        array.push("<td style='width: 15%;text-align:center;border-top: 1px solid blue;border-right: 1px solid blue;'>");
+        array.push("<span>"+headData.versionNum+"</span>");
+        array.push("</td>");
+        array.push("<td style='width: 10%;text-align:center;border-top: 1px solid blue;border-right: 1px solid blue;'>");
+        array.push("<span>检验人:</span>");
+        array.push("</td>");
+        array.push("<td style='width: 15%;text-align:center;border-top: 1px solid blue;border-right: 1px solid blue;'>");
+        array.push("<span>"+headData.inspectorUserName?headData.inspectorUserName:""+"</span>");
+        array.push("</td>");
+        array.push("</tr>");
+        array.push("</table>");
+        //row6
+        array.push("<table class='titleTable' style='width: 100%;color: black;'>");
+        array.push("<tr style='width: 100%'>");
+        array.push("<td style='width: 10%;text-align:center;border-top: 1px solid blue;border-right: 1px solid blue;border-left: 1px solid blue;'>");
+        array.push("<span>备注:</span>");
+        array.push("</td>");
+        array.push("<td style='width: 90%;text-align:left;border-top: 1px solid blue;border-right: 1px solid blue;'>");
+        array.push("<span>"+headData.remark?headData.remark:""+"</span>");
+        array.push("</td>");
+        array.push("</tr>");
+        array.push("</table>");
+        $('#pageDiv').append(array.join(''));
+	}
+	function initLineDate(){
+		var array = new Array();
+        array.push("<table class='lineTable' style='width: 100%;height: 30px;color: black;'>");
+        //表头
+        array.push("<tr style='width: 100%'>");
+        array.push("<th style='width: 3%;border-top: 1px solid blue;border-right: 1px solid blue;border-left: 1px solid blue;'>");
+        array.push("NO");
+        array.push("</th>");
+        array.push("<th style='width: 7%;border-top: 1px solid blue;border-right: 1px solid blue;'>");
+        array.push("检验项类别");
+        array.push("</th>");
+        array.push("<th style='width: 20%;border-top: 1px solid blue;border-right: 1px solid blue;'>");
+        array.push("检验项目");
+        array.push("</th>");
+        array.push("<th style='width: 5%;border-top: 1px solid blue;border-right: 1px solid blue;'>");
+        array.push("抽样标准");
+        array.push("</th>");
+        array.push("<th style='width: 5%;border-top: 1px solid blue;border-right: 1px solid blue;'>");
+        array.push("检验工具");
+        array.push("</th>");
+        array.push("<th style='width: 5%;border-top: 1px solid blue;border-right: 1px solid blue;'>");
+        array.push("检验水平");
+        array.push("</th>");
+        array.push("<th style='width: 5%;border-top: 1px solid blue;border-right: 1px solid blue;'>");
+        array.push("AQL");
+        array.push("</th>");
+        array.push("<th style='width: 5%;border-top: 1px solid blue;border-right: 1px solid blue;'>");
+        array.push("抽样数量");
+        array.push("</th>");
+        array.push("<th style='width: 5%;border-top: 1px solid blue;border-right: 1px solid blue;'>");
+        array.push("规格类型");
+        array.push("</th>");
+        array.push("<th style='width: 5%;border-top: 1px solid blue;border-right: 1px solid blue;'>");
+        array.push("规格");
+        array.push("</th>");
+        array.push("<th style='width: 20%;border-top: 1px solid blue;border-right: 1px solid blue;'>");
+        array.push("检验记录	");
+        array.push("</th>");
+        array.push("<th style='width: 5%;border-top: 1px solid blue;border-right: 1px solid blue;'>");
+        array.push("合格数");
+        array.push("</th>");
+        array.push("<th style='width: 5%;border-top: 1px solid blue;border-right: 1px solid blue;'>");
+        array.push("不良数");
+        array.push("</th>");
+        array.push("<th style='width: 5%;border-top: 1px solid blue;border-right: 1px solid blue;'>");
+        array.push("结论");
+        array.push("</th>");
+        array.push("</tr>");
+        for(var i=0;i<lineData.length;i++){
+        	array.push("<tr style='width: 100%'>");
+            array.push("<td style='border-top: 1px solid blue;border-right: 1px solid blue;border-left: 1px solid blue;border-bottom: 1px solid blue'>");
+            array.push(""+(i+1)+"");
+            array.push("</td>");
+            array.push("<td style='border-top: 1px solid blue;border-right: 1px solid blue;border-bottom: 1px solid blue'>");
+            array.push(""+getMeaningByValue(lineData[i].attributeType,hqmIqcAttributeCategory)+"");
+            array.push("</td>");
+            array.push("<td style='border-top: 1px solid blue;border-right: 1px solid blue;border-bottom: 1px solid blue'>");
+            array.push(""+lineData[i].inspectionAttribute+"");
+            array.push("</td>");
+            array.push("<td style='border-top: 1px solid blue;border-right: 1px solid blue;border-bottom: 1px solid blue'>");
+            array.push(""+getMeaningByValue(lineData[i].sampleProcedureType,hqmIqcSampleStandardType)+"");
+            array.push("</td>");
+            array.push("<td style='border-top: 1px solid blue;border-right: 1px solid blue;border-bottom: 1px solid blue'>");
+            array.push(""+lineData[i].inspectionTool+"");
+            array.push("</td>");
+            array.push("<td style='border-top: 1px solid blue;border-right: 1px solid blue;border-bottom: 1px solid blue'>");
+            array.push(""+getMeaningByValue(lineData[i].inspectionLevels,hqmIqcInspectionLevels)+""); 
+            array.push("</td>");
+            array.push("<td style='border-top: 1px solid blue;border-right: 1px solid blue;border-bottom: 1px solid blue'>");
+            array.push(""+getMeaningByValue(lineData[i].acceptanceQualityLimit,hqmIqcAql)+"");
+            array.push("</td>");
+            array.push("<td style='border-top: 1px solid blue;border-right: 1px solid blue;border-bottom: 1px solid blue'>");
+            array.push(""+lineData[i].sampleSize+"");
+            array.push("</td>");
+            array.push("<td style='border-top: 1px solid blue;border-right: 1px solid blue;border-bottom: 1px solid blue'>");
+            array.push(""+getMeaningByValue(lineData[i].standardType,hqmIqcStandardType)+"");
+            array.push("</td>");
+            array.push("<td style='border-top: 1px solid blue;border-right: 1px solid blue;border-bottom: 1px solid blue'>");
+            array.push(""+(lineData[i].standradFrom?lineData[i].standradFrom:"")+"~"+(lineData[i].standradTo?lineData[i].standradTo:"")+"");
+            array.push("</td>");
+            array.push("<td style='border-top: 1px solid blue;border-right: 1px solid blue;border-bottom: 1px solid blue'>");
+            array.push(""+lineData[i].inspectionHistory+"");
+            array.push("</td>");
+            array.push("<td style='border-top: 1px solid blue;border-right: 1px solid blue;border-bottom: 1px solid blue'>");
+            array.push(""+lineData[i].conformingQty?lineData[i].conformingQty:""+"");
+            array.push("</td>");
+            array.push("<td style='border-top: 1px solid blue;border-right: 1px solid blue;border-bottom: 1px solid blue'>");
+            array.push(""+lineData[i].nonConformingQty?lineData[i].nonConformingQty:""+"");
+            array.push("</td>");
+            array.push("<td style='border-top: 1px solid blue;border-right: 1px solid blue;border-bottom: 1px solid blue'>");
+            array.push(""+lineData[i].attributeInspectionRes?lineData[i].attributeInspectionRes:""+"");
+            array.push("</td>");
+            array.push("</tr>");
+        }
+        array.push("</table>");
+        
+        $('#pageDiv').append(array.join(''));
+	}
+	function initBottom(){
+		var array = new Array();
+        array.push("<table class='lineTable' style='width: 100%;height: 30px;color: black;'>");
+        array.push("<tr style='width: 100%'>");
+        array.push("<td style='width: 10%;text-align:center;border-top: 1px solid blue;border-right: 1px solid blue;border-left: 1px solid blue;'>");
+        array.push("检验结果");
+        array.push("</td>");
+        array.push("<td style='width: 90%;border-top: 1px solid blue;border-right: 1px solid blue;'>");
+        array.push(""+getMeaningByValue(headData.inspectionRes,hqmInspectionResult)+"");
+        array.push("</td>");
+        array.push("</tr>");
+        array.push("<tr style='width: 100%'>");
+        array.push("<td style='width: 10%;text-align:center;border-top: 1px solid blue;border-right: 1px solid blue;border-left: 1px solid blue;'>");
+        array.push("检验描述	");
+        array.push("</td>");
+        array.push("<td style='width: 90%;border-top: 1px solid blue;border-right: 1px solid blue;'>");
+        array.push(""+headData.inspectionDes?headData.inspectionDes:""+"");
+        array.push("</td>");
+        array.push("</tr>");
+        array.push("<tr style='width: 100%'>");
+        array.push("<td style='width: 10%;text-align:center;border-top: 1px solid blue;border-right: 1px solid blue;border-left: 1px solid blue;'>");
+        array.push("检验判定	");
+        array.push("</td>");
+        array.push("<td style='width: 90%;border-top: 1px solid blue;border-right: 1px solid blue;'>");
+        array.push(""+headData.inspectionJudge?headData.inspectionJudge:""+"");
+        array.push("</td>");
+        array.push("</tr>");
+		array.push("</table>");
+		
+		array.push("<table class='lineTable' style='width: 100%;height: 30px;color: black;'>");
+        array.push("<tr style='width: 100%'>");
+        array.push("<td style='width: 3%;text-align:center;border-top: 1px solid blue;border-right: 1px solid blue;border-left: 1px solid blue;'>");
+        array.push("不<br/>合<br/>格");
+        array.push("</td>");
+        array.push("<td style='width: 7%;text-align:center;border-top: 1px solid blue;border-right: 1px solid blue;'>");
+        array.push("审批判定");
+        array.push("</td>");
+        array.push("<td style='width: 90%;border-top: 1px solid blue;border-right: 1px solid blue;'>");
+        array.push(""+headData.approvalResult?headData.approvalResult:""+"");
+        array.push("</td>");
+        array.push("</tr>");
+        array.push("<tr style='width: 100%'>");
+        array.push("<td style='width: 3%;text-align:center;border-right: 1px solid blue;border-left: 1px solid blue;'>");
+        array.push("审<br/>批<br/>处");
+        array.push("</td>");
+        array.push("<td style='width: 7%;text-align:center;border-top: 1px solid blue;border-right: 1px solid blue;'>");
+        array.push("处置方式	");
+        array.push("</td>");
+        array.push("<td style='width: 90%;border-top: 1px solid blue;border-right: 1px solid blue;'>");
+        array.push(""+getMeaningByValue(headData.solveWay,hqmInspectionSolveWay)+"");
+        array.push("</td>");
+        array.push("</tr>");
+        array.push("<tr style='width: 100%'>");
+        array.push("<td style='width: 3%;text-align:center;border-right: 1px solid blue;border-left: 1px solid blue;border-bottom: 1px solid blue;'>");
+        array.push("理<br/>项<br/>目");
+        array.push("</td>");
+        array.push("<td style='width: 7%;text-align:center;border-top: 1px solid blue;border-right: 1px solid blue;border-bottom: 1px solid blue;'>");
+        array.push("审批描述");
+        array.push("</td>");
+        array.push("<td style='width: 90%;border-top: 1px solid blue;border-right: 1px solid blue;border-bottom: 1px solid blue;'>");
+        array.push(""+headData.approvalDes?headData.approvalDes:""+"");
+        array.push("</td>");
+        array.push("</tr>");
+		array.push("</table>");
+        $('#pageDiv').append(array.join(''));
+	}
+	function getMeaningByValue(meaning,datasource){
+		var v = meaning ? meaning : "";
+        $.each(datasource, function (i, n) {
+            if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                v = n.meaning;
+                return v;
+            }
+        })
+        return v;
+	}
+</script>
+<script>
+	$(function (){
+		getInspectionHeadInfo();
+		getInspectionLineInfo();
+		initHead();
+		initTitle();
+		initLineDate();
+		initBottom();
+		if(printFlag=='P'){
+			window.print();
+		}
+// 		window.print();
+	});
+</script>
+</body>
+</html>

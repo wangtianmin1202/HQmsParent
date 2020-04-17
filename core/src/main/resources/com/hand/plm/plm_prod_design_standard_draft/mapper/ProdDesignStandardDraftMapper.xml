@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper
+	namespace="com.hand.plm.plm_prod_design_standard_draft.mapper.ProdDesignStandardDraftMapper">
+	<resultMap id="BaseResultMap"
+		type="com.hand.plm.plm_prod_design_standard_draft.view.ProdDesignStandardDraftVO">
+		<result column="KID" property="kid" jdbcType="VARCHAR" />
+		<result column="DESIGN_STANDARD_ID" property="designStandardId"	jdbcType="VARCHAR" />
+		<result column="DETAIL_ID" property="detailId"	jdbcType="VARCHAR" />
+		<result column="DESION_DIMENSION" property="desionDimension"	jdbcType="VARCHAR" />
+		<result column="RELATED_PARTS" property="relatedParts"	jdbcType="VARCHAR" />
+		<result column="DESIGN_STANDARD_DESCRIPTION"	property="designStandardDescription" jdbcType="VARCHAR" />
+		<result column="GRAPHIC_CODE" property="graphicCode"	jdbcType="VARCHAR" />
+		<result column="CHECKER" property="checker" jdbcType="VARCHAR" />
+		<result column="STATUS" property="status" jdbcType="VARCHAR" />
+		<result column="VERSION" property="version" jdbcType="VARCHAR" />
+		<result column="operation_type" property="operationType" jdbcType="VARCHAR" />
+		<result column="structure_module" property="structureModule" jdbcType="VARCHAR" />
+		<result column="part_name" property="partName" jdbcType="VARCHAR" />
+	    <result column="checker_name" property="checkerName" jdbcType="VARCHAR" />
+		
+	</resultMap>
+
+
+
+
+	<select id="queryAll" resultMap="BaseResultMap"
+		parameterType="com.hand.plm.plm_prod_design_standard_draft.view.ProdDesignStandardDraftVO">
+		SELECT  p1.name part_name,
+				t.kid,
+				t.design_standard_id,
+				t.detail_id,
+				t.desion_dimension,
+				t.related_parts,
+				t.design_standard_description,
+				t.graphic_code,
+				t.checker,
+				(SELECT he.name
+                  FROM sys_user su, hr_employee he
+                 WHERE su.employee_id = he.employee_id
+                   AND su.user_id = t.checker) checker_name,
+				t.status,
+				t.version,
+				t.operation_type
+		FROM plm_prod_design_standard_draft t
+		LEFT JOIN plm_product_design_standard p1
+			ON t.design_standard_id = p1.kid
+		WHERE 1 = 1
+		<if test="status != null and status != ''">
+            AND t.status= #{status}
+        </if>
+        <if test="designStandardId != null and designStandardId != ''">
+            AND t.design_standard_id= #{designStandardId}
+        </if>
+		 <if test="operationType != null and operationType != ''">
+            AND t.operation_type= #{operationType}
+        </if>
+        <if test="kid != null and kid != ''">
+            AND t.kid= #{kid}
+        </if>
+         <if test="detailId != null and detailId != ''">
+            AND t.detail_id= #{detailId}
+        </if>
+        
+        <if test="createdBy != null and createdBy != ''">
+            AND t.created_by= #{createdBy}
+        </if>
+        
+        
+        <if test="detailIdList !=null and detailIdList.size > 0">
+            AND t.detail_id IN
+            <foreach collection="detailIdList" index="index" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        
+        <if test="designStandardIdList !=null and designStandardIdList.size > 0">
+            AND t.design_standard_id IN
+            <foreach collection="designStandardIdList" index="index" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+	</select>
+</mapper>

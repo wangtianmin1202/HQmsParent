@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.dimension.hqm_dimension_improving_actions_ev.mapper.DimensionImprovingActionsEvMapper">
+    <resultMap id="BaseResultMap" type="com.hand.dimension.hqm_dimension_improving_actions_ev.dto.DimensionImprovingActionsEv">
+        <result column="EVALUATE_ID" property="evaluateId" jdbcType="DECIMAL" />
+        <result column="ACTION_ID" property="actionId" jdbcType="DECIMAL" />
+        <result column="MEMBER_ID" property="memberId" jdbcType="DECIMAL" />
+        <result column="EVALUATE_FLAG" property="evaluateFlag" jdbcType="VARCHAR" />
+    </resultMap>
+
+
+</mapper>

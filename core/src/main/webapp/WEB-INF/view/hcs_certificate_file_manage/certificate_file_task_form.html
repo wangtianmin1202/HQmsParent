@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<!--
+  供应商文件上传
+-->
+<#include "../include/header.html">
+<style>
+.container{
+margin-left: 0px;
+margin-right: 0px;
+}
+.btnrow{
+margin-bottom: 5px;
+}
+button.btn{
+width: 140px;
+height: 66px;
+text-align: center;
+}
+td{
+border: #aaaaaa solid 1px;
+}
+</style>
+<script src="${base.contextPath}/lib/bootstrap-3.3.7/js/bootstrap.min.js"></script>
+<script src="${base.contextPath}/common/code?HQM_CETIFICATE_CLASS_I=HQM_CETIFICATE_CLASS_I"></script>
+<script src="${base.contextPath}/common/code?HQM_CETIFICATE_CLASS_II_SYS=HQM_CETIFICATE_CLASS_II_SYS"></script>
+<script src="${base.contextPath}/common/code?HQM_CETIFICATE_CLASS_II=HQM_CETIFICATE_CLASS_II"></script>
+<script src="${base.contextPath}/common/code?HQM_PERSON_CERTIFICATE_TYPE=HQM_PERSON_CERTIFICATE_TYPE"></script>
+
+<script type="text/javascript">
+    var supplierId = "${RequestParameters.supplierId!0}"
+    var itemId = "${RequestParameters.itemId!0}"
+    var viewModel = kendo.observable({
+    	model: {},
+    })
+    var rows = new Array()
+
+</script>
+
+<body style="height: 400px;">
+
+<div id="page-content">
+    <div class="container">
+    <!-- 按钮组 -->
+	    <div class="col-lg-4">
+	    	<div class="row btnrow">
+		    	<button type="button" id="PRO-SFIEC" class="btn btn-default btn-lg disabled" style="border-radius: 10px;">安规-IEC<br/></button>
+		    	<button type="button" id="SYS-EV" class="btn btn-default btn-lg disabled" style="border-radius: 10px;">环境证书<br/></button>
+	    	</div>
+	    	<div class="row btnrow">
+		    	<button type="button" id="PRO-SFUL" class="btn btn-default btn-lg disabled" style="border-radius: 10px;">安规-UL<br/></button>
+		    	<button type="button" id="SYS-OTH" class="btn btn-default btn-lg disabled" style="border-radius: 10px;">体系其他证书<br/></button>
+	    	</div>
+	    	<div class="row btnrow">
+		    	<button type="button" id="PRO-REACH" class="btn btn-default btn-lg disabled" style="border-radius: 10px;">REACH<br/></button>
+		    	<button type="button" id="PRO-PPAP" id="PRO-PPAP" class="btn btn-default btn-lg" style="border-radius: 10px;">PPAP<br/></button>
+	    	</div>
+	    	<div class="row btnrow">
+	    		<button type="button" id="PRO-ROHS" class="btn btn-default btn-lg disabled" style="border-radius: 10px;">ROHS<br/></button>
+		    	<button type="button" id="PRO-PER-KEY" class="btn btn-default btn-lg disabled" style="border-radius: 10px;">人员认证<br/>关键岗位培训</button>
+	    	</div>
+	    	<div class="row btnrow">
+		    	<button type="button" id="PRO-OTH" class="btn btn-default btn-lg disabled" style="border-radius: 10px;">产品其他文件<br/></button>
+		    	<button type="button" id="PRO-PER-WIN" class="btn btn-default btn-lg disabled" style="border-radius: 10px;">人员认证<br/>窗口认证</button>
+	    	</div>
+	    	<div class="row btnrow">
+		    	<button type="button" id="SYS-QA" class="btn btn-default btn-lg disabled" style="border-radius: 10px;">质量证书<br/></button>
+	    	</div>
+	    </div>
+	<!-- 界面组1 -->
+	    <div id="panel-item" class="col-lg-8" style="display: none;">
+	    <table style="width: 100%; font-size: 16px; font-color: #000;text-align: center;">
+		    <tr>
+		    <td style="width: 20%;">供应商</td>
+		    <td name="supplierCode" style="width: 40%;">111</td>
+		    <td name="supplierName" style="width: 40%;">111</td>
+		    </tr>
+		    <td rowspan="2">类型</td>
+		    <td colspan="2" name="firstCategory">产品证书</td>
+		    <tr>
+		    <td colspan="2" name="secondCategory">环境证书</td>
+		    </tr>
+		    <tr>
+		    <td style="width: 20%;">物料</td>
+		    <td name="itemCode" style="width: 40%;">111</td>
+		    <td name="itemDescription" style="width: 40%;">111</td>
+		    </tr>
+	    </table>
+	    <!-- 两个时间输入框 -->
+	    <div class="row" style="margin-top: 5px;text-align: center;">
+	     <div class="col-lg-6">
+             <label><@spring.message "hcs.certificate.startdate"/>:</label>
+             <input id="issueDateItem" required data-role="datetimepicker" style="width: 150px;margin-right:5px;" />
+    		<script>
+    		$("#issueDateItem").kendoDatePicker({
+    			format : "yyyy-MM-dd HH:mm:ss",
+				change : function(e) {
+                    $("#issueDate").val(this.value().toISOString())
+                }
+			});
+    		</script>
+	     </div>
+	     <div class="col-lg-6">
+             <label><@spring.message "hcs.certificate.enddate"/>:</label>
+             <input id="disabledDateItem" required data-role="datetimepicker" style="width: 150px;margin-right:5px;" />
+    		<script>
+    		$("#disabledDateItem").kendoDatePicker({
+    			format : "yyyy-MM-dd HH:mm:ss",
+				change : function() {
+                    $("#disabledDate").val(this.value().toISOString())
+                }
+			});
+    		</script>
+	     </div>
+	    </div>
+	    <!-- 文件提交的表单 -->
+	    <div class="row" style="margin-top: 5px;">
+	    <form method="post"  target="hidden_frame_item" action="${base.contextPath}/certificate/file/submit/upload1?${_csrf.parameterName}=${_csrf.token}" >
+                <div class="demo-section k-content">
+                    <input name="files" id="filesItem" type="file" aria-label="files" />
+                    <input name="certificateId" id="certificateIdItem" type="text" style="display: none;"/>
+                    <input name="issueDate" id="issueDate" type="text"  style="display: none;"/>
+                    <input name="disabledDate" id="disabledDate" type="text" style="display: none;" />
+                    <p style="padding-top: 1em; text-align: center">
+                        <button id="submit-item-item" type="submit" class="k-button k-primary">提交</button>
+                    </p>
+                </div>
+         </form>
+         <iframe name="hidden_frame_item" id="hidden_frame_item" style="display: none;"></iframe>
+         <script>
+         $("#filesItem").kendoUpload();
+         $("#hidden_frame_item").load(function(){
+        	 var text = $(this).contents().find("body").text();
+        	 var res = $.parseJSON(text)
+        	 if(res.success){
+        		 kendo.ui.showInfoDialog({message: "成功"})
+        		 $("#filesItem").data("kendoUpload").clearAllFiles();
+        		 $("button[certificate-id='" + $("#certificateIdItem").val() + "']").removeClass("btn-warning btn-success").addClass("btn-default disabled").attr('disabled','disabled');
+        		 loadFirst()
+        	 }else{
+        		 kendo.ui.showErrorDialog({message: res.message})
+        	 }
+         })
+
+         </script>
+	    </div>
+	    </div>
+	 <!-- 界面组2 -->
+	    <div id="panel-ppap" class="col-lg-8" style="display: none;">
+	    <table style="width: 100%; font-size: 16px; font-color: #000;text-align: center;">
+		    <tr>
+		    <td style="width: 20%;">供应商</td>
+		    <td name="supplierCode" style="width: 40%;">111</td>
+		    <td name="supplierName" style="width: 40%;">111</td>
+		    </tr>
+		    <tr>
+		    <td>版本</td>
+		    <td colspan="2" name="typeValue">AA</td>
+		    </tr>
+		    <tr>
+		    <td>级别</td>
+		    <td colspan="2" name="levels">0级</td>
+		    </tr>
+		    <tr>
+		    <td>模板下载</td>
+		    <td colspan="2"><a>下载</a></td>
+		    </tr>
+		    <tr>
+		    <td style="width: 20%;">物料</td>
+		    <td name="itemCode" style="width: 40%;">111</td>
+		    <td name="itemDescription" style="width: 40%;">111</td>
+		    </tr>
+	    </table>
+	    <!-- 文件提交的表单 -->
+	    <div class="row" style="margin-top: 5px;">
+	    <form method="post" target="hidden_frame_ppap" action="${base.contextPath}/certificate/file/submit/upload1?${_csrf.parameterName}=${_csrf.token}">
+                <div class="demo-section k-content">
+                    <input name="files" id="filesPpap" type="file" aria-label="files" />
+                    <input name="certificateId" id="certificateIdPpap" type="text" style="display: none;" />
+                    <p style="padding-top: 1em; text-align: center">
+                        <button id="submit-item-ppap" type="submit" class="k-button k-primary">提交</button>
+                    </p>
+                </div>
+         </form>
+         <iframe name="hidden_frame_ppap" id="hidden_frame_ppap" style="display: none;"></iframe>
+         <script>
+         $("#filesPpap").kendoUpload();
+         $("#hidden_frame_ppap").load(function(){
+        	 var text = $(this).contents().find("body").text();
+        	 var res = $.parseJSON(text)
+        	 if(res.success){
+        		 kendo.ui.showInfoDialog({message: "成功"})
+        		 $("#filesPpap").data("kendoUpload").clearAllFiles();
+        		 $("button[certificate-id='" + $("#certificateIdPpap").val() + "']").removeClass("btn-warning btn-success").addClass("btn-default disabled").attr('disabled','disabled');
+        		 loadFirst()
+        	 }else{
+        		 kendo.ui.showErrorDialog({message: res.message})
+        	 }
+         })
+         </script>
+	    </div>
+	    </div>
+	 <!-- 界面组3 -->
+	    <div id="panel-per" class="col-lg-8" style="display: none;">
+	    <table style="width: 100%; font-size: 16px; font-color: #000;text-align: center;">
+		    <tr>
+		    <td style="width: 20%;">供应商</td>
+		    <td name="supplierCode" style="width: 40%;">111</td>
+		    <td name="supplierName" style="width: 40%;">111</td>
+		    </tr>
+		    <tr>
+		    <td>类型</td>
+		    <td colspan="2" name="typeValue">关键岗位培训</td>
+		    </tr>
+		    <tr>
+		    <td>模板下载</td>
+		    <td colspan="2"><a>下载</a></td>
+		    </tr>
+		    <tr>
+		    <td style="width: 20%;">物料</td>
+		    <td name="itemCode" style="width: 40%;">111</td>
+		    <td name="itemDescription" style="width: 40%;">111</td>
+		    </tr>
+	    </table>
+	    <!-- 文件提交的表单 -->
+	    <div class="row" style="margin-top: 5px;">
+	    <form method="post" target="hidden_frame_per" action="${base.contextPath}/certificate/file/submit/upload1?${_csrf.parameterName}=${_csrf.token}">
+                <div class="demo-section k-content">
+                    <input name="files" id="filesPer" type="file" aria-label="files" />
+                    <input name="certificateId" id="certificateIdPer" type="text" style="display: none;" />
+                    <p style="padding-top: 1em; text-align: center">
+                        <button id="submit-item-per" type="submit" class="k-button k-primary">提交</button>
+                    </p>
+                </div>
+         </form>
+         <iframe name="hidden_frame_per" id="hidden_frame_per" style="display: none;"></iframe>
+         <script>
+         $("#filesPer").kendoUpload();
+         $("#hidden_frame_per").load(function(){
+        	 var text = $(this).contents().find("body").text();
+        	 var res = $.parseJSON(text)
+        	 if(res.success){
+        		 kendo.ui.showInfoDialog({message: "成功"})
+        		 $("#filesPer").data("kendoUpload").clearAllFiles();
+        		 $("button[certificate-id='" + $("#certificateIdPer").val() + "']").removeClass("btn-warning btn-success").addClass("btn-default disabled").attr('disabled','disabled');
+        		 loadFirst()
+        	 }else{
+        		 kendo.ui.showErrorDialog({message: res.message})
+        	 }
+         })
+         </script>
+	    </div>
+	    </div>
+    </div>
+</div>
+<script>
+function getAllRows(){//获取供应商上传和物料上传的数据
+	$.ajax({
+		url:"${base.contextPath}/hcs/certificate/rows/get",
+		type: "POST",
+		data: {
+			supplierId: supplierId,
+			itemId: itemId
+		},
+		async: false,
+		dataType: "json",
+		success: function(response){
+			if(response.success && response.rows.length > 0){
+				rows = response.rows
+			}
+		}
+	})
+}
+function buttonStatus(){
+	for(var i = 0; i < rows.length; i++){
+		if(rows[i].firstCategory == "SYS"){//体系
+			$("#SYS-" + rows[i].secondCategory).removeClass("disabled btn-default").addClass("btn-warning").attr("certificate-id",rows[i].certificateId);
+		}else{//PRO 物料
+			if(rows[i].secondCategory == "PER"){
+				$("#PRO-PER-" + rows[i].typeValue).removeClass("disabled btn-default").addClass("btn-warning").attr("certificate-id",rows[i].certificateId);;
+			}else{
+				$("#PRO-" + rows[i].secondCategory).removeClass("disabled btn-default").addClass("btn-warning").attr("certificate-id",rows[i].certificateId);;
+			}
+		}
+	}
+}
+function disabledPanelItem(){
+	//disabled panel-item
+	$("#issueDateItem").data("kendoDatePicker").enable(false)
+	$("#disabledDateItem").data("kendoDatePicker").enable(false)
+	$("#filesItem").data("kendoUpload").enable(false);
+	$("#submit-item-item").attr("disabled",true)
+}
+function enablePanelItem(){
+	$("#issueDateItem").data("kendoDatePicker").enable(true)
+	$("#disabledDateItem").data("kendoDatePicker").enable(true)
+	$("#filesItem").data("kendoUpload").enable(true);
+	$("#submit-item-item").attr("disabled",false)
+}
+function disabledPanelPpap(){
+	//disabled panel-ppap
+	$("#filesPpap").data("kendoUpload").enable(false);
+	$("#submit-item-ppap").attr("disabled",true)
+}
+function enablePanelPpap(){
+	$("#filesPpap").data("kendoUpload").enable(true);
+	$("#submit-item-ppap").attr("disabled",false)
+}
+function disabledPanelPer(){
+	//disabled panel-per
+	$("#filesPer").data("kendoUpload").enable(false);
+	$("#submit-item-per").attr("disabled",true)
+}
+function enablePanelPer(){
+	$("#filesPer").data("kendoUpload").enable(true);
+	$("#submit-item-per").attr("disabled",false)
+}
+function showPanelPpap(){//展示 ppap
+	$("#panel-ppap").show()
+	$("#panel-per").hide()
+	$("#panel-item").hide()
+	enablePanelPpap()
+}
+function showPanelPer(){//展示 per 人员认证相关
+	$("#panel-ppap").hide()
+	$("#panel-per").show()
+	$("#panel-item").hide()
+	enablePanelPer()
+}
+function showPanelItem(){//展示 物料的录入界面
+	$("#panel-ppap").hide()
+	$("#panel-per").hide()
+	$("#panel-item").show()
+	enablePanelItem()
+}
+function getCodeMeaning(datas, v) {
+	var result = datas.filter((p) => {
+		return p.value == v
+	})
+	if(result.length > 0)
+		return result[0].meaning
+	else
+		return v
+}
+function loadTableData(data){//数据初始加载 按钮状态加载
+	$("[name='certificateId']").val(data.certificateId)
+	$("[name='supplierCode']").text(data.supplierCode)
+	$("[name='supplierName']").text(data.supplierName)
+	$("[name='itemCode']").text(data.itemCode? data.itemCode : "")
+	$("[name='itemDescription']").text(data.itemDescription? data.itemDescription : "")
+	$("[name='firstCategory']").text(Hap.getCodeMeaning(HQM_CETIFICATE_CLASS_I, data.firstCategory == "SYS"?"SYS" : "PRO"))
+	$("[name='secondCategory']").text(Hap.getCodeMeaning(data.firstCategory == "SYS"?HQM_CETIFICATE_CLASS_II_SYS : HQM_CETIFICATE_CLASS_II , data.secondCategory))
+	$("[name='levels']").text(data.levels? data.levels : "")
+	if(data.certificateType == "PPAP")
+		$("[name='typeValue']").text(data.typeValue?data.typeValue : "")
+	else
+		$("[name='typeValue']").text(Hap.getCodeMeaning(HQM_PERSON_CERTIFICATE_TYPE, data.typeValue))
+		
+}
+function loadFirst(){//加载必输按钮的第一个
+	$("button.btn-warning:first").trigger("click")
+}
+function bindEvent(){//十个按钮的点击句柄添加
+	$("button[certificate-id]").on("click",function(){
+		var certificateId = $(this).attr("certificate-id")
+		var buttonId = $(this).attr("id")
+		if(buttonId.match("PPAP"))
+			showPanelPpap()
+		else if(buttonId.match("PER"))
+			showPanelPer()
+		else
+			showPanelItem()
+		var data = rows.filter((p) => {return p.certificateId == certificateId })[0]
+		loadTableData(data)
+		$("button.btn-success").removeClass("btn-success").addClass("btn-warning")
+		$(this).removeClass("btn-warning").addClass("btn-success")
+	})
+}
+</script>
+<script>
+$(function(){
+	getAllRows()
+	buttonStatus()
+	bindEvent()
+	loadFirst()
+})
+</script>
+</body>
+</html>

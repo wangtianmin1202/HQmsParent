@@ -1,0 +1,285 @@
+<#include "../include/header.html">
+<script src="${base.contextPath}/common/code?SRM_BARCODE_STATUS=SRM_BARCODE_STATUS"></script>
+<script src="${base.contextPath}/common/code?SRM_OUT_BARCODE_STATUS=SRM_OUT_BARCODE_STATUS"></script>
+<script src="${base.contextPath}/common/code?yesorno=SRM_YES_NO"></script>
+<script src="${base.contextPath}/common/code?SRM_PACKING_MODE=SRM_PACKING_MODE"></script>
+<script src="${base.contextPath}/common/code?SRM_YES_NO=SRM_YES_NO"></script>
+<script src="${base.contextPath}/common/code?SRM_OUT_BACODE_TYPE=SRM_OUT_BACODE_TYPE"></script>
+<script src="${base.contextPath}/common/code?HQM_DEFAULT_PLANT=HQM_DEFAULT_PLANT"></script>
+<script src="${base.contextPath}/common/code?SRM_BARCODE_QTY=SRM_BARCODE_QTY"></script>
+<script src="${base.contextPath}/lib/prints/doc_print.js" type="text/javascript" charset="UTF-8"></script>
+<body>
+<script type="text/javascript">
+	var supplierId = window.parent.supplierId;
+	var supplierCode = window.parent.supplierCode;
+	var code ;
+	$(document).ready(function(){
+		
+		viewModel.model.set('plantName',nvl(HQM_DEFAULT_PLANT[0].description,''))
+		viewModel.model.set('plantCode',HQM_DEFAULT_PLANT[0].value)
+		viewModel.model.set('codeSum',1)
+		viewModel.model.set('supplierCode',supplierCode)
+		viewModel.model.set('supplierId',supplierId)
+	})
+	//光标移开事件
+	function change(){
+		if(typeof(viewModel.model.codeSum) != 'undefined' && viewModel.model.codeSum != ''){
+			if(parseInt(viewModel.model.codeSum) === 0){
+				viewModel.model.set('codeSum',1);
+				viewModel.model.set('obarcodeNumEnd',viewModel.model.obarcodeNumStart) ;
+				viewModel.model.set('obarcodeEnd',viewModel.model.obarcodeStart) ;
+
+				kendo.ui.showInfoDialog({
+					title: "提示",
+	    			message: '<@spring.message "error.srm_purchase_0031"/>'
+	    		})
+	    		return;
+			}else{
+				var obarcodeNumStart = viewModel.model.obarcodeNumStart;
+				var end = obarcodeNumStart.substr(obarcodeNumStart.length-5)
+				var start = obarcodeNumStart.substr(0,obarcodeNumStart.length-5)
+				var num = (Array(5).join(0) + (parseInt(end) + parseInt(viewModel.model.codeSum) -1));
+				if(parseFloat(num) > 9999){
+					kendo.ui.showInfoDialog({
+						title: "提示",
+		    			message: '<@spring.message "error.srm_purchase_1012"/>'
+		    		})
+		    		viewModel.model.set('codeSum',1);
+					change()
+		    		return;
+				}
+				var codeStr = start + (num).slice(-5)
+				viewModel.model.set('obarcodeNumEnd',codeStr);
+				
+				var obarcodeStart = viewModel.model.obarcodeStart;
+				var barcodeNum =  obarcodeStart.substr(obarcodeStart.length-9,6)+''
+				var startNum = obarcodeStart.substr(0,obarcodeStart.length-9)
+				var endNum = obarcodeStart.substr(obarcodeStart.length-3)
+				var maxEndNum = (parseInt(barcodeNum) + parseInt(viewModel.model.codeSum) -1)+'';
+				var codeNum = (Array(7-maxEndNum.length).join(0) + maxEndNum);
+				var str = startNum + (codeNum).slice(-6) + endNum
+				viewModel.model.set('obarcodeEnd',str);
+			}
+		}else{
+			viewModel.model.set('codeSum',1);
+			viewModel.model.set('obarcodeNumEnd',viewModel.model.obarcodeNumStart) ;
+			viewModel.model.set('obarcodeEnd',viewModel.model.obarcodeStart) ;
+		} 
+	}
+	var viewModel = kendo.observable({
+		model: {
+		},
+		save: function(e){
+			var validator = $("#mainform").kendoValidator().data("kendoValidator");
+			if (validator.validate()) {
+				var data= viewModel.model.toJSON();
+				var flag = true;
+		        $.each(SRM_BARCODE_QTY, function (i, n) {
+		            if(n.value == 2){
+		            	if(parseInt(viewModel.model.codeSum) >= parseInt(n.meaning)){
+		            		flag = false;
+		            	}
+		            }
+		        });
+		        if(flag){		        	
+			        saveData(data)
+		        }else{
+		        	kendo.ui.showConfirmDialog({
+    		    		title: '<@spring.message "hap.tip.info"/>',
+    		    		message: '<@spring.message "error.srm_purchase_1027"/>'
+    		    	}).done(function(e){
+    		    		if(e.button=='OK'){
+    		    			saveData(data)
+    		    		}
+    		    	})
+		        }
+			}
+		},
+		closeWin: function(e){
+        	window.parent.$("#addWindow").data("kendoWindow").close();
+        }
+	});
+	function saveData(data){
+		$.ajax({
+	        url: '${base.contextPath}/hcs/out/barcode/addInfo',
+	        type: 'POST',
+	        data: data,
+	        async: false,
+	        dataType: "json",
+	        success: function (response) {
+	            if (response.success) {
+	            	Hap.showToast({
+            			type:'success',
+            			"positionClass": "toast-bottom-right",
+            			message:'<@spring.message "hap.tip.success"/>',
+            			hideDuration:10*1000
+            		})	
+	            	window.parent.$("#addWindow").data("kendoWindow").close();
+	            	window.parent.viewModel.query();
+	            } else {
+	            	kendo.ui.showWarningDialog({
+	                    message: response.message
+	                });
+	            }
+	        }
+	    }); 
+	}
+</script>
+
+<div id="page-content">
+	<form id="mainform"  class="form-horizontal" method="post" enctype="application/json;charset=UTF-8">
+
+	<div class="row" style="margin-left: 5px;">
+	 	<div class="col-sm-12">
+	 	  	<div class="form-group">
+				<!-- 类型 -->
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message "outbarcode.obarcodeType"/>:</label>
+					<div class="col-sm-9">
+                        <input id="obarcodeType" style="width:100%" required name="<@spring.message 'outbarcode.obarcodeType'/>"
+                               data-label="<@spring.message 'outbarcode.obarcodeType'/>"
+                               data-bind="value:model.obarcodeType">
+						<span data-for="obarcodeType" class=".k-invalid-msg"></span>
+					</div>
+					<script>
+					$("#obarcodeType").kendoComboBox({
+				 		dataSource:SRM_OUT_BACODE_TYPE,
+				 		valuePrimitive: true,
+				 		dataTextField: "meaning",
+				 		dataValueField: "value",
+				 		change:function(e){
+				 			if(isNotEmpty(this._old)){
+					 			var jsonData = {
+									"supplierId" : supplierId,
+									"obarcodeType": this._old
+								}
+					 			var desc = SRM_OUT_BACODE_TYPE[this._oldIndex].description;
+					 			var codeValue = this._old;
+					 			viewModel.model.set('obarcodeTypeDesc',desc)
+								$.ajax({
+									url:"${base.contextPath}/hcs/out/barcode/getMaxNum",
+									type:"POST",
+									data: jsonData,
+									dataType: "json",
+									success: function (data){
+										
+									 	viewModel.model.set('obarcodeNumStart', (supplierCode + '-' + desc + '-' + data.maxObarcodeNum));	
+									 	viewModel.model.set('obarcodeStart', (codeValue + supplierCode + data.maxObarcode + '000'));
+									 	
+									 	var endNum = (parseInt(data.maxObarcodeNum) + parseInt(viewModel.model.codeSum) -1) +'';
+									 
+									 	var num = (Array(7-endNum.length).join(0) + endNum);
+										if(parseFloat(num) > 999999){
+											kendo.ui.showInfoDialog({
+												title: "提示",
+								    			message: '<@spring.message "error.srm_purchase_1012"/>'
+								    		})
+								    		viewModel.model.set('codeSum','1');
+											change();
+								    		return;
+										}
+									 	viewModel.model.set('obarcodeNumEnd', (supplierCode + '-' + desc + '-' + num))
+										var endobarcodeNum = (parseInt(data.maxObarcode) + parseInt(viewModel.model.codeSum) -1) +''
+									 	var obarcodeNum = (Array(7-endobarcodeNum.length).join(0) + endobarcodeNum);
+									
+									 	viewModel.model.set('obarcodeEnd', (codeValue + supplierCode + obarcodeNum + '000'))
+									 
+									}
+								}) 
+							}else{
+								viewModel.model.set('obarcodeNumStart', '');	
+							 	viewModel.model.set('obarcodeStart', '');
+							 	viewModel.model.set('obarcodeNumEnd', '')
+								viewModel.model.set('obarcodeEnd', '')
+							}
+				 		}
+				 	});
+					</script>
+				</div>
+	 	  		<!-- 标签张数 -->
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message "outbarcode.codeSum"/>:</label>
+					<div class="col-sm-9">
+                        <input required style="width:100%" name="<@spring.message 'outbarcode.codeSum'/>" oninput = "value=value.replace(/[^\d]/g,'')" onblur = "change()"
+                               data-label="<@spring.message 'outbarcode.codeSum'/>" id="codeSum"
+                               data-bind="value:model.codeSum" data-role="maskedtextbox">
+						<span data-for="codeSum" class=".k-invalid-msg"></span>
+					</div>
+				</div>
+            </div>
+			<div class="form-group">
+				<!-- 工厂 -->
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message 'outbarcode.plantName'/>:</label>
+					<div class="col-sm-9">
+                        <input disabled  style="width:100%" name="<@spring.message 'outbarcode.plantName'/>"
+                               data-label="<@spring.message 'outbarcode.plantName'/>" id="plantName"
+                               data-bind="value:model.plantName" data-role="maskedtextbox">
+						<span data-for="plantName" class=".k-invalid-msg"></span>
+					</div>
+				</div>
+				<!-- 备注 -->
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message "outbarcode.remarks"/>:</label>
+					<div class="col-sm-9">
+                        <input  style="width:100%" name="remarks"
+                               data-label="<@spring.message 'outbarcode.remarks'/>" id="remarks"
+                               data-bind="value:model.remarks" data-role="maskedtextbox">
+						<span data-for="remarks" class=".k-invalid-msg"></span>
+					</div>
+				</div>
+				
+			</div>
+			<div class="form-group">
+				<!-- 序列号从 -->
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message "outbarcodecreate.obarcodenumstart"/>:</label>
+					<div class="col-sm-9">
+						<input id="obarcodeNumStart"  style="width:100%" name="<@spring.message 'outbarcodecreate.obarcodenumstart'/>" disabled data-bind="value:model.obarcodeNumStart" data-role="maskedtextbox">
+						<span data-for="obarcodeNumStart" class=".k-invalid-msg"></span>
+					</div>
+				</div>
+				<!-- 序列号至 -->
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message "outbarcodecreate.obarcodeNumEnd"/>:</label>
+					<div class="col-sm-9">
+						<input id="obarcodeNumEnd" style="width:100%" name="<@spring.message 'outbarcodecreate.obarcodeNumEnd'/>" disabled data-bind="value:model.obarcodeNumEnd" data-role="maskedtextbox">
+						<span data-for="obarcodeNumEnd" class=".k-invalid-msg"></span>
+					</div>
+				</div>
+			</div>
+			<div class="form-group">
+				<!-- 条码编号从 -->
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message "outbarcodecreate.obarcodeStart"/>:</label>
+					<div class="col-sm-9">
+						<input id="obarcodeStart"  style="width:100%" name="<@spring.message 'outbarcodecreate.obarcodeStart'/>" disabled data-bind="value:model.obarcodeStart" data-role="maskedtextbox">
+						<span data-for="obarcodeStart" class=".k-invalid-msg"></span>
+					</div>
+				</div>
+				<!-- 条码编号至 -->
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message "outbarcodecreate.obarcodeEnd"/>:</label>
+					<div class="col-sm-9">
+						<input id="obarcodeEnd" style="width:100%" name="<@spring.message 'outbarcodecreate.obarcodeEnd'/>" disabled data-bind="value:model.obarcodeEnd" data-role="maskedtextbox">
+						<span data-for="obarcodeEnd" class=".k-invalid-msg"></span>
+					</div>
+				</div>
+			</div>
+		</div>
+	  </div>
+
+
+	</form>
+</div>
+<div id="mainBottom" class="text-center" style="bottom: 15px;position: fixed;  float: left;padding-top:15px;border-top:1px solid #ebebeb;width:100%; background: #fff;">
+	        <span class="btn btn-danger" style="float:right;margin-right:30px;" data-bind="click:closeWin"><i class="fa fa-trash-o" style="margin-right:3px;"></i><@spring.message "outbarcodecreate.cancel"/></span>
+        <span class="btn btn-success k-grid-save-changes fa fa-check" data-bind="click:save" style="float:right;margin-right:5px;"><@spring.message " hap.confirm "/></span>
+</div>
+
+<script type="text/javascript">
+    kendo.bind($('#mainBottom'),viewModel);
+	kendo.bind($('#mainform'), viewModel);
+</script>
+</body>
+</html>

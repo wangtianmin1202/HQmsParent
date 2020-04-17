@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.spc.ecr_main.mapper.EcrProcessMapper">
+    <resultMap id="BaseResultMap" type="com.hand.spc.ecr_main.dto.EcrProcess">
+        <result column="ECR_ID" property="ecrId" jdbcType="DECIMAL" />
+        <result column="PROCESS_CODE" property="processCode" jdbcType="VARCHAR" />
+        <result column="PROCESS_ID" property="processId" jdbcType="DECIMAL" />
+        <result column="PROCESS_EMPLOYEE_CODE" property="processEmployeeCode" jdbcType="VARCHAR" />
+        <result column="PROCESS_STATUS" property="processStatus" jdbcType="VARCHAR" />
+        <result column="PROCESS_START_DATE" property="processStartDate" jdbcType="DATE" />
+        <result column="PROCESS_END_DATE" property="processEndDate" jdbcType="DATE" />
+        <result column="PLAN_FINISHED_DATE" property="planFinishedDate" jdbcType="DATE" />
+        <result column="ECRNO" property="ecrno" jdbcType="VARCHAR" />
+        <result column="KID" property="kid" jdbcType="DECIMAL" />
+    </resultMap>
+
+
+</mapper>

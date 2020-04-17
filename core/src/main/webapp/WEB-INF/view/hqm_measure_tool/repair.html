@@ -1,0 +1,120 @@
+<#include "../include/header.html">
+<script type="text/javascript">
+var viewModel = Hap.createGridViewModel("#grid");
+function closeWindow(){
+	window.parent.$("#repairWindow").data("kendoWindow").close();
+}					  
+//維修
+viewModel.save = function(){
+	var validator = $("#mainForm").kendoValidator().data("kendoValidator");
+	if (validator.validate()) {
+		viewModel.model.set('measureToolId',window.parent.parentData[0].measureToolId);
+		$.ajax({
+	   		url:"${base.contextPath}/hqm/measure/tool/repair",
+	   		type: "POST",
+	   		data: viewModel.model.toJSON(),
+	   		dataType: "json",
+	   		success: function(data){
+	   			if(data.success){
+	   				Hap.showToast({
+            			type:'success',
+            			"positionClass": "toast-bottom-right",
+            			message:'維修成功',
+            			hideDuration:10*1000
+            		})
+	   				window.parent.viewModel.refresh();
+	   				window.parent.$("#repairWindow").data("kendoWindow").close();
+	   			}else{
+	   				kendo.ui.showErrorDialog({
+							title: "提示",
+			    			message: data.message
+		    		})
+		    		return;
+	   		 }
+	   		}
+	   	})
+	}
+
+}
+$(function(){
+	var parentData = window.parent.parentData;
+	viewModel.model.set('measureToolNum',parentData[0].measureToolNum);
+	viewModel.model.set('descriptions',parentData[0].descriptions);
+	viewModel.model.set('purchaseDate',parentData[0].purchaseDate);
+})
+</script>
+<body>
+<div id="page-content">
+   <div class="row">
+    <div class="pull-left" id="toolbar-btn" style="padding-bottom:10px;">
+    	<span class="btn btn-success k-grid-save-changes" style="float:left;margin-right:5px;"data-bind="click:save"><i class="fa fa-save" style="margin-right:3px;"></i><@spring.message "hap.confirm"/></span>
+        <span class="btn btn-primary fa fa-undo" style="float:left;margin-right:5px;" onClick="closeWindow()">&nbsp;<@spring.message "return.back"/></span>
+    </div>
+    <script>kendo.bind($('#toolbar-btn'), viewModel);</script>
+    <div class="pull-right" id="query-form" style="padding-bottom:10px;">
+           
+        <div style="clear:both"></div>
+    </div>
+    <script>kendo.bind($('#query-form'), viewModel);</script>
+    </div>
+    <div id="mainForm" class="panel-body" style="margin-right:5px;padding-bottom:10px;width: 100%;;padding:0px">
+    	<div class="row" style="margin-top: 5px;font-size:small">
+	    	<!-- 设备编号 -->
+	    		<div class="col-sm-6">
+	    			<div class="form-group">
+	                    <label class="col-sm-5 control-label" style="text-align:right;margin-top:2%"><@spring.message "measuretool.measuretoolnum"/>：</label>
+	                    <div class="col-sm-7">
+	                        <input id="measureToolNum" data-role="maskedtextbox" disabled type="text" style="width: 100%;" data-bind="value:model.measureToolNum">
+	                        <script>kendo.bind($('#measureToolNum'), viewModel);</script>
+	                    </div>
+	                </div>
+			    </div> 
+			    <!-- 设备名称 -->
+			    <div class="col-sm-6">
+			    	<div class="form-group">
+			    	   <lable class="col-xs-5 control-lable" style="text-align:right;margin-top:2%"><@spring.message "measuretool.descriptions"/>：</lable>
+			    	   <div class="col-xs-7" >
+			    	    	 <input id="descriptions" style="width: 100%;" disabled  data-role="maskedtextbox" type="text" data-bind="value:model.descriptions"/>
+			    	    	 <script>kendo.bind($("#descriptions"),viewModel);</script>
+			    	   </div>
+			        </div>	   
+			    </div>
+	    </div>
+	    <div class="row" style="margin-top: 5px;font-size:small">
+			    <!-- 购买日期 -->
+			    <div class="col-sm-6">
+			    	<lable class="col-xs-5 control-lable" style="text-align:right;margin-top:2%"> <@spring.message "measuretool.purchasedate"/>：</lable>
+			  		<div class="col-xs-7">
+			    	    	 <input id="purchaseDate" style="width: 100%;" disabled    data-bind="value:model.purchaseDate">
+			    	    	 <script>
+			    	    	 	kendo.bind($("#purchaseDate"),viewModel);
+			    	    	 	var datePicker = $("#purchaseDate").kendoDatePicker({
+		    					    format: "{0:yyyy-MM-dd}",
+		    					    change: function(){
+		    					    }
+		    					}); 
+			    	    	 	//$("#purchaseDate").attr("readonly","readonly");
+			    				//datePicker[0] 
+			    	    	 </script>
+			    	    	 
+			    	</div>
+			    </div>
+	    </div>
+    	<div class="row" style="margin-top: 5px;font-size:small;text-align:center;padding:0px;">
+	    		<!-- 維修原因 -->
+			    <div class="col-sm-6">
+			    	<div class="form-group">
+				    	 <lable class="col-xs-5 control-lable" style="text-align:right;margin-top:2%;"><@spring.message "measuretool.repairReason"/></lable>
+				    	 <div class="col-xs-7" >
+			    	    	 <textarea rows="5" id="repairReason" style="width: 315%;"  data-bind="value:model.repairReason"></textarea>
+			    	    	 <script>
+			    	    	 		kendo.bind($("#repairReason"),viewModel);
+				            </script>
+		    	    	</div>
+		    	     </div>
+			    </div>
+	    </div>
+    </div>
+</div>
+</body>
+</html>

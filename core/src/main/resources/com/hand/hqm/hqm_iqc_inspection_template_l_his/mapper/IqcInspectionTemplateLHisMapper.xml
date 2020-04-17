@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_iqc_inspection_template_l_his.mapper.IqcInspectionTemplateLHisMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_iqc_inspection_template_l_his.dto.IqcInspectionTemplateLHis">
+        <result column="EVENT_ID" property="eventId" jdbcType="DECIMAL" />
+        <result column="EVENT_BY" property="eventBy" jdbcType="DECIMAL" />
+        <result column="EVENT_TIME" property="eventTime" jdbcType="DATE" />
+        <result column="LINE_ID" property="lineId" jdbcType="DECIMAL" />
+        <result column="HEADER_ID" property="headerId" jdbcType="DECIMAL" />
+        <result column="INSPECTION_ATTRIBUTE" property="inspectionAttribute" jdbcType="VARCHAR" />
+        <result column="ORDER_CODE" property="orderCode" jdbcType="DECIMAL" />
+        <result column="ENABLE_TYPE" property="enableType" jdbcType="VARCHAR" />
+        <result column="SAMPLE_PROCEDURE_TYPE" property="sampleProcedureType" jdbcType="VARCHAR" />
+        <result column="INSPECTION_LEVELS" property="inspectionLevels" jdbcType="VARCHAR" />
+        <result column="QUALITY_CHARACTER_GRADE" property="qualityCharacterGrade" jdbcType="VARCHAR" />
+        <result column="ACCEPTANCE_QUALITY_LIMIT" property="acceptanceQualityLimit" jdbcType="VARCHAR" />
+        <result column="STANDARD_TYPE" property="standardType" jdbcType="VARCHAR" />
+        <result column="TEXT_STANDRAD" property="textStandrad" jdbcType="VARCHAR" />
+        <result column="STANDRAD_FROM" property="standradFrom" jdbcType="VARCHAR" />
+        <result column="STANDRAD_TO" property="standradTo" jdbcType="VARCHAR" />
+        <result column="STANDRAD_UOM" property="standradUom" jdbcType="VARCHAR" />
+        <result column="FREQUENCY_TYPE" property="frequencyType" jdbcType="VARCHAR" />
+        <result column="FREQUENCY" property="frequency" jdbcType="DECIMAL" />
+        <result column="INSPECTION_TOOL" property="inspectionTool" jdbcType="VARCHAR" />
+        <result column="REMARK" property="remark" jdbcType="VARCHAR" />
+        <result column="ENABLE_TIME" property="enableTime" jdbcType="DATE" />
+        <result column="DISABLE_TIME" property="disableTime" jdbcType="DATE" />
+        <result column="SOURCE_TYPE" property="sourceType" jdbcType="VARCHAR" />
+        <result column="HISTORY_NUM" property="historyNum" jdbcType="DECIMAL" />
+        <result column="IS_SYNC" property="isSync" jdbcType="VARCHAR" />
+        <result column="FILL_IN_TYPE" property="fillInType" jdbcType="VARCHAR" />
+        <result column="ENABLE_FLAG" property="enableFlag" jdbcType="VARCHAR" />
+        <result column="PRECISION" property="precision" jdbcType="DECIMAL" />
+        <result column="INSPECTION_METHOD" property="inspectionMethod" jdbcType="VARCHAR" />
+        <result column="SAMPLE_WAY_ID" property="sampleWayId" jdbcType="DECIMAL" />
+        <result column="SAMPLE_PLAN" property="samplePlan" jdbcType="VARCHAR" />
+    </resultMap>
+
+
+</mapper>

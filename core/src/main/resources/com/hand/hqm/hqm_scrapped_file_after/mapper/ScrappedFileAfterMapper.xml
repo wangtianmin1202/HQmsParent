@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_scrapped_file_after.mapper.ScrappedFileAfterMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_scrapped_file_after.dto.ScrappedFileAfter">
+        <result column="SCRAPPED_FILE_ID" property="scrappedFileId" jdbcType="DECIMAL" />
+        <result column="SCRAPPED_LINE_ID" property="scrappedLineId" jdbcType="DECIMAL" />
+        <result column="FILE_ADDRESS" property="fileAddress" jdbcType="VARCHAR" />
+        
+        <result column="CREATION_DATE_COLUMN" property="creationDateColumn" jdbcType="DATE" />
+        <result column="CREATED_NAME" property="createdName" jdbcType="VARCHAR" />
+    </resultMap>
+
+<select id="reSelect" resultMap="BaseResultMap" parameterType="com.hand.hqm.hqm_scrapped_file_after.dto.ScrappedFileAfter">
+SELECT t.*, t.creation_date AS creation_date_column, he.name AS created_name
+  FROM hqm_scrapped_file t, sys_user su, hr_employee he
+ WHERE t.created_by = su.user_id
+   AND su.employee_id = he.employee_id
+   <if test="scrappedLineId != null">
+   AND t.scrapped_line_id = #{scrappedLineId}
+   </if>
+</select>
+</mapper>

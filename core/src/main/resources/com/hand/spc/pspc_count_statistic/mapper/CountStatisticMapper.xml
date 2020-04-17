@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.spc.pspc_count_statistic.mapper.CountStatisticMapper">
+    <resultMap id="BaseResultMap" type="com.hand.spc.pspc_count_statistic.dto.CountStatistic">
+        <result column="COUNT_STATISTIC_ID" property="countStatisticId" jdbcType="DECIMAL" />
+        <result column="TENANT_ID" property="tenantId" jdbcType="DECIMAL" />
+        <result column="SITE_ID" property="siteId" jdbcType="DECIMAL" />
+        <result column="COUNT_SAMPLE_DATA_ID" property="countSampleDataId" jdbcType="DECIMAL" />
+        <result column="ENTITY_CODE" property="entityCode" jdbcType="VARCHAR" />
+        <result column="ENTITY_VERSION" property="entityVersion" jdbcType="VARCHAR" />
+        <result column="SUBGROUP_NUM" property="subgroupNum" jdbcType="DECIMAL" />
+        <result column="SAMPLE_VALUE_COUNT" property="sampleValueCount" jdbcType="DECIMAL" />
+        <result column="UNQUALIFIED_QUANTITY" property="unqualifiedQuantity" jdbcType="DECIMAL" />
+        <result column="SAMPLE_TIME" property="sampleTime" jdbcType="DATE" />
+        <result column="UNQUALIFIED_PERCENT" property="unqualifiedPercent" jdbcType="DECIMAL" />
+        <result column="UPPER_CONTROL_LIMIT" property="upperControlLimit" jdbcType="DECIMAL" />
+        <result column="CENTER_LINE" property="centerLine" jdbcType="DECIMAL" />
+        <result column="LOWER_CONTROL_LIMIT" property="lowerControlLimit" jdbcType="DECIMAL" />
+        <result column="UPPER_SPEC_LIMIT" property="upperSpecLimit" jdbcType="DECIMAL" />
+        <result column="SPEC_TARGET" property="specTarget" jdbcType="DECIMAL" />
+        <result column="LOWER_SPEC_LIMIT" property="lowerSpecLimit" jdbcType="DECIMAL" />
+        <result column="wc1" property="wc1" jdbcType="VARCHAR" />
+        <result column="wc2" property="wc2" jdbcType="VARCHAR" />
+        <result column="fastCode" property="fastCode" jdbcType="VARCHAR" />
+        <result column="meaning" property="meaning" jdbcType="VARCHAR" />
+        <result column="value" property="value" jdbcType="VARCHAR" />
+    </resultMap>
+
+
+
+    <!-- 柏拉图展示查询 主要数据查询 -->
+    <select id="queryReport" parameterType="com.hand.spc.pspc_count_statistic.dto.CountStatistic" resultMap="BaseResultMap">
+        select pcs.count_sample_data_id,
+        -- 样本时间
+        pcs.SAMPLE_TIME,
+        -- 抽检数
+        pcs.SAMPLE_VALUE_COUNT,
+        -- 不合格数
+        pcs.UNQUALIFIED_QUANTITY,
+        -- 不合格率
+        pcs.unqualified_percent,
+        --动态列1
+        (select to_char(listagg(pc.description || '+' || pcsdc.CLASSIFY_COUNT_VALUE,',' ) within GROUP (order by (pc.description || '+' || pcsdc.CLASSIFY_COUNT_VALUE) desc) )
+        from PSPC_COUNT_SAMPLE_DATA_CLASS pcsdc, PSPC_CLASSIFY pc
+        where pcsdc.count_sample_data_id = pcs.count_sample_data_id
+        and pcsdc.classify_id = pc.classify_id) as wc1,
+        -- 动态列2
+        (select
+        to_char(listagg(pcsde.extend_attribute || '+' || pcsde.EXTEND_VALUE,',' ) within GROUP (order by (pcsde.extend_attribute || '+' || pcsde.EXTEND_VALUE) desc) )
+        from PSPC_COUNT_SAMPLE_DATA_EXTEND pcsde
+        where pcsde.count_sample_data_id = pcs.count_sample_data_id) as wc2
+        from PSPC_COUNT_STATISTIC pcs
+        join pspc_entity pe on pe.entity_code = pcs.entity_code and pe.entity_version = pcs.entity_version
+        <where>
+            <if test="releaseTimeBegin != null and releaseTimeBegin != ''">
+                and pcs.sample_time &gt;= to_date(#{releaseTimeBegin},'yyyy-mm-dd hh24:mi:ss')
+            </if>
+            <if test="queryRelaeseTimeEnd != null and queryRelaeseTimeEnd != ''">
+                and pcs.sample_time &lt;= to_date(#{queryRelaeseTimeEnd},'yyyy-mm-dd hh24:mi:ss')
+            </if>
+            <if test="ceGroupId != null and ceGroupId != ''">
+                and pe.ce_group_id = #{ceGroupId}
+            </if>
+            <if test="ceParameterId != null and ceParameterId != ''">
+                and pe.ce_parameter_id = #{ceParameterId}
+            </if>
+            <if test="attachmentGroupId != null and attachmentGroupId != ''">
+                and pe.attachment_group_id = #{attachmentGroupId}
+            </if>
+            <if test="chartId != null and chartId != ''">
+                and pe.chart_id = #{chartId}
+            </if>
+            <if test="entityId != null and entityId != ''">
+                and pe.entity_id = #{entityId}
+            </if>
+            <if test="myLimit != null and myLimit != ''">
+                and rownum  &lt;= #{myLimit}
+            </if>
+        </where>
+    </select>
+
+
+    <!-- 根据count_sample_data_id获取status -->
+    <select id="queryOccStatus" parameterType="java.lang.String" resultType="java.lang.String">
+        select pco.ooc_status from PSPC_COUNT_OOC pco  where pco.count_sample_data_id = #{countSampleDataId}
+    </select>
+
+
+
+    <!--获取快速编码的信息-->
+    <select id="queryFastCode" parameterType="com.hand.spc.pspc_count_statistic.dto.CountStatistic" resultMap="BaseResultMap">
+        SELECT scvb.value AS value,
+        scvb.meaning AS meaning
+        FROM sys_code_value_b scvb
+        WHERE scvb.code_id =
+        (SELECT scb.code_id
+        FROM sys_code_b scb
+        WHERE code = #{fastCode})
+        AND scvb.code_value_id IN
+        (SELECT scvt.code_value_id
+        FROM sys_code_value_tl scvt
+        WHERE scvt.lang = #{request.locale})
+    </select>
+
+
+
+    <!-- 时间为null时，查询最大的limit -->
+    <select id="queryLimit" parameterType="com.hand.spc.pspc_count_statistic.dto.CountStatistic" resultType="java.lang.String">
+        select max(pc.max_plot_points) from pspc_chart pc,
+        pspc_entity pe
+        where pc.chart_id = pe.chart_id
+        and pe.entity_id = #{entityId}
+    </select>
+
+
+    <!-- 根据 entity_id 找到对应的  控制图类型 -->
+    <select id="queryCharType"
+            parameterType="com.hand.spc.pspc_count_statistic.dto.CountStatistic"
+            resultType="java.lang.String">
+        select pc.chart_type
+        from pspc_entity pe, pspc_chart pc
+        where pe.chart_id = pc.chart_id
+        and pe.entity_id = #{entityId}
+    </select>
+</mapper>

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.plm.laboratory.mapper.LabUserOldScoreMapper">
+    <resultMap id="BaseResultMap" type="com.hand.plm.laboratory.dto.LabUserOldScore">
+        <result column="LAB_USER_ID" property="labUserId" jdbcType="DECIMAL" />
+        <result column="USER_ID" property="userId" jdbcType="DECIMAL" />
+        <result column="USER_NAME" property="userName" jdbcType="VARCHAR" />
+        <result column="MAJOR" property="major" jdbcType="VARCHAR" />
+        <result column="EDUCATION" property="education" jdbcType="VARCHAR" />
+        <result column="QUALITY" property="quality" jdbcType="VARCHAR" />
+        <result column="JOB_DESC" property="jobDesc" jdbcType="VARCHAR" />
+        <result column="ABILITY_SCORE" property="abilityScore" jdbcType="VARCHAR" />
+        <result column="PRAISE_RATE" property="praiseRate" jdbcType="VARCHAR" />
+        <result column="FINISH_TIME_RATE" property="finishTimeRate" jdbcType="VARCHAR" />
+ 		<result column="CREATE_DATE" property="createDate" jdbcType="DATE" /> 
+	</resultMap>
+
+
+	<!-- <select id="query" resultMap="BaseResultMap">
+		select 
+			lab_user_id,
+			ability_score,
+			creation_date as create_date 
+		from plm_lab_user_old_score where lab_user_id = #{labUserId}
+	</select> -->
+
+
+    <select id="selOldScore" resultMap="BaseResultMap">
+		  select 
+			user_name,
+			ability_score,
+			creation_date as create_date 
+		from plm_lab_user_old_score where lab_user_id = #{labUserId}
+    </select>
+
+</mapper>

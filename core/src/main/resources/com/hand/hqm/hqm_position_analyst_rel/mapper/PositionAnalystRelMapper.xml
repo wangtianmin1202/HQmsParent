@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_position_analyst_rel.mapper.PositionAnalystRelMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_position_analyst_rel.dto.PositionAnalystRel">
+        <result column="REL_ID" property="relId" jdbcType="DECIMAL" />
+        <result column="PLANT_ID" property="plantId" jdbcType="DECIMAL" />
+        <result column="POSITION_TITLE" property="positionTitle" jdbcType="VARCHAR" />
+        <result column="ANALYST_ID" property="analystId" jdbcType="DECIMAL" />
+        <result column="ENABLE_FLAG" property="enableFlag" jdbcType="VARCHAR" />
+        
+        <!-- 业务字段 -->
+        <result column="PLANT_NAME" property="plantName" jdbcType="VARCHAR"/>
+        <result column="PLANT_CODE" property="plantCode" jdbcType="VARCHAR"/>
+        <result column="USER_NAME" property="userName" jdbcType="VARCHAR"/>
+    </resultMap>
+	<!-- 关键岗位与分析人关系维护 -->
+	<select id="query" parameterType="com.hand.hqm.hqm_position_analyst_rel.dto.PositionAnalystRel" resultMap="BaseResultMap">
+		select hpar.rel_id,
+			   hpar.plant_id,
+		       hp.descriptions,
+		       hp.plant_code,
+		       hpar.position_title,
+		       hpar.analyst_id,
+		       su.user_name,
+		       hpar.enable_flag
+		from hqm_position_analyst_rel hpar
+		join hcm_plant hp on hpar.plant_id = hp.plant_id
+		left join sys_user su on hpar.analyst_id = su.user_id
+		where 1=1
+		<if test="plantId != null">
+			and  hpar.plant_id = #{plantId}
+		</if>
+		<if test="analystId != null">
+			and  hpar.analyst_id = #{analystId}
+		</if>
+		<if test="positionTitle != null">
+			and  hpar.position_title like concat('%',concat(#{positionTitle},'%')) 
+		</if>
+		<if test="enableFlag != null">
+			and  hpar.enable_flag = #{enableFlag}
+		</if>
+	</select>
+</mapper>

@@ -1,0 +1,453 @@
+<#include "../include/header.html">
+<script src="${base.contextPath}/common/code?HQM_TEM_INSPECTION_STATUS=HQM_TEM_INSPECTION_STATUS"></script>
+<script src="${base.contextPath}/common/code?HQM_IQC_STANDARD_TYPE=HQM_IQC_STANDARD_TYPE"></script>
+<script src="${base.contextPath}/common/code?HQM_IQC_ENABLE_TYPE=HQM_IQC_ENABLE_TYPE"></script>
+<script src="${base.contextPath}/common/code?yesNo=SYS.YES_NO"></script>
+<script src="${base.contextPath}/common/code?HQM_INSPECTION_TYPE=HQM_INSPECTION_TYPE"></script>
+<script src="${base.contextPath}/common/code?HQM_INSPECTION_METHOD=HQM_INSPECTION_METHOD"></script>
+<script src="${base.contextPath}/common/code?HQM_IQC_QUALITY_GRADE=HQM_IQC_QUALITY_GRADE"></script>
+<script src="${base.contextPath}/common/code?HQM_IQC_ATTRIBUTE_CATEGORY=HQM_IQC_ATTRIBUTE_CATEGORY"></script>
+
+<script type="text/javascript">
+var inspectionType = "${RequestParameters.inspectionType!'-1'}";
+var viewModel = Hap.createGridViewModel("#grid");
+</script>
+<body>
+<script type="text/javascript">
+
+viewModel.openAddWin = function() {
+    var dialog = $("#createInspectionWindow").kendoWindow({
+        actions: ["Close"],
+        width: 900,
+        height: 550,
+        title: '<@spring.message "hap.new"/>',
+        content: './temporary_inspection_edit.html',
+        iframe: true,
+        visible: false,
+        resizable: false,
+        modal: true,
+        close: function () {
+            $('#grid').data('kendoGrid').dataSource.fetch();
+        }
+    }).data("kendoWindow");
+    dialog.center().open();
+}
+
+//发布
+viewModel.issue = function() {//发布
+	var opFlag = true;
+	var data = grid.selectedDataItems();
+	if(data.length == 0){
+		return;
+	}
+	if(!opFlag)return;
+	$.ajax({
+        url: '${base.contextPath}/hqm/temporary/inspection/issue',
+        type: 'POST',
+        data: JSON.stringify(data),
+        async: false,
+        contentType: "application/json",
+        dataType: "json",
+        success: function (response) {
+            if (response.success) {
+            	grid.dataSource.fetch();
+            	kendo.ui.showInfoDialog({
+                    message: '发布成功'
+                }); 
+            } else {
+            	kendo.ui.showWarningDialog({
+                    message: response.message
+                });
+            }
+        }
+    });
+}
+
+//失效
+viewModel.disable = function() {//失效
+	var opFlag = true;
+	var data = grid.selectedDataItems();
+	if(data.length == 0){
+		return;
+	}
+	if(!opFlag)return;
+	$.ajax({
+        url: '${base.contextPath}/hqm/temporary/inspection/disable',
+        type: 'POST',
+        data: JSON.stringify(data),
+        async: false,
+        contentType: "application/json",
+        dataType: "json",
+        success: function (response) {
+            if (response.success) {
+            	grid.dataSource.fetch();
+            	kendo.ui.showInfoDialog({
+                    message: '操作成功'
+                }); 
+            } else {
+            	kendo.ui.showWarningDialog({
+                    message: response.message
+                });
+            }
+        }
+    });
+}
+
+//编辑
+viewModel.edit = function() {//编辑
+	var opFlag = true;
+	var data = grid.selectedDataItems();
+	if(data.length == 0){
+		return;
+	}
+	var dialog = $("#createInspectionWindow").kendoWindow({
+        actions: ["Close"],
+        width: 900,
+        height: 550,
+        title: '<@spring.message "hap.new"/>',
+        content: './temporary_inspection_edit.html?kid=' + data[0].kid,
+        iframe: true,
+        visible: false,
+        resizable: false,
+        modal: true,
+        close: function () {
+            $('#grid').data('kendoGrid').dataSource.fetch();
+        }
+    }).data("kendoWindow");
+    dialog.center().open();
+}
+</script>
+<div id="createInspectionWindow" style="dispaly:none;"></div>
+<div id="page-content">
+    <div class="pull-left" id="toolbar-btn" style="padding-bottom:10px;">
+    	<!-- 新建 -->
+        <span class="btn btn-primary k-grid-add" style="float:left;margin-right:5px;" data-bind="click:openAddWin">
+        <i class="fa fa-plus-square"></i>
+        <@spring.message "hap.new"/>
+        </span>
+        <!-- 编辑 -->
+        <span class="btn btn-warning" data-bind="click:edit" style="float:left;margin-right:5px;">
+        <i class="fa fa-file-text-o"></i>
+        <@spring.message "hap.edit"/>
+        </span>
+        <!-- 发布 -->
+        <span class="btn btn-success" data-bind="click:issue" style="float:left;margin-right:5px;">
+        <i class="fa fa-angle-double-up"></i>
+        <@spring.message "hap.issue"/>
+        </span>
+        <!-- 失效 -->
+        <span  data-bind="click:disable" class="btn btn-danger" style="float:left;">
+        <i class="fa fa-angle-double-down"></i>
+        <@spring.message "hap.disable"/>
+        </span>
+    </div>
+    <script>kendo.bind($('#toolbar-btn'), viewModel);</script>
+    <div id="queryPanel" class="pull-right" style="padding-bottom:10px;">
+    
+    	<div class="k-query-simple" id="query-form">
+    		<input id="plantId" style="margin-right: 5px;width:150px;" 
+                		placeholder="<@spring.message 'temporaryinspection.plantid'/>" data-bind="value:model.plantId">
+            <input id="categoryId" style="margin-right: 5px;width:150px;" 
+                		placeholder="<@spring.message 'temporaryinspection.categoryid'/>" data-bind="value:model.categoryId">
+            <input id="attributeType" style="width:150px;margin-right:5px;" 
+            		placeholder='<@spring.message "temporaryinspection.attributetype"/>' data-bind="value:model.attributeType">
+            <input id="standardType" style="width:150px;margin-right:5px;" 
+            		placeholder='<@spring.message "temporaryinspection.standardtype"/>' data-bind="value:model.standardType">
+            <script>
+            $("#categoryId").kendoLov($.extend
+	         	    (<@lov"LOV_ITEM_CATEGORY"/>, {
+	         	        textField: 'categoryCode',
+	         	        valueField:'categoryId',
+	         	}));
+            $("#plantId").kendoLov($.extend
+	         	    (<@lov"LOV_PLANT"/>, {
+	         	        textField: 'plantCode',
+	         	        valueField:'plantId',
+	         	}));
+            $("#attributeType").kendoComboBox({
+				dataTextField : "meaning",
+				dataValueField : "value",
+				valuePrimitive : true,
+				dataSource : HQM_IQC_ATTRIBUTE_CATEGORY
+			});
+		　　 $("#standardType").kendoComboBox({
+				dataTextField : "meaning",
+				dataValueField : "value",
+				valuePrimitive : true,
+				dataSource : HQM_IQC_STANDARD_TYPE
+			});
+            </script>
+        </div>
+        <script>kendo.bind($('#query-form'), viewModel);</script>
+        <div class="k-query-detail" id="query-form2">
+            <div class="rows" style="margin-top:5px">
+            <input id="status" style="width:150px;margin-right:5px;" 
+            		placeholder='<@spring.message "temporaryinspection.status"/>' data-bind="value:model.status">
+            <script>
+            $("#status").kendoComboBox({
+				dataTextField : "meaning",
+				dataValueField : "value",
+				valuePrimitive : true,
+				dataSource : HQM_TEM_INSPECTION_STATUS
+			});
+            </script>
+            </div>
+        </div>
+        <script>kendo.bind($('#query-form2'), viewModel);</script>
+    </div>
+    <script>
+    kendo.bind($('#query-form'), viewModel);
+    $('#queryPanel').kendoQueryPanel({
+        queryFunction: function () {
+            viewModel.query();
+        },
+        resetFunction: function () {
+            viewModel.reset();
+        }
+    });
+    </script>
+    <div style="clear:both">
+        <div id="grid"></div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    Hap.initEnterQuery('#query-form', viewModel.query);
+    var BaseUrl = _basePath;
+    dataSource = new kendo.data.DataSource({
+        transport: {
+            read: {
+                url: BaseUrl + "/hqm/temporary/inspection/query",
+                type: "POST",
+                dataType: "json"
+            },
+            update: {
+                url: BaseUrl + "/hqm/temporary/inspection/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            destroy: {
+                url: BaseUrl + "/hqm/temporary/inspection/remove",
+                type: "POST",
+                contentType: "application/json"
+            },
+            create: {
+                url: BaseUrl + "/hqm/temporary/inspection/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            parameterMap: function (options, type) {
+                if (type !== "read" && options.models) {
+                    var datas = Hap.prepareSubmitParameter(options, type)
+                    return kendo.stringify(datas);
+                } else if (type === "read") {
+                	viewModel.model.inspectionType = inspectionType;
+                    return Hap.prepareQueryParameter(viewModel.model.toJSON(), options)
+                }
+            }
+        },
+        batch: true,
+        serverPaging: true,
+        pageSize: 20,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+                id: "kid",
+                fields: {},
+                editable: function(col){
+                	return false;
+                },
+            }
+        }
+    });
+
+    var grid = $("#grid").kendoGrid({
+        dataSource: dataSource,
+        resizable: true,
+        scrollable: true,
+        navigatable: false,
+        sortable:true,
+        
+        selectable: 'rowbox',
+        dataBound: function () {
+            if (parent.autoResizeIframe) {
+                parent.autoResizeIframe('${RequestParameters.functionCode!}')
+            }
+        },
+        pageable: {
+            pageSizes: [5, 10, 20, 50],
+            refresh: true,
+            buttonCount: 5
+        },
+        columns: [
+                    {
+                field: "plantCode",
+                title: '<@spring.message "temporaryinspection.plantid"/>',
+                width: 120
+            },
+                    {
+                field: "categoryCode",
+                title: '<@spring.message "temporaryinspection.categoryid"/>',
+                width: 120
+            },
+            
+                    {
+                field: "standardOpCode",
+                title: '<@spring.message "temporaryinspection.standardopcode"/>',
+                hidden: true,
+                width: 120
+            },
+                    {
+                field: "workstationCode",
+                title: '<@spring.message "temporaryinspection.workstationcode"/>',
+                hidden: true,
+                width: 120
+            },
+                    {
+                field: "inspectionType",
+                title: '<@spring.message "temporaryinspection.inspectiontype"/>',
+                width: 120,
+                template: function (dataItem) {
+                    var v = dataItem.inspectionType ? dataItem.inspectionType : "";
+                    $.each(HQM_INSPECTION_TYPE, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return v;
+                        }
+                    });
+                    return v;
+                },
+                
+            },
+                    {
+                field: "standardType",
+                title: '<@spring.message "temporaryinspection.standardtype"/>',
+                width: 120,
+                template: function (dataItem) {
+                    var v = dataItem.standardType ? dataItem.standardType : "";
+                    $.each(HQM_IQC_STANDARD_TYPE, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return v;
+                        }
+                    });
+                    return v;
+                },
+            },
+                    {
+                field: "inspectionAttribute",
+                title: '<@spring.message "temporaryinspection.inspectionattribute"/>',//INSPECTION_ATTRIBUTE
+                width: 120
+            },
+                    {
+                field: "attributeType",
+                title: '<@spring.message "temporaryinspection.attributetype"/>',
+                width: 120
+            },
+                    {
+                field: "sampleWayCode",
+                title: '<@spring.message "temporaryinspection.samplewayid"/>',
+                width: 120
+            },
+                    {
+                field: "inspectionRequest",
+                title: '<@spring.message "temporaryinspection.inspectionrequest"/>',
+                width: 120
+            },
+                    {
+                field: "inspectionMethod",
+                title: '<@spring.message "temporaryinspection.inspectionmethod"/>',
+                width: 120,
+                template: function (dataItem) {
+                    var v = dataItem.inspectionMethod ? dataItem.inspectionMethod : "";
+                    $.each(HQM_INSPECTION_METHOD, function (i, n) {
+                        if ((n.value + '' || '').toLowerCase() == (v + '' || '').toLowerCase()) {
+                            v = n.meaning;
+                            return v;
+                        }
+                    });
+                    return v;
+                },
+            },
+                    {
+                field: "standradFrom",
+                title: '<@spring.message "temporaryinspection.standradfrom"/>',
+                width: 120
+            },
+                    {
+                field: "standradTo",
+                title: '<@spring.message "temporaryinspection.standradto"/>',
+                width: 120
+            },
+                    {
+                field: "standradUom",
+                title: '<@spring.message "temporaryinspection.standraduom"/>',
+                width: 120
+            },
+                    {
+                field: "textStandrad",
+                title: '<@spring.message "temporaryinspection.textstandrad"/>',
+                width: 120
+            },
+                    {
+                field: "qualityCharacterGrade",
+                title: '<@spring.message "temporaryinspection.qualitycharactergrade"/>',
+                width: 120,
+                template: function (dataItem) {
+                    var v = dataItem.qualityCharacterGrade ? dataItem.qualityCharacterGrade : "";
+                    $.each(HQM_IQC_QUALITY_GRADE, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return v;
+                        }
+                    });
+                    return v;
+                },
+            },
+                    {
+                field: "remark",
+                title: '<@spring.message "temporaryinspection.remark"/>',
+                width: 120
+            },
+                    {
+                field: "enableTime",
+                title: '<@spring.message "temporaryinspection.enabletime"/>',
+                width: 180
+            },
+                    {
+                field: "disableTime",
+                title: '<@spring.message "temporaryinspection.disabletime"/>',
+                width: 180
+            },
+                    {
+                field: "status",
+                title: '<@spring.message "temporaryinspection.status"/>',
+                width: 120,
+                template: function (dataItem) {
+                    var v = dataItem.status ? dataItem.status : "";
+                    $.each(HQM_TEM_INSPECTION_STATUS, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return v;
+                        }
+                    });
+                    return v;
+                },
+            },
+        ],
+        editable: true
+    }).data('kendoGrid');
+    Hap.autoResizeGrid('#grid');
+</script>
+<script>
+$(function(){
+    if(inspectionType == "PQC"){
+        grid.showColumn("standardOpCode");
+        grid.showColumn("workstationCode");
+        
+    }
+});
+</script>
+</body>
+</html>

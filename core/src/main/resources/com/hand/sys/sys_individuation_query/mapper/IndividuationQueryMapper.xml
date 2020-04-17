@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.sys.sys_individuation_query.mapper.IndividuationQueryMapper">
+    <resultMap id="BaseResultMap" type="com.hand.sys.sys_individuation_query.dto.IndividuationQuery">
+        <result column="INDIVIDUATION_ID" property="individuationId" jdbcType="DECIMAL" />
+        <result column="COLUMN_CODE" property="columnCode" jdbcType="VARCHAR" />
+        <result column="COLUMN_DESC" property="columnDesc" jdbcType="VARCHAR" />
+        <result column="COLUMN_TYPE" property="columnType" jdbcType="VARCHAR" />
+        <result column="COLUMN_TYPE_CODE" property="columnTypeCode" jdbcType="VARCHAR" />
+        <result column="COLUMN_VERIFY" property="columnVerify" jdbcType="VARCHAR" />
+        <result column="FUNCTION_CODE" property="functionCode" jdbcType="VARCHAR" />
+    </resultMap>
+
+    <select id="selectColumnByFunction" resultMap="BaseResultMap">
+        SELECT t.individuation_id
+              ,t.column_code
+              ,t.column_desc
+              ,t.column_type
+              ,t.column_type_code
+              ,t.column_verify
+              ,t.function_code
+        FROM   sys_individuation_query t
+        WHERE  t.function_code = #{functionCode}
+    </select>
+
+
+</mapper>

@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hcm.hcm_category_settings.mapper.ItemCategorySettingsMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hcm.hcm_category_settings.dto.ItemCategorySettings">
+        <result column="KID" property="kid" jdbcType="DECIMAL" />
+        <result column="ITEM_ID" property="itemId" jdbcType="DECIMAL" />
+        <result column="CATEGORY_FIRST_ID" property="categoryFirstId" jdbcType="DECIMAL" />
+        <result column="CATEGORY_SECOND_ID" property="categorySecondId" jdbcType="DECIMAL" />
+        <result column="CATEGORY_THIRD_ID" property="categoryThirdId" jdbcType="DECIMAL" />
+        <result column="ITEM_CODE" property="itemCode" jdbcType="VARCHAR" />
+        <result column="descriptions" property="itemDescription" jdbcType="VARCHAR" />
+        <result column="cost" property="cost" jdbcType="DECIMAL" />
+        <result column="make_buy_code" property="makeBuyCode" jdbcType="VARCHAR" />
+        <result column="item_type" property="itemType" jdbcType="VARCHAR" />
+        <result column="price_unit" property="priceUnit" jdbcType="VARCHAR" />
+        <result column="item_category" property="itemCategory" jdbcType="VARCHAR" />
+        <result column="first_code" property="firstCode" jdbcType="VARCHAR" />
+        <result column="second_code" property="secondCode" jdbcType="VARCHAR" />
+        <result column="third_code" property="thirdCode" jdbcType="VARCHAR" />
+        <result column="item_edition" property="itemEdition" jdbcType="DECIMAL" />
+    </resultMap>
+
+    <select id="listQuery" parameterType="com.hand.hcm.hcm_category_settings.dto.ItemCategorySettings" resultMap="BaseResultMap">
+       select t.*,t.unit_price/t.price_unit cost from ( select distinct hib.item_id,
+        hib.item_edition,
+        hi.ITEM_CODE,
+        hi.descriptions,
+        hib.unit_price,
+        hib.make_buy_code,
+        hib.item_type,
+        hib.price_unit,
+        case when hcs.SPARE_PART_NAME is not null then
+        concat(concat(concat(hcs.SPARE_PART_NAME,'/'),concat(hcs1.SPARE_PART_NAME,'/')),hcs2.SPARE_PART_NAME) else null end  item_category,
+        hics.category_first_id,
+        hics.category_second_id,
+        hics.category_third_id,
+        hcs.SPARE_PART_CODE first_code,
+        hcs1.SPARE_PART_CODE second_code,
+        hcs2.SPARE_PART_CODE third_code
+        from hcm_item_b hib
+        left join hcm_item hi
+        on hib.item_id = hi.ITEM_ID
+        left join hcm_item_category_settings hics
+        on hib.item_id = hics.item_id
+        left join npi_technology_spare_part hcs
+        on hics.category_first_id = hcs.SPARE_PART_ID
+        left join npi_technology_spare_part hcs1
+        on hics.category_second_id = hcs1.SPARE_PART_ID
+        left join npi_technology_spare_part hcs2
+        on hics.category_third_id = hcs2.SPARE_PART_ID) t
+    <where>
+        <if test="itemId != null">
+            t.item_id = #{itemId}
+        </if>
+    </where>
+
+    </select>
+
+    <update id="update" parameterType="com.hand.hcm.hcm_category_settings.dto.ItemCategorySettings">
+        update HCM_ITEM_CATEGORY_SETTINGS  hcs set  hcs.category_first_id =#{categoryFirstId}, hcs.CATEGORY_SECOND_ID=#{categorySecondId}
+        ,hcs.CATEGORY_THIRD_ID =#{categoryThirdId} where hcs.item_id =#{itemId}
+    </update>
+
+    <update id="updateItemVersion" >
+        update HCM_ITEM_B hib
+   set hib.item_edition = #{itemVersion}
+ where hib.item_id = #{itemId}
+    </update>
+</mapper>

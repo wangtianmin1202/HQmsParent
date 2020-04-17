@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.spc.pspc_judgement_group.mapper.JudgementMapper">
+    <resultMap id="BaseResultMap" type="com.hand.spc.pspc_judgement_group.dto.Judgement">
+        <result column="JUDGEMENT_ID" property="judgementId" jdbcType="DECIMAL" />
+        <result column="TENANT_ID" property="tenantId" jdbcType="DECIMAL" />
+        <result column="SITE_ID" property="siteId" jdbcType="DECIMAL" />
+        <result column="JUDGEMENT_SHORT_CODE" property="judgementShortCode" jdbcType="VARCHAR" />
+        <result column="JUDGEMENT_CODE" property="judgementCode" jdbcType="VARCHAR" />
+        <result column="LIMIT_DATA" property="limitData" jdbcType="DECIMAL" />
+        <result column="LENGTH_DATA" property="lengthData" jdbcType="DECIMAL" />
+        <result column="MESSAGE_TYPE_CODE" property="messageTypeCode" jdbcType="VARCHAR" />
+        <result column="JUDGEMENT_GROUP_ID" property="judgementGroupId" jdbcType="DECIMAL" />
+    </resultMap>
+
+    <select id="selectData" resultMap="BaseResultMap">
+        SELECT
+        pj.*
+        FROM
+        PSPC_JUDGEMENT pj
+        WHERE
+        1 = 1
+        <if test="judgementGroupId != null">
+            AND pj.JUDGEMENT_GROUP_ID = #{judgementGroupId}
+        </if>
+        <if test="judgementShortCode != null">
+            AND pj.JUDGEMENT_SHORT_CODE  like concat(concat('%',#{judgementShortCode}),'%')
+        </if>
+        <if test="judgementCode != null">
+            AND pj.JUDGEMENT_CODE like concat(concat('%',#{judgementCode}),'%')
+        </if>
+        <if test="messageTypeCode != null">
+            AND pj.MESSAGE_TYPE_CODE like concat(concat('%',#{messageTypeCode}),'%')
+        </if>
+    </select>
+
+
+    <select id="validateUnique" parameterType="com.hand.spc.pspc_judgement_group.dto.Judgement"
+            resultType="java.lang.Long">
+    SELECT COUNT(*)
+    FROM PSPC_JUDGEMENT t
+    WHERE t.TENANT_ID = #{tenantId} AND
+          t.SITE_ID = #{siteId} AND
+          t.JUDGEMENT_SHORT_CODE = #{judgementShortCode} AND
+          t.JUDGEMENT_GROUP_ID = #{judgementGroupId} AND
+          t.JUDGEMENT_ID != #{judgementId}
+    </select>
+
+    <select id="selectChartDetailCount" resultType="java.lang.Integer">
+SELECT
+	COUNT (*)
+FROM
+	PSPC_JUDGEMENT pj,
+	PSPC_CHART_DETAIL pcd,
+	PSPC_JUDGEMENT_GROUP pjg
+WHERE
+	1 = 1
+AND pj.JUDGEMENT_GROUP_ID = pjg.JUDGEMENT_GROUP_ID
+AND pjg.JUDGEMENT_GROUP_ID = pcd.JUDGEMENT_GROUP_ID
+AND pj.JUDGEMENT_ID = #{judgementId}
+    </select>
+
+    <select id="selectOocRecordCount" resultType="java.lang.Integer">
+        SELECT
+            COUNT (*)
+        FROM
+            PSPC_JUDGEMENT pj,
+            PSPC_COUNT_OOC pco
+        where 1=1
+        AND pj.JUDGEMENT_ID = pco.JUDGEMENT_ID
+        AND pj.JUDGEMENT_ID = #{judgementId}
+    </select>
+
+    <select id="selectOocCount" resultType="java.lang.Integer">
+        SELECT
+            COUNT (*)
+        FROM
+            PSPC_JUDGEMENT pj,
+            PSPC_OOC po
+        where 1=1
+        AND pj.JUDGEMENT_ID = po.JUDGEMENT_ID
+        AND pj.JUDGEMENT_ID = #{judgementId}
+    </select>
+
+
+</mapper>

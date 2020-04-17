@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.npi.npi_technology.mapper.SopInfoMapper">
+    <resultMap id="BaseResultMap" type="com.hand.npi.npi_technology.dto.SopInfo">
+        <result column="SOP_ID" property="sopId" jdbcType="DECIMAL" />
+        <result column="SOP_CODE" property="sopCode" jdbcType="VARCHAR" />
+        <result column="SOP_NAME" property="sopName" jdbcType="VARCHAR" />
+        <result column="FILE_ID" property="fileId" jdbcType="DECIMAL" />
+    </resultMap>
+
+
+	<select id="getCodeSeq" resultType="string">
+		select lpad(NPI_SOP_INFO_CODE_S.NEXTVAL,6,'0') from dual
+	</select>
+	
+	<select id="queryFileId" resultType="string">
+		select t.FILE_ID from NPI_SOP_INFO t where t.sop_code= #{dto.sopCode}
+	</select>
+</mapper>

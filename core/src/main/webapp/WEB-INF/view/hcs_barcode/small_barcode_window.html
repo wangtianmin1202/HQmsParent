@@ -1,0 +1,398 @@
+<#include "../include/header.html">
+<script src="${base.contextPath}/common/code?TMstatusds=SRM_BARCODE_STATUS"></script>
+<script src="${base.contextPath}/common/code?yesorno=SRM_YES_NO"></script>
+<script src="${base.contextPath}/common/code?packingLevelds=SRM_PACKING_MODE"></script>
+<script src="${base.contextPath}/common/code?SRM_BARCODE_QTY=SRM_BARCODE_QTY"></script>
+<script type="text/javascript">
+ function formatDate(date) {
+	  var d = new Date(date),
+	    month = '' + (d.getMonth() + 1),
+	    day = '' + d.getDate(),
+	    year = d.getFullYear();
+	  if (month.length < 2) month = '0' + month;
+	  if (day.length < 2) day = '0' + day;
+	 
+	  return [year, month, day].join('-');
+} 
+var viewModel = kendo.observable({
+	model: {
+		receiveQty:1,
+		inspectionType:"IQC",
+	},
+	save: function(e){
+		var validator = $("#mainForm").kendoValidator().data("kendoValidator");
+		if (validator.validate()) {
+			viewModel.model.set('productionTime',formatDate(viewModel.model.productionTime));
+		 	var data= viewModel.model.toJSON();
+			var v = "1";
+	        $.each(SRM_BARCODE_QTY, function (i, n) {
+	            if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+	                v = n.meaning;
+	            }
+	        });
+			if(Number(data.codeSum) > Number(v)){
+				kendo.ui.showConfirmDialog({
+		    		title: '提示',
+		    		message: "条码张数超过"+v+"，将按序列生成"+ data.codeSum + "个条码，是否继续。"
+		    	}).done(function(e){
+		    		if(e.button=='OK'){
+		    			saveFunction(data)
+		    		}
+		    	})
+			}else{
+				saveFunction(data)
+			} 
+		}
+	},
+	closeWin: function(e){
+    	window.parent.$("#childWindow").data("kendoWindow").close();
+    }
+});
+function saveFunction(data){
+	$.ajax({
+        url: '${base.contextPath}/hcs/small/barcode/savesmall',
+        type: 'POST',
+        data: data,
+        async: false,
+        dataType: "json",
+        success: function (response) {
+            if (response.success) {
+            	window.parent.$("#childWindow").data("kendoWindow").close();
+            	alert('success');
+            } else {
+            	kendo.ui.showWarningDialog({
+                    message: response.message
+                });
+            }
+        }
+    }); 
+	}
+var supplierId = window.parent.supplierId;
+var supplierName = window.parent.supplierName;
+
+var code ;
+	$(document).ready(function(){
+		//viewModel.model.set("codeSum","1")
+		var jsonData = {
+				"supplierId" : supplierId
+		}
+		$.ajax({
+			url:"${base.contextPath}/hcs/small/barcode/queryMaxNum",
+			type:"POST",
+			data: jsonData,
+			dataType: "json",
+			success: function (data){
+				code = data;
+				viewModel.model.itemCodeStart = data;
+				viewModel.model.itemCodeEnd = data;
+				viewModel.model.set("sbarcode",data);
+				viewModel.model.set("supplierId",supplierId);
+				
+				document.getElementById("itemCodeStart").value = data;
+				document.getElementById("itemCodeEnd").value = data;
+			}
+		}) 
+	})
+	
+	
+	//光标移开事件
+	function change(){
+		if(typeof(viewModel.model.codeSum) != 'undefined' && viewModel.model.codeSum != ''){
+			if(viewModel.model.codeSum === 0){
+				document.getElementById("itemCodeEnd").value = document.getElementById("itemCodeStart").value;
+				viewModel.model.itemCodeEnd = viewModel.model.itemCodeStart;
+				kendo.ui.showInfoDialog({
+					title: "提示",
+	    			message: '<@spring.message "error.srm_purchase_0031"/>'
+	    		})
+	    		return;
+			}else{
+				var end = code.substr(code.length-4)
+				var start = code.substr(0,code.length-4)
+				var num = (Array(4).join(0) + (parseInt(end) + parseInt(viewModel.model.codeSum) -1));
+				if(parseFloat(num) > 9999){
+					kendo.ui.showInfoDialog({
+						title: "提示",
+		    			message: '<@spring.message "error.srm_purchase_0035"/>'
+		    		})
+		    		viewModel.model.set('codeSum','');
+		    		return;
+				}
+				var codeStr = start + (Array(4).join(0) + (parseInt(end) + parseInt(viewModel.model.codeSum) -1)).slice(-4)
+				document.getElementById("itemCodeEnd").value = codeStr;
+				viewModel.model.itemCodeEnd = codeStr;
+			}
+		}else{
+			document.getElementById("itemCodeEnd").value = document.getElementById("itemCodeStart").value;
+			viewModel.model.itemCodeEnd = viewModel.model.itemCodeStart;
+		} 
+	}
+	function check(obj) { 
+         if(obj.value.length > 30){
+        	 obj.value = obj.value.substring(0,30) 
+        	 Hap.showToast({
+             			type:'success',
+             			"positionClass": "toast-bottom-right",
+             			message:'<@spring.message "error.srm_purchase_0045"/>',
+             			hideDuration:10*1000
+         		})
+         }
+    }
+	
+	function checkLength(obj){
+        if(obj.value.length>30){
+        	obj.value = obj.value.substring(0,30);
+        }
+	}
+	 
+	function clearNoZhCn(obj) { 
+			 //var r = /^[0-9a-zA-Z]*$/g;
+			 var r = /.*[\u4e00-\u9fa5].*/;
+			 if(r.test(obj.value)){
+		        //obj.value = obj.value.replace(/[^\da-zA-Z]/g,"");
+		        obj.value = obj.value.replace(/[^\w\.\/]/ig,"");
+				Hap.showToast({
+        			type:'success',
+        			"positionClass": "toast-bottom-right",
+        			message:'<@spring.message "error.srm_purchase_1070"/>',
+        			hideDuration:10*1000
+    		    })
+			 }
+			 if(obj.value.length > 30){
+	       	 obj.value = obj.value.substring(0,30) 
+	       	 Hap.showToast({
+	            			type:'success',
+	            			"positionClass": "toast-bottom-right",
+	            			message:'<@spring.message "error.srm_purchase_0045"/>',
+	            			hideDuration:10*1000
+	        		})
+	        }
+	}
+	function checkLengthAndNoZh(obj){
+// 		 var r = /^[0-9a-zA-Z]*$/g;
+		var r = /.*[\u4e00-\u9fa5].*/;
+		 if(r.test(obj.value)){
+	        //obj.value = obj.value.replace(/[^\da-zA-Z]/g,"");
+	        obj.value = obj.value.replace(/[^\w\.\/]/ig,"");
+			Hap.showToast({
+   			type:'success',
+   			"positionClass": "toast-bottom-right",
+   			message:'<@spring.message "error.srm_purchase_1070"/>',
+   			hideDuration:10*1000
+		    })
+		 }
+        if(obj.value.length>30){
+        	obj.value = obj.value.substring(0,30);
+        }
+	}
+	function clearNoZh(obj){
+		 //var r = /^[0-9a-zA-Z]*$/g;
+		 var r = /.*[\u4e00-\u9fa5].*/;
+		 if(r.test(obj.value)){
+	        //obj.value = obj.value.replace(/[^\da-zA-Z]/g,"");
+	        obj.value = obj.value.replace(/[^\w\.\/]/ig,"");
+			Hap.showToast({
+   			type:'success',
+   			"positionClass": "toast-bottom-right",
+   			message:'<@spring.message "error.srm_purchase_1070"/>',
+   			hideDuration:10*1000
+		    })
+		 }
+	}
+</script>
+<body>
+<div id="page-content">
+	<div class="form-horizontal" id="" style="padding-bottom:10px;">
+		<div class="panel" style="padding: 0px;border:none;box-shadow: none;">
+    	<div id="mainForm" class="panel-body" style="margin-right:5px;padding-bottom:10px;width: 100%;">
+	        <div class="row" style="padding:0px">
+	        	<div class="form-group col-sm-4" style="padding:0px">
+	                <label class="control-label col-sm-4" style="padding-right:0px"><@spring.message "smallbarcodecreate.itemcode"/>：</label>
+	                <div class="col-sm-7" style="padding:0px;maigin-left:0px">
+	                    <input id="itemLov" required data-bind="value:model.itemId" name='<@spring.message "smallbarcodecreate.itemcode"/>' style="width: 100%;"/>
+				            <script>
+				                	$("#itemLov").kendoLov($.extend
+				                	    (<@lov"LOV_ITEM_BY_USER"/>, {
+				                	        textField: 'itemName',
+				                	        valueField:'itemId',
+				                	        query: function(e){
+				                	        	e.param['supplierId'] = supplierId;
+				                	        	e.param['enableFlag'] = 'Y';
+				                	        },select:function(e){
+				                	        	viewModel.model.set("plantId",e.item.plantId);
+				                	        	viewModel.model.set("itemDesc",e.item.itemName);
+				                	        	viewModel.model.set("itemCode",e.item.itemCode);
+				                	        },change:function(e) {
+				                                /* if (v == undefined  || v == ""){
+				                                    options.model.set('plantCode', "");
+				                                    options.model.set('plantId','')
+				                                }else{
+				                                    options.model.plantCode =  this._dataItem.plantCode;
+				                                    options.model.plantId=this._dataItem.plantId;
+				                                } */
+				                                //viewModel.model.plantId=666;
+				                            }
+				                	}));
+				            </script>
+	                </div>
+	            </div>
+	            <div class="form-group col-sm-4" style="padding:0px">
+	                <label class="control-label col-sm-4" style="padding-right:0px"><@spring.message "smallbarcodecreate.itemname"/></label>
+	                <div class="col-sm-7" style="padding:0px">
+	                    <input id="" type="text" class="k-textbox" data-bind="value:model.itemDesc" style="width: 100%;background-color:#f5f5f5" readOnly/>
+	                </div>
+	            </div>
+	            <div class="form-group col-sm-4" style="padding:0px">
+	                <label class="control-label col-sm-4" style="padding-right:0px"><@spring.message "smallbarcodecreate.itemversion"/></label>
+	                <div class="col-sm-7" style="padding:0px">
+	                    <input id="" type="text" required data-bind="value:model.itemVersion"  name='<@spring.message "smallbarcodecreate.itemversion"/>' onkeyup = "clearNoZhCn(this)" style="width: 100%;" class="k-textbox"/>
+	                </div>
+	            </div>
+	        </div>
+	        
+	        <div class="row" style="padding:0px">
+	        	<div class="form-group col-sm-4" style="padding:0px">
+	                <label class="control-label col-sm-4" style="padding-right:0px"><@spring.message "smallbarcodecreate.quantity"/></label>
+	                <div class="col-sm-7" style="padding:0px">
+	                    <input id="" type="text" class="k-textbox" name='<@spring.message "smallbarcodecreate.quantity"/>' oninput = "value=value.replace(/[^\d]/g,'')" data-bind="value:model.quantity" style="width: 100%;" required/>
+	                </div>
+	            </div>
+	            <div class="form-group col-sm-4" style="padding:0px">
+                    <label class="col-sm-4 control-label" style="padding-right:0px"><@spring.message "smallbarcodecreate.productiontime"/></label>
+                    <div class="col-sm-7" style="padding: 0;">					    	    
+                    	<input id="productionTime"   required  style="width:100%;" data-bind="value:model.productionTime"> 
+				        <script>
+					        kendo.bind($("#productionTime"),viewModel);
+					        var datePicker = $("#productionTime").kendoDatePicker({
+	    					    format: "{0:yyyy-MM-dd}",
+	    					}); 
+	    					for(var i=0;i<datePicker.length;i++){    						
+		    					datePicker[i].disabled=true; 
+	    					}
+				        </script>	                   
+                        <!-- <input id="createBeginDate" style="width: 100%;" data-bind="value:model.productionTime" required> -->
+                    </div>
+                </div>
+                <div class="form-group col-sm-4" style="padding:0px">
+	                <label class="control-label col-sm-4" style="padding-right:0px"><@spring.message "smallbarcodecreate.lotcode"/></label>
+	                <div class="col-sm-7" style="padding:0px">
+	                    <input id="" data-bind="value:model.lotCode" name='<@spring.message "smallbarcodecreate.lotcode"/>' onkeyup="clearNoZh(this)" style="width: 100%;" class="k-textbox" required/>
+	                </div>
+	            </div>
+			</div>	
+			<div class="row" style="padding:0px">
+	        	<div class="form-group col-sm-4" style="padding:0px">
+	                <label class="control-label col-sm-4" style="padding-right:0px"><@spring.message "smallbarcodecreate.packingsize"/>：</label>
+	                <div class="col-sm-7" style="padding:0px">
+	                    <input id=""  type="text" class="k-textbox" data-bind="value:model.packingSize" onkeyup="clearNoZh(this)" style="width: 100%;"/>
+	                </div>
+	            </div>
+	            <div class="form-group col-sm-4" style="padding:0px">
+	                <label class="control-label col-sm-4" style="padding-right:0px"><@spring.message "smallbarcodecreate.packinglevel"/></label>
+	                <div class="col-sm-7" style="padding:0px">
+	                    <input id="packingLevelCombox" name='<@spring.message "smallbarcodecreate.packinglevel"/>' data-bind="value:model.packingLevel" style="width: 100%;" required/>
+	                </div>
+	            </div>
+	            <!-- 档位 -->
+	            <div class="form-group col-sm-4" style="padding:0px">
+	                <label class="control-label col-sm-4" style="padding-right:0px"><@spring.message "smallbarcodecreate.spreading"/>：</label>
+	                <div class="col-sm-7" style="padding:0px">
+	                    <input id="" data-bind="value:model.spreading" onkeyup = "checkLengthAndNoZh(this)" style="width: 100%;" class="k-textbox"/>
+	                </div>
+	            </div>
+	            
+	        </div>
+	        
+	        
+	        <div class="row" style="padding:0px">
+	        	<!-- 总箱数 -->
+	        	 <div class="form-group col-sm-4" style="padding:0px">
+	                <label class="control-label col-sm-4" style="padding-right:0px"><@spring.message "smallbarcodecreate.sum"/>：</label>
+	                <div class="col-sm-7" style="padding:0px">
+	                    <input id="codeSum" type="text" name='<@spring.message "smallbarcodecreate.sum"/>' data-bind="value:model.codeSum"  oninput = "value=value.replace(/[^\d]/g,'')" onblur = "change()" style="width: 100%;" class="k-textbox" required/>
+	                </div>
+	            </div>
+	            <!-- 订单号 -->
+	            <div class="form-group col-sm-4" style="padding:0px">
+	                <label class="control-label col-sm-4" style="padding-right:0px"><@spring.message "smallbarcodecreate.poNumberPrint"/>：</label>
+	                <div class="col-sm-7" style="padding:0px">
+	                    <input id=""  type="text" class="k-textbox" onkeyup = "checkLengthAndNoZh(this)" data-bind="value:model.poNumberPrint" style="width: 100%;"/>
+	                </div>
+	            </div>
+	        </div>
+	        <div class="row" style="padding:0px">
+	        	<!-- 生产区域 -->
+	        	<div class="form-group col-sm-4" style="padding:0px">
+	                <label class="control-label col-sm-4" style="padding-right:0px"><@spring.message "smallbarcodecreate.productionRegion"/>：</label>
+	                <div class="col-sm-7" style="padding:0px">
+	                    <input id=""  type="text" class="k-textbox" oninput = "checkLength(this)" data-bind="value:model.productionRegion" style="width: 100%;"/>
+	                </div>
+	            </div>
+	            <!-- 生产设备 -->
+	            <div class="form-group col-sm-4" style="padding:0px">
+	                <label class="control-label col-sm-4" style="padding-right:0px"><@spring.message "smallbarcodecreate.productionEquipment"/>：</label>
+	                <div class="col-sm-7" style="padding:0px">
+	                    <input id="" type="text" class="k-textbox" oninput = "checkLength(this)" data-bind="value:model.productionEquipment" style="width: 100%;" />
+	                </div>
+	            </div>
+	            <div class="form-group col-sm-4" style="padding:0px">
+	                <label class="control-label col-sm-4" style="padding-right:0px"><@spring.message "smallbarcodecreate.remarks"/></label>
+	                <div class="col-sm-7" style="padding:0px">
+	                    <input id="" data-bind="value:model.remarks" style="width: 100%;" class="k-textbox"/>
+	                </div>
+	            </div>
+	        </div>
+	        
+	        
+	        <div class="row" style="padding:0px">
+	        	<div class="form-group col-sm-4" style="padding:0px">
+	                <label class="control-label col-sm-4" style="padding-right:0px"><@spring.message "smallbarcodecreate.sbarcodefrom"/></label>
+	                <div class="col-sm-7" style="padding:0px">
+	                    <input id="itemCodeStart" type="text" class="k-textbox" data-bind="value:model.sbarcode" style="width: 100%; background-color:#f5f5f5" readOnly/>
+	                </div>
+	            </div>
+	            <div class="form-group col-sm-4" style="padding:0px">
+	                <label class="control-label col-sm-4" style="padding-right:0px"><@spring.message "smallbarcodecreate.sbarcodeto"/></label>
+	                <div class="col-sm-7" style="padding:0px">
+	                    <input id="itemCodeEnd" type="text" class="k-textbox" data-bind="" style="width: 100%; background-color:#f5f5f5" readOnly/>
+	                </div>
+	            </div>
+	            <div class="form-group col-sm-4" style="padding:0px">
+	                <label class="control-label col-sm-4" style="padding-right:0px"><@spring.message "smallbarcodecreate.sbarcodeqty"/></label>
+	                <div class="col-sm-7" style="padding:0px">
+	                    <input id="" readOnly type="text" data-bind="value:model.codeSum"  style="width: 100%; background-color:#f5f5f5" class="k-textbox" />
+	                </div>
+	            </div>
+	        </div>
+			            
+	    </div>
+	 </div>
+	 <div style="clear:both">
+	    <div class="pull-right" id="toolbar-btn" style="padding-bottom:10px;margin-right:120px">	    
+	        <span class="btn btn-success k-grid-save-changes fa fa-check" data-bind="click:save " style="float:left;margin-right:5px;"><@spring.message " hap.confirm "/></span>
+	        <span class="btn btn-danger" style="float:left;" data-bind="click:closeWin"><i class="fa fa-trash-o" style="margin-right:3px;"></i><@spring.message "smallbarcodecreate.cancel"/></span>
+	    </div>
+    </div>
+    <script>
+	    kendo.bind($('#mainForm'),viewModel);
+	    kendo.bind($('#toolbar-btn'), viewModel);
+    </script>
+  </div>
+</div>
+	   
+<script type="text/javascript">
+$("#packingLevelCombox").kendoComboBox({
+    dataTextField: "meaning",
+    dataValueField: "value",
+    valuePrimitive: true,
+    dataSource: packingLevelds
+});
+
+/* $("#createBeginDate").kendoDatePicker({
+    format: "{0:yyyy-MM-dd HH:mm:ss}",
+    select: function(){
+    }
+}); */ 
+</script>
+</body>
+</html>

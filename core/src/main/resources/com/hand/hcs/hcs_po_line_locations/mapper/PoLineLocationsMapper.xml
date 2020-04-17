@@ -1,0 +1,452 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hcs.hcs_po_line_locations.mapper.PoLineLocationsMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hcs.hcs_po_line_locations.dto.PoLineLocations">
+        <result column="LINE_LOCATION_ID" property="lineLocationId" jdbcType="DECIMAL" />
+        <result column="PO_LINE_ID" property="poLineId" jdbcType="DECIMAL" />
+        <result column="PO_HEADER_ID" property="poHeaderId" jdbcType="DECIMAL" />
+        <result column="SHIPMENT_NUM" property="shipmentNum" jdbcType="DECIMAL" />
+        <result column="SHIP_TO_ORGANIZATION_ID" property="shipToOrganizationId" jdbcType="DECIMAL" />
+        <result column="SHIP_TO_LOCATION_ID" property="shipToLocationId" jdbcType="DECIMAL" />
+        <result column="UNIT_MEAS_LOOKUP_CODE" property="unitMeasLookupCode" jdbcType="VARCHAR" />
+        <result column="QUANTITY" property="quantity" jdbcType="DECIMAL" />
+        <result column="CANCELED_FLAG" property="canceledFlag" jdbcType="VARCHAR" />
+        <result column="CLOSED_CODE" property="closedCode" jdbcType="VARCHAR" />
+        <result column="CLOSED_DATE" property="closedDate" jdbcType="DATE" />
+        <result column="CLOSED_FLAG" property="closedFlag" jdbcType="VARCHAR" />
+        <result column="APPROVED_FLAG" property="approvedFlag" jdbcType="VARCHAR" />
+        <result column="ORG_ID" property="orgId" jdbcType="DECIMAL" />
+        <result column="RECEIVING_ROUTING_ID" property="receivingRoutingId" jdbcType="DECIMAL" />
+        <result column="QUANTITY_RECEIVED" property="quantityReceived" jdbcType="DECIMAL" />
+        <result column="QUANTITY_ACCEPTED" property="quantityAccepted" jdbcType="DECIMAL" />
+        <result column="QUANTITY_REJECTED" property="quantityRejected" jdbcType="DECIMAL" />
+        <result column="QUANTITY_BILLED" property="quantityBilled" jdbcType="DECIMAL" />
+        <result column="QUANTITY_CANCELLED" property="quantityCancelled" jdbcType="DECIMAL" />
+        <result column="AHEAD_OF_TIME" property="aheadOfTime" jdbcType="DECIMAL" />
+        <result column="DELAY_DAYS" property="delayDays" jdbcType="DECIMAL" />
+        <result column="OPERATION1" property="operation1" jdbcType="VARCHAR" />
+        <result column="ALLOWANCE" property="allowance" jdbcType="DECIMAL" />
+        <result column="OPERATION2" property="operation2" jdbcType="VARCHAR" />
+        <result column="PROMISED_DATE" property="promisedDate" jdbcType="DATE" />
+        <result column="NEED_BY_DATE" property="needByDate" jdbcType="DATE" />
+        <result column="SHIPMENT_TYPE" property="shipmentType" jdbcType="VARCHAR" />
+        <result column="CONSIGNED_FLAG" property="consignedFlag" jdbcType="VARCHAR" />
+        <result column="LINE_LOCATION_DESC" property="lineLocationDesc" jdbcType="VARCHAR" />
+        <result column="LINE_LOCATION_SUPPLIER_DESC" property="lineLocationSupplierDesc" jdbcType="VARCHAR" />
+        <result column="NOTIFICATION_FLAG" property="notificationFlag" jdbcType="VARCHAR" />
+        <result column="PO_RELEASE_ID" property="poReleaseId" jdbcType="DECIMAL" />
+        <result column="CID" property="cid" jdbcType="DECIMAL" />
+        <result column="SHIPMENT_STATUS" property="shipmentStatus" jdbcType="VARCHAR" />
+        <result column="CANCEL_DATE" property="cancelDate" jdbcType="TIMESTAMP" />
+        <result column="CONFIRM_FLAG" property="confirmFlag" jdbcType="VARCHAR" />
+        <result column="CONFIRM_TIME" property="confirmTime" jdbcType="TIMESTAMP" />
+        <result column="CONFIRM_BY" property="confirmBy" jdbcType="DECIMAL" />
+        <result column="PACKING_QTY" property="packingQty" jdbcType="DECIMAL" />
+        <result column="SUPPLY_PLAN_ID" property="supplyPlanId" jdbcType="DECIMAL" />
+        <result column="CLOSED_BY" property="closedBy" jdbcType="DECIMAL" />
+        <result column="CLOSED_TIME" property="closedTime" jdbcType="DATE" />
+        
+        <!-- 业务字段 -->
+        <result column="PLANT_ID" property="plantId" jdbcType="DECIMAL" />
+        <result column="ITEM_ID" property="itemId" jdbcType="DECIMAL" />
+        <result column="ITEM_CODE" property="itemCode" jdbcType="VARCHAR" />
+        <result column="ITEM_NAME" property="itemName" jdbcType="VARCHAR" />
+        <result column="ITEM_VERSION" property="itemVersion" jdbcType="VARCHAR" />
+        <result column="UNIT_CODE" property="unitCode" jdbcType="VARCHAR" />
+        <result column="SHIPPED" property="shipped" jdbcType="VARCHAR" />
+        <result column="BUSINESS_UNIT_NAME" property="businessUnitName" jdbcType="VARCHAR" />
+        <result column="BUSINESS_UNIT_ID" property="businessUnitId" jdbcType="DECIMAL" />
+        <result column="PLANT_NAME" property="plantName" jdbcType="VARCHAR" />
+        <result column="PLANT_CODE" property="plantCode" jdbcType="VARCHAR" />
+        <result column="PO_NUMBER" property="poNumber" jdbcType="VARCHAR" />
+        <result column="LINE_NUM" property="lineNum" jdbcType="VARCHAR" />
+        <result column="PO_ORDER_TYPE" property="poOrderType" jdbcType="VARCHAR" />
+        <result column="PO_STATUS" property="poStatus" jdbcType="VARCHAR" />
+        <result column="URGENT_STATUS" property="urgentStatus" jdbcType="VARCHAR" />
+        <result column="AGENT_FULL_NAME" property="agentFullName" jdbcType="VARCHAR" />
+        <result column="AGENT_DESC" property="agentDesc" jdbcType="VARCHAR" />
+        <result column="SUPPLIER_ID" property="supplierId" jdbcType="DECIMAL" />
+        <result column="SUPPLIER_NAME" property="supplierName" jdbcType="VARCHAR" />
+        <result column="SUPPLIER_CODE" property="supplierCode" jdbcType="VARCHAR" />
+        <result column="SUPPLIER_SITE_ID" property="supplierSiteId" jdbcType="DECIMAL" />
+        <result column="SUPPLIER_SITE_NAME" property="supplierSiteName" jdbcType="VARCHAR" />
+        <result column="EDITION" property="edition" jdbcType="VARCHAR" />
+        <result column="RELEASE_DATE" property="releaseDate" jdbcType="DATE" />
+        <result column="USER_TYPE" property="userType" jdbcType="VARCHAR" />
+        <result column="START_TIME" property="startTime" jdbcType="VARCHAR" />
+        <result column="END_TIME" property="endTime" jdbcType="VARCHAR" />
+        <result column="START_DATE" property="startDate" jdbcType="VARCHAR" />
+        <result column="END_DATE" property="endDate" jdbcType="VARCHAR" />
+        <result column="AGENT_ID" property="agentId" jdbcType="DECIMAL" /> 
+        <result column="URGENT_TIME" property="urgentTime" jdbcType="TIMESTAMP" />
+        <result column="UNIT_PRICE" property="unitPrice" jdbcType="DECIMAL" />
+        <result column="CURRENCY" property="currency" jdbcType="VARCHAR" />
+        <result column="TAX_RATE" property="taxRate" jdbcType="VARCHAR" />  	
+        <result column="CONFIRM_NAME" property="confirmName" jdbcType="VARCHAR" /> 	
+        <result column="LINE_TOTAL_PRICE" property="lineTotalPrice" jdbcType="DECIMAL" />
+        <result column="PRICE_UNIT" property="priceUnit" jdbcType="VARCHAR" />
+        <result column="purchase_group" property="purchaseGroup" jdbcType="VARCHAR" />
+        <result column="supply_plan_num" property="supplyPlanNum" jdbcType="VARCHAR" />
+        <result column="receive_qty" property="receiveQty" jdbcType="DECIMAL" />
+        <result column="close_name" property="closeName" jdbcType="VARCHAR" />
+        <result column="supply_plan_line_num" property="supplyPlanLineNum" jdbcType="VARCHAR" />
+    </resultMap>
+	<!-- 送货单主界面查询 -->
+	<select id="queryPoLineLocations" resultMap="BaseResultMap" parameterType="com.hand.hcs.hcs_po_line_locations.dto.PoLineLocations">
+		   select t.* from (
+				   	select  hpll.line_location_id,
+				           hpl.item_id,
+				           hi.ITEM_CODE,
+				           hi.descriptions ITEM_NAME,
+				           hpl.edition ITEM_VERSION,
+				           hpl.unit_code,
+				           hpll.quantity,
+				           (nvl((select sum(hdtl.ship_quantity)
+				               from hcs_delivery_ticket_l hdtl
+				              where hdtl.po_header_id = hpll.po_header_id
+				                and hdtl.po_line_id = hpll.po_line_id
+				                and hdtl.line_location_id = hpll.line_location_id
+				                and hdtl.line_status in ('N', 'P', 'S')),0) +
+				           nvl((select sum(hdtl.receive_quantity)
+				               from hcs_delivery_ticket_l hdtl
+				              where hdtl.po_header_id = hpll.po_header_id
+				                and hdtl.po_line_id = hpll.po_line_id
+				                and hdtl.line_location_id = hpll.line_location_id
+				                and hdtl.line_status in('R','Q')),0)) SHIPPED,
+				           hpll.need_by_date,
+				           to_date(to_char(hpll.promised_date ,'yyyy-mm-dd'),'yyyy-mm-dd') promised_date,
+				           hpll.org_id,
+				           hpll.ship_to_organization_id,
+				           hp.descriptions PLANT_NAME,
+				           hp.PLANT_ID,
+				           hp.PLANT_CODE,
+				           hph.po_number,
+				           hpl.line_num,
+				           hpll.shipment_num,
+				           hph.po_order_type,
+				           hph.po_status,
+				           hph.urgent_status,
+				           hpll.shipment_status,
+				           hpll.allowance,
+				           hph.PO_AGENT_ID AGENT_ID,
+				           hph.agent_full_name,
+				           hph.agent_desc,
+				           hpll.line_location_desc,
+				           hpll.line_location_supplier_desc,
+				           hph.supplier_id,
+				           hs.supplier_name,
+				           hs.supplier_code,
+				           hph.supplier_site_id,
+				           hss.description SUPPLIER_SITE_NAME,
+				           hph.edition,
+				           to_date(to_char(hph.release_date ,'yyyy-mm-dd'),'yyyy-mm-dd') release_date,
+				           hpll.confirm_time,
+				           hph.urgent_time,
+				           hpl.unit_price,
+				           hpl.currency,
+				           hpl.tax_rate,
+				           suu.user_name CONFIRM_NAME,
+				           hpl.po_line_id,
+			          	   hpl.po_header_id,
+		                   hpl.LINE_TOTAL_PRICE,
+		                   hpl.PRICE_UNIT,
+		                   hac.purchase_group,
+		                   hsp.supply_plan_num,
+		                   hsp.supply_plan_line_num,
+		                   hsp.supply_plan_id,
+		                   hi.pack_qty packing_qty
+				      from sys_user su 
+				      join hcs_po_headers hph on decode(su.user_type,'S',su.supplier_id,hph.supplier_id) = hph.supplier_id
+				      join hcs_po_lines hpl on hph.po_header_id = hpl.po_header_id
+				      join hcs_po_line_locations hpll on hpl.po_line_id = hpll.po_line_id
+				      join hcm_item hi on hpl.item_id = hi.ITEM_ID
+				      join hcm_plant hp on hpl.plant_id = hp.plant_id
+				      join hcs_suppliers hs on hph.supplier_id = hs.supplier_id
+				      left join hcs_supplier_site hss on hph.supplier_site_id = hss.supplers_site_id
+				      left join sys_user suu on hpll.confirm_by = suu.user_id
+				      left join hcs_asl ha on hpl.item_id = ha.item_id and hpl.plant_id = ha.plant_id and ha.enable_flag = 'Y' and hph.supplier_id = ha.supplier_id
+				      left join hcs_asl_control hac on ha.asl_id = hac.asl_id
+				      left join hcs_supply_plan hsp on hpll.supply_plan_id = hsp.supply_plan_id
+				      where 
+				      hi.PLANT_ID = hpl.plant_id
+				      <if test='queryFlag == null'>
+				      	and hpll.confirm_flag = 'Y'
+				      </if>
+				      <!-- and hpll.shipment_status = 'A' -->
+				      and su.user_id = #{request.userId}
+				   <if test = "purchaseGroup != null">
+						and hac.purchase_group = #{purchaseGroup}
+				   </if>
+				   <if test = "supplyPlanNum != null">
+						and hsp.supply_plan_num LIKE concat('%',concat(#{supplyPlanNum,jdbcType=VARCHAR},'%'))
+				   </if>
+				   <if test = "poNumber != null">
+						and hph.po_number LIKE concat('%',concat(#{poNumber,jdbcType=VARCHAR},'%'))
+				   </if>
+				   <if test = "lineNum != null">
+						and hpl.line_num LIKE concat('%',concat(#{lineNum,jdbcType=VARCHAR},'%'))
+				   </if>
+				   <if test = "shipmentNum != null">
+						and hpll.shipment_num LIKE concat('%',concat(#{shipmentNum,jdbcType=VARCHAR},'%'))
+				   </if>
+				   <if test = "plantId != null">
+						and hp.PLANT_ID = #{plantId}
+				   </if>
+				   <if test = "itemId != null">
+						and hpl.item_id = #{itemId}
+				   </if>
+				   <if test = "startTime != null">
+						and hpll.need_by_date &gt;= to_date(#{startTime}, 'yyyy-mm-dd hh24:mi:ss')
+				   </if>
+				   <if test = "endTime != null">
+					 	and hpll.need_by_date &lt;= to_date(#{endTime}, 'yyyy-mm-dd hh24:mi:ss')
+				   </if>
+				   <if test = "poOrderType != null">
+						and hph.po_order_type = #{poOrderType}
+				   </if>
+				   <if test = "supplierId != null">
+						and hph.supplier_id = #{supplierId}
+				   </if>
+				   <if test = "supplierSiteId != null">
+						and hph.supplier_site_id = #{supplierSiteId}
+				   </if>
+				   <if test = "urgentStatus != null">
+						and hph.urgent_status = #{urgentStatus}
+				   </if>
+				   <if test = "shipmentStatus != null">
+						and hpll.shipment_status = #{shipmentStatus}
+				   </if>
+				   <if test = "startDate != null">
+						and to_date(to_char(hpll.promised_date ,'yyyy-mm-dd'),'yyyy-mm-dd') &gt;= to_date(#{startDate}, 'yyyy-mm-dd hh24:mi:ss')
+				   </if>
+				   <if test = "endDate != null">
+					 	and to_date(to_char(hpll.promised_date ,'yyyy-mm-dd'),'yyyy-mm-dd') &lt;= to_date(#{endDate}, 'yyyy-mm-dd hh24:mi:ss')
+				   </if>
+				 order by hpll.need_by_date desc
+		   ) t where t.quantity > t.SHIPPED 
+	</select>	
+	
+	<!-- 采购订单明细行查询 -->
+	<select id="queryPoLineDetail" resultMap="BaseResultMap" parameterType="com.hand.hcs.hcs_po_line_locations.dto.PoLineLocations">
+
+--queryPoLineDetail TRUE
+
+SELECT hpll.line_location_id,
+       hpl.item_id,
+       hi.item_code,
+       hi.descriptions item_name,
+       hpl.edition item_version,
+       hpl.unit_code,
+       hpll.quantity,
+       (nvl((SELECT SUM((CASE
+                         WHEN tl.line_status IN ('N', 'S', 'P') THEN
+                          tl.ship_quantity
+                         WHEN tl.line_status IN ('R', 'Q') THEN
+                          tl.receive_quantity
+                       END))
+              FROM hcs_delivery_ticket_l tl
+             WHERE tl.line_status IN ('N', 'S', 'P', 'R', 'Q')
+               AND tl.line_location_id = hpll.line_location_id),
+            0)) shipped,
+       (nvl((SELECT SUM((tl.receive_quantity))
+              FROM hcs_delivery_ticket_l tl
+             WHERE tl.line_status IN ('R', 'Q')
+               AND tl.line_location_id = hpll.line_location_id),
+            0)) receive_qty,
+       hpll.need_by_date,
+       to_date(to_char(hpll.promised_date, 'yyyy-mm-dd'), 'yyyy-mm-dd') promised_date,
+       hpll.org_id,
+       hpll.ship_to_organization_id,
+       hp.descriptions plant_name,
+       hp.plant_id,
+       hp.plant_code,
+       hph.po_number,
+       hpl.line_num,
+       hpll.shipment_num,
+       hph.po_order_type,
+       hph.po_status,
+       hph.urgent_status,
+       hpll.shipment_status,
+       hpll.allowance,
+       hph.po_agent_id agent_id,
+       hph.agent_full_name,
+       hph.agent_desc,
+       hpll.line_location_desc,
+       hpll.line_location_supplier_desc,
+       hph.supplier_id,
+       hs.supplier_name,
+       hs.supplier_code,
+       hph.supplier_site_id,
+       hss.description supplier_site_name,
+       hpl.edition,
+       to_date(to_char(hph.release_date, 'yyyy-mm-dd'), 'yyyy-mm-dd') release_date,
+       hpll.confirm_time,
+       hph.urgent_time,
+       hi.pack_qty packing_qty,
+       hpl.unit_price,
+       hpl.currency,
+       hpl.tax_rate,
+       suu.user_name confirm_name,
+       hpl.po_line_id,
+       hpl.po_header_id,
+       hpl.line_total_price,
+       hpl.price_unit,
+       hac.purchase_group,
+       hsp.supply_plan_num,
+       hsp.supply_plan_id,
+       hsp.supply_plan_line_num,
+       hpll.closed_time,
+       he.name close_name
+  FROM sys_user su
+  JOIN hcs_po_headers hph
+    ON decode(su.user_type, 'S', su.supplier_id, hph.supplier_id) = hph.supplier_id
+  JOIN hcs_po_lines hpl
+    ON hph.po_header_id = hpl.po_header_id
+  JOIN hcs_po_line_locations hpll
+    ON hpl.po_line_id = hpll.po_line_id
+  JOIN hcm_item hi
+    ON hpl.item_id = hi.item_id
+  JOIN hcm_plant hp
+    ON hpl.plant_id = hp.plant_id
+  JOIN hcs_suppliers hs
+    ON hph.supplier_id = hs.supplier_id
+  LEFT JOIN hcs_supplier_site hss
+    ON hph.supplier_site_id = hss.supplers_site_id
+  LEFT JOIN sys_user suu
+    ON hpll.confirm_by = suu.user_id
+  LEFT JOIN hcs_asl ha
+    ON hpl.item_id = ha.item_id
+   AND hpl.plant_id = ha.plant_id
+   AND ha.enable_flag = 'Y'
+   AND hph.supplier_id = ha.supplier_id
+  LEFT JOIN hcs_asl_control hac
+    ON ha.asl_id = hac.asl_id
+  LEFT JOIN hcs_supply_plan hsp
+    ON hpll.supply_plan_id = hsp.supply_plan_id
+  LEFT JOIN sys_user su2
+    ON hpll.closed_by = su2.user_id
+  LEFT JOIN hr_employee he
+    ON su2.employee_id = he.employee_id
+ WHERE hi.plant_id = hpl.plant_id
+		      <if test='queryFlag == null'>
+		      	and hpll.confirm_flag = 'Y'
+		      </if>
+		      <!-- and hpll.shipment_status = 'A' -->
+		      and su.user_id = #{request.userId}
+		   <if test = "purchaseGroup != null">
+				and hac.purchase_group = #{purchaseGroup}
+		   </if>
+		   <if test = "supplyPlanNum != null">
+				and hsp.supply_plan_num LIKE concat('%',concat(#{supplyPlanNum,jdbcType=VARCHAR},'%'))
+		   </if>
+		   <if test = "poNumber != null">
+				and hph.po_number LIKE concat('%',concat(#{poNumber,jdbcType=VARCHAR},'%'))
+		   </if>
+		   <if test = "lineNum != null">
+				and hpl.line_num LIKE concat('%',concat(#{lineNum,jdbcType=VARCHAR},'%'))
+		   </if>
+		   <if test = "shipmentNum != null">
+				and hpll.shipment_num LIKE concat('%',concat(#{shipmentNum,jdbcType=VARCHAR},'%'))
+		   </if>
+		   <if test = "plantId != null">
+				and hp.PLANT_ID = #{plantId}
+		   </if>
+		   <if test = "itemId != null">
+				and hpl.item_id = #{itemId}
+		   </if>
+		   <if test = "startTime != null">
+				and hpll.need_by_date &gt;= to_date(#{startTime}, 'yyyy-mm-dd hh24:mi:ss')
+		   </if>
+		   <if test = "endTime != null">
+			 	and hpll.need_by_date &lt;= to_date(#{endTime}, 'yyyy-mm-dd hh24:mi:ss')
+		   </if>
+		   <if test = "poOrderType != null">
+				and hph.po_order_type = #{poOrderType}
+		   </if>
+		   <if test = "supplierId != null">
+				and hph.supplier_id = #{supplierId}
+		   </if>
+		   <if test = "supplierSiteId != null">
+				and hph.supplier_site_id = #{supplierSiteId}
+		   </if>
+		   <if test = "urgentStatus != null">
+				and hph.urgent_status = #{urgentStatus}
+		   </if>
+		   <if test = "shipmentStatus != null">
+				and hpll.shipment_status = #{shipmentStatus}
+		   </if>
+		   <if test = "startDate != null">
+				and to_date(to_char(hpll.promised_date ,'yyyy-mm-dd'),'yyyy-mm-dd') &gt;= to_date(#{startDate}, 'yyyy-mm-dd hh24:mi:ss')
+		   </if>
+		   <if test = "endDate != null">
+			 	and to_date(to_char(hpll.promised_date ,'yyyy-mm-dd'),'yyyy-mm-dd') &lt;= to_date(#{endDate}, 'yyyy-mm-dd hh24:mi:ss')
+		   </if>
+		 order by hpll.need_by_date desc
+	</select>	
+	<!-- 采购订单发运明细查询 -->
+	<select  id="queryLocationDetail" resultMap="BaseResultMap" parameterType="com.hand.hcs.hcs_po_line_locations.dto.PoLineLocations">
+SELECT hpll.line_location_id,
+       hpll.shipment_num,
+       hpll.shipment_status,
+       hpll.quantity,
+       hpl.item_id,
+       hi.item_code,
+       hi.descriptions item_name,
+       hpl.edition,
+       (nvl((SELECT SUM((CASE
+                         WHEN tl.line_status IN ('N', 'S', 'P') THEN
+                          tl.ship_quantity
+                         WHEN tl.line_status IN ('R', 'Q') THEN
+                          tl.receive_quantity
+                       END))
+              FROM hcs_delivery_ticket_l tl
+             WHERE tl.line_status IN ('N', 'S', 'P', 'R', 'Q')
+               AND tl.line_location_id = hpll.line_location_id),
+            0)) shipped,
+       (nvl((SELECT SUM((tl.receive_quantity))
+              FROM hcs_delivery_ticket_l tl
+             WHERE tl.line_status IN ('R', 'Q')
+               AND tl.line_location_id = hpll.line_location_id),
+            0)) receive_qty,
+       hpll.need_by_date,
+       hpll.promised_date,
+       hi.pack_qty packing_qty,
+       hsp.supply_plan_num,
+       hsp.supply_plan_id,
+       hsp.supply_plan_line_num,
+       hpll.confirm_time,
+       hpll.line_location_supplier_desc,
+       hpll.closed_time,
+       he.name close_name,
+       hpl.unit_code
+  FROM hcs_po_lines hpl
+  JOIN hcs_po_line_locations hpll
+    ON hpl.po_line_id = hpll.po_line_id
+  LEFT JOIN hcm_item hi
+    ON hpl.item_id = hi.item_id
+  LEFT JOIN hcs_supply_plan hsp
+    ON hpll.supply_plan_id = hsp.supply_plan_id
+  LEFT JOIN sys_user su
+    ON hpll.closed_by = su.user_id
+  LEFT JOIN hr_employee he
+    ON su.employee_id = he.employee_id
+		where hi.PLANT_ID = hpl.plant_id
+		and hpl.po_line_id = #{poLineId}
+		order by hpll.creation_date desc
+	</select>
+	
+	
+	<select id="getNewPoLocationShipmentNum" resultType="java.lang.Float">
+	SELECT nvl(MAX(t.shipment_num), 0) + 1
+  FROM hcs_po_line_locations t
+ WHERE t.po_header_id = #{0}
+   AND t.po_line_id = #{1}
+	</select>
+	
+	
+	<select id="getSumQuantity" resultType="java.lang.Float">
+	SELECT nvl(SUM(t.quantity),0) FROM hcs_po_lines t WHERE t.po_line_id = #{0}
+	</select>
+	
+</mapper>

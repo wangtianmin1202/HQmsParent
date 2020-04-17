@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<!--
+  description  供应商文件管理界面
+  @author KOCDZX0 2020/03/21 1:08 PM 
+-->
+<#include "../include/header.html">
+<style>
+    .col-sm-8{
+        padding-top: 7px;
+    }
+</style>
+<script type="text/javascript">
+
+    var BaseUrl = _basePath;
+    var viewModel = Hap.createGridViewModel("#grid");
+
+    var viewModelTree = Hap.createGridViewModel("#gridTree");
+
+    var viewModelHead = Hap.createGridViewModel("#mainForm",{
+        model:{},
+        queryInfo:function(certificateId){
+            if(certificateId != 0){
+                $.ajax({
+                    url:BaseUrl+"/hcs/certificate/currentQuery?certificateId="+certificateId,
+                    success:function(data){
+                        var a0 = data.rows[0] || {};
+                        for(var k in a0){
+                            viewModelHead.model.set(k,a0[k]);
+                        }
+                    }
+                })
+            }
+        }
+
+    });
+
+    //下载文件
+    function fileDownloadFunction(attachment){
+        window.open(attachment);
+    }
+
+    //测试审批
+   function submit(){
+        debugger
+       viewModel.model.certificateId = 91;
+       viewModel.model.certificateType = 'PPAP';
+        var data = viewModel.model.toJSON();
+            Hap.request({
+                url: '${base.contextPath}/hcs/certificate/approve',
+                data: kendo.stringify(data),
+                success: function (data) {
+                    kendo.ui.showInfoDialog({
+                        title:$l('hap.tip.info'),
+                        message:'<@spring.message "hap.tip.success"/>'
+                    })
+                    viewModel.closeWin();
+                },
+                // error: function (data) {
+                //     kendo.ui.showInfoDialog({
+                //         title: $l('hap.error'),
+                //         message: kendo.stringify(data.message)
+                //     });
+                // },
+                complete:function () {
+                    Hap.unblockUI();
+                }
+            });
+
+
+    }
+</script>
+
+
+
+<body>
+<div id="page-content">
+    <div class="pull-left" id="toolbar-btn" style="padding-bottom:10px;">
+        <span type="button" class="btn btn-primary"  style="float:left;margin-right:5px" onclick="openItem()"><i class="fa fa-plus-square" style="margin-right:3px;"></i><@spring.message "物料文件上传发起"/></span>
+        <span class="btn btn-primary" onclick="openSupplier()"  style="float:left;margin-right:5px;"><i class="fa fa-plus-square" style="margin-right:3px;"></i><@spring.message "供应商文件上传发起"/></span>
+        <span class="btn btn-primary" onclick="submit()"  style="float:left;margin-right:5px;"><i class="fa fa-plus-square" style="margin-right:3px;"></i><@spring.message "测试审批"/></span>
+    </div>
+    <script>kendo.bind($('#toolbar-btn'), viewModel);</script>
+
+    <!-- 侧面加分层 -->
+    <div class="row" style="width: 100%;height: 100%;margin-top: 10px;">
+        <div class="col-sm-12" style="height: 100%">
+            <div class="col-sm-3" style="height: 100%;border: 2px solid #EEEEEE;border-radius:10px;">
+                <!--树查询-->
+                <div class="row">
+                    <div id="query-form" style="padding-bottom:10px;">
+                    <div class="k-query-simple" id="queryPanel">
+                        <div class="row">
+                            <div class="form-group col-sm-4">
+                                <input  id="supplierId" style="width: 200px;" placeholder='<@spring.message "dimensionproblemdescription.supplier"/>'
+                                       data-bind="value:model.supplierId">
+                                <script>
+                                    var data = {
+                                        serverFiltering: true,
+                                        transport: {
+                                            read: function (options) {
+                                                var supplierId= $("#supplierId").val();
+                                                $.ajax({
+                                                    url: '${base.contextPath}/hcs/certificate/queryMuliItem?supplierId='+supplierId,
+                                                    data:JSON.stringify( viewModelTree.model.toJSON() ) ,
+                                                    type: 'POST',
+                                                    dataType: 'json',
+                                                    contentType: "application/json;charset=UTF-8",
+                                                    success: function (args) {
+                                                        return options.success(args);
+                                                    },
+                                                });
+                                            }
+                                        }
+                                    };
+                                    var suppliers = $("#supplierId").kendoComboBox({
+                                        filter:"contains",
+                                        valuePrimitive:true,
+                                        dataTextField: "supplierCode",
+                                        dataValueField: "supplierId",
+                                        dataSource: {
+                                            serverFiltering: true,
+                                            transport:{
+                                                read:BaseUrl+'/hcs/certificate/queryMuliSupplier',
+                                            }
+                                        },
+                                        change:function (e) {
+                                           var item =  $("#itemId").kendoComboBox({
+                                                autoBind:false,
+                                                filter:"contains",
+                                                dataTextField: "itemCode",
+                                                dataValueField: "itemId",
+                                                dataSource: data,
+                                            }).data("kendoComboBox");
+                                            item.enable();
+                                        },
+                                    }).data("kendoComboBox");
+                                </script>
+                            </div>
+
+                        </div>
+
+                        <div class="row">
+                            <div class="form-group col-sm-4">
+                                <input type="text"  id="itemId" style="width:200px;margin-right:5px;" placeholder='<@spring.message "asliqccontrol.item"/>'
+                                       data-bind="value:model.itemId" >
+                                <script>
+                                    $("#itemId").kendoComboBox({
+                                        autoBind:false,
+                                        filter:"contains",
+                                        dataTextField: "itemCode",
+                                        dataValueField: "itemId",
+                                        dataSource: {},
+                                    }).data("kendoComboBox").enable(false)
+                                </script>
+                            </div>
+                        </div>
+                    </div>
+                    <script>kendo.bind($('#query-form'), viewModelTree);</script>
+                </div>
+                </div>
+                <script>
+                    kendo.bind($('#query-form'), viewModelTree);
+                    $('#queryPanel').kendoQueryPanel({
+                        queryFunction: function () {
+                            query()
+                        }
+                    });
+                </script>
+                <!--树显示-->
+                <div style="clear:both;">
+                    <div id="gridTree"style="height: 700px"></div>
+                </div>
+            </div>
+            <!--右边数据显示-->
+            <div class="col-sm-9" style="border: 2px solid #EEEEEE;border-radius:10px;">
+                <div id = "mainForm" style="paddiing-bottom:50px;padding-top:15px" class="form-horizontal">
+                    <div style="clear:both;">
+                        <div class="panel-heading" style="padding-top:5px;height: 25px;border-bottom: 0px;">
+                            <span class="title" style="font-weight: bold;"><@spring.message "当前版本"/></span>
+                        </div>
+                        <div style="border-top: 1px solid #e7ecf1;padding: 15px 0px 0px 0px;">
+                            <div class="row">
+                                <div class="form-group col-sm-4">
+                                    <label class="col-sm-4 control-label" style="padding-right: 0px;"><@spring.message
+                                        "iqcinspectionh.inspectionstatus"/>：</label>
+                                    <div class="col-sm-8">
+                                        <span id="status" style="border: none"
+                                              data-bind="text:model.approvalStatus"></span>
+                                    </div>
+                                </div>
+                                <div class="form-group col-sm-4" id="itemCodeDiv">
+                                    <label class="col-sm-4 control-label" style="padding-right: 0px;"><@spring.message"asl.itemcode"/>：</label>
+                                    <div class="col-sm-8">
+                                        <span id="itemCode" style="border: none"
+                                              data-bind="text:model.itemCode"></span>
+                                    </div>
+                                </div>
+                                <div class="form-group col-sm-4" id="itemDescriptionDiv">
+                                    <label class="col-sm-4 control-label" style="padding-right: 0px;"><@spring.message"settlement.itemname"/>：</label>
+                                    <div class="col-sm-8">
+                                        <span id="itemDescription" style="border: none"
+                                              data-bind="text:model.itemDescription"></span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+
+                                <div class="form-group col-sm-4" id="certificateTypeDiv" hidden>
+                                    <label class="col-sm-4 control-label" style="padding-right: 0px;"><@spring.message
+                                        "code.type"/>：</label>
+                                    <div class="col-sm-8">
+                                        <span id="certificateType" style="border: none"
+                                              data-bind="text:model.certificateType"></span>
+                                    </div>
+                                </div>
+                                <div class="form-group col-sm-4" id="typeValueDiv" hidden>
+                                    <label class="col-sm-4 control-label" style="padding-right: 0px;"><@spring.message
+                                        "entity.entityversion"/>：</label>
+                                    <div class="col-sm-8">
+                                        <span id="typeValue" style="border: none"
+                                              data-bind="text:model.typeValue"></span>
+                                    </div>
+                                </div>
+                                <div class="form-group col-sm-4" id="levelsDiv" hidden>
+                                    <label class="col-sm-4 control-label" style="padding-right: 0px;"><@spring.message
+                                        "hcs.certificate.class"/>：</label>
+                                    <div class="col-sm-8">
+                                        <span id="levels" style="border: none"
+                                              data-bind="text:model.levels"></span>
+                                    </div>
+                                </div>
+
+                                <div class="form-group col-sm-4" id="startDateDiv">
+                                    <label class="col-sm-4 control-label" style="padding-right: 0px;"><@spring.message
+                                        "hcs.certificate.startdate"/>：</label>
+                                    <div class="col-sm-8">
+                                        <span id="startDate" style="border: none"
+                                              data-bind="text:model.startDate"></span>
+                                    </div>
+                                </div>
+                                <div class="form-group col-sm-4" id="endDateDiv">
+                                    <label class="col-sm-4 control-label" style="padding-right: 0px;"><@spring.message
+                                        "hcs.certificate.enddate"/>：</label>
+                                    <div class="col-sm-8">
+                                        <span id="endDate" style="border: none"
+                                              data-bind="text:model.endDate"></span>
+                                    </div>
+                                </div>
+                                <div class="form-group col-sm-4" >
+                                    <label class="col-sm-4 control-label" style="padding-right: 0px;"><@spring.message
+                                        "hcs.certificate.submitdate"/>：</label>
+                                    <div class="col-sm-8">
+                                        <span id="submitDate" style="border: none"
+                                              data-bind="text:model.submitDate"></span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="form-group col-sm-4">
+                                    <label class="col-sm-4 control-label" style="padding-right: 0px;"><@spring.message
+                                        "attachcategory.attachment"/>：</label>
+                                    <div class="col-sm-8">
+                                        <a href="#" onclick="fileDownloadFunction()"></a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <script>
+                    kendo.bind($('#mainForm'), viewModelHead);
+                </script>
+                <div class="panel-heading" style="padding-top:5px;height: 25px">
+                    <span class="title" style="font-weight: bold;"><@spring.message "历史记录"/></span>
+                </div>
+                <div style="clear:both">
+                    <div id="grid"style="height: 600px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!--物料发起界面-->
+<div id="itemDiv"></div>
+<!--供应商发起界面-->
+<div id="supplierDiv"></div>
+<script type="text/javascript">
+    /*打开物料发起*/
+    function openItem() {
+        var url = 'hcs_item_start.html';
+        var itemDiv = $("#itemDiv").kendoWindow({
+            actions: ["close"],
+            width: 840,
+            height: 600,
+            title: '物料相关文件上传申请',
+            content: url,
+            iframe: true,
+            visible: false,
+            resizable: true,
+            modal: true,
+            close: function () {
+                // $("#gridHead").data('kendoGrid').dataSource.read();
+            }
+        }).data("kendoWindow");
+        itemDiv.center().open();
+    }
+
+    /*打开供应商发起*/
+    function openSupplier() {
+        var url = 'hcs_supplier_start.html';
+        var supplierDiv = $("#supplierDiv").kendoWindow({
+            actions: ["close"],
+            width: 792,
+            height: 600,
+            title: '供应商相关文件上传申请',
+            content: url,
+            iframe: true,
+            visible: false,
+            resizable: true,
+            modal: true,
+            close: function () {
+                // $("#gridHead").data('kendoGrid').dataSource.read();
+            }
+        }).data("kendoWindow");
+        supplierDiv.center().open();
+    }
+
+
+    Hap.initEnterQuery('#query-form', viewModel.query);
+
+    var dataSource = new kendo.data.DataSource({
+        transport: {
+            read: {
+                url: BaseUrl + "/hcs/certificate/history/listQuery",
+                type: "POST",
+                dataType: "json"
+            },
+            parameterMap: function (options, type) {
+                if (type !== "read" && options.models) {
+                    var datas = Hap.prepareSubmitParameter(options, type)
+                    return kendo.stringify(datas);
+                } else if (type === "read") {
+                    return Hap.prepareQueryParameter(viewModel.model.toJSON(), options)
+                }
+            }
+        },
+        batch: true,
+        serverPaging: true,
+        pageSize: 10,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+                id: "",
+                fields: {}
+            }
+        }
+    });
+
+
+    var grid = $("#grid").kendoGrid({
+        dataSource: dataSource,
+        resizable: true,
+        scrollable: true,
+        navigatable: false,
+        columnMenu: true,
+        dataBound: function () {
+            if (parent.autoResizeIframe) {
+                parent.autoResizeIframe('${RequestParameters.functionCode!}')
+            }
+        },
+        pageable: {
+            pageSizes: [5, 10, 20, 50],
+            refresh: true,
+            buttonCount: 5
+        },
+        columns: [
+            {
+                field: "typeValue",
+                title: '<@spring.message "版本"/>',
+                width: 120,
+                hidden: true
+            },
+            {
+                field: "attachment",
+                title: '<@spring.message "attachcategory.attachment"/>',
+                width: 120,
+                template: function (dataItem) {
+                    if (isNotEmpty(dataItem.attachment)) {
+                        return '<a href="javascript:void(0)" style="font-size:14px;margin-left:5px;" onclick="fileDownloadFunction(\'' +
+                            (dataItem.attachment ? dataItem.attachment : -1) + '\')"><span class="fa fa-download">' + dataItem.attachment.split('/')[dataItem.attachment.split('/').length - 1] + '</span></a>'
+                    }
+                }
+            },
+            {
+                field: "startDate",
+                title: '<@spring.message "hcs.certificate.startdate"/>',
+                width: 120,
+                hidden: true
+            },
+            {
+                field: "endDate",
+                title: '<@spring.message "hcs.certificate.enddate"/>',
+                width: 120,
+                hidden: true
+            },
+            {
+                field: "submitName",
+                title: '<@spring.message "hcs.certificate.submitname"/>',
+                width: 120,
+                hidden: true
+            },
+            {
+                field: "submitDate",
+                title: '<@spring.message "hcs.certificate.submitdate"/>',
+                width: 120
+            }
+        ]
+    }).data("kendoGrid");
+
+
+    var BaseUrl = _basePath;
+    var Second = {
+        transport: {
+            read: function (options) {
+                var idCode = options.data.idCode;
+                var supplierId;
+                var firstCategory;
+                if (isNotEmpty(idCode)) {
+                    var split = idCode.split('-');
+                    supplierId = split[0];
+                    firstCategory = split[1];
+                }
+                $.ajax({
+                    url: '${base.contextPath}/hcs/certificate/querySecondCategory?supplierId=' + supplierId + '&firstCategory=' + firstCategory,
+                    data: JSON.stringify(viewModelTree.model.toJSON()),
+                    type: 'POST',
+                    dataType: 'json',
+                    contentType: "application/json;charset=UTF-8",
+                    success: function (args) {
+                        return options.success(args);
+                    },
+                    async: true
+                });
+
+            }
+        },
+        schema: {
+            model: {
+                id: "certificateId",
+                hasChildren: function () {
+                    return false;
+                }
+            }
+        }
+    };
+
+    var First = {
+        schema: {
+            model: {
+                id: "idCode",
+                hasChildren: true,
+                children: Second
+            }
+        },
+        transport: {
+            read: function (options) {
+
+                var supplierId = options.data.supplierId;
+                $.ajax({
+                    url: '${base.contextPath}/hcs/certificate/queryFirstCategory?supplierId=' + supplierId,
+                    data: JSON.stringify(viewModelTree.model.toJSON()),
+                    type: 'POST',
+                    dataType: 'json',
+                    contentType: "application/json;charset=UTF-8",
+                    parameterMap: function (options, type) {
+                        if (type === "read") {
+                            return Hap.prepareQueryParameter(viewModel.model.toJSON(), options)
+                        }
+                    },
+                    success: function (args) {
+                        return options.success(args);
+                    },
+                    async: true
+                });
+            }
+        },
+    };
+
+    var Suppliers = new kendo.data.HierarchicalDataSource({
+
+        transport: {
+            read: function (options) {
+                $.ajax({
+                    url: '${base.contextPath}/hcs/certificate/querySupplier',
+                    data: JSON.stringify(viewModelTree.model.toJSON()),
+                    type: 'POST',
+                    dataType: 'json',
+                    contentType: "application/json;charset=UTF-8",
+                    success: function (args) {
+                        return options.success(args);
+                    },
+                    async: true
+                });
+            }
+        },
+        schema: {
+            model: {
+                hasChildren: true,
+                id: "supplierId",
+                children: First
+            }
+        }
+    });
+    var gridTree=$("#gridTree").kendoTreeView({
+        checkboxes: false,
+        dataSource: Suppliers,
+        dataTextField: ["supplierCode", "firstCategory", "secCateMean"],
+        select: onSelect
+    });
+
+    //选择树节点时事件，加载相应数据到右边区域
+    function onSelect(e) {
+        var treeview = $("#gridTree").data("kendoTreeView");
+        var dataItem = treeview.dataItem(e.node);
+
+        //选择二级分类时查询相应证书显示
+        if (!dataItem.hasChildren) {
+            viewModelHead.queryInfo(dataItem.certificateId);
+            inputControl(dataItem.certificateType)
+        }
+    }
+
+    //不同证书类型显示不同的字段控制及表格显示列控制
+    function inputControl(certificateType) {
+        if (certificateType === 'PPAP') {
+            //PPAP
+            $("#typeValueDiv").show();
+            $("#levelsDiv").show();
+            $("#startDateDiv").hide();
+            $("#endDateDiv").hide();
+            grid.showColumn("typeValue");
+        } else if (certificateType === 'PER') {
+            //人员
+            $("#levelsDiv").hide();
+            $("#startDateDiv").hide();
+            $("#endDateDiv").hide();
+
+        } else if (certificateType === 'CER') {
+            //证书
+            $("#itemCodeDiv").hide();
+            $("#itemDescriptionDiv").hide();
+            $("#typeValueDiv").hide();
+            $("#levelsDiv").hide();
+            $("#certificateTypeDiv").hide();
+
+            grid.showColumn("startDate");
+            grid.showColumn("endDate");
+            grid.showColumn("submitName");
+        }
+    }
+
+
+
+</script>
+
+</body>
+</html>

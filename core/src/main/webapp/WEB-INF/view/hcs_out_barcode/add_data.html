@@ -1,0 +1,250 @@
+<#include "../include/header.html">
+<script src="${base.contextPath}/common/code?SRM_PACKING_MODE=SRM_PACKING_MODE"></script>
+<script src="${base.contextPath}/common/code?SRM_BARCODE_QTY=SRM_BARCODE_QTY"></script>
+<body>
+<script type="text/javascript">
+	var supplierId = window.parent.supplierId;
+	var code ;
+	$(document).ready(function(){
+		var jsonData = {
+				"supplierId" : supplierId
+		}
+		$.ajax({
+			url:"${base.contextPath}/hcs/out/barcode/queryMaxNum",
+			type:"POST",
+			data: jsonData,
+			dataType: "json",
+			success: function (data){
+				code = data;
+				viewModel.model.itemCodeStart = data;
+				viewModel.model.itemCodeEnd = data;
+				
+				document.getElementById("itemCodeStart").value = data;
+				document.getElementById("itemCodeEnd").value = data;
+			}
+		}) 
+	})
+	//光标移开事件
+	function change(){
+		if(typeof(viewModel.model.codeSum) != 'undefined' && viewModel.model.codeSum != ''){
+			if(viewModel.model.codeSum === 0){
+				document.getElementById("itemCodeEnd").value = document.getElementById("itemCodeStart").value;
+				viewModel.model.itemCodeEnd = viewModel.model.itemCodeStart;
+				kendo.ui.showInfoDialog({
+					title: "提示",
+	    			message: '<@spring.message "error.srm_purchase_0031"/>'
+	    		})
+	    		return;
+			}else{
+				
+				var end = code.substr(code.length-4)
+				var start = code.substr(0,code.length-4)
+				var num = (Array(4).join(0) + (parseInt(end) + parseInt(viewModel.model.codeSum) -1));
+				if(parseFloat(num) > 9999){
+					kendo.ui.showInfoDialog({
+						title: "提示",
+		    			message: '<@spring.message "error.srm_purchase_0036"/>'
+		    		})
+		    		viewModel.model.set('codeSum','');
+		    		return;
+				}
+				var codeStr = start + (num).slice(-4)
+				document.getElementById("itemCodeEnd").value = codeStr;
+				viewModel.model.itemCodeEnd = codeStr;
+			}
+		}else{
+			document.getElementById("itemCodeEnd").value = document.getElementById("itemCodeStart").value;
+			viewModel.model.itemCodeEnd = viewModel.model.itemCodeStart;
+		} 
+	}
+	var viewModel = kendo.observable({
+		model: {
+		},
+		save: function(e){
+		    if(typeof(viewModel.model.codeSum) == 'undefined'){
+				kendo.ui.showInfoDialog({
+					title: "提示",
+	    			message: '条码张数不能为空'
+	    		})
+	    		return;
+			}else if(typeof(viewModel.model.packingLevel) == 'undefined' || viewModel.model.packingLevel == ''){
+				kendo.ui.showInfoDialog({
+					title: "提示",
+	    			message: '包装方式不能为空'
+	    		})
+	    		return;
+			} else if(typeof(viewModel.model.packingSize) == 'undefined' || viewModel.model.packingSize == ''){
+				kendo.ui.showInfoDialog({
+					title: "提示",
+	    			message: '规格不能为空'
+	    		})
+	    		return;
+			}
+		 	var data= viewModel.model.toJSON();
+		 	data.supplierId = supplierId;
+
+		 	var v = "1";
+	        $.each(SRM_BARCODE_QTY, function (i, n) {
+	            if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+	                v = n.meaning;
+	            }
+	        });
+			if(Number(data.codeSum) > Number(v)){
+				kendo.ui.showConfirmDialog({
+		    		title: '提示',
+		    		message: "条码张数超过"+v+"，将按序列生成"+ data.codeSum + "个条码，是否继续。"
+		    	}).done(function(e){
+		    		if(e.button=='OK'){
+		    			$.ajax({
+		    		        url: '${base.contextPath}/hcs/out/barcode/addInfo',
+		    		        type: 'POST',
+		    		        data: data,
+		    		        async: false,
+		    		        dataType: "json",
+		    		        success: function (response) {
+		    		            if (response.success) {
+		    		            	Hap.showToast({
+		                    			type:'success',
+		                    			"positionClass": "toast-bottom-right",
+		                    			message:"新建成功",
+		                    			hideDuration:10*1000
+		                    		})
+		    		            	window.parent.viewModel.refresh();
+		    		            	window.parent.$("#addWindow").data("kendoWindow").close();
+		    		            } else {
+		    		            	kendo.ui.showWarningDialog({
+		    		                    message: response.message
+		    		                });
+		    		            }
+		    		        }
+		    		    }); 
+		    		}
+		    	})
+			}else{
+				
+			    $.ajax({
+			        url: '${base.contextPath}/hcs/out/barcode/addInfo',
+			        type: 'POST',
+			        data: data,
+			        async: false,
+			        dataType: "json",
+			        success: function (response) {
+			            if (response.success) {
+			            	Hap.showToast({
+	                			type:'success',
+	                			"positionClass": "toast-bottom-right",
+	                			message:"新建成功",
+	                			hideDuration:10*1000
+	                		})
+			            	window.parent.viewModel.refresh();
+			            	window.parent.$("#addWindow").data("kendoWindow").close();
+			            } else {
+			            	kendo.ui.showWarningDialog({
+			                    message: response.message
+			                });
+			            }
+			        }
+			    });  
+			}
+		 	
+			
+		},
+		closeWin: function(e){
+        	window.parent.$("#addWindow").data("kendoWindow").close();
+        }
+	});
+
+</script>
+
+<div id="page-content">
+	<form id="mainform"  class="form-horizontal" method="post" enctype="application/json;charset=UTF-8">
+
+	<div class="row" style="margin-left: 5px;">
+	 	<div class="col-sm-12">
+	 	  	<div class="form-group">
+	 	  		<!-- 规格 -->
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message "outbarcode.packingsize"/>:</label>
+					<div class="col-sm-9">
+                        <input  style="width:100%" name="productionBatch" required
+                               data-label="<@spring.message 'outbarcode.packingsize'/>" id="packingSize"
+                               data-bind="value:model.packingSize" data-role="maskedtextbox">
+						<span data-for="packingSize" class=".k-invalid-msg"></span>
+					</div>
+				</div>
+				<!-- 包装方式 -->
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message "outbarcode.packinglevel"/>:</label>
+					<div class="col-sm-9">
+                        <input id="packingLevel" style="width:100%" required name="packingLevel"
+                               data-label="<@spring.message 'outbarcode.packinglevel'/>"
+                               data-bind="value:model.packingLevel">
+						<span data-for="packingLevel" class=".k-invalid-msg"></span>
+					</div>
+					<script>
+					$("#packingLevel").kendoComboBox({
+				 		dataSource:SRM_PACKING_MODE,
+				 		valuePrimitive: true,
+				 		dataTextField: "meaning",
+				 		dataValueField: "value"
+				 	});
+					</script>
+				</div>
+            </div>
+			<div class="form-group">
+				<!-- 备注 -->
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message "outbarcode.remarks"/>:</label>
+					<div class="col-sm-9">
+                        <input  style="width:100%" name="remarks"
+                               data-label="<@spring.message 'outbarcode.remarks'/>" id="remarks"
+                               data-bind="value:model.remarks" data-role="maskedtextbox">
+						<span data-for="remarks" class=".k-invalid-msg"></span>
+					</div>
+				</div>
+				<!-- 条码张数 -->
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message "outbarcode.codeSum"/>:</label>
+					<div class="col-sm-9">
+                        <input required style="width:100%" name="codeSum" oninput = "value=value.replace(/[^\d]/g,'')" onblur = "change()"
+                               data-label="<@spring.message 'outbarcode.codeSum'/>" id="codeSum"
+                               data-bind="value:model.codeSum" data-role="maskedtextbox">
+						<span data-for="codeSum" class=".k-invalid-msg"></span>
+					</div>
+				</div>
+			</div>
+			<div class="form-group">
+				<!-- 条码编号从 -->
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message "outbarcodecreate.sbarcodefrom"/>:</label>
+					<div class="col-sm-9">
+						<input id="itemCodeStart"  style="width:100%" name="itemCodeStart" disabled data-bind="value:model.itemCodeStart" data-role="maskedtextbox">
+						<span data-for="itemCodeStart" class=".k-invalid-msg"></span>
+					</div>
+				</div>
+				<!-- 条码编号至 -->
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message "outbarcodecreate.sbarcodeto"/>:</label>
+					<div class="col-sm-9">
+						<input id="itemCodeEnd" style="width:100%" name="itemCodeEnd" disabled data-bind="value:model.itemCodeEnd" data-role="maskedtextbox">
+						<span data-for="itemCodeEnd" class=".k-invalid-msg"></span>
+					</div>
+				</div>
+			</div>
+		</div>
+	  </div>
+
+
+	</form>
+</div>
+<div id="mainBottom" class="text-center" style="bottom: 15px;position: fixed;  float: left;padding-top:15px;border-top:1px solid #ebebeb;width:100%; background: #fff;">
+	        <span class="btn btn-danger" style="float:right;margin-right:30px;" data-bind="click:closeWin"><i class="fa fa-trash-o" style="margin-right:3px;"></i><@spring.message "outbarcodecreate.cancel"/></span>
+        <span class="btn btn-success k-grid-save-changes fa fa-check" data-bind="click:save" style="float:right;margin-right:5px;"><@spring.message " hap.confirm "/></span>
+</div>
+
+<script type="text/javascript">
+    kendo.bind($('#mainBottom'),viewModel);
+	kendo.bind($('#mainform'), viewModel);
+</script>
+</body>
+</html>

@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.spc.ecr_main.mapper.EcrApproveMapper">
+
+
+    <resultMap id="baseResult1" type="com.hand.spc.ecr_main.view.EcrApproveV1">
+        <result column="ecrno" property="ecrno" jdbcType="VARCHAR" />
+        <result column="plan_finished_date" property="planFinishedDate" jdbcType="DATE" />
+        <result column="status" property="status" jdbcType="VARCHAR" />
+    </resultMap>
+
+    <select id="approve1Query" parameterType="com.hand.spc.ecr_main.view.EcrApproveV1"
+            resultMap="baseResult1">
+        select hem.ecrno,hem.plan_finished_date,hem.status from hpm_ecr_main hem
+        <where>
+            <if test="ecrno != null">
+                hem.ecrno = #{ecrno}
+            </if>
+        </where>
+    </select>
+
+    <resultMap id="baseResult2" type="com.hand.spc.ecr_main.view.EcrApproveV2">
+        <result column="ITEM_ID" property="itemId" jdbcType="DECIMAL" />
+        <result column="ITEM_CODE" property="itemCode" jdbcType="VARCHAR" />
+        <result column="item_descriptions" property="itemDescriptions" jdbcType="VARCHAR" />
+        <result column="item_version" property="itemVersion" jdbcType="VARCHAR" />
+        <result column="first_recieve_time" property="firstRecieveTime" jdbcType="DATE" />
+    </resultMap>
+
+    <select id="approve2Query" parameterType="com.hand.spc.ecr_main.view.EcrApproveV2"
+            resultMap="baseResult2">
+        select hi.ITEM_ID,hi.ITEM_CODE, hi.descriptions item_descriptions, hei.item_version,heisb.first_recieve_time
+        from hpm_ecr_influencedmaterial hei
+        left join hcm_item hi on hei.material_id = hi.ITEM_ID
+        left join hpm_ecr_item_sku_b heisb on hi.ITEM_ID =  heisb.item_id
+        <where>
+            <if test="ecrno != null">
+                hei.ecrno = #{ecrno}
+            </if>
+        </where>
+    </select>
+
+    <resultMap id="baseResult3" type="com.hand.spc.ecr_main.view.EcrApproveV3">
+        <result column="ITEM_ID" property="itemId" jdbcType="DECIMAL" />
+        <result column="sku_code" property="skuCode" jdbcType="VARCHAR" />
+        <result column="sku_description" property="skuDescription" jdbcType="VARCHAR" />
+        <result column="sku_version" property="skuVersion" jdbcType="VARCHAR" />
+    </resultMap>
+
+    <select id="approve3Query" parameterType="com.hand.spc.ecr_main.view.EcrApproveV3"
+            resultMap="baseResult3">
+        select item_id,sku_code,SKU_DESCRIPTION,SKU_VERSION from hqm_ecr_product_temp t
+        <where>
+            <if test="itemId != null">
+                t.item_id=#{itemId}
+            </if>
+        </where>
+    </select>
+
+
+</mapper>

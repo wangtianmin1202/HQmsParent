@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_sample_manage.mapper.SampleManageMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_sample_manage.dto.SampleManage">
+        <result column="SAMPLE_WAY_ID" property="sampleWayId" jdbcType="DECIMAL" />
+        <result column="SAMPLE_WAY_CODE" property="sampleWayCode" jdbcType="VARCHAR" />
+        <result column="DESCRIPTION" property="description" jdbcType="VARCHAR" />
+        <result column="SAMPLE_TYPE" property="sampleType" jdbcType="VARCHAR" />
+        <result column="PARAMETER" property="parameter" jdbcType="VARCHAR" />
+        <result column="SAMPLE_PROCEDURE_TYPE" property="sampleProcedureType" jdbcType="VARCHAR" />
+        <result column="INSPECTION_LEVELS" property="inspectionLevels" jdbcType="VARCHAR" />
+        <result column="ACCEPTANCE_QUALITY_LIMIT" property="acceptanceQualityLimit" jdbcType="VARCHAR" />
+        <result column="STANDRAD_UOM" property="standradUom" jdbcType="VARCHAR" />
+        <result column="ENABLE_FLAG" property="enableFlag" jdbcType="VARCHAR" />
+        <result column="REMARK" property="remark" jdbcType="VARCHAR" />
+        <result column="SAMPLE_TYPE_MEANING" property="sampleTypeMeaning" jdbcType="VARCHAR" />
+        
+        <result column="PARAMETER_S" property="parameterS" jdbcType="DECIMAL" />
+        <result column="PARAMETER_L" property="parameterL" jdbcType="DECIMAL" />
+    </resultMap>
+    
+    <select id="querySampleManage"  resultMap="BaseResultMap" parameterType="com.hand.hqm.hqm_sample_manage.dto.SampleManage">
+    
+	     select 
+	        hsm.sample_way_id,
+	        hsm.sample_way_code,
+	        hsm.description,
+	        hsm.sample_type,
+	        hsm.parameter,
+	        hsm.sample_procedure_type,
+	        hsm.inspection_levels,
+	        hsm.acceptance_quality_limit,
+	        hsm.standrad_uom,
+	        hsm.enable_flag,
+	        hsm.remark,
+	        hsm.created_by,
+	        hsm.creation_date,
+	        hsm.last_updated_by,
+	        hsm.last_update_date,
+	        hsm.last_update_login,
+	        hsm.request_id,
+	        hsm.program_id,
+	        hsm.object_version_number,
+	        hsm.attribute_category,
+	        hsm.parameter_s,
+	        hsm.parameter_l
+	       from HQM_SAMPLE_MANAGE hsm
+	       where 1=1 
+       		<if test="sampleWayCode != null and sampleWayCode != ''">
+                and hsm.sample_way_code like concat('%',concat(#{sampleWayCode},'%'))
+            </if>
+            <if test="description != null and description != ''">
+                and hsm.description like concat('%',concat(#{description},'%'))
+            </if>
+            <if test="enableFlag != null">
+                and hsm.enable_flag = #{enableFlag}
+            </if>
+            <if test="sampleType != null and sampleType != ''">
+                and hsm.sample_type=#{sampleType}
+            </if>
+            <if test="sampleWayId != null">
+            	and hsm.sampleWayId = #{sampleWayId}
+            </if>
+            <if test="sampleProcedureType != null and sampleProcedureType != ''">
+                and hsm.sample_procedure_type =#{sampleProcedureType}
+            </if>
+    	   order by hsm.sample_way_id desc
+    </select>
+
+<select id="queryLov"  resultMap="BaseResultMap" parameterType="com.hand.hqm.hqm_sample_manage.dto.SampleManage">
+    
+	     SELECT hsm.*, scvb.meaning AS sample_type_meaning
+  FROM hqm_sample_manage hsm, sys_code_b scb, sys_code_value_b scvb
+ WHERE 1 = 1
+   AND scb.code = 'HQM_SAMPLE_TYPE'
+   AND scb.code_id = scvb.code_id
+   AND scvb.value = hsm.sample_type
+       		<if test="sampleWayCode != null and sampleWayCode != ''">
+                and hsm.sample_way_code like concat('%',concat(#{sampleWayCode},'%'))
+            </if>
+            <if test="description != null and description != ''">
+                and hsm.description like concat('%',concat(#{description},'%'))
+            </if>
+            <if test="enableFlag != null">
+                and hsm.enable_flag = #{enableFlag}
+            </if>
+            <if test="sampleWayId != null">
+            	and hsm.sampleWayId = #{sampleWayId}
+            </if>
+            <if test="sampleType != null and sampleType != ''">
+                and hsm.sample_type=#{sampleType}
+            </if>
+            <if test="sampleProcedureType != null and sampleProcedureType != ''">
+                and hsm.sample_procedure_type =#{sampleProcedureType}
+            </if>
+    	   order by hsm.sample_way_id desc
+    </select>
+
+</mapper>

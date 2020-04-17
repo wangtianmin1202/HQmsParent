@@ -1,0 +1,818 @@
+<#include "../include/header.html">
+<script src="${base.contextPath}/common/code?SRM_BARCODE_STATUS=SRM_BARCODE_STATUS"></script>
+<script src="${base.contextPath}/common/code?SRM_OUT_BARCODE_STATUS=SRM_OUT_BARCODE_STATUS"></script>
+<script src="${base.contextPath}/common/code?yesorno=SRM_YES_NO"></script>
+<script src="${base.contextPath}/common/code?SRM_PACKING_MODE=SRM_PACKING_MODE"></script>
+<script src="${base.contextPath}/common/code?SRM_YES_NO=SRM_YES_NO"></script>
+<script src="${base.contextPath}/common/code?SRM_OUT_BACODE_TYPE=SRM_OUT_BACODE_TYPE"></script>
+<script src="${base.contextPath}/common/code?SRM_PURCHASE_GROUP=SRM_PURCHASE_GROUP"></script>
+<script src="${base.contextPath}/lib/prints/JsBarcode.all.min.js" type="text/javascript"></script>
+<script src="${base.contextPath}/lib/prints/jquery-barcode.js" type="text/javascript"></script>
+<script src="${base.contextPath}/lib/prints/jquery-qrcode.min.js" type="text/javascript"></script>
+<script src="${base.contextPath}/lib/prints/qrcode.js" type="text/javascript"></script>
+<script src="${base.contextPath}/lib/prints/doc_print.js" type="text/javascript" charset="UTF-8"></script>
+<script type="text/javascript">
+    var viewModel = Hap.createGridViewModel("#grid");
+    var supplierId;
+    var supplierCode;
+    //新建
+    viewModel.addData = function(){
+    	var dialog = $("#addWindow").kendoWindow({
+            actions: ["Close"],
+            width: 900,
+            height: 300,
+            title: '<@spring.message "outbarcode.outbarcodecreate"/>',
+            content: '${base.contextPath}/hcs_barcode/obarcode_add.html',
+            iframe: true,
+            visible: false,
+            resizable: false,
+            modal: true,
+            close: function () {
+                $('#grid').data('kendoGrid').dataSource.fetch();
+            }
+        }).data("kendoWindow");
+        dialog.center().open();
+    }
+    /* 页面初始化查询供应商id */
+    $(document).ready(function(){
+    	$.ajax({
+    		url:"${base.contextPath}/hcs/supplier/onhand/quantities/querySupplier",
+    		type: "POST",
+    		contentType: "application/json",
+    		success: function(data){
+    			if(data.success){
+    				if(data.rows[0] != null){
+    					supplierId = data.rows[0].supplierId;
+    					//supplierName = data.rows[0].supplierName;
+    					supplierCode = data.rows[0].supplierCode;
+    					if(supplierId == null){
+       						$("#new").hide()
+       						$("#unEnableFlag").hide()
+       						$("#print").hide()
+       						$("#bind").hide()
+       						$("#unBind").hide()
+       					}
+    				}
+    			}
+    		}
+    	})
+    })
+    var parentData;
+    //容器包装详情
+    function association(id){
+    	var jsonData = {
+    			"obarcodeId" : id
+    	}
+    	$.ajax({
+    		url:"${base.contextPath}/hcs/out/barcode/query",
+    		type: "POST",
+    		data: jsonData,
+    		jsonType: "json",
+    		success: function(resultData){
+    			if(resultData.success){
+    				parentData = resultData.rows[0]
+    				var dialog = $("#smallWindow").kendoWindow({
+    		            actions: ["Close"],
+    		            width: 1400,
+    					height: 700,
+    		            title: '<@spring.message "outbarcode.bindcode"/>',
+    		            content: '${base.contextPath}/hcs_barcode/code_detail.html',
+    		            iframe: true,
+    		            visible: false,
+    		            resizable: false,
+    		            modal: true,
+    		            close: function () {
+    		                $('#grid').data('kendoGrid').dataSource.fetch();
+    		            }
+    		        }).data("kendoWindow");
+    		        dialog.center().open();
+    			}
+    		}
+    	})
+    	
+    }
+    //打印
+	
+    var dataList;
+    viewModel.print = function(){
+    	var grid = $("#grid").data("kendoGrid");
+    	var checked = grid.selectedDataItems();
+    	var len = checked.length;
+    	if(len === 0){
+    		kendo.ui.showInfoDialog({
+    			title: '<@spring.message "hap.tip.info"/>',
+    			message: '<@spring.message "hap.tip.selectrow"/>',
+    		})
+    		return;
+    	}
+    	var printFlag = true;
+    	for(var i=0; i<len;i++){
+    		if(checked[i].status === 'SX'){
+        		kendo.ui.showInfoDialog({
+        			title: '<@spring.message "hap.tip.info"/>',
+        			message: '<@spring.message "error.srm_purchase_1017"/>'
+        		})
+        		return;
+        	}else if(checked[i].status === 'FH'){
+        		kendo.ui.showInfoDialog({
+        			title: '<@spring.message "hap.tip.info"/>',
+        			message: '<@spring.message "error.srm_purchase_1018"/>'
+        		})
+        		return;
+        	}
+    		if(i>0){
+    			if(checked[i].obarcodeType != checked[i-1].obarcodeType){
+    				kendo.ui.showInfoDialog({
+            			title: '<@spring.message "hap.tip.info"/>',
+            			message: '<@spring.message "error.srm_purchase_1028"/>'
+            		})
+            		return;
+    			}
+    		}
+    		if(checked[i].printTime >= 1){
+    			printFlag = false;
+    		}
+    	} 
+    	dataList = checked;
+    	if(!printFlag){    		
+	    	kendo.ui.showConfirmDialog({
+	    		title: '<@spring.message "hap.tip.info"/>',
+	    		message: '<@spring.message "error.srm_purchase_1019"/>'
+	    	}).done(function(e){
+	    		if(e.button=='OK'){
+	    			printWindow()
+	    		}
+	    	})
+    	}else{
+    		printWindow()
+    	}
+    }
+   //打印逻辑
+	function printWindow(){
+		var dialog = $("#printWindow").kendoWindow({
+            width: 500,
+            height: 400,
+            title: '打印',
+            visible: false,
+            iframe: true,
+            modal: true,
+            content: 'print_obarcode.html'
+        }).data("kendoWindow");
+        dialog.center().open();
+	}
+    //失效
+    viewModel.unEnableFlag = function(){
+    	var grid = $("#grid").data("kendoGrid");
+    	var checked = grid.selectedDataItems();
+    	var len = checked.length;
+    	if(len === 0){
+    		kendo.ui.showInfoDialog({
+    			title: '<@spring.message "hap.tip.info"/>',
+    			message: '<@spring.message "hap.tip.selectrow"/>',
+    		})
+    		return;
+    	}
+    	var kzFlag = false;
+    	for(var i=0; i<len;i++){
+    		if(checked[i].status === 'SX' || checked[i].status === 'FH'){
+        		kendo.ui.showInfoDialog({
+        			title: '<@spring.message "hap.tip.info"/>',
+        			message: '<@spring.message "error.srm_purchase_1014"/>'
+        		})
+        		return;
+        	}else if(checked[i].status === 'BT'){
+        		kendo.ui.showInfoDialog({
+        			title: '<@spring.message "hap.tip.info"/>',
+        			message: '<@spring.message "error.srm_purchase_1078"/>'
+        		})
+        		return;
+        	}else if(checked[i].status === 'ZZ'){
+        		kendo.ui.showInfoDialog({
+        			title: '<@spring.message "hap.tip.info"/>',
+        			message: '<@spring.message "error.srm_purchase_1015"/>'
+        		})
+        		return;
+        	}else if(checked[i].status === 'KZ'){
+        		kzFlag = true;
+        	}
+    	} 
+    	if(kzFlag){
+    		kendo.ui.showConfirmDialog({
+        		title: '<@spring.message "hap.tip.info"/>',
+        		message: '<@spring.message "error.srm_purchase_1016"/>'
+        	}).done(function(e){
+        		if(e.button=='OK'){
+        			changeFlag()
+        		}
+        	})
+    	}else{
+    		changeFlag()
+    	}
+    }
+    //失效逻辑
+    function changeFlag(){
+    	var grid = $("#grid").data("kendoGrid");
+    	var checked = grid.selectedDataItems();
+    	var len = checked.length;
+    	
+    	$.ajax({
+			url:"${base.contextPath}/hcs/out/barcode/changeFlag",
+			type:"POST",
+			data: kendo.stringify(checked),
+			contentType: "application/json",
+			success: function (data){
+				if(data.success){
+					Hap.showToast({
+            			type:'success',
+            			"positionClass": "toast-bottom-right",
+            			message:'<@spring.message "hap.tip.success"/>',
+            			hideDuration:10*1000
+            		})
+					viewModel.query();
+				}
+			}
+    	})
+    }
+    //绑定托盘
+    var parentData;
+    var dataList;
+    function bind(){
+    	var grid = $("#grid").data("kendoGrid");
+    	var checked = grid.selectedDataItems();
+    	var len = checked.length;
+    	if(len === 0){
+    		kendo.ui.showInfoDialog({
+    			title: '<@spring.message "hap.tip.info"/>',
+    			message: '<@spring.message "hap.tip.selectrow"/>',
+    		})
+    		return;
+    	}
+
+    	for(var i=0; i<len;i++){
+    		if(checked[i].obarcodeType === 'TP'){
+    			kendo.ui.showInfoDialog({
+        			title: '<@spring.message "hap.tip.info"/>',
+        			message: '<@spring.message "error.srm_purchase_1021"/>'
+        		})
+        		return;
+    		}
+    		if(checked[i].status === 'SX'){
+    			kendo.ui.showInfoDialog({
+        			title: '<@spring.message "hap.tip.info"/>',
+        			message: '<@spring.message "error.srm_purchase_1022"/>'
+        		})
+        		return;
+    		} 
+    		if(checked[i].packingFlag === 'Y'){
+    			kendo.ui.showInfoDialog({
+        			title: '<@spring.message "hap.tip.info"/>',
+        			message: '<@spring.message "error.srm_purchase_1020"/>'
+        		})
+        		return;
+    		}
+    		if(!isNotEmpty(checked[i].sbarcode) || !isNotEmpty(checked[i].barcodeContent)){
+    			kendo.ui.showInfoDialog({
+        			title: '<@spring.message "hap.tip.info"/>',
+        			message: '<@spring.message "error.srm_purchase_1023"/>'
+        		})
+        		return;
+    		}
+    	} 
+		
+    	$.ajax({
+			url:"${base.contextPath}/hcs/out/barcode/bindValidator",
+			type:"POST",
+			data: kendo.stringify(checked),
+			contentType: "application/json",
+			success: function (data){
+				if(data.success){
+					parentData = checked;  
+					dataList = data.rows;
+			    	//弹出绑定界面
+			    	var dialog = $("#bindWindow").kendoWindow({
+			            width: 1400,
+			            height: 750,
+			            title: '<@spring.message "bind.window"/>',
+			            visible: false,
+			            iframe: true,
+			            modal: true,
+			            content: 'obarcode_bind_code.html'
+			        }).data("kendoWindow");
+			        dialog.center().open();
+				}else{
+					if(data.message == 'ERROR-1'){						
+						kendo.ui.showInfoDialog({
+		        			title: '<@spring.message "hap.tip.info"/>',
+		        			message: '<@spring.message "error.srm_purchase_1024"/>',
+		        		})
+					}
+	        		return;
+				}
+			}
+    	})
+    }
+    //解绑托盘
+    viewModel.unBind = function(){
+    	var grid = $("#grid").data("kendoGrid");
+    	var checked = grid.selectedDataItems();
+    	var len = checked.length;
+    	if(len === 0){
+    		kendo.ui.showInfoDialog({
+    			title: '<@spring.message "hap.tip.info"/>',
+    			message: '<@spring.message "hap.tip.selectrow"/>',
+    		})
+    		return;
+    	}
+
+    	for(var i=0; i<len;i++){
+    		if(checked[i].obarcodeType === 'TP'){
+    			kendo.ui.showInfoDialog({
+        			title: '<@spring.message "hap.tip.info"/>',
+        			message: '<@spring.message "error.srm_purchase_1071"/>'
+        		})
+        		return;
+    		}else if(checked[i].status === 'KZ'){
+    			kendo.ui.showInfoDialog({
+        			title: '<@spring.message "hap.tip.info"/>',
+        			message: '<@spring.message "error.srm_purchase_1029"/>'
+        		})
+        		return;
+    		}else if(checked[i].status === 'SX'){
+    			kendo.ui.showInfoDialog({
+        			title: '<@spring.message "hap.tip.info"/>',
+        			message: '<@spring.message "error.srm_purchase_1030"/>'
+        		})
+        		return;
+    		}else if(checked[i].status === 'FH'){
+    			kendo.ui.showInfoDialog({
+        			title: '<@spring.message "hap.tip.info"/>',
+        			message: '<@spring.message "error.srm_purchase_1031"/>'
+        		})
+        		return;
+    		} 
+    	} 
+    	
+    	var jsonData = {
+				"outbarcodeId" : checked[0].obarcodeId,
+		}
+		$.ajax({
+			url:"${base.contextPath}/hcs/out/barcode/unBind",
+			type:"POST",
+			async:false,
+			data: kendo.stringify(checked),
+			contentType: "application/json",
+			success: function (data){
+				if(data.success){
+					Hap.showToast({
+            			type:'success',
+            			"positionClass": "toast-bottom-right",
+            			message:'<@spring.message "hap.tip.success"/>',
+            			hideDuration:10*1000
+            		})	
+		    		viewModel.query();
+				}else{
+					kendo.ui.showErrorDialog({
+						title:'<@spring.message "hap.error"/>',
+		    			message: data.message
+		    		})
+				}
+			}
+		})
+    }
+</script>
+<body style="width:100%">
+<div id="bindWindow"></div>
+<div id="barCode"></div>
+<div id="printWindow"></div>
+<div id="addWindow"></div>
+<div id="smallWindow"></div>
+<div id="page-content">
+    <div class="pull-left" id="toolbar-btn" style="padding-bottom:10px;">
+    	<span  id="new" type="button" class="btn btn-primary"
+                         style="float:left;margin-right:5px" data-bind="click:addData"><i class="fa fa-plus-square" style="margin-right:3px;"></i><@spring.message "hap.new"/></span>
+        <span id="print" class="btn btn-success k-grid-save-changes" data-bind="click:print"  style="float:left;margin-right:5px;"><i class="fa fa-print" style="margin-right:3px;"></i><@spring.message "hap.print"/></span>
+        <span id="unEnableFlag" class="btn btn-danger" style="float:left;margin-right:5px;" data-bind="click:unEnableFlag"><i class="fa fa-trash-o" style="margin-right:3px;"></i><@spring.message "ourbarcode.fail"/></span>
+        <span  id="bind" type="button" class="btn btn-primary" style="float:left;margin-right:5px" onclick="bind()"><i class="" style="margin-right:3px;"></i><@spring.message "ourbarcode.bind"/></span>
+        <span id="unBind" class="btn btn-success k-grid-save-changes" data-bind="click:unBind"  style="float:left;margin-right:5px;"><i class="" style="margin-right:3px;"></i><@spring.message "ourbarcode.unBind"/></span>
+        <span class="btn btn-primary k-grid-excel" style="float:left;margin-right:5px;" data-bind="click:exportExcel">
+			    	<i class="fa fa-file-excel-o" style="margin-right:3px"></i><@spring.message "srm.exportexcel"/></span>
+    </div>
+    <script>kendo.bind($('#toolbar-btn'), viewModel);</script>
+    <div class="pull-right" id="queryPanel" style="padding-bottom:10px;">
+    	<div class="k-query-simple" id="query-form">
+    		<!-- 序列号 -->
+            <input type="text" data-role="maskedtextbox" style="float:left;margin-right:5px;" placeholder='<@spring.message "OutBarcode.obarcodeNum"/>'
+                   data-bind="value:model.obarcodeNum" class="k-textbox">
+            <!-- 类型 -->
+            <input id="obarcodeType" type="text"  style="width:100px;margin-right:5px;" placeholder='<@spring.message "OutBarcode.obarcodeType"/>'
+            data-bind="value:model.obarcodeType">
+            <script>
+                   $("#obarcodeType").kendoComboBox({
+	               	    dataTextField: "meaning",
+	               	    dataValueField: "value",
+	               	    valuePrimitive: true,
+	               	    dataSource: SRM_OUT_BACODE_TYPE
+	               	});
+            </script>
+            <!-- 状态 -->
+            <input id="status" type="text" style="width:100px;margin-right:5px;" placeholder='<@spring.message "OutBarcode.status"/>'
+            data-bind="value:model.status">
+            <script>
+                   $("#status").kendoComboBox({
+	               	    dataTextField: "meaning",
+	               	    dataValueField: "value",
+	               	    valuePrimitive: true,
+	               	    dataSource: SRM_OUT_BARCODE_STATUS
+	               	});
+            </script>
+    	</div>
+		<script>kendo.bind($('#query-form'), viewModel);</script>
+        <div class="k-query-detail" id="query-form2">	
+        	<div class="rows" style="margin-top: 5px">
+        		<!-- 容器标签 -->
+           		<input type="text" data-role="maskedtextbox" style="float:left;margin-right:5px;" placeholder='<@spring.message "OutBarcode.obarcode"/>'
+                   data-bind="value:model.obarcode" class="k-textbox">
+                 <!-- 创建日期从 -->
+	            <input type="text" data-role="datepicker" style="margin-right:5px;" placeholder='<@spring.message "OutBarcode.startTime"/>'
+	            data-bind="value:model.startTime" class="datepicker">
+	            <!-- 创建日期至 -->
+	            <input type="text" data-role="datepicker" style="margin-right:5px;" placeholder='<@spring.message "OutBarcode.endTime"/>'
+	            data-bind="value:model.endTime" class="datepicker">
+	             <!-- 供应商名称 -->
+				<input  id="supplierId" style="margin-right:5px;" placeholder="<@spring.message 'srm.suppliername'/>" data-bind="value:model.supplierId" >
+				<script>
+						$("#supplierId").kendoLov($.extend
+						    (<@lov"LOV_SUPPLIER_SRM"/>, {
+						        textField: 'supplierCode',
+						        valueField:'supplierId',
+						        query: function(e){
+	                	        	e.param['supplierId'] = supplierId;
+	                	        }
+						}));
+				</script> 
+        	</div>
+        	<div class="rows" style="margin-top: 5px">
+        		<!-- 是否捆包 -->
+	            <input id="packingFlag" style="margin-right:5px;" placeholder='<@spring.message "OutBarcode.packingFlag"/>'
+	            data-bind="value:model.packingFlag">
+	            <script>
+	                   $("#packingFlag").kendoComboBox({
+		               	    dataTextField: "meaning",
+		               	    dataValueField: "value",
+		               	    valuePrimitive: true,
+		               	    dataSource: SRM_YES_NO
+		               	});
+	            </script>
+	            <!-- 有效性 -->
+	            <input id="enableFlag" style="margin-right:5px;" placeholder='<@spring.message "OutBarcode.enableFlag"/>'
+	            data-bind="value:model.enableFlag">
+	            <script>
+	                   $("#enableFlag").kendoComboBox({
+		               	    dataTextField: "meaning",
+		               	    dataValueField: "value",
+		               	    valuePrimitive: true,
+		               	    dataSource: SRM_YES_NO
+		               	});
+	            </script>
+	            <!-- 工厂 -->
+<!--    				<input  id="plantLov" style="width:150px;margin-right:5px;" placeholder="<@spring.message 'srm.plantname'/>" data-bind="value:model.plantId" > -->
+   				<script>
+//     				$("#plantLov").kendoLov($.extend
+//  					    (<@lov"LOV_PLANT_BY_USER"/>, {
+//  					        textField: 'plantName',
+//  					        valueField:'plantId',
+//  					     	query: function(e){
+//            	        	e.param['supplierId'] = supplierId;
+//            	        	e.param['enableFlag'] = 'Y';
+//            	        }
+//  					    }));
+   				</script>
+	            <!-- 送货单号 -->
+	            <input type="text" data-role="maskedtextbox" style="margin-right:5px;" placeholder='<@spring.message "OutBarcode.ticketNumber"/>'
+	                   data-bind="value:model.ticketNumber" class="k-textbox">
+        	</div>
+        </div>    
+        <script>kendo.bind($('#query-form2'), viewModel);</script>
+       	<div style="clear:both"></div>
+ 	</div>	    
+    <div style="clear:both">
+        <div id="grid"></div>
+    </div>
+</div>
+
+<script type="text/javascript">
+	$("#queryPanel").kendoQueryPanel({
+		queryFunction: function(){
+			viewModel.query();
+		},
+		resetFunction: function(){
+			viewModel.reset();
+			window.parent.viewModel.model.set('purchaseGroup' , '')
+		}
+	})
+    Hap.initEnterQuery('#query-form', viewModel.query);
+    var BaseUrl = _basePath;
+    dataSource = new kendo.data.DataSource({
+        transport: {
+            read: {
+                url: BaseUrl + "/hcs/out/barcode/query",
+                type: "POST",
+                dataType: "json"
+            },
+            update: {
+                url: BaseUrl + "/hcs/out/barcode/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            destroy: {
+                url: BaseUrl + "/hcs/out/barcode/remove",
+                type: "POST",
+                contentType: "application/json"
+            },
+            create: {
+                url: BaseUrl + "/hcs/out/barcode/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            parameterMap: function (options, type) {
+                if (type !== "read" && options.models) {
+                    var datas = Hap.prepareSubmitParameter(options, type)
+                    return kendo.stringify(datas);
+                } else if (type === "read") {
+                	viewModel.model.purchaseGroup = window.parent.viewModel.model.purchaseGroup
+                    return Hap.prepareQueryParameter(viewModel.model.toJSON(), options)
+                }
+            }
+        },
+        batch: true,
+        serverPaging: true,
+        pageSize: 20,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+                id: "obarcodeId",
+                fields: {
+                	/* enableFlag:{
+                		type:'boolean',
+                		checkedValue:'Y',
+                		uncheckedValue:'N',
+                		defaultValue:'N'
+                	}, */
+                }
+            }
+        }
+    });
+
+    $("#grid").kendoGrid({
+    	excel: {
+    		fileName:'<@spring.message "srm.purchase.obarcode"/>.xlsx',
+    		filterable: true,
+    	},
+    	excelExport: function(e){
+    		var rows = e.workbook.sheets[0].rows;
+    		var datas = e.data;
+    		
+    		for(var i=1;i<rows.length; i++){
+    			rows[i].cells[2].value = Hap.getCodeMeaning(SRM_OUT_BACODE_TYPE,datas[i-1].obarcodeType);
+    			rows[i].cells[3].value = Hap.getCodeMeaning(SRM_OUT_BARCODE_STATUS,datas[i-1].status);
+    			rows[i].cells[8].value = Hap.getCodeMeaning(SRM_YES_NO,datas[i-1].packingFlag);
+    			rows[i].cells[14].value = Hap.getCodeMeaning(SRM_YES_NO,datas[i-1].enableFlag);
+    		}
+    	},
+        dataSource: dataSource,
+        resizable: true,
+        scrollable: true,
+        sortable:true,
+        navigatable: false,
+        autoBind: true,
+        selectable: 'multiple, rowbox',
+        dataBound: function () {
+            if (parent.autoResizeIframe) {
+                parent.autoResizeIframe('${RequestParameters.functionCode!}')
+            }
+        },
+        pageable: {
+            pageSizes: [5, 10, 20, 50],
+            refresh: true,
+            buttonCount: 5
+        },
+        columns: [
+        	{
+                field: "obarcodeNum",
+                title: '<@spring.message "outbarcode.obarcodeNum"/>',
+                width: 200,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+                locked:true
+            },
+                    {
+                field: "obarcode",
+                title: '<@spring.message "outbarcode.obarcode"/>',
+                width: 200,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+                locked:true
+            },
+            {
+                field: "obarcodeType",
+                title: '<@spring.message "outbarcode.obarcodeType"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+                template: function (dataItem) {
+                    var v = dataItem.obarcodeType ? dataItem.obarcodeType : "";
+                    $.each(SRM_OUT_BACODE_TYPE, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return v;
+                        }
+                    });
+                    return v;
+                },
+                editor: function (container, options) {
+                    $('<input name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            dataTextField: "meaning",
+                            dataValueField: "value",
+                            valuePrimitive: true,
+                            dataSource:SRM_OUT_BACODE_TYPE
+                        });
+                }
+            },
+            {
+                field: "status",
+                title: '<@spring.message "outbarcode.status"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+                template: function (dataItem) {
+                    var v = dataItem.status ? dataItem.status : "";
+                    $.each(SRM_OUT_BARCODE_STATUS, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return v;
+                        }
+                    });
+                    return v;
+                },
+                editor: function (container, options) {
+                    $('<input name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            dataTextField: "meaning",
+                            dataValueField: "value",
+                            valuePrimitive: true,
+                            dataSource:SRM_OUT_BARCODE_STATUS
+                        });
+                }
+            },
+            {
+                field: "remarks",
+                title: '<@spring.message "outbarcode.remarks"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+            {
+                field: "creationDate",
+                title: '<@spring.message "outbarcode.creationDate"/>',
+                width: 150,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+                template: function (dataItem) {
+                    var v = dataItem.creationDate ? dataItem.creationDate.substring(0,10) : "";
+                    return v;
+                },
+            },
+            {
+                field: "supplierCode",
+                title: '<@spring.message "outbarcode.supplierCode"/>',
+                width: 150,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+            {
+                field: "supplierName",
+                title: '<@spring.message "outbarcode.supplierName"/>',
+                width: 200,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+            {
+                field: "packingFlag",
+                title: '<@spring.message "outbarcode.packingFlag"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+                template: function (dataItem) {
+                    var v = dataItem.packingFlag ? dataItem.packingFlag : "";
+                    $.each(SRM_YES_NO, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return v;
+                        }
+                    });
+                    return v;
+                },
+                editor: function (container, options) {
+                    $('<input name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            dataTextField: "meaning",
+                            dataValueField: "value",
+                            valuePrimitive: true,
+                            dataSource:SRM_YES_NO
+                        });
+                }
+            },
+            {
+                field: "tpObarcodeNum",
+                title: '<@spring.message "outbarcode.tpObarcodeNum"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+            {
+                field: "tpObarcode",
+                title: '<@spring.message "outbarcode.tpObarcode"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+            {
+                field: "sbarcode",
+                title: '<@spring.message "outbarcode.sbarcode"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+            {
+                field: "barcodeContent",
+                title: '<@spring.message "outbarcode.barcodeContent"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+            {
+                field: "",
+                title: '<@spring.message "outbarcode.detail"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+                template: function(rowdata){
+                	if(rowdata.status === "C"){
+                		return '<span></span>'
+                	}else{	
+                	return '<a style="color:blue" href="javascript:void(0)" onclick="association('+rowdata.obarcodeId+')"><@spring.message "ourbarcode.detailInfo"/></a>'
+                	}
+                }
+            },
+            {
+                field: "printTime",
+                title: '<@spring.message "outbarcode.printtime"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+            
+            {
+                field: "enableFlag",
+                title: '<@spring.message "outbarcode.enableflag"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+                template: function (dataItem) {
+                    var v = dataItem.enableFlag ? dataItem.enableFlag : "";
+                    $.each(yesorno, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return v;
+                        }
+                    });
+                    return v;
+                },
+            },
+            {
+                field: "plantName",
+                title: '<@spring.message "outbarcode.plantName"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+            {
+                field: "ticketNumber",
+                title: '<@spring.message "outbarcode.ticketNumber"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+                    
+        ],
+        editable: false
+    });
+    Hap.autoResizeGrid('#grid');
+</script>
+</body>
+</html>

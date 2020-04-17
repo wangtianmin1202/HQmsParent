@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper  namespace="com.hand.hqm.hqm_standard_op_ins_l.mapper.StandardOpInspectionLMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_standard_op_ins_l.dto.StandardOpInspectionL">
+        <result column="LINE_ID" property="lineId" jdbcType="DECIMAL" />
+        <result column="HEAD_ID" property="headId" jdbcType="DECIMAL" />
+        <result column="VERSION" property="version" jdbcType="VARCHAR" />
+        <result column="INSPECTION_FLAG" property="inspectionFlag" jdbcType="VARCHAR" />
+        <result column="ENABLE_FLAG" property="enableFlag" jdbcType="VARCHAR" />
+ 
+        <result column="INSPECTION_ATTRIBUTE" property="inspectionAttribute" jdbcType="VARCHAR" />
+        <result column="ATTRIBUTE_TYPE" property="attributeType" jdbcType="VARCHAR" />
+        <result column="SAMPLE_PROCEDURE_TYPE" property="sampleProcedureType" jdbcType="VARCHAR" />
+        <result column="INSPECTION_LEVELS" property="inspectionLevels" jdbcType="VARCHAR" />
+        <result column="ACCEPTANCE_QUALITY_LIMIT" property="acceptanceQualityLimit" jdbcType="VARCHAR" />
+        <result column="SOURCE_TYPE" property="sourceType" jdbcType="VARCHAR" />
+        <result column="STANDARD_TYPE" property="standardType" jdbcType="VARCHAR" />
+        <result column="FILL_IN_TYPE" property="fillInType" jdbcType="VARCHAR" />
+        <result column="FREQUENCY_TYPE" property="frequencyType" jdbcType="VARCHAR" />
+        <result column="FREQUENCY" property="frequency" jdbcType="DECIMAL" />
+        <result column="INSPECTION_TOOL" property="inspectionTool" jdbcType="VARCHAR" />    
+         <result column="INSPECTION_METHOD" property="inspectionMethod" jdbcType="VARCHAR" /> 
+         <result column="ATTRIBUTE_ID" property="attributeId" jdbcType="DECIMAL" />
+    </resultMap>
+
+    <select id="myselect" resultMap="BaseResultMap"  parameterType="com.hand.hqm.hqm_standard_op_ins_l.dto.StandardOpInspectionL">   
+        SELECT l.head_id,
+       l.line_id,
+       l.attribute_id,
+       h.inspection_attribute,
+       h.attribute_type,
+       h.sample_procedure_type,
+       h.inspection_levels,
+       h.acceptance_quality_limit,
+       hh.source_type,
+       h.standard_type,
+       h.fill_in_type,
+       h.frequency_type,
+       h.frequency,
+       h.inspection_tool,
+       l.enable_flag,
+       h.precision,
+       h.inspection_method
+  FROM hqm_standard_op_inspection_l l, hqm_inspection_attribute h, hqm_standard_op_inspection_h hh
+ WHERE h.attribute_id = l.attribute_id
+   AND hh.head_id = l.head_id
+     <if test="headEnableFlag != null">
+     AND hh.enable_flag = #{headEnableFlag}
+     </if>
+   <if test="plantId != null">
+     AND  hh.plant_id = #{plantId}
+   </if>
+   <if test="headId == '-1'">
+     AND  1 = 2 
+   </if>
+   <if test="prodLineId != null">
+     AND hh.prod_Line_Id = #{prodLineId}  
+   </if>
+   <if test="standardOpId != null">
+     AND  hh.standard_Op_Id = #{standardOpId}     
+   </if>
+   <if test="workstationId != null">
+     AND  hh.workstation_Id = #{workstationId}
+   </if>
+   <if test="headVersion != null">
+     AND  hh.version = #{headVersion}
+   </if>
+   <if test="headId != null">
+     AND  hh.head_id = #{headId}
+   </if>
+   <if test="sourceType != null">
+     AND  hh.source_type = #{sourceType}
+   </if>
+   </select>
+
+</mapper>

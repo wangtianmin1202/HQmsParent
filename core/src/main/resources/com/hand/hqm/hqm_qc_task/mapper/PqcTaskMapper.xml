@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_qc_task.mapper.PqcTaskMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_qc_task.dto.PqcTask">
+        <result column="TASK_ID" property="taskId" jdbcType="DECIMAL" />
+        <result column="PLANT_ID" property="plantId" jdbcType="DECIMAL" />
+        <result column="TIME_ID" property="timeId" jdbcType="DECIMAL" />
+        <result column="PROD_LINE_ID" property="prodLineId" jdbcType="DECIMAL" />
+        <result column="SHIFT_CODE" property="shiftCode" jdbcType="VARCHAR" />
+        <result column="CHECK_DATE" property="checkDate" jdbcType="DATE" />
+        <result column="ORDER_NUM" property="orderNum" jdbcType="VARCHAR" />
+        <result column="ITEM_ID" property="itemId" jdbcType="DECIMAL" />
+        <result column="ITEM_VERSION" property="itemVersion" jdbcType="VARCHAR" />
+        <result column="INSPECTOR_ID" property="inspectorId" jdbcType="DECIMAL" />
+        <result column="SOLVE_STATUS" property="solveStatus" jdbcType="VARCHAR" />
+        <result column="ERROR_MSG" property="errorMsg" jdbcType="VARCHAR" />
+        <result column="INSPECTION_NUM" property="inspectionNum" jdbcType="VARCHAR" />
+        <result column="INSPECTION_RESULT" property="inspectionResult" jdbcType="VARCHAR" />
+        
+        <result column="WARNING_ID" property="warningId" jdbcType="DECIMAL" />
+        <result column="WARNING_DESC" property="warningDesc" jdbcType="VARCHAR" />
+        <result column="OVER_TIME" property="overTime" jdbcType="DECIMAL" />
+        <result column="WARNING_OBJECT" property="warningObject" jdbcType="VARCHAR" />
+        
+        <result column="plant_code" property="plantCode" jdbcType="VARCHAR" />
+        <result column="prod_line_code" property="prodLineCode" jdbcType="VARCHAR" />
+        <result column="prod_line_descriptions" property="prodLineDescriptions" jdbcType="VARCHAR" />
+        <result column="inspector_employee_name" property="inspectorEmployeeName" jdbcType="VARCHAR" />
+        <result column="item_codes" property="itemCodes" jdbcType="VARCHAR" />
+        <result column="item_descriptionss" property="itemDescriptionss" jdbcType="VARCHAR" />
+    </resultMap>
+
+<select id="reSelect" resultMap="BaseResultMap" parameterType="com.hand.hqm.hqm_qc_task.dto.PqcTask">
+SELECT t.*,
+       hp.plant_code,
+       hpl.prod_line_code,
+       hpl.descriptions AS prod_line_descriptions,
+       he.name AS inspector_employee_name,
+       (SELECT listagg(hib.item_code, ',') within GROUP(ORDER BY hmo.make_order_id)
+          FROM hps_make_order hmo
+          JOIN hcm_item_b hib
+            ON hmo.item_id = hib.item_id
+           AND hmo.plant_id = hib.plant_id
+         WHERE hmo.plant_id = t.plant_id
+           AND hmo.prod_line_id = t.prod_line_id
+           AND t.check_date >= hmo.start_time
+           AND hmo.fulfill_time >= t.check_date) AS item_codes,
+       (SELECT listagg(hit.descriptions, ',') within GROUP(ORDER BY hmo.make_order_id)
+          FROM hps_make_order hmo
+          JOIN hcm_item_tl hit
+            ON hmo.item_id = hit.item_id
+           AND hit.lang = 'zh_CN'
+           AND hmo.plant_id = hit.plant_id
+         WHERE hmo.plant_id = t.plant_id
+           AND hmo.prod_line_id = t.prod_line_id
+           AND t.check_date >= hmo.start_time
+           AND hmo.fulfill_time >= t.check_date) AS item_descriptionss
+  FROM hqm_pqc_task t
+  JOIN hcm_plant hp
+    ON t.plant_id = hp.plant_id
+  JOIN hcm_production_line hpl
+    ON t.prod_line_id = hpl.prod_line_id
+  LEFT JOIN sys_user su
+    ON t.inspector_id = su.user_id
+  LEFT JOIN hr_employee he
+    ON su.employee_id = he.employee_id
+ WHERE 1 = 1
+ AND t.inspection_num IS NULL
+ <if test="plantId != null">
+    AND t.plant_id = #{plantId}
+ </if>
+ <if test="prodLineId != null">
+    AND t.prod_line_id = #{prodLineId}
+ </if>
+ <if test="inspectorId != null">
+    AND t.inspector_id = #{inspectorId}
+ </if>
+ <if test="taskId != null">
+ 	AND t.task_id = #{taskId}
+ </if>
+</select>
+    
+    
+    
+<!-- 需要超时预警的任务 -->
+<select id="jobSelect" resultMap="BaseResultMap">
+SELECT pw.warning_id,
+       t.task_id,
+       '预警级别:' || pw.warning_level || '&lt;br&gt;级别描述:' || pw.level_desc || '&lt;br&gt;产线:' ||
+       hpl.prod_line_code || '&lt;br&gt;超时时间:' || round((SYSDATE - t.check_date) * 24 * 60) AS warning_desc,
+       t.prod_line_id,
+       round((SYSDATE - t.check_date) * 24 * 60) AS over_time,
+       pw.warning_object,
+       t.plant_id
+  FROM hqm_pqc_task t
+  LEFT JOIN hcm_production_line hpl
+    ON t.prod_line_id = hpl.prod_line_id, hqm_pqc_warning pw
+ WHERE t.inspection_num IS NULL
+   AND (SYSDATE - t.check_date) * 24 * 60 >= pw.warning_time
+   AND pw.enable_flag = 'Y'
+   AND NOT EXISTS (SELECT 1
+          FROM hqm_pqc_warning_record pwr
+         WHERE pwr.warning_id = pw.warning_id
+           AND pwr.task_id = t.task_id)   
+</select>
+
+</mapper>

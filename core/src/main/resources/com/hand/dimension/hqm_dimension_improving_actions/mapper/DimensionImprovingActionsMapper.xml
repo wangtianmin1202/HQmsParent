@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.dimension.hqm_dimension_improving_actions.mapper.DimensionImprovingActionsMapper">
+    <resultMap id="BaseResultMap" type="com.hand.dimension.hqm_dimension_improving_actions.dto.DimensionImprovingActions">
+        <result column="STEP" property="step" jdbcType="DECIMAL" />
+        <result column="ACTION_ID" property="actionId" jdbcType="DECIMAL" />
+        <result column="ORDER_ID" property="orderId" jdbcType="DECIMAL" />
+        <result column="IMPROVING_ACTION" property="improvingAction" jdbcType="VARCHAR" />
+        <result column="ACTION_DESCRIPTION" property="actionDescription" jdbcType="VARCHAR" />
+        <result column="USER_ID" property="userId" jdbcType="DECIMAL" />
+        <result column="TOTAL_SCORE" property="totalScore" jdbcType="DECIMAL" />
+        <result column="REMARK" property="remark" jdbcType="VARCHAR" />
+        <result column="USER_NAMES" property="userNames" jdbcType="VARCHAR" />
+        <result column="USER_NAME" property="userName" jdbcType="VARCHAR" />
+        <result column="USER_IDS" property="userIds" jdbcType="VARCHAR" />
+        <result column="EVALUATE_IDS" property="evaluateIds" jdbcType="VARCHAR" />
+        <result column="EMPLOYEE_NAME" property="employeeName" jdbcType="VARCHAR" />
+        
+        <result column="PRINCIPAL_NAME" property="principalName" jdbcType="VARCHAR" />
+        <result column="PRINCIPAL_ID" property="principalId" jdbcType="DECIMAL" />
+        <result column="ROW_NUM" property="rowNum" jdbcType="DECIMAL" />
+        <result column="ESTIMATED_FINISH_TIME" property="estimatedFinishTime" jdbcType="DATE" />
+        <result column="ACTUAL_FINISHI_TIME" property="actualFinishiTime" jdbcType="DATE" />
+        <result column="ACTION_STATUS" property="actionStatus" jdbcType="VARCHAR" />
+        <result column="CF_NUM" property="cfNum" jdbcType="VARCHAR" />
+    </resultMap>
+<!-- 基础查询 -->
+<select id="reSelect" resultMap="BaseResultMap" parameterType="com.hand.dimension.hqm_dimension_improving_actions.dto.DimensionImprovingActions">
+select rownum  as row_num,ta.* from  (SELECT Distinct t.*, suu.name AS PRINCIPAL_NAME 
+  FROM hqm_8d_improving_actions t
+  LEFT JOIN (SELECT su.employee_id, he.name
+               FROM sys_user su, hr_employee he
+              WHERE su.employee_id = he.employee_id) suu 
+    ON t.principal_id = suu.employee_id 
+ WHERE t.enable_flag = 'Y'
+ <if test="orderId !=null">
+ AND t.order_id = #{orderId}
+ </if>
+  <if test="orderId ==null">
+ AND t.order_id = -1
+ </if>
+   <if test="actionDescription !=null">
+   AND t.action_description LIKE concat('%',concat(#{actionDescription},'%'))
+   </if>
+) ta    
+</select>
+<!-- 删除查询 -->
+<select id="reSelectDelete" resultMap="BaseResultMap" parameterType="com.hand.dimension.hqm_dimension_improving_actions.dto.DimensionImprovingActions">
+select rownum  as row_num,ta.* from  (SELECT Distinct t.*, suu.name AS PRINCIPAL_NAME 
+  FROM hqm_8d_improving_actions t
+  LEFT JOIN (SELECT su.employee_id, he.name
+               FROM sys_user su, hr_employee he
+              WHERE su.employee_id = he.employee_id) suu 
+    ON t.principal_id = suu.employee_id 
+ WHERE t.enable_flag = 'N'
+  <if test="orderId !=null">
+ AND t.order_id = #{orderId}
+ </if>
+  <if test="orderId ==null">
+ AND t.order_id = -1
+ </if>
+) ta    
+</select>
+</mapper>

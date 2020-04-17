@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.npi.npi_technology.mapper.TechnologySpecMapper">
+    <resultMap id="BaseResultMap" type="com.hand.npi.npi_technology.dto.TechnologySpec">
+        <result column="SPEC_ID" property="specId" jdbcType="DECIMAL" />
+        <result column="SPEC_VERSION" property="specVersion" jdbcType="VARCHAR"/>
+        <result column="STATUS" property="status" jdbcType="VARCHAR" />
+        <result column="PARENT_SPEC_ID" property="parentSpecId" jdbcType="DECIMAL" />
+        <result column="SPEC_NUMBER" property="specNumber" jdbcType="VARCHAR" />
+        <result column="STAND_ACTION_ID" property="standActionId" jdbcType="VARCHAR" />
+        <result column="MATERIEL_ATTRIBUTE_NUMBER_A" property="materielAttributeNumberA" jdbcType="VARCHAR" />
+        <result column="MATERIEL_ATTRIBUTE_NUMBER_B" property="materielAttributeNumberB" jdbcType="VARCHAR" />
+        <result column="SPEC_REQUIREMENT" property="specRequirement" jdbcType="VARCHAR" />
+        <result column="TOOL" property="tool" jdbcType="VARCHAR" />
+        <result column="METERING_COUNT" property="meteringCount" jdbcType="VARCHAR" />
+        <result column="LINE" property="line" jdbcType="VARCHAR" />
+        <result column="STANDARD_WORKING_HOURS" property="standardWorkingHours" jdbcType="DECIMAL" />
+        <result column="LOWER_LIMIT" property="lowerLimit" jdbcType="DECIMAL" />
+        <result column="UPPER_LIMIT" property="upperLimit" jdbcType="DECIMAL" />
+        <result column="UNIT" property="unit" jdbcType="VARCHAR" />
+        <result column="ACTION_NAME" property="actionName" jdbcType="VARCHAR" />
+        <result column="TECHNOLOGY_ACTION_NUMBER" property="technologyActionNumber" jdbcType="VARCHAR" />
+        <result column="materielAttributeNameA" property="materielAttributeNameA" jdbcType="VARCHAR" />
+        <result column="materielAttributeNameB" property="materielAttributeNameB" jdbcType="VARCHAR" />
+    	<result column="CHARACTERISTIC_ID" property="characteristicId" jdbcType="DECIMAL" />
+    	<result column="CHARACTERISTIC_NAME" property="characteristicName" jdbcType="VARCHAR" />
+    	<result column="MSA" property="msa" jdbcType="VARCHAR" />
+    	<result column="SPC" property="spc" jdbcType="VARCHAR" />
+    	<result column="SPEC_ACTION_TYPE" property="specActionType" jdbcType="VARCHAR" />
+    	<result column="SPEC_REMARK" property="specRemark" jdbcType="VARCHAR" />
+    </resultMap>
+    
+    <select id="queryTechnologySpecList" resultMap="BaseResultMap"
+		parameterType="com.hand.npi.npi_technology.dto.TechnologySpec">
+		select s.*,a.action_name,da.DETAILS_NAME as materielAttributeNameA,db.DETAILS_NAME as materielAttributeNameB,
+		hcc.CHARACTERISTIC_NAME
+		from npi_technology_spec s left join npi_technology_standard_action a
+		on s.stand_action_id=a.standard_action_id
+		left join NPI_TECHNOLOGY_SPARE_PART_DETAILS da on s.materiel_attribute_number_a = da.SPARE_PART_DETAILS_ID
+		left join NPI_TECHNOLOGY_SPARE_PART_DETAILS db on s.materiel_attribute_number_b = db.SPARE_PART_DETAILS_ID
+		left join npi_characteristic_classification hcc on s.CHARACTERISTIC_ID = hcc.CHARACTERISTIC_ID
+		<where>
+			<if test="specId != null and specId != ''">
+				and s.SPEC_ID =#{specId}
+			</if>
+			<if test="specActionType != null and specActionType != ''">
+				and s.SPEC_ACTION_TYPE =#{specActionType}
+			</if>
+			<if test="specNumber != null and specNumber != ''">
+				and s.spec_number  LIKE concat('%',concat(#{specNumber},'%'))
+			</if>
+			<if test="actionName != null and actionName != ''">
+				and a.action_name  LIKE concat('%',concat(#{actionName},'%'))
+			</if>
+			<if test="materielAttributeNameA != null and materielAttributeNameA != ''">
+				and (da.materiel_attribute_name  LIKE concat('%',concat(#{materielAttributeNameA},'%'))   or  db.materiel_attribute_name  LIKE concat('%',concat(#{materielAttributeNameA},'%')))
+			</if>
+			<if test="specRequirement != null and specRequirement != ''">
+				and s.SPEC_REQUIREMENT  LIKE concat('%',concat(#{specRequirement},'%'))
+			</if>
+		</where>
+		order by s.spec_id
+	</select>
+    
+    <select id="selectMaxNumber" resultMap="BaseResultMap"
+		parameterType="com.hand.npi.npi_technology.dto.TechnologySpec">
+		select s.spec_number from npi_technology_spec s where s.spec_number like  concat(#{specNumber}, '%') 
+		order by s.spec_number desc
+	</select>
+    
+	<select id="queryStandardActionName" parameterType="string" resultType="com.hand.wfl.util.DropDownListDto">
+		select t.standard_action_id as value,t.action_name  as text from npi_technology_standard_action t
+		<where>
+			t.action_type = '1'
+			<if test="standardActionName != null and standardActionName != ''">
+				and t.action_name = #{standardActionName}
+			</if>
+		</where>
+		order by t.standard_action_id
+	</select>
+	
+	<!-- 测试动作下拉列表查询 -->
+	<select id="queryTestActionName" parameterType="string" resultType="com.hand.wfl.util.DropDownListDto">
+		select t.standard_action_id as value,t.action_name  as text from npi_technology_standard_action t
+		<where>
+			t.action_type = '2'
+			<if test="standardActionName != null and standardActionName != ''">
+				and t.action_name = #{standardActionName}
+			</if>
+		</where>
+		order by t.standard_action_id
+	</select>
+	
+	<select id="queryAuxiliaryActionName" parameterType="string" resultType="com.hand.wfl.util.DropDownListDto">
+		select t.auxiliary_action_id as value,t.action_name  as text from npi_technology_auxiliary_action t
+		<where>
+			<if test="auxiliaryActionName != null and auxiliaryActionName != ''">
+				and t.action_name = #{standardActionName}
+			</if>
+		</where>
+		order by t.auxiliary_action_id
+	</select>
+	
+	<select id="queryMaterielName" parameterType="string" resultType="com.hand.wfl.util.DropDownListDto">
+		select d.materiel_attribute_number as value,d.materiel_attribute_name as text from npi_materiel_data d 
+		<where>
+			<if test="materielName != null and materielName != ''">
+				and d.materiel_attribute_name = #{materielName}
+			</if>
+		</where>
+		order by d.materiel_id
+	</select>
+	
+	<select id="queryCharacteristicName" parameterType="string" resultType="com.hand.wfl.util.DropDownListDto">
+		select s.characteristic_id as value,s.characteristic_name as text from npi_characteristic_classification s
+		<where>
+			<if test="characteristicName != null and characteristicName != ''">
+				and s.characteristic_name = #{characteristicName}
+			</if>
+		</where>
+		order by s.characteristic_id
+	</select>
+	
+	
+	<select id="querySpecData" resultMap="BaseResultMap"
+		parameterType="com.hand.npi.npi_technology.dto.TechnologySpec">
+		SELECT B.*,t1.action_name,t1.technology_action_number FROM (SELECT  t.*   
+           FROM NPI_TECHNOLOGY_SPEC t 
+		where CONNECT_BY_ISLEAF =1
+		     START WITH t.parent_spec_id IS NULL  
+		     CONNECT BY t.parent_spec_id = PRIOR t.spec_id) B
+     	left join npi_technology_standard_action t1 on 
+		B.stand_action_id = t1.standard_action_id
+		<where>
+			<if test="specId != null and specId != ''">
+				and B.SPEC_ID =#{specId}
+			</if>
+			<if test="specActionType != null and specActionType != ''">
+				and B.SPEC_ACTION_TYPE =#{specActionType}
+			</if>
+			<if test="actionName != null and actionName != ''">
+				and t1.action_name  LIKE concat('%',concat(#{actionName},'%'))
+			</if>
+		</where>
+		order by B.spec_id
+	</select>
+	<select id="querySpecInfo" resultMap="BaseResultMap"
+		parameterType="com.hand.npi.npi_technology.dto.TechnologySpec">
+		SELECT t.*,t1.action_name FROM  NPI_TECHNOLOGY_SPEC t 
+     	left join npi_technology_standard_action t1 on 
+		t.stand_action_id = t1.standard_action_id
+		<where>
+			<if test="specId != null and specId != ''">
+				and t.SPEC_ID =#{specId}
+			</if>
+			<if test="specVersion != null and specVersion != ''">
+				and t.SPEC_VERSION =#{specVersion}
+			</if>
+			<if test="specActionType != null and specActionType != ''">
+				and t.SPEC_ACTION_TYPE =#{specActionType}
+			</if>
+			<if test="actionName != null and actionName != ''">
+				and t1.action_name  LIKE concat('%',concat(#{actionName},'%'))
+			</if>
+		</where>
+		order by t.spec_id
+	</select>
+	<select id="queryHisData" resultMap="BaseResultMap"
+		parameterType="com.hand.npi.npi_technology.dto.TechnologySpec">
+		SELECT B.*,t1.action_name FROM (SELECT  t.*   
+           FROM NPI_TECHNOLOGY_SPEC t 
+		     START WITH t.SPEC_ID =#{specId}  
+		     CONNECT BY t.spec_id = PRIOR t.parent_spec_id) B
+     	left join npi_technology_standard_action t1 on 
+		B.stand_action_id = t1.standard_action_id
+		<where>
+			<if test="specId != null and specId != ''">
+				and B.SPEC_ID != #{specId}
+			</if>
+			<if test="specActionType != null and specActionType != ''">
+				and B.SPEC_ACTION_TYPE =#{specActionType}
+			</if>
+		</where>
+		order by B.spec_id desc
+	</select>
+
+</mapper>

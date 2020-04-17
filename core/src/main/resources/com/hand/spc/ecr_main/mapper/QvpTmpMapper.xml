@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.spc.ecr_main.mapper.QvpTmpMapper">
+    <resultMap id="BaseResultMap" type="com.hand.spc.ecr_main.dto.QvpTmp">
+        <result column="VTP_NUM" property="vtpNum" jdbcType="VARCHAR" />
+        <result column="VTP_SEQ" property="vtpSeq" jdbcType="DECIMAL" />
+        <result column="CONCLUTION" property="conclution" jdbcType="VARCHAR" />
+        <result column="DUTYBY" property="dutyby" jdbcType="VARCHAR" />
+        <result column="LAB_REQNO" property="labReqno" jdbcType="VARCHAR" />
+        <result column="PCI_TITLE" property="pciTitle" jdbcType="VARCHAR" />
+        <result column="PCI_TEST_REPORT" property="pciTestReport" jdbcType="VARCHAR" />
+        <result column="CONCLUSION" property="conclusion" jdbcType="VARCHAR" />
+        <result column="QTP_SEQ" property="qtpSeq" jdbcType="DECIMAL" />
+        <result column="STATUS" property="status" jdbcType="VARCHAR" />
+        <result column="PCI_CODE" property="pciCode" jdbcType="VARCHAR" />
+        <result column="PCI_ATTACHMENT" property="pciAttachment" jdbcType="VARCHAR" />
+        <result column="PCI_TEXT" property="pciText" jdbcType="VARCHAR" />
+        <result column="ASK_FINISHED_DATE" property="askFinishedDate" jdbcType="DATE" />
+        <result column="PLAN_FINISHED_DATE" property="planFinishedDate" jdbcType="DATE" />
+        <result column="ACT_FINISHED_DATE" property="actFinishedDate" jdbcType="DATE" />
+        <result column="IS_NEED" property="isNeed" jdbcType="VARCHAR" />
+        <result column="ITEM_SKU_ID" property="itemSkuId" jdbcType="DECIMAL" />
+    </resultMap>
+
+
+</mapper>

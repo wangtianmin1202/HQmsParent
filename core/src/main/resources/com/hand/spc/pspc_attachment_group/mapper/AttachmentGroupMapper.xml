@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.spc.pspc_attachment_group.mapper.AttachmentGroupMapper">
+    <resultMap id="BaseResultMap" type="com.hand.spc.pspc_attachment_group.dto.AttachmentGroup">
+        <result column="attachment_group_id" property="attachmentGroupId" jdbcType="DECIMAL" />
+        <result column="tenant_id" property="tenantId" jdbcType="DECIMAL" />
+        <result column="site_id" property="siteId" jdbcType="DECIMAL" />
+        <result column="attachment_group_description" property="attachmentGroupDescription" jdbcType="VARCHAR" />
+        <result column="ce_group_id" property="ceGroupId" jdbcType="DECIMAL" />
+    </resultMap>
+
+
+    <select id="queryAttachmentGroup" parameterType="com.hand.spc.pspc_attachment_group.dto.AttachmentGroup" resultMap="BaseResultMap">
+        SELECT pag.ce_group_id
+              ,pag.attachment_group_id
+              ,pag.attachment_group_description
+        FROM   pspc_attachment_group pag
+        WHERE  pag.ce_group_id = #{ceGroupId}
+    </select>
+
+    <select id="selectAttacmentGroupLov" parameterType="com.hand.spc.pspc_attachment_group.dto.AttachmentGroup" resultMap="BaseResultMap">
+         SELECT
+          pag.attachment_group_id,
+          pag.attachment_group_description,
+          pag.ce_group_id
+        FROM
+          pspc_attachment_group pag
+        left join pspc_ce_group pcg on pag.ce_group_id = pcg.ce_group_id
+        <where>
+            1 = 1
+            <if test="ceGroupId != null and ceGroupId != ''">
+                and pcg.ce_group_id = #{ceGroupId,jdbcType=DECIMAL}
+            </if>
+            <if test="attachmentGroupDescription != null and attachmentGroupDescription != ''">
+                and pag.attachment_group_description like '%'||#{attachmentGroupDescription,jdbcType=VARCHAR}||'%'
+            </if>
+        </where>
+    </select>
+
+</mapper>

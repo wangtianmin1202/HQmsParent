@@ -1,0 +1,276 @@
+<#include "../include/header.html">
+
+
+<script type="text/javascript">
+    var viewModel = Hap.createGridViewModel("#grid");
+</script>
+
+<body>
+
+<div id="page-content">
+    <div class="pull-left" id="toolbar-btn" style="padding-bottom:10px;">
+    	<span id="add-btn" class="btn btn-primary k-grid-add" style="float:left;margin-right:5px;" onclick="openNewWindow()"><@spring.message "hap.new"/></span>
+        <!-- <span class="btn btn-primary k-grid-add" style="float:left;margin-right:5px;" data-bind="click:create"><@spring.message "hap.new"/></span>
+        <span class="btn btn-success k-grid-save-changes" data-bind="click:save" style="float:left;margin-right:5px;"><@spring.message "hap.save"/></span>
+        <span  data-bind="click:remove" class="btn btn-danger" style="float:left;"><@spring.message "hap.delete"/></span> -->
+    </div>
+    <script>kendo.bind($('#toolbar-btn'), viewModel);</script>
+    <div id="queryForm" class="pull-right" style="margin-right:5px;padding-bottom:10px;">
+	    <input id="repairNumber" data-role="maskedtextbox" style="width:150px;margin-right:5px;" placeholder='维修单号'
+	           data-bind="value:model.repairNumber" class="k-textbox">
+	    <input  id="measureToolNum" data-role="maskedtextbox" 
+	    	style="width:150px;margin-right:5px;" placeholder="量具编号" data-bind="value:model.measureToolNum">
+	    <input  id="measureToolType" data-role="maskedtextbox" 
+	    	style="width:150px;margin-right:5px;" placeholder="型号" data-bind="value:model.measureToolType">
+	    <span class="btn btn-primary" style="width:70px;margin-right:5px;" data-bind="click:query" type="submit">查询</span>
+	    <span class="btn btn-default" type="button" data-bind="click:reset">
+	    	<i class="fa fa-eraser" style="margin-right:5px;"></i>重置</span>
+    </div>
+    <script>kendo.bind($('#queryForm'), viewModel);</script>
+    <div style="clear:both">
+        <div id="grid"></div>
+    </div>
+</div>
+<div id="newWindow"></div>
+<div id="viewWindow"></div>
+<script>
+	//进入量具维修单新建页面
+	function openNewWindow(){
+		var url='measure_tool_repair_new.html';
+		
+		var newWindow = $("#newWindow").kendoWindow({
+			actions:["close"],
+			width:800,
+			height:500,
+			title:'新建维修单',
+			content:url,
+			iframe:true,
+			visible:false,
+			resizable:true,
+			modal:true,
+			close:function(){
+				$("#grid").data('kendoGrid').dataSource.read();
+			}
+			
+		}).data("kendoWindow");
+		newWindow.center().open();
+	}
+	
+	//确认按钮
+	function confirmRepair(measureToolRepairId){
+		$.ajax({
+			url:_basePath + "/hqm/measure/tool/repair/confirmRepair?measureToolRepairId="+measureToolRepairId,
+			success:function(data){
+				//$("#grid").data('kendoGrid').dataSource.page(1);
+				$("#grid").data('kendoGrid').dataSource.read();
+			}
+		});
+	}
+	
+	//维修单号跳转详情页
+	function openViewWindow(measureToolRepairId){
+		var url='measure_tool_repair_view.html?measureToolRepairId='+measureToolRepairId;
+		
+		var viewWindow = $("#viewWindow").kendoWindow({
+			actions:["close"],
+			width:800,
+			height:500,
+			title:'维修单详情',
+			content:url,
+			iframe:true,
+			visible:false,
+			resizable:true,
+			modal:true,
+			close:function(){
+				$("#grid").data('kendoGrid').dataSource.read();
+			}
+			
+		}).data("kendoWindow");
+		viewWindow.center().open();
+	}
+</script>
+<script>
+    Hap.initEnterQuery('#queryForm', viewModel.query);
+    var BaseUrl = _basePath;
+    dataSource = new kendo.data.DataSource({
+        transport: {
+            read: {
+                url: BaseUrl + "/hqm/measure/tool/repair/queryByCondition",
+                type: "POST",
+                dataType: "json"
+            },
+            update: {
+                url: BaseUrl + "/hqm/measure/tool/repair/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            destroy: {
+                url: BaseUrl + "/hqm/measure/tool/repair/remove",
+                type: "POST",
+                contentType: "application/json"
+            },
+            create: {
+                url: BaseUrl + "/hqm/measure/tool/repair/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            parameterMap: function (options, type) {
+                if (type !== "read" && options.models) {
+                    var datas = Hap.prepareSubmitParameter(options, type)
+                    return kendo.stringify(datas);
+                } else if (type === "read") {
+                    return Hap.prepareQueryParameter(viewModel.model.toJSON(), options)
+                }
+            }
+        },
+        batch: true,
+        serverPaging: true,
+        pageSize: 20,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+                id: "measureToolRepairId",
+                fields: {
+                	repairNumber:{editable:false},
+                	measureToolNum:{editable:false},
+                	descriptions:{editable:false},
+                	measuringRange:{editable:false},
+                	measureToolType:{editable:false},
+                	repairStartTime:{type:"date",editable:false},
+                	repairEndTime:{type:"date",editable:false},
+                }
+            }
+        }
+    });
+
+</script>
+
+<script>
+    $("#grid").kendoGrid({
+        dataSource: dataSource,
+        resizable: true,
+        scrollable: true,
+        navigatable: false,
+        sortable:true,
+        selectable: 'multiple, rowbox',
+        dataBound: function () {
+            if (parent.autoResizeIframe) {
+                parent.autoResizeIframe('${RequestParameters.functionCode!}')
+            }
+        },
+        pageable: {
+            pageSizes: [5, 10, 20, 50],
+            refresh: true,
+            buttonCount: 5
+        },
+        columns: [
+            /* {
+                field: "measureToolRepairId",
+                title: '<@spring.message "measuretoolrepair.measuretoolrepairid"/>',
+                width: 120
+            }, 
+                    {
+                field: "measureToolId",
+                title: '<@spring.message "measuretoolrepair.measuretoolid"/>',
+                width: 120
+            },*/
+            {
+                field: "repairNumber",
+                title: '维修单号',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+                template:function(rowdata) {
+                	return '<a href="#" style="color:blue" onclick="openViewWindow('+rowdata.measureToolRepairId+')">'+rowdata.repairNumber+'</a>'
+                }
+            },
+            {
+                field: "measureToolNum",
+                title: '量具编号',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"}
+            },
+            {
+                field: "descriptions",
+                title: '量具名称',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"}
+            },
+                    {
+                field: "measuringRange",
+                title: '规格',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"}
+            },
+            {
+                field: "measureToolType",
+                title: '型号',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"}
+            }, 
+                    {
+                field: "repairStartTime",
+                title: '申请日期',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+                format:"{0:yyyy-MM-dd}"
+            },
+                    {
+                field: "repairEndTime",
+                title: '维修完成日期',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+                format:"{0:yyyy-MM-dd}"
+            },
+            {
+                title: '操作',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+                template:function(rowdata) {
+                	if(rowdata.repairEndTime){
+                		return "确认";
+                	} else {
+                		return '<a href="#" style="color:blue" onclick="confirmRepair('+rowdata.measureToolRepairId+')">'+'确认'+'</a>';
+                	} 
+                }
+            },
+                    /* {
+                field: "businessKey",
+                title: '<@spring.message "measuretoolrepair.businesskey"/>',
+                width: 120
+            },
+                    {
+                field: "processStartTime",
+                title: '<@spring.message "measuretoolrepair.processstarttime"/>',
+                width: 120
+            },
+                    {
+                field: "processEndTime",
+                title: '<@spring.message "measuretoolrepair.processendtime"/>',
+                width: 120
+            },
+                    {
+                field: "processInstId",
+                title: '<@spring.message "measuretoolrepair.processinstid"/>',
+                width: 120
+            },
+                    {
+                field: "processStatus",
+                title: '<@spring.message "measuretoolrepair.processstatus"/>',
+                width: 120
+            }, */
+        ],
+        editable: true
+    });
+
+</script>
+</body>
+</html>

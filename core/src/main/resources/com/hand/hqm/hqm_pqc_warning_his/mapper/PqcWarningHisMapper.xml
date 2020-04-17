@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_pqc_warning_his.mapper.PqcWarningHisMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_pqc_warning_his.dto.PqcWarningHis">
+        <result column="EVENT_ID" property="eventId" jdbcType="DECIMAL" />
+        <result column="EVENT_BY" property="eventBy" jdbcType="DECIMAL" />
+        <result column="EVENT_TIME" property="eventTime" jdbcType="DATE" />
+        <result column="WARNING_ID" property="warningId" jdbcType="DECIMAL" />
+        <result column="PLANT_ID" property="plantId" jdbcType="DECIMAL" />
+        <result column="WARNING_LEVEL" property="warningLevel" jdbcType="VARCHAR" />
+        <result column="LEVEL_DESC" property="levelDesc" jdbcType="VARCHAR" />
+        <result column="WARNING_OBJECT" property="warningObject" jdbcType="VARCHAR" />
+        <result column="WARNING_TIME" property="warningTime" jdbcType="DECIMAL" />
+        <result column="ENABLE_FLAG" property="enableFlag" jdbcType="VARCHAR" />
+    </resultMap>
+
+
+</mapper>

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.spc.his.mapper.EntityRoleRelationHisMapper">
+    <resultMap id="BaseResultMap" type="com.hand.spc.his.dto.EntityRoleRelationHis">
+        <result column="ENTITY_ROLE_RELATION_HIS_ID" property="entityRoleRelationHisId" jdbcType="DECIMAL" />
+        <result column="ENTITY_ROLE_RELATION_ID" property="entityRoleRelationId" jdbcType="DECIMAL" />
+        <result column="TENANT_ID" property="tenantId" jdbcType="DECIMAL" />
+        <result column="SITE_ID" property="siteId" jdbcType="DECIMAL" />
+        <result column="ENTITY_CODE" property="entityCode" jdbcType="VARCHAR" />
+        <result column="ENTITY_VERSION" property="entityVersion" jdbcType="VARCHAR" />
+        <result column="ROLE_ID" property="roleId" jdbcType="DECIMAL" />
+    </resultMap>
+
+
+</mapper>

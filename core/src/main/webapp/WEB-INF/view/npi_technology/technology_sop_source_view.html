@@ -1,0 +1,60 @@
+<#include "../include/header.html">
+<script type="text/javascript">
+	var sopCode = '${RequestParameters.sopCode!0}';
+    var viewModel = Hap.createGridViewModel(null,{
+    	model:{
+    		
+    	},
+    	closeWin:function(e) {
+    		window.parent.$("#fileDownLoadD2").data("kendoWindow").close();
+    	},
+    	queryInfo:function(){
+    		if(sopCode != 0){
+    			var jsonData = {
+						sopCode :sopCode
+		    	}
+				//获取文件地址
+				$.ajax({
+					url:"${base.contextPath}/npi/sop/info/downLoadFile",
+					type: 'POST',
+		    		data: JSON.stringify(jsonData),
+		            contentType: 'application/json',
+					success:function(data){
+						debugger;
+						var filePath = data.message;
+						var fileType=filePath.substring(filePath.lastIndexOf('.')+1);
+						//格式校验
+						if(fileType == 'jpg'){
+							//src="/demension/filemanager/file_sop10028/29777843001.mp4"
+							$("#imgsrc").attr('src',filePath);
+							$("#videoDiv").hide();
+						}else{
+							$("#videoid").attr('src',filePath);
+							//$("#videoid").play();
+							$("#imgsrc").hide();
+						}
+						
+					}
+				})
+    		}
+    	},
+    });
+    viewModel.queryInfo();
+</script>
+
+<body>
+<div align="center" id="videoDiv">
+	<video id="videoid" width="600" height="400" controls="controls" autoplay="autoplay">
+	  <source  type="video/mp4" />
+	  <!-- <object data="/demension/filemanager/file_sop10028/29777843001.mp4" width="320" height="240">
+	    <embed width="320" height="240" src="/demension/filemanager/file_sop10028/29777843001.mp4"/>
+	  </object> -->
+	</video>
+</div>
+<div align="center" id="imgDiv">
+	<img id="imgsrc" alt="无法加载资源"/>
+</div>
+
+
+</body>
+</html>

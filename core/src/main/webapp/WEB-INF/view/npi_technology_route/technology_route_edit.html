@@ -1,0 +1,119 @@
+<#include "../include/header.html">
+
+<script src="${base.contextPath}/common/code?YES_NO=SYS.YES_NO" type="text/javascript"></script>
+<script src="${base.contextPath}/common/code?NPI_METERING_COUNT=NPI_METERING_COUNT"></script>
+<script src="${base.contextPath}/common/code?NPI_ROUTE_LINE=NPI_ROUTE_LINE"></script>
+
+<script type="text/javascript">
+	var BaseUrl = _basePath;
+	var routeNumber = '${RequestParameters.routeNumber!0}';
+    var viewModel = Hap.createGridViewModel(null,{
+    	model:{
+    		
+    	},
+    	closeWin:function(e) {
+    		window.parent.$("#newDataWindow").data("kendoWindow").close();
+    	},
+    	save:function(){
+    		var validator = $("#mainForm").data("kendoValidator");
+    		if(validator.validate()) {
+    			viewModel.model.__status = 'update';
+                Hap.submitForm({
+                    url: '${base.contextPath}/hqm/technology/route/update',
+                    formModel: viewModel.model,
+                    success: function (data) {
+                    	viewModel.closeWin();
+                    }
+                });
+    		}
+    	}
+    });
+    
+    $.ajax({
+		url:"${base.contextPath}/npi/technology/route/query?routeNumber="+routeNumber,
+		type:"POST",
+		//data:ticketIdData,
+		dataType:'json',
+		success: function(data){
+			debugger;
+			viewModel.model.set('routeNumber',data.rows[0].routeNumber) ;
+			viewModel.model.set('routeId',data.rows[0].routeId) ;
+            viewModel.model.set('skuId',data.rows[0].skuId);
+            viewModel.model.set('line',data.rows[0].line);
+            viewModel.model.set('_token',data.rows[0]._token);
+		}
+	});
+</script>
+
+<body>
+
+<div id="page-content">
+	<form id = "mainForm" style="paddiing-bottom:50px;padding-top:15px" class="form-horizontal" method="post" enctype="application/json;charset=UTF-8">
+		<div class="row">
+			<div class="col-sm-12">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-4 control-label">工艺路径编码</label>
+						<div class="col-sm-4">
+							<input style="width:100%" id="routeNumber"  data-role="maskedtextbox" class="k-textbox"
+								data-bind="value:model.routeNumber"  disabled>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="col-sm-12">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-4 control-label">sku<span style="color:red;">*</span></label>
+						<div class="col-sm-4">
+							<input style="width:100%" id="skuId" name="skuId"  data-role="maskedtextbox" class="k-textbox" 
+								data-bind="value:model.skuId"  required >
+						</div>
+						
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="row" style="margin-top: 10px;">
+			<div class="col-sm-12">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-4 control-label">Line<span style="color:red;">*</span></label>
+						<div class="col-sm-4">
+							<input style="width:100%" id="line" name="line"
+								data-bind="value:model.line" required>
+						</div>
+						<script>
+							$("#line").kendoComboBox({
+	    				        dataTextField: "meaning",
+	    				        dataValueField: "value",
+	    				        valuePrimitive: true,
+	    				        dataSource: NPI_ROUTE_LINE,
+	    					});
+						</script>
+					</div>
+				</div>
+			</div>
+		</div>
+	</form>
+	<div id="mainBottom" class="text-right" style="bottom:15px;position:fixed;float:left;padding-top:15px;border-top:1px solid #e8e1eb;
+		width:100%;background:#fff;margin-right:30px">
+		<span class="btn btn-primary" data-bind="click:save" type="submit" style="margin-right:5px">保存</span>
+		<span class="btn btn-default" data-bind="click:closeWin" type="button" style="margin-right:25px">取消</span>
+	</div>
+	<script>
+		kendo.bind($('#mainForm'), viewModel);
+		kendo.bind($('#mainBottom'), viewModel);
+	</script>
+	<script>
+		$('#mainForm').kendoValidator({
+			messages:{
+				required:'<@spring.message "hap.validation.notempty"/>'
+			},
+			invalidMessageType:"tooltip"
+		});
+	</script>
+
+</div>
+</body>
+</html>

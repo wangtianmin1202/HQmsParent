@@ -1,0 +1,1019 @@
+<!--
+ * description: VTP新增主界面
+ * author:tianmin.wang 
+ * date:20200221
+ -->
+<#include "../include/header.html">
+<script src="${base.contextPath}/lib/bootstrap-3.3.7/js/bootstrap.min.js"></script>
+<script src="${base.contextPath}/common/code?yesNo=SYS.YES_NO"></script><!-- 是否 -->
+<script src="${base.contextPath}/common/code?hqmInspectionTemplateStatus=HQM_INSPECTION_TEMPLATE_STATUS"></script>
+<script src="${base.contextPath}/common/code?HQM_IQC_SOURCE_TYPE=HQM_IQC_SOURCE_TYPE"></script>
+<script src="${base.contextPath}/common/code?HQM_FQC_SOURCE_TYPE=HQM_FQC_SOURCE_TYPE"></script>
+<script src="${base.contextPath}/common/code?hqmIqcItemCategory=HQM_IQC_ITEM_CATEGORY"></script>
+<script src="${base.contextPath}/common/code?hqmIqcEnableType=HQM_IQC_ENABLE_TYPE"></script>
+<script src="${base.contextPath}/common/code?hqmStandradUom=HQM_STANDARD_UOM"></script>
+<script src="${base.contextPath}/common/code?hqmIqcFillInType=HQM_FILL_IN_TYPE"></script>
+<script src="${base.contextPath}/common/code?hqmIqcSampleStandardType=HQM_IQC_SAMPLE_STANDARD_TYPE"></script>
+<script src="${base.contextPath}/common/code?hqmIqcIinspectionLevels=HQM_IQC_INSPECTION_LEVELS"></script>
+<script src="${base.contextPath}/common/code?hqmIqcQualityGrade=HQM_IQC_QUALITY_GRADE"></script>
+<script src="${base.contextPath}/common/code?hqmIqcAql=HQM_IQC_AQL"></script>
+<script src="${base.contextPath}/common/code?hqmIqcAttributeCategory=HQM_IQC_ATTRIBUTE_CATEGORY"></script>
+<script src="${base.contextPath}/common/code?hqmIqcStandardType=HQM_IQC_STANDARD_TYPE"></script>
+<script src="${base.contextPath}/common/code?hqmIqcFrequencyType=HQM_IQC_FREQUENCY_TYPE"></script>
+<script src="${base.contextPath}/common/code?HQM_SOURCE_TYPE_TEMP=HQM_SOURCE_TYPE_TEMP"></script>
+<script src="${base.contextPath}/common/code?HQM_INSPECTION_METHOD=HQM_INSPECTION_METHOD"></script>
+<body>
+<script type="text/javascript">
+	var headerId = "${RequestParameters.headerId!'-1'}";
+	var vtpNumber = "${RequestParameters.vtpNumber!''}";
+	var mainType = "${RequestParameters.mainType!''}";
+	var saveCount = 0;
+	var viewModelLine = Hap.createGridViewModel("#grid");
+	var viewModel = kendo.observable({
+		model: {
+			headerId:headerId,
+			status: '1',
+			versionNum: "1",
+			enableFlag: "Y",
+			vtpNumber: vtpNumber
+		},
+		save: function(){
+			grid.dataSource.data()[0].vtpNumber = vtpNumber;
+		 	var data = JSON.stringify(grid.dataSource.data());
+			var validator = $("#mainform").data("kendoValidator");
+			$.ajax({
+		        url: '${base.contextPath}/hqm/iqc/inspection/template/h/vtp/create/save',
+		        type: 'POST',
+		        data: data,
+		        async: false,
+		        dataType: "json",
+		        contentType: "application/json",
+		        success: function (response) {
+		            if (response.success) {
+		            	$('#btnSave').hide();
+		            	$('#deleteButton').hide();
+		            	viewModel.closeWin();
+		            } else {
+		            	kendo.ui.showErrorDialog({
+		                    message: response.message
+		                });
+		            }
+		        }
+		    });
+		},
+		closeWin: function(e){
+			window.parent.$('#vtpDetailWindow').data('kendoWindow').close();
+        }
+	});
+</script>
+<script>
+function copy(){
+	  
+	  if(headerId == null || headerId=='-1' || headerId==undefined){
+		  kendo.ui.showInfoDialog({message: "请先保存数据!"});
+		  return;
+	  }
+		var dialog = $("#childWindowcopy").kendoWindow({
+	       width: window.innerWidth * 0.55,
+	       height: window.innerHeight *0.75,
+	       title: '同步检验组',
+	       visible: false,
+	       iframe: true,
+	       modal: true,
+	       content: '../hqm_iqc_inspection_template_h/inspection_synchronize_lov.html?headerId='+headerId
+	   }).data("kendoWindow");   
+	   dialog.center().open();
+	}
+
+ 	function copyOwn(){	  
+	  if(headerId == null||headerId == '-1'||headerId == undefined){
+		  kendo.ui.showInfoDialog({message: "请先保存数据!"});
+		  return;
+	  }
+		var dialog = $("#childWindowcopyOwn").kendoWindow({
+	       width: window.innerWidth * 0.8,
+	       height: window.innerHeight *0.7,
+	       title: '复制',
+	       visible: false,
+	       iframe: true,
+	       modal: true,
+	       content: '../hqm_iqc_inspection_template_h/inspection_copy.html?headerId='+headerId
+	   }).data("kendoWindow");   
+	   dialog.center().open();
+	}
+	function getHeaderInfo(){
+		if(headerId == '-1')return;
+		$.ajax({
+	        url: '${base.contextPath}/hqm/iqc/inspection/template/h/query',
+	        type: 'POST',
+	        data: {headerId:headerId},
+	        async: false,
+	        dataType: "json",
+	        success: function (response) {
+	            if (response.success) {
+	            	viewModel.set("model",response.rows[0]);
+	            	headerId = viewModel.model.headerId;
+	            	viewModel.model.set('status','2');
+	            	viewModel.model.set('sourceType','16');
+	            	grid.dataSource.fetch();
+	            } else {
+	            	kendo.ui.showErrorDialog({
+	                    message: response.message
+	                });
+	            }
+	        }
+	    });
+	}
+</script>
+<div id="mainTop" class="text-left" style="padding-top:5px;padding-left:5px;border-top:1px solid #ebebeb;width:100%; background: #fff;">
+        <span id="btnSave" class="btn btn-success fa fa-check" data-bind="click:save" type="submit" style="margin-right:5px"><@spring.message "hap.save"/></span>
+        
+</div>
+<script type="text/javascript">
+function clearNoNum(value,precision){
+	if(!isNotEmpty(precision)||!isNotEmpty(value)){return value+'';}
+	value = value.replace(/[^\d.]/g,""); //清除"数字"和"."以外的字符  
+    value = value.replace(/^\./g,""); //验证第一个字符是数字而不是  
+    value = value.replace(/\.{2,}/g,"."); //只保留第一个. 清除多余的  
+    value = value.replace(".","$#$").replace(/\./g,"").replace("$#$","."); 
+    value = (value*1);
+    return value;
+}
+function clearNoNumNoPrecision(value){
+	if(!isNotEmpty(value)){return value;}
+	value = value.replace(/[^\d.]/g,""); //清除"数字"和"."以外的字符  
+    value = value.replace(/^\./g,""); //验证第一个字符是数字而不是  
+    value = value.replace(/\.{2,}/g,"."); //只保留第一个. 清除多余的  
+    value = value.replace(".","$#$").replace(/\./g,"").replace("$#$","."); 
+    return value;
+}
+function getPoint(value){
+	//获取小数点之后的字符长度
+	var pointLength = 0;
+	value = value+'';
+	console.log(value.indexOf('.'));
+	if(value.indexOf('.')<0){
+		return pointLength;
+	}else{
+		pointLength = value.split('.')[1].length;
+		console.log(pointLength);
+		return pointLength;
+	}
+}
+function isNotEmpty(obj) {
+    if(obj != undefined && obj != null && obj != ""){
+        return true;
+    }else{
+        return false;
+    }
+}
+kendo.bind($('#mainTop'),viewModel);
+</script>
+<div  class="container">
+	<form id="mainform"  class="form-horizontal" method="post" enctype="application/json;charset=UTF-8">
+	<div class="row" style="margin-left: 5px;">
+	 		<!-- 工厂+状态 -->
+	 	  	<div class="form-group">
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message "asliqccontrol.plant"/>:</label>
+					<div class="col-sm-9">
+                        <input id="lovPlant" disabled style="width:100%" name="plantId"
+                               data-label="<@spring.message 'asliqccontrol.plant'/>"
+								data-bind="value:model.plantId,text:model.plantCode">
+						<span data-for="plantId" class=".k-invalid-msg"></span>
+					</div>
+					<script>
+					kendo.bind($('#lovPlant'), viewModel);
+					$("#lovPlant").kendoLov($.extend
+				    	    (<@lov"LOV_PLANT"/>, {
+				    	        textField: 'plantCode',
+				    	        valueField:'plantId',
+				    	        change:function(){
+				    	        	viewModel.model.status = '1';
+				    	        	viewModel.model.plantCode = this._dataItem.plantCode;
+				    	        }
+				    	    }));
+					</script>
+				</div>
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message "iqcinspectiontemplateh.status"/>:</label>
+					<div class="col-sm-9">
+                        <input id="statusComboBox" disabled style="width:100%" name="status"
+                               data-label='<@spring.message "iqcinspectiontemplateh.status"/>'
+								data-bind="value:model.status">
+						<span data-for="status" class=".k-invalid-msg"></span>
+					</div>
+					<script>
+					kendo.bind($('#statusComboBox'), viewModel);
+					$("#statusComboBox").kendoComboBox({
+				        dataTextField: "meaning",
+				        dataValueField: "value",
+				        valuePrimitive: true,
+				        dataSource: hqmInspectionTemplateStatus
+				    });
+					</script>
+				</div>
+            </div>
+			<!-- 物料编码 + 版本 -->
+			<div class="form-group">
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message "hap.itemcode"/>:</label>
+					<div class="col-sm-9">
+                        <input id="itemCode" disabled style="width:100%" name="itemCode"
+                               data-bind="value:model.itemId,text:model.itemCode">
+						<span data-for="itemCode" class=".k-invalid-msg"></span>
+					</div>
+					<script type="text/javascript">
+					kendo.bind($('#itemCode'), viewModel);
+					$("#itemCode").kendoLov($.extend
+				    	    (<@lov"LOV_ITEM"/>, {
+				    	        textField: 'itemCode',
+				    	        valueField:'itemId',
+				    	        query:function(e){
+				    	        	e.param['plantId'] = viewModel.model.plantId;
+				    	        },
+				    	        change:function(){
+							        viewModel.model.set('status','1');
+				    	        	viewModel.model.itemCode = this._dataItem.itemCode;
+				    	        	viewModel.model.set('itemDescriptions',this._dataItem.itemDescriptions)  ;
+				    	        }
+				    	    }));
+					</script>
+				</div>
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message "iqcinspectiontemplateh.versionnum"/>:</label>
+					<div class="col-sm-9">
+                        <input id="versionNum" style="width:100%" name="versionNum" disabled
+                               data-label="<@spring.message 'iqcinspectiontemplateh.versionnum'/>"
+								data-bind="value:model.versionNum">
+						<span data-for="versionNum" class=".k-invalid-msg"></span>
+					</div>
+					<script type="text/javascript">
+					kendo.bind($('#versionNum'), viewModel);
+					$("#versionNum").kendoMaskedTextBox({});
+					</script>
+				</div>
+				
+			</div>
+			<!-- 物料描述+ 来源类型-->
+			<div class="form-group">
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message "hap.itemdescriptions"/>:</label>
+					<div class="col-sm-9">
+                        <input  style="width:100%" disabled name="itemDescriptions"
+                        		 id="itemDescriptions"
+                               data-bind="value:model.itemDescriptions">
+						<span data-for="itemDescriptions" class=".k-invalid-msg"></span>
+					</div>
+					<script type="text/javascript">
+					kendo.bind($('#itemDescriptions'), viewModel);
+					$("#itemDescriptions").kendoMaskedTextBox({});
+					</script>
+				</div>
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message "iqcinspectiontemplateh.sourcetype"/>:</label>
+					<div class="col-sm-9">
+                        <input id="sourceType" style="width:100%" name="sourceType" disabled
+                               data-label="<@spring.message 'iqcinspectiontemplateh.sourcetype'/>"
+								data-bind="value:model.sourceType">
+						<span data-for="sourceType" class=".k-invalid-msg"></span>
+					</div>
+					<script type="text/javascript">
+					kendo.bind($('#sourceType'), viewModel);
+					$("#sourceType").kendoComboBox({
+				        dataTextField: "meaning",
+				        dataValueField: "value",
+				        valuePrimitive: true,
+				        change:function(e){
+				        	viewModel.model.set('status','1');
+				        },
+				        dataSource: mainType=="IQC"?HQM_IQC_SOURCE_TYPE:HQM_FQC_SOURCE_TYPE
+				    });
+					</script>
+				</div>
+				
+			</div>
+			
+            <!-- 是否有效+检验时效 -->
+	 	  	<div class="form-group">
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message "iqcinspectiontemplateh.enableflag"/>:</label>
+					<div class="col-sm-9">
+                        <input id="enableFlag" disabled style="width:100%" name="enableFlag"
+                               data-label="<@spring.message 'iqcinspectiontemplateh.enableflag'/>"
+								data-bind="value:model.enableFlag">
+						<span data-for="enableFlag" class=".k-invalid-msg"></span>
+					</div>
+					<script>
+					kendo.bind($('#enableFlag'), viewModel);
+					$("#enableFlag").kendoComboBox({
+				        dataTextField: "meaning",
+				        dataValueField: "value",
+				        valuePrimitive: true,
+				        change:function(e){
+				        	viewModel.model.set('status','1');
+				        },
+				        dataSource: yesNo
+				    });
+					</script>
+				</div>
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message "iqcinspectiontemplateh.timelimit"/>:</label>
+					<div class="col-sm-9">
+                        <input id="timeLimit" disabled  style="width:100%" name="timeLimit"
+                               data-label="<@spring.message 'iqcinspectiontemplateh.timelimit'/>"
+                               placeholder="<@spring.message 'iqcinspectiontemplateh.timelimithold'/>"
+								data-bind="value:model.timeLimit">
+						<span data-for="timeLimit" class=".k-invalid-msg"></span>
+					</div>
+					<script>
+					kendo.bind($('#timeLimit'), viewModel);
+					$("#timeLimit").kendoNumericTextBox({
+						min:1,
+						format:"{0:0}",
+						change:function(e){
+					        viewModel.model.set('status','1');
+						}
+				    });
+					</script>
+				</div>
+            </div>
+            
+            <!-- 物料版本 + 抽样方式 -->
+	 	  	<div class="form-group">
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message "iqcinspectiontemplateh.itemedition"/>:</label>
+					<div class="col-sm-9">
+                        <input id="itemEdition" disabled style="width:100%" name="itemEdition"
+                               data-label="<@spring.message 'iqcinspectiontemplateh.itemedition'/>"
+								data-bind="value:model.itemEdition">
+						<span data-for="itemEdition" class=".k-invalid-msg"></span>
+					</div>
+					<script>
+					kendo.bind($('#itemEdition'), viewModel);
+					$("#itemEdition").kendoMaskedTextBox({});
+					</script>
+				</div>
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message "iqcinspectiontemplateh.samplewaycode"/>:</label>
+					<div class="col-sm-9">
+                        <input id="sampleWayId" disabled style="width:100%" name="sampleWayId"
+                               data-bind="value:model.sampleWayId,text:model.sampleWayDescription">
+						<span data-for="sampleWayId" class=".k-invalid-msg"></span>
+					</div>
+					<script type="text/javascript">
+					kendo.bind($('#sampleWayId'), viewModel);
+					$("#sampleWayId").kendoLov($.extend(<@lov "LOV_SAMPLE_MANAGE"/>, {
+	                    query: function (e) {
+	                    	e.param['enableFlag'] = 'Y';
+	                    },
+	                }));
+					</script>
+				</div>
+            </div>
+	  </div>
+	</form>
+</div>
+<div class="row" style="padding:0px;margin:5px;">
+	<span id="deleteButton" class="btn btn-danger" ><i class="fa fa-trash-o" style="margin-right:3px;"></i><@spring.message "hap.delete"/></span>
+</div>
+
+<div style="clear:both">
+    <div id="grid">
+    </div>
+</div>
+<script>
+viewModel.model.set('enableFlag','Y');
+var BaseUrl = _basePath;
+dataSource = new kendo.data.DataSource({
+    transport: {
+        read: {
+            url: BaseUrl + "/hqm/iqc/inspection/template/l/query",
+            type: "POST",
+            async: false,
+            dataType: "json"
+        },
+        update: {
+            url: BaseUrl + "/hqm/iqc/inspection/template/l/submit",
+            type: "POST",
+            async:false,
+            contentType: "application/json"
+        },
+        destroy: {
+            url: BaseUrl + "/hqm/iqc/inspection/template/l/remove",
+            type: "POST",
+            contentType: "application/json"
+        },
+        create: {
+            url: BaseUrl + "/hqm/iqc/inspection/template/l/submit",
+            type: "POST",
+            async: false,
+            contentType: "application/json"
+        },
+        parameterMap: function (options, type) {
+            if (type !== "read" && options.models) {
+                var datas = Hap.prepareSubmitParameter(options,type)
+                for (var i = 0; i < datas.length; i++) {
+                	datas[i].headerId = headerId;
+                }
+                return kendo.stringify(datas);
+            } else if (type === "read") {
+            	var queryModel = {
+            			headerId:headerId,
+            	}
+                return Hap.prepareQueryParameter(queryModel, options)
+            }
+        }
+    },
+    batch: true,
+    serverPaging: true,
+    pageSize: 20,
+    schema: {
+        data: 'rows',
+        total: 'total',
+        model: {
+            id: "lineId",
+            fields: {
+            	standradTo: {
+                    type: 'string',
+                    validation: {
+                        NoValidation:function(input){
+                        	var modelOption = grid.dataSource.data()[input.parent().parent().index()];
+                            if (input.is("[name='standradTo']") && input.val() != "") {
+//                                if((input.val())%1 !== 0){
+//                                  input.attr("data-NoValidation-msg", "请输入整数");
+//                                     return false;
+//                                 }
+								console.log(input.val());
+                               if((modelOption.standardType == 'M')&&(getPoint(input.val()) != modelOption.precision)){
+                            	   input.attr("data-NoValidation-msg", "<@spring.message 'hqm_iqc_inspection_template_precision_01'/>");
+                                   return false;
+                       			}
+                            }
+                            return true;
+                       },
+                        
+                    },
+                },
+            	orderCode:{
+            		type:'number',
+                    format: "{0:0}",
+                    validation: {
+                        min: 0,
+                        required:true,
+                        required: {message: "排序号为必输项"},
+                    },
+            	},
+            	enableType:{
+            		defaultValue:"D",
+            	},
+            	enableTime:{
+            		type:'date',
+                    validation: {
+                        required: true,
+                    },
+            	}
+            },
+            editable:function(column){
+            	return false;
+            }
+        }
+    }
+});
+</script>
+<script>
+var grid = $("#grid").kendoGrid({
+    dataSource: dataSource,
+    resizable: true,
+    autoBind:false,
+    autoResize:true,
+    scrollable: true,
+    navigatable: false,
+    rownumber:true,
+    selectable: 'multiple, rowbox',
+    dataBound: function () {
+    },
+    pageable: {
+        pageSizes: [5, 10, 20, 50],
+        refresh: true,
+        buttonCount: 5
+    },
+    columns: [
+                {
+            field: "inspectionAttribute",
+            title: '<@spring.message "iqcinspectiontemplatel.inspectionattribute"/>',//检验项名称LOV_HQM_INSPECTION_ATTRIBUTE
+            width: 180,
+            template: function (item) {
+                return item['inspectionAttribute'] || ''
+            },
+            editor: function (container, options) {
+	                $('<input name="' + options.field + '"/>')
+	                    .appendTo(container)
+	                    .kendoLov($.extend(<@lov "LOV_HQM_INSPECTION_ATTRIBUTE"/>, {
+	                    query: function (e) {
+	                    	var sourceType = viewModel.model.sourceType;
+	                    	e.param['sourceType'] = sourceType;
+	                        //e.param['plantId']= options.model.plantId;
+	                    },
+	                    textField: 'inspectionAttribute',
+	                    model: options.model,
+	                    change:function() {
+	                        var v = this.value();
+	                        if (v == undefined  || v == ""){
+	                        }else{
+	                            options.model.attributeId = this._dataItem.attributeId;
+	                            options.model.set('inspectionAttribute',this._dataItem.inspectionAttribute);
+	                            options.model.set('standardType',this._dataItem.standardType);
+	                            options.model.set('qualityCharacterGrade',this._dataItem.qualityCharacterGrade);
+	                            options.model.set('attributeType',this._dataItem.attributeType);
+	                            options.model.set('inspectionTool',this._dataItem.inspectionTool);
+	                            options.model.set('inspectionMethod',this._dataItem.inspectionMethod);
+	                            options.model.set('fillInType',this._dataItem.fillInType);
+	                        }
+	                    }
+	                }));
+            },
+            attributes: {style: "text-align:center;white-space:nowrap;"},
+            headerAttributes: {style: "text-align:center"}
+        },
+        {
+            field: "attributeType",
+            title: '<@spring.message "iqcinspectiontemplatel.attributetype"/>',//检验项类型  from look_up_code:HQM_IQC_ATTRIBUTE_CATEGORY
+            width: 120,
+            template: function (dataItem) {
+                var v = dataItem.attributeType ? dataItem.attributeType : "";
+                $.each(hqmIqcAttributeCategory, function (i, n) {
+                    if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                        v = n.meaning;
+                        return v;
+                    }
+                });
+                return v;
+            },
+            editor: function (container, options) {
+            		var v = options.model.attributeType ? options.model.attributeType : "";
+                	$.each(hqmIqcAttributeCategory, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                        }
+                    });
+                	$('<span">'+ v +'</span>').appendTo(container);
+            	
+            },
+            attributes: {style: "text-align:center"},
+            headerAttributes: {style: "text-align:center"}
+        }, 
+        {
+            field: "standardType",
+            title: '<@spring.message "iqcinspectiontemplatel.standardtype"/>',//规格类型   from look_up_code:HQM_IQC_STANDARD_TYPE
+            width: 120,
+            template: function (dataItem) {
+                var v = dataItem.standardType ? dataItem.standardType : "";
+                $.each(hqmIqcStandardType, function (i, n) {
+                    if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                        v = n.meaning;
+                        return v;
+                    }
+                });
+                return v;
+            },
+            editor: function (container, options) {
+            		var v = options.model.standardType ? options.model.standardType : "";
+                	console.log(options.model.standardType);
+                	$.each(hqmIqcStandardType, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                        }
+                    });
+                	$('<span">'+ v +'</span>').appendTo(container);
+            },
+            attributes: {style: "text-align:center"},
+            headerAttributes: {style: "text-align:center"}
+        },
+        {
+            field: "sampleWayCode",
+            title: '<@spring.message "iqcinspectiontemplatel.samplewaycode"/>',//抽样方式
+            width: 120,
+//             locked:true,
+            template: function (item) {
+                return item['sampleWayCode'] || ''
+            },
+            editor: function (container, options) {
+	                $('<input name="' + options.field + '"/>')
+	                    .appendTo(container)
+	                    .kendoLov($.extend(<@lov "LOV_SAMPLE_MANAGE"/>, {
+	                    query: function (e) {
+	                    	e.param['enableFlag'] = 'Y';
+	                    },
+	                    textField: 'sampleWayCode',
+	                    model: options.model,
+	                    change:function() {
+	                        var v = this.value();
+	                        if (v == undefined  || v == ""){
+	                        }else{
+	                            options.model.sampleWayId = this._dataItem.sampleWayId;
+	                            options.model.set('sampleWayCode',this._dataItem.sampleWayCode);
+	                            options.model.set('sampleProcedureType',this._dataItem.inspectionAttribute);
+	                            options.model.set('inspectionLevels',this._dataItem.standardType);
+	                            options.model.set('acceptanceQualityLimit',this._dataItem.qualityCharacterGrade);
+	                        }
+	                    }
+	                }));
+            },
+            attributes: {style: "text-align:center;white-space:nowrap;"},
+            headerAttributes: {style: "text-align:center"}
+        },
+        {
+            field: "inspectionTool",
+            title: '<@spring.message "iqcinspectiontemplatel.inspectiontool"/>',//检验工具
+            width: 120,
+            attributes: {style: "text-align:center"},
+            headerAttributes: {style: "text-align:center"},
+            editor: function (container, options) {
+            	if(options.model.enableType=='D'&&options.model.lineId!=null&&options.model.lineId!=undefined){
+            		$('<span data-bind="text:inspectionTool"></span>').appendTo(container);
+            	}else{
+            		$('<input type="text" class="k-input k-textbox" name="'+
+            				options.field+'" required="required" data-required-msg="无效输入" data-bind="value:'+
+            				options.field+'" >')
+                    .appendTo(container);
+            	}
+                
+            },
+        },
+        {
+            field: "inspectionMethod",
+            title: '<@spring.message "iqcinspectiontemplatel.inspectionmethod"/>',//检验方法
+            width: 120,
+            attributes: {style: "text-align:center"},
+            headerAttributes: {style: "text-align:center"},
+            template: function (dataItem) {
+                var v = dataItem.inspectionMethod ? dataItem.inspectionMethod : "";
+                $.each(HQM_INSPECTION_METHOD, function (i, n) {
+                    if (((n.value+'') || '').toLowerCase() == ((v+'') || '').toLowerCase()) {
+                        v = n.meaning;
+                        return v;
+                    }
+                })
+                return v;
+            },
+            editor: function (container, options) {
+                $('<input name="' + options.field + '"/>')
+                    .appendTo(container)
+                    .kendoDropDownList({
+                        dataTextField: "meaning",
+                        dataValueField: "value",
+                        valuePrimitive: true,
+                        dataSource: HQM_INSPECTION_METHOD
+                    });
+            },
+        },
+        {
+            field: "standradFrom",
+            title: '<@spring.message "iqcinspectiontemplatel.standradfrom"/>',//规格值从
+            width: 120,
+            attributes: {style: "text-align:center"},
+            headerAttributes: {style: "text-align:center"},
+            template:function(item){
+            	if(item.standardType=='D'){
+            		return isNotEmpty(item.standradFrom)?item.standradFrom:"";
+            	}else{
+            		var value = clearNoNum(item.standradFrom+'',item.precision)
+                	return isNotEmpty(value)?value:"";
+            	}
+            	
+            },
+            editor: function (container, options) {
+            	if(options.model.standardType=='D'){
+            		$('<span data-bind="text:standradFrom"></span>').appendTo(container);
+            	}else{
+            		$('<input required name="'+
+            				options.field+'" data-required-msg="必输" >')
+                    .appendTo(container).kendoMaskedTextBox({
+                    	change:function(){
+                    		var value = clearNoNumNoPrecision(this.value()+'');
+                    		options.model.set('precision',getPoint(value));
+                    		options.model.set('standradFrom', value);
+                    	}
+                    });
+            	}
+            },
+            
+        },
+        {
+            field: "standradTo",
+            title: '<@spring.message "iqcinspectiontemplatel.standradto"/>',//规格值至
+             width: 120,
+            attributes: {style: "text-align:center"},
+            headerAttributes: {style: "text-align:center"},
+            template:function(item){
+                if(item.standardType=='D'){
+                	return item.standradTo?item.standradTo:"";
+                }else{
+                	var value = clearNoNum(item.standradTo + '',item.precision)
+                    return value?value:"";
+                }
+              },
+            editor: function (container, options) {
+            	if(options.model.standardType=='D'){
+            		$('<span data-bind="text:standradTo"></span>').appendTo(container);
+            	}else{
+            		$('<input required name="'+
+            				options.field+'" data-required-msg="必输" ><span data-for="'+options.field+'" class=".k-invalid-msg"></span>')
+                    .appendTo(container).kendoMaskedTextBox({
+                    	change:function(){
+                    		var value = clearNoNumNoPrecision(this.value() + '');
+                    		options.model.set('standradTo', value);
+                    	}
+                    });
+            	}
+            },
+            
+        },
+        {
+            field: "standradUom",
+            title: '<@spring.message "iqcinspectiontemplatel.standraduom"/>',//规格单位 from look_up_code:HQM_STANDRAD_UOM
+            width: 120,
+            attributes: {style: "text-align:center"},
+            headerAttributes: {style: "text-align:center"},
+            template: function (dataItem) {
+                var v = dataItem.standradUom ? dataItem.standradUom : "";
+                $.each(hqmStandradUom, function (i, n) {
+                    if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                        v = n.meaning;
+                        return v;
+                    }
+                })
+                return v;
+            },
+            editor: function (container, options) {
+            	var v = options.model.standradUom ? options.model.standradUom : "";
+                $.each(hqmStandradUom, function (i, n) {
+                    if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                        v = n.meaning;
+                        return v;
+                    }
+                });
+            	if(options.model.standardType=='D'){
+            		$('<span>'+v+'</span>').appendTo(container);
+            	}else{
+            		$('<input required name="' + options.field + '"/>')
+                    .appendTo(container)
+                    .kendoDropDownList({
+                        dataTextField: "meaning",
+                        dataValueField: "value",
+                        valuePrimitive: true,
+                        dataSource: hqmStandradUom
+                    });
+            	}
+                
+            },
+            
+        },
+        {
+            field: "textStandrad",
+            title: '<@spring.message "iqcinspectiontemplatel.textstandrad"/>',//文本规格值
+             width: 180,
+            attributes: {style: "text-align:center"},
+            headerAttributes: {style: "text-align:center"},
+            editor: function (container, options) {
+            	if(options.model.standardType=='D'){
+            		$('<input data-role="maskedtextbox" class="k-input" name="'+
+            				options.field+'">').appendTo(container);
+            	}else{
+            		$('<span data-bind="text:textStandrad"></span>').appendTo(container);
+            	}
+                
+            },
+            
+        },
+        {
+            field: "qualityCharacterGrade",
+            title: '<@spring.message "iqcinspectiontemplatel.qualitycharactergrade"/>',//质量特性等级  from look_up_code: HQM_IQC_QUALITY_GRADE
+           width: 120,
+            template: function (dataItem) {
+                var v = dataItem.qualityCharacterGrade ? dataItem.qualityCharacterGrade : "";
+                $.each(hqmIqcQualityGrade, function (i, n) {
+                    if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                        v = n.meaning;
+                        return v;
+                    }
+                });
+                return v;
+            },
+            editor: function (container, options) {
+            		var v = options.model.qualityCharacterGrade ? options.model.qualityCharacterGrade : "";
+                	$.each(hqmIqcQualityGrade, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                        }
+                    });
+                	$('<span">'+ v +'</span>').appendTo(container);
+            },
+            attributes: {style: "text-align:center"},
+            headerAttributes: {style: "text-align:center"}
+        },
+        
+        
+                {
+            field: "enableType",
+            title: '<@spring.message "iqcinspectiontemplatel.enabletype"/>',//生效类型     from look_up_code:HQM_IQC_ENABLE_TYPE
+             width: 120,
+            attributes: {style: "text-align:center"},
+            headerAttributes: {style: "text-align:center"},
+            template: function (dataItem) {
+                var v = dataItem.enableType ? dataItem.enableType : "";
+                $.each(hqmIqcEnableType, function (i, n) {
+                    if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                        v = n.meaning;
+                        return v;
+                    }
+                });
+                return v;
+            },
+            editor: function (container, options) {
+                $('<input name="' + options.field + '"/>')
+                    .appendTo(container)
+                    .kendoComboBox({
+                        dataTextField: "meaning",
+                        dataValueField: "value",
+                        valuePrimitive: true,
+                        dataSource:hqmIqcEnableType
+                    });
+            },
+        },   
+        {
+            field: "enableTime",
+            title: '<@spring.message "iqcinspectiontemplatel.enabletime"/>',//生效时间
+          width: 180,
+            attributes: {style: "text-align:center"},
+            headerAttributes: {style: "text-align:center"},
+            format: "{0:yyyy-MM-dd HH:mm:ss}",
+            editor: function (container, options) {
+                $('<input required name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDateTimePicker();
+            },
+            
+        },
+                {
+            field: "disableTime",
+            title: '<@spring.message "iqcinspectiontemplatel.disabletime"/>',//失效时间
+            width: 180,
+            attributes: {style: "text-align:center"},
+            headerAttributes: {style: "text-align:center"},
+            format: "{0:yyyy-MM-dd HH:mm:ss}",
+            editor: function (container, options) {
+                $('<input name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDateTimePicker();
+            },
+            
+            
+        },
+                {
+            field: "isSync",
+            title: '<@spring.message "iqcinspectiontemplatel.issync"/>',//是否为同步检验项
+             width: 120,
+            attributes: {style: "text-align:center"},
+            headerAttributes: {style: "text-align:center"},
+            template: function (dataItem) {
+                var v = dataItem.isSync ? dataItem.isSync : "";
+                $.each(yesNo, function (i, n) {
+                    if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                        v = n.meaning;
+                        return v;
+                    }
+                })
+                return v;
+            },
+            editor: function (container, options) {
+                $('<input name="' + options.field + '"/>')
+                    .appendTo(container)
+                    .kendoDropDownList({
+                        dataTextField: "meaning",
+                        dataValueField: "value",
+                        valuePrimitive: true,
+                        dataSource: yesNo
+                    });
+            },
+        },
+        
+        {
+            field: "remark",
+            title: '<@spring.message "iqcinspectiontemplatel.remark"/>',//备注
+             width: 240,
+            attributes: {style: "text-align:center"},
+            headerAttributes: {style: "text-align:center"},
+            editor: function (container, options) {
+            	if(options.model.enableType=='D'&&options.model.lineId!=null&&options.model.lineId!=undefined){
+            		$('<span data-bind="text:remark"></span>').appendTo(container);
+            	}else{
+            		$('<input type="text" class="k-input k-textbox" name="'+
+            				options.field+'" required="required" data-required-msg="无效输入" data-bind="value:'+
+            				options.field+'" >')
+                    .appendTo(container);
+            	}
+            },
+        },
+                
+    ],
+    editable: true
+}).data('kendoGrid');
+</script>
+
+<script>
+
+	$('#deleteButton').on('click', function () {
+		var selectedDataItems = grid.selectedDataItems();
+		$.each(selectedDataItems,function(i,v){
+			grid.dataSource.data().remove(v);
+		});
+	});
+	function replaceValue(obj1,obj2){
+		console.log(obj1);
+		console.log(obj2);
+    	var content1 = {};
+    	console.log(content1);
+    	for(var name in JSON.parse(JSON.stringify(obj2))){
+    		if(name == "uid"||name == "lineId"||name == "_token")continue;
+    		content1[name] = obj2[name];
+    	}
+
+    	for(var name in JSON.parse(JSON.stringify(obj1))){
+    		if(name == "uid"||name == "lineId"||name == "_token")continue;
+    		obj2.set(name,null);
+    		obj2.set(name,obj1[name]);
+    	}
+ 
+    	for(var name in JSON.parse(JSON.stringify(content1))){
+    		if(name == "uid"||name == "lineId"||name == "_token")continue;
+    		obj1.set(name,null);
+    		obj1.set(name,content1[name]);
+    	}
+
+    }
+	</script>
+	<script>
+    var initMinDate = new Date(1900, 0, 1);
+    var initMaxDate = new Date(2099, 11, 31);
+	//验证
+	$("#mainform").kendoValidator({
+    	messages: {
+            required: '<@spring.message "hap.validation.notempty"/>'
+    	},
+		invalidMessageType : "tooltip"
+    });
+</script>
+
+<script>
+var pageNumber = 1;
+var onePageCount = 20;
+function pageOne(){
+	var columns = grid.columns.length;
+	for(var columnIndex=columns-1;columnIndex>(onePageCount+2);columnIndex--){
+		grid.hideColumn(columnIndex);
+	}
+	for(var columnIndex=2;columnIndex<=(onePageCount+2);columnIndex++){
+		grid.showColumn(columnIndex);
+	}
+}
+function pageTwo(){
+	var columns = grid.columns.length;
+	for(var columnIndex=2;columnIndex<=(onePageCount+2);columnIndex++){
+		grid.hideColumn(columnIndex);
+	}
+	for(var columnIndex=columns-1;columnIndex>(onePageCount+2);columnIndex--){
+		grid.showColumn(columnIndex);
+	}
+}
+function togglePage(){
+	var columns = grid.columns.length;
+	if(pageNumber == 0){
+		for(var columnIndex=0;columnIndex<=(onePageCount+2);columnIndex++){
+			grid.hideColumn(columnIndex);
+		}
+		for(var columnIndex=columns-1;columnIndex>(onePageCount+2);columnIndex--){
+			grid.showColumn(columnIndex);
+		}
+		pageNumber = 1;
+	}else{
+		for(var columnIndex=columns-1;columnIndex>(onePageCount+2);columnIndex--){
+			grid.hideColumn(columnIndex);
+		}
+		for(var columnIndex=0;columnIndex<=(onePageCount+2);columnIndex++){
+			grid.showColumn(columnIndex);
+		}
+		pageNumber = 0;
+	}
+}
+</script>
+<script>
+$(function(){
+	$('#grid').height(window.innerHeight*55/100).width(window.innerWidth*99/100);
+	getHeaderInfo();
+	togglePage();
+});
+</script>
+</body>
+</html>

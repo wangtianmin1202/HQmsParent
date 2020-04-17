@@ -1,0 +1,1049 @@
+<#include "../include/header.html">
+<!--
+ * @description: 8D打印
+ * @author: tianmin.wang
+ * @date: 20190911
+ -->
+<script src="${base.contextPath}/common/code?HQM_8D_MEMBER_ROLE=HQM_8D_MEMBER_ROLE"></script>
+<script src="${base.contextPath}/common/code?HQM_8D_PROBLEM_SOURCE=HQM_8D_PROBLEM_SOURCE"></script>
+<script src="${base.contextPath}/common/code?HQM_8D_PROBLEM_LEVEL=HQM_8D_PROBLEM_LEVEL"></script>
+<script src="${base.contextPath}/common/code?HQM_8D_ACTION_STATUS=HQM_8D_ACTION_STATUS"></script>
+ <style> 
+	div{
+	font-size:12px;
+	} 
+	span{
+	font-size:10px;
+	}
+	td{
+	font-size:10px;
+	}
+	th{
+	font-size:12px;
+	}
+</style> 
+<script type="text/javascript">
+	
+	var orderId = "${RequestParameters.orderId!'-1'}";
+	var printFlag = "${RequestParameters.printFlag!'N'}";
+	var ngOk = [{meaning:"OK",value:"OK"},{meaning:"NG",value:"NG"}];
+	var dimensionOrder = {};
+</script>
+<body>
+<div style="width:100%">
+<div id="pageDiv" style="width:100%;">
+</div>
+</div>
+<script type="text/javascript">
+	function getMeaningByValue(meaning,datasource){
+		var v = meaning ? meaning : "";
+        $.each(datasource, function (i, n) {
+            if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                v = n.meaning;
+                return v;
+            }
+        })
+        return v;
+	}
+</script>
+<!-- dimensionMain -->
+<script>
+function getDimensionInfo(){
+	if(orderId=="-1")return;
+	$.ajax({
+        url: '${base.contextPath}/hqm/8d/order/select',
+        type: 'POST',
+        data: {
+        	orderId:orderId,
+        },
+        async: false,
+        dataType: "json",
+        success: function (response) {
+            if (response.success) {
+            	if(response.rows.length>0){
+            		dimensionOrder = response.rows[0];
+            	}
+            } else {
+            	
+            }
+        }
+    });
+}
+function appendTitle(){
+	//大标题
+	var array = new Array();
+    array.push("<table style='width: 100%;color: black;'>");
+    array.push("<tr style='width: 100%'>");
+    array.push("<th style='width: 40%';text-align:center;>");
+    array.push("</th>");
+    array.push("<th style='width: 30%';text-align:center;>");
+    array.push("<span style='font-size:16px;'>8D报告</span>");
+    array.push("</th>");
+    array.push("<th style='width: 30%';text-align:left;>");
+    array.push("<span style='font-size:14px;'>No.:"+dimensionOrder.orderCode+"</span>");
+    array.push("</th>");
+    array.push("</tr>");
+    array.push(" </table>");
+    $('#pageDiv').append(array.join(''));
+}
+function appendTitleContent(){
+	//8D主信息内容
+	var array = new Array();
+	array.push("<table style='width: 100%;color: black;'>");
+    array.push("<tr style='width: 100%'>");
+    array.push("<td style='width: 11%;text-align:center;border-top: 1px solid black;border-left: 1px solid black;border-right: 1px solid black;'>");
+    array.push("<span>8D主题:</span>");
+    array.push("</td>");
+    array.push("<td style='width: 22%;text-align:center;border-top: 1px solid black;border-right: 1px solid black;'>");
+    array.push("<span>"+dimensionOrder.orderTheme+"</span>");
+    array.push("</td>");
+    array.push("<td style='width: 11%;text-align:center;border-top: 1px solid black;border-left: 1px solid black;border-right: 1px solid black;'>");
+    array.push("<span>8D进程:</span>");
+    array.push("</td>");
+    array.push("<td style='width: 22%;text-align:center;border-top: 1px solid black;border-right: 1px solid black;'>");
+    array.push("<span>"+dimensionOrder.orderProcess+"</span>");
+    array.push("</td>");
+    array.push("<td style='width: 11%;text-align:center;border-top: 1px solid black;border-left: 1px solid black;border-right: 1px solid black;'>");
+    array.push("<span>创建时间:</span>");
+    array.push("</td>");
+    array.push("<td style='width: 22%;text-align:center;border-top: 1px solid black;border-right: 1px solid black;'>");
+    array.push("<span>"+dimensionOrder.createDate+"</span>");
+    array.push("</td>");
+    array.push("</tr>");
+    array.push("<tr style='width: 100%'>");
+    array.push("<td style='width: 11%;text-align:center;border-top: 1px solid black;border-left: 1px solid black;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+    array.push("<span>来源单据:</span>");
+    array.push("</td>");
+    array.push("<td style='width: 22%;text-align:center;border-top: 1px solid black;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+    array.push("<span>"+dimensionOrder.sourceOrder+"</span>");
+    array.push("</td>");
+    array.push("<td style='width: 11%;text-align:center;border-top: 1px solid black;border-left: 1px solid black;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+    array.push("<span>发起人:</span>");
+    array.push("</td>");
+    array.push("<td style='width: 22%;text-align:center;border-top: 1px solid black;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+    array.push("<span>"+dimensionOrder.createName+"</span>");
+    array.push("</td>");
+    array.push("<td style='width: 11%;text-align:center;border-top: 1px solid black;border-left: 1px solid black;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+    array.push("<span>预计完成时间:</span>");
+    array.push("</td>");
+    array.push("<td style='width: 22%;text-align:center;border-top: 1px solid black;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+    array.push("<span>"+dimensionOrder.createDate+"</span>");
+    array.push("</td>");
+    array.push("</tr>");
+    array.push(" </table>");
+    $('#pageDiv').append(array.join(''));
+}
+</script>
+<!-- 1dimension teamAssembled-->
+<script>
+var teamAssembledArray = new Array();
+function getTeamAssembled(){
+	if(orderId=="-1")return;
+	$.ajax({
+        url: '${base.contextPath}/hqm/8d/team/assembled/select',
+        type: 'POST',
+        data: {
+        	orderId:orderId,
+        },
+        async: false,
+        dataType: "json",
+        success: function (response) {
+            if (response.success) {
+            	if(response.rows.length>0){
+            		teamAssembledArray = response.rows;
+            	}
+            }
+        }
+    });
+}
+function appendTeamAssembledTitle(){
+	//D1标题
+	var array = new Array();
+    array.push("<table style='width: 100%;color: black;'>");
+    array.push("<tr style='width: 100%'>");
+    array.push("<th style='width: 100%;border-left: 1px solid black;border-right: 1px solid black;'>");
+    array.push("<span style='font-size:12px;'>D1&nbsp;团队组建&nbsp;Team&nbsp;Assembled</span>");
+    array.push("</th>");
+    array.push("</tr>");
+    array.push(" </table>");
+    array.push("<table id='teamAssembled' style='width: 100%;color: black;'>");
+    array.push("<tr style='width: 100%'>");
+    array.push("<th style='width: 5%;text-align:center;border: 1px solid black;'>");
+    array.push("<span>NO</span>");
+    array.push("</th>");
+    array.push("<th style='width: 10%;text-align:center;border: 1px solid black;'>");
+    array.push("<span>角色</span>");
+    array.push("</th>");
+    array.push("<th style='width: 15%;text-align:center;border-top: 1px solid black;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+    array.push("<span>部门</span>");
+    array.push("</th>");
+    array.push("<th style='width: 10%;text-align:center;border-top: 1px solid black;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+    array.push("<span>职位</span>");
+    array.push("</th>");
+    array.push("<th style='width: 10%;text-align:center;border-top: 1px solid black;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+    array.push("<span>姓名</span>");
+    array.push("</th>");
+    array.push("<th style='width: 35%;text-align:center;border-top: 1px solid black;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+    array.push("<span>邮件</span>");
+    array.push("</th>");
+    array.push("<th style='width: 15%;text-align:center;border-top: 1px solid black;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+    array.push("<span>电话</span>");
+    array.push("</th>");
+    array.push("</tr>");
+    array.push(" </table>");
+    $('#pageDiv').append(array.join(''));
+}
+function appendTeamAssembledContent(){
+	//D1内容
+	var array = new Array();
+	$.each(teamAssembledArray,function(index,element){
+		array.push("<tr style='width: 100%'>");
+		array.push("<td style='width: 5%;text-align:center;border-right: 1px solid black;border-left: 1px solid black;border-bottom: 1px solid black;'>");
+	    array.push("<span>"+(index+1)+"</span>");
+	    array.push("</td>");
+	    array.push("<td style='width: 10%;text-align:center;border-right: 1px solid black;border-left: 1px solid black;border-bottom: 1px solid black;'>");
+	    array.push("<span>"+getMeaningByValue(element.memberRole,HQM_8D_MEMBER_ROLE)+"</span>");
+	    array.push("</td>");
+	    array.push("<td style='width: 15%;text-align:center;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+	    array.push("<span>"+element.orgUnitDes+"</span>");
+	    array.push("</td>");
+	    array.push("<td style='width: 10%;text-align:center;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+	    array.push("<span>"+element.orgPositionName+"</span>");
+	    array.push("</td>");
+	    array.push("<td style='width: 10%;text-align:center;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+	    array.push("<span>"+element.employeeName+"</span>");
+	    array.push("</td>");
+	    array.push("<td style='width: 35%;text-align:center;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+	    array.push("<span>"+element.employeeEmail+"</span>");
+	    array.push("</td>");
+	    array.push("<td style='width: 15%;text-align:center;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+	    array.push("<span>"+element.employeeMobil+"</span>");
+	    array.push("</td>");
+	    array.push("</tr>");
+	});
+	$('#teamAssembled').append(array.join(''));
+}
+</script>
+<!-- 2dimension -->
+<script>
+var problemDescription = {};
+function getProblemDescriptionInfo(){
+	//D2信息
+	if(orderId=="-1")return;
+	$.ajax({
+        url: '${base.contextPath}/hqm/8d/problem/description/select',
+        type: 'POST',
+        data: {
+        	orderId:orderId,
+        },
+        async: false,
+        dataType: "json",
+        success: function (response) {
+            if (response.success) {
+            	if(response.rows.length>0){
+            		problemDescription = response.rows[0];
+            	}
+            }
+        }
+    });
+}
+function appendProblemDescriptionTitle(){
+	//D2标题
+	var array = new Array();
+    array.push("<table style='width: 100%;color: black;'>");
+    array.push("<tr style='width: 100%'>");
+    array.push("<th style='width: 100%;border-left: 1px solid black;border-right: 1px solid black;'>");
+    array.push("<span style='font-size:12px;'>D2&nbsp;问题描述&nbsp;Problem&nbsp;Description</span>");
+    array.push("</th>");
+    array.push("</tr>");
+    array.push(" </table>");
+    array.push("<table id='problemDescription' style='width: 100%;color: black;'>");
+    array.push(" </table>");
+    $('#pageDiv').append(array.join(''));
+}
+function appendProblemDescriptionContent(){
+	//D2内容
+	var array = new Array();
+    array.push("<tr style='width: 100%'>");
+    array.push("<td style='width: 11%;text-align:center;border-top: 1px solid black;border-left: 1px solid black;border-right: 1px solid black;'>");
+    array.push("<span>物料编码:</span>");
+    array.push("</td>");
+    array.push("<td style='width: 22%;text-align:center;border-top: 1px solid black;border-right: 1px solid black;'>");
+    array.push("<span>"+problemDescription.itemCode+"</span>");
+    array.push("</td>");
+    array.push("<td style='width: 11%;text-align:center;border-top: 1px solid black;border-left: 1px solid black;border-right: 1px solid black;'>");
+    array.push("<span>物料描述:</span>");
+    array.push("</td>");
+    array.push("<td style='width: 22%;text-align:center;border-top: 1px solid black;border-right: 1px solid black;'>");
+    array.push("<span>"+problemDescription.itemDescriptions+"</span>");
+    array.push("</td>");
+    array.push("<td style='width: 11%;text-align:center;border-top: 1px solid black;border-left: 1px solid black;border-right: 1px solid black;'>");
+    array.push("<span>问题来源:</span>");
+    array.push("</td>");
+    array.push("<td style='width: 22%;text-align:center;border-top: 1px solid black;border-right: 1px solid black;'>");
+    array.push("<span>"+getMeaningByValue(problemDescription.problemSource,HQM_8D_PROBLEM_SOURCE)+"</span>");
+    array.push("</td>");
+    array.push("</tr>");
+    
+    array.push("<tr style='width: 100%'>");
+    array.push("<td style='width: 11%;text-align:center;border-top: 1px solid black;border-left: 1px solid black;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+    array.push("<span>零件编码:</span>");
+    array.push("</td>");
+    array.push("<td style='width: 22%;text-align:center;border-top: 1px solid black;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+    array.push("<span>"+problemDescription.itemComponentCode+"</span>");
+    array.push("</td>");
+    array.push("<td style='width: 11%;text-align:center;border-top: 1px solid black;border-left: 1px solid black;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+    array.push("<span>零件描述:</span>");
+    array.push("</td>");
+    array.push("<td style='width: 22%;text-align:center;border-top: 1px solid black;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+    array.push("<span>"+problemDescription.itemComponentDescriptions+"</span>");
+    array.push("</td>");
+    array.push("<td style='width: 11%;text-align:center;border-top: 1px solid black;border-left: 1px solid black;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+    array.push("<span>问题等级:</span>");
+    array.push("</td>");
+    array.push("<td style='width: 22%;text-align:center;border-top: 1px solid black;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+    array.push("<span>"+getMeaningByValue(problemDescription.problemLevel,HQM_8D_PROBLEM_LEVEL)+"</span>");
+    array.push("</td>");
+    array.push("</tr>");
+    
+    array.push("<tr style='width: 100%'>");
+    array.push("<td style='width: 11%;text-align:center;border-top: 1px solid black;border-left: 1px solid black;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+    array.push("<span>问题数量:</span>");
+    array.push("</td>");
+    array.push("<td style='width: 22%;text-align:center;border-top: 1px solid black;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+    array.push("<span>"+problemDescription.problemQty+"</span>");
+    array.push("</td>");
+    array.push("<td style='width: 11%;text-align:center;border-top: 1px solid black;border-left: 1px solid black;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+    array.push("<span>产线:</span>");
+    array.push("</td>");
+    array.push("<td style='width: 22%;text-align:center;border-top: 1px solid black;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+    array.push("<span>"+problemDescription.prodLineCode?problemDescription.prodLineCode:''+"</span>");
+    array.push("</td>");
+    array.push("<td style='width: 11%;text-align:center;border-top: 1px solid black;border-left: 1px solid black;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+    array.push("<span>发生时间:</span>");
+    array.push("</td>");
+    array.push("<td style='width: 22%;text-align:center;border-top: 1px solid black;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+    array.push("<span>"+problemDescription.occurTime?problemDescription.occurTime:""+"</span>");
+    array.push("</td>");
+    array.push("</tr>");
+    
+    array.push("<tr style='width: 100%'>");
+    array.push("<td style='width: 11%;text-align:center;border-top: 1px solid black;border-left: 1px solid black;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+    array.push("<span>不良代码组:</span>");
+    array.push("</td>");
+    array.push("<td style='width: 22%;text-align:center;border-top: 1px solid black;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+    array.push("<span>"+problemDescription.ngGroupCode+"</span>");
+    array.push("</td>");
+    array.push("<td style='width: 11%;text-align:center;border-top: 1px solid black;border-left: 1px solid black;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+    array.push("<span>不良代码:</span>");
+    array.push("</td>");
+    array.push("<td style='width: 22%;text-align:center;border-top: 1px solid black;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+    array.push("<span>"+problemDescription.ngMemberCode+"</span>");
+    array.push("</td>");
+    array.push("<td style='width: 11%;text-align:center;border-top: 1px solid black;border-left: 1px solid black;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+    array.push("<span>发生地点:</span>");
+    array.push("</td>");
+    array.push("<td style='width: 22%;text-align:center;border-top: 1px solid black;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+    array.push("<span>"+problemDescription.occurPlace?problemDescription.occurPlace:""+"</span>");
+    array.push("</td>");
+    array.push("</tr>");
+    
+    array.push("<tr style='width: 100%'>");
+    array.push("<td style='width: 11%;text-align:center;border-top: 1px solid black;border-left: 1px solid black;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+    array.push("<span>供应商:</span>");
+    array.push("</td>");
+    array.push("<td style='width: 22%;text-align:center;border-top: 1px solid black;border-bottom: 1px solid black;'>");
+    array.push("<span>"+problemDescription.supplierCode?problemDescription.supplierCode:""+"</span>");
+    array.push("</td>");
+    array.push("<td style='width: 11%;text-align:center;border-top: 1px solid black;border-bottom: 1px solid black;'>");
+    array.push("</td>");
+    array.push("<td style='width: 22%;text-align:center;border-top: 1px solid black;border-bottom: 1px solid black;'>");
+    array.push("</td>");
+    array.push("<td style='width: 11%;text-align:center;border-top: 1px solid black;border-bottom: 1px solid black;'>");
+    array.push("</td>");
+    array.push("<td style='width: 22%;text-align:center;border-top: 1px solid black;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+    array.push("</td>");
+    array.push("</tr>");
+    array.push("<tr style='width: 100%'>");
+    array.push("<td style='width: 11%;text-align:center;border-top: 1px solid black;border-left: 1px solid black;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+    array.push("<span>问题描述:</span>");
+    array.push("</td>");
+    array.push("<td style='width: 22%;text-align:center;border-top: 1px solid black;border-bottom: 1px solid black;'>");
+    array.push("<span>"+problemDescription.problemDescription?problemDescription.problemDescription:''+"</span>");
+    array.push("</td>");
+    array.push("<td style='width: 11%;text-align:center;border-top: 1px solid black;border-bottom: 1px solid black;'>");
+    array.push("</td>");
+    array.push("<td style='width: 22%;text-align:center;border-top: 1px solid black;border-bottom: 1px solid black;'>");
+    array.push("</td>");
+    array.push("<td style='width: 11%;text-align:center;border-top: 1px solid black;border-bottom: 1px solid black;'>");
+    array.push("</td>");
+    array.push("<td style='width: 22%;text-align:center;border-top: 1px solid black;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+    array.push("</td>");
+    array.push("</tr>");
+	$('#problemDescription').append(array.join(''));
+}
+</script>
+
+<!-- 3dimension immediateActions -->
+<script>
+var immediateActionsHeadArray = new Array();
+function getActionsHead(){
+	if(orderId=="-1")return;
+	$.ajax({
+        url: '${base.contextPath}/hqm/8d/immediate/actions/head/query',
+        type: 'POST',
+        data: {
+        	orderId:orderId,
+        },
+        async: false,
+        dataType: "json",
+        success: function (response) {
+            if (response.success) {
+            	if(response.rows.length>0){
+            		immediateActionsHeadArray = response.rows;
+            	}
+            }
+        }
+    });
+}
+function getActionsLine(headActionId){
+	var lineArray = new Array();
+	if(orderId=="-1")return;
+	$.ajax({
+        url: '${base.contextPath}/hqm/8d/immediate/actions/line/query',
+        type: 'POST',
+        data: {
+        	headActionId:headActionId,
+        },
+        async: false,
+        dataType: "json",
+        success: function (response) {
+            if (response.success) {
+            	if(response.rows.length>0){
+            		lineArray = response.rows;
+            	}
+            }
+        }
+    });
+	return lineArray;
+}
+function appendImmediateActionsTitle(){
+	//D3标题
+	var array = new Array();
+    array.push("<table style='width: 100%;color: black;'>");
+    array.push("<tr style='width: 100%'>");
+    array.push("<th style='width: 100%;border-left: 1px solid black;border-right: 1px solid black;'>");
+    array.push("<span style='font-size:12px;'>D3&nbsp;临时措施&nbsp;Immediate&nbsp;Actions</span>");
+    array.push("</th>");
+    array.push("</tr>");
+    array.push(" </table>");
+    array.push("<table id='immediateActions' style='width: 100%;color: black;'>");
+    array.push("<tr style='width: 100%'>");
+    array.push("<th style='width: 10%;text-align:center;border: 1px solid black;'>");
+    array.push("<span>主措施</span>");
+    array.push("</th>");
+    array.push("<th style='width: 15%;text-align:center;border-top: 1px solid black;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+    array.push("<span>实施的临时措施</span>");
+    array.push("</th>");
+    array.push("<th style='width: 15%;text-align:center;border-top: 1px solid black;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+    array.push("<span>措施说明</span>");
+    array.push("</th>");
+    array.push("<th style='width: 20%;text-align:center;border-top: 1px solid black;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+    array.push("<span>计划执行时间</span>");
+    array.push("</th>");
+    array.push("<th style='width: 20%;text-align:center;border-top: 1px solid black;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+    array.push("<span>实际执行时间</span>");
+    array.push("</th>");
+    array.push("<th style='width: 10%;text-align:center;border-top: 1px solid black;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+    array.push("<span>措施状态</span>");
+    array.push("</th>");
+    array.push("<th style='width: 10%;text-align:center;border-top: 1px solid black;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+    array.push("<span>备注</span>");
+    array.push("</th>");
+    array.push("</tr>");
+    array.push(" </table>");
+    $('#pageDiv').append(array.join(''));
+}
+function appendImmediateActionsContent(){
+	//D3内容
+	var array = new Array();
+	$.each(immediateActionsHeadArray,function(index,element){
+		var lineArray = new Array();
+		lineArray = getActionsLine(element.headActionId);
+		if(lineArray.length == 0){
+		array.push("<tr style='width: 100%'>");
+	    array.push("<td style='width: 10%;text-align:center;border-right: 1px solid black;border-left: 1px solid black;border-bottom: 1px solid black;'>");
+	    array.push("<span>"+element.immediateAction+"</span>");
+	    array.push("</td>");
+	    array.push("<td style='width: 15%;text-align:center;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+	    array.push("<span></span>");
+	    array.push("</td>");
+	    array.push("<td style='width: 15%;text-align:center;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+	    array.push("<span></span>");
+	    array.push("</td>");
+	    array.push("<td style='width: 20%;text-align:center;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+	    array.push("<span></span>");
+	    array.push("</td>");
+	    array.push("<td style='width: 20%;text-align:center;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+	    array.push("<span></span>");
+	    array.push("</td>");
+	    array.push("<td style='width: 10%;text-align:center;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+	    array.push("<span></span>");
+	    array.push("</td>");
+	    array.push("<td style='width: 10%;text-align:center;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+	    array.push("<span></span>");
+	    array.push("</td>");
+	    array.push("</tr>");
+		}else{
+			$.each(lineArray,function(idx,ele){
+				array.push("<tr style='width: 100%'>");
+				if(idx == 0){
+					array.push("<td rowspan='"+lineArray.length+"' style='width: 10%;text-align:center;border-right: 1px solid black;border-left: 1px solid black;border-bottom: 1px solid black;'>");
+				    array.push("<span>"+element.immediateAction+"</span>");
+				    array.push("</td>");
+				}
+			    array.push("<td style='width: 15%;text-align:center;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+			    array.push("<span>"+ele.executeImmediateAction+"</span>");
+			    array.push("</td>");
+			    array.push("<td style='width: 15%;text-align:center;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+			    array.push("<span>"+ele.actionDescription?ele.actionDescription:""+"</span>");
+			    array.push("</td>");
+			    array.push("<td style='width: 20%;text-align:center;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+			    array.push("<span>"+ele.planTime+"</span>");
+			    array.push("</td>");
+			    array.push("<td style='width: 20%;text-align:center;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+			    array.push("<span>"+ele.actualTime?ele.actualTime:""+"</span>");
+			    array.push("</td>");
+			    array.push("<td style='width: 10%;text-align:center;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+			    array.push("<span>"+getMeaningByValue(ele.actionStatus,HQM_8D_ACTION_STATUS)+"</span>");
+			    array.push("</td>");
+			    array.push("<td style='width: 10%;text-align:center;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+			    array.push("<span>"+ele.remark?ele.remark:""+"</span>");
+			    array.push("</td>");
+			    array.push("</tr>");
+			});
+		}
+	});
+	$('#immediateActions').append(array.join(''));
+}
+</script>
+
+<!-- 4dimension rootCause -->
+<script>
+var rootCauseArray = new Array();
+function getRootCause(rcauseId){
+	if(orderId=="-1")return;
+	$.ajax({
+        url: '${base.contextPath}/hqm/8d/root/cause/l/query',
+        type: 'POST',
+        data: {
+        	rcauseId:rcauseId,
+        },
+        async: false,
+        dataType: "json",
+        success: function (response) {
+            if (response.success) {
+            	if(response.rows.length>0){
+            		rootCauseArray = response.rows;
+            	}
+            }
+        }
+    });
+}
+function getRootCauseHead(){
+	var rcauseId = -1;
+	//D4info
+	if(orderId=="-1")return;
+	$.ajax({
+        url: '${base.contextPath}/hqm/8d/root/cause/query',
+        type: 'POST',
+        data: {
+        	orderId:orderId,
+        },
+        async: false,
+        dataType: "json",
+        success: function (response) {
+            if (response.success) {
+            	if(response.rows.length>0){
+            		rcauseId = response.rows[0].rcauseId;
+            		getRootCause(rcauseId);
+            	}
+            }
+        }
+    });
+}
+
+function appendRootCauseTitle(){
+	//D4标题
+	var array = new Array();
+    array.push("<table style='width: 100%;color: black;'>");
+    array.push("<tr style='width: 100%'>");
+    array.push("<th style='width: 100%;border-left: 1px solid black;border-right: 1px solid black;'>");
+    array.push("<span style='font-size:12px;'>D4&nbsp;原因分析 Root&nbsp;Cause&nbsp;Analysis</span>");
+    array.push("</th>");
+    array.push("</tr>");
+    array.push(" </table>");
+    array.push("<table id='rootCause' style='width: 100%;color: black;'>");
+    array.push("<tr style='width: 100%'>");
+    array.push("<th style='width: 5%;text-align:center;border: 1px solid black;'>");
+    array.push("<span>NO</span>");
+    array.push("</th>");
+    array.push("<th style='width: 70%;text-align:center;border-top: 1px solid black;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+    array.push("<span>根本原因</span>");
+    array.push("</th>");
+    array.push("<th style='width: 25%;text-align:center;border-top: 1px solid black;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+    array.push("<span>提出者</span>");
+    array.push("</th>");
+    array.push("</tr>");
+    array.push(" </table>");
+    $('#pageDiv').append(array.join(''));
+}
+function appendRootCauseContent(){
+	//D4内容
+	var array = new Array();
+	$.each(rootCauseArray,function(index,element){
+		array.push("<tr style='width: 100%'>");
+	    array.push("<td style='width: 5%;text-align:center;border-right: 1px solid black;border-left: 1px solid black;border-bottom: 1px solid black;'>");
+	    array.push("<span>"+(index+1)+"</span>");
+	    array.push("</td>");
+	    array.push("<td style='width: 70%;text-align:center;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+	    array.push("<span>"+element.causeItem+"</span>");
+	    array.push("</td>");
+	    array.push("<td style='width: 25%;text-align:center;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+	    array.push("<span>"+element.employeeName+"</span>");
+	    array.push("</td>");
+	    array.push("</tr>");
+	});
+	$('#rootCause').append(array.join(''));
+}
+</script>
+
+<!-- 5dimension improvingActions -->
+<script>
+var improvingActions = new Array();
+function getImprovingActions(){
+	var rcauseId = -1;
+	//D5info
+	if(orderId=="-1")return;
+	$.ajax({
+        url: '${base.contextPath}/hqm/8d/improving/actions/select',
+        type: 'POST',
+        data: {
+        	orderId:orderId,
+        },
+        async: false,
+        dataType: "json",
+        success: function (response) {
+            if (response.success) {
+            	if(response.rows.length>0){
+            		improvingActions = response.rows;
+            	}
+            }
+        }
+    });
+}
+function appendImprovingActionsTitle(){
+	//D5标题
+	var array = new Array();
+    array.push("<table style='width: 100%;color: black;'>");
+    array.push("<tr style='width: 100%'>");
+    array.push("<th style='width: 100%;border-left: 1px solid black;border-right: 1px solid black;'>");
+    array.push("<span style='font-size:12px;'>D5&nbsp;长期措施&nbsp;Permanent&nbsp;Corrective&nbsp;Action</span>");
+    array.push("</th>");
+    array.push("</tr>");
+    array.push(" </table>");
+    array.push("<table id='improvingActions' style='width: 100%;color: black;'>");
+    array.push("<tr style='width: 100%'>");
+    array.push("<th style='width: 5%;text-align:center;border: 1px solid black;'>");
+    array.push("<span>NO</span>");
+    array.push("</th>");
+    array.push("<th style='width: 20%;text-align:center;border-top: 1px solid black;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+    array.push("<span>措施</span>");
+    array.push("</th>");
+    array.push("<th style='width: 45%;text-align:center;border-top: 1px solid black;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+    array.push("<span>措施说明</span>");
+    array.push("</th>");
+    array.push("<th style='width: 15%;text-align:center;border-top: 1px solid black;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+    array.push("<span>提出者</span>");
+    array.push("</th>");
+    array.push("<th style='width: 15%;text-align:center;border-top: 1px solid black;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+    array.push("<span>备注</span>");
+    array.push("</th>");
+    array.push("</tr>");
+    array.push(" </table>");
+    $('#pageDiv').append(array.join(''));
+}
+function appendImprovingActionsContent(){
+	//D5内容
+	var array = new Array();
+	$.each(improvingActions,function(index,element){
+		array.push("<tr style='width: 100%'>");
+	    array.push("<td style='width: 5%;text-align:center;border-right: 1px solid black;border-left: 1px solid black;border-bottom: 1px solid black;'>");
+	    array.push("<span>"+(index+1)+"</span>");
+	    array.push("</td>");
+	    array.push("<td style='width: 20%;text-align:center;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+	    array.push("<span>"+element.improvingAction+"</span>");
+	    array.push("</td>");
+	    array.push("<td style='width: 45%;text-align:center;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+	    array.push("<span>"+element.actionDescription+"</span>");
+	    array.push("</td>");
+	    array.push("<td style='width: 15%;text-align:center;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+	    array.push("<span>"+element.employeeName+"</span>");
+	    array.push("</td>");
+	    array.push("<td style='width: 15%;text-align:center;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+	    array.push("<span>"+element.remark?element.remark:""+"</span>");
+	    array.push("</td>");
+	    array.push("</tr>");
+	});
+	$('#improvingActions').append(array.join(''));
+}
+</script>
+
+<!-- 6dimension initiatedActions -->
+<script>
+var initiatedActions = new Array();
+function getInitiatedActions(){
+	var rcauseId = -1;
+	//D6info
+	if(orderId=="-1")return;
+	$.ajax({
+        url: '${base.contextPath}/hqm/8d/initiated/actions/select',
+        type: 'POST',
+        data: {
+        	orderId:orderId,
+        },
+        async: false,
+        dataType: "json",
+        success: function (response) {
+            if (response.success) {
+            	if(response.rows.length>0){
+            		initiatedActions = response.rows;
+            	}
+            }
+        }
+    });
+}
+function appendInitiatedActionsTitle(){
+	//D6标题
+	var array = new Array();
+    array.push("<table style='width: 100%;color: black;'>");
+    array.push("<tr style='width: 100%'>");
+    array.push("<th style='width: 100%;border-left: 1px solid black;border-right: 1px solid black;'>");
+    array.push("<span style='font-size:12px;'>D6&nbsp;纠正措施验证&nbsp;Validate&nbsp;Permanent&nbsp;Corrective&nbsp;Action</span>");
+    array.push("</th>");
+    array.push("</tr>");
+    array.push(" </table>");
+    array.push("<table id='initiatedActions' style='width: 100%;color: black;'>");
+    array.push("<tr style='width: 100%'>");
+    array.push("<th style='width: 5%;text-align:center;border: 1px solid black;'>");
+    array.push("<span>NO</span>");
+    array.push("</th>");
+    array.push("<th style='width: 5%;text-align:center;border-top: 1px solid black;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+    array.push("<span>措施</span>");
+    array.push("</th>");
+    array.push("<th style='width: 15%;text-align:center;border-top: 1px solid black;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+    array.push("<span>措施说明</span>");
+    array.push("</th>");
+    array.push("<th style='width: 10%;text-align:center;border-top: 1px solid black;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+    array.push("<span>提出者</span>");
+    array.push("</th>");
+    array.push("<th style='width: 12%;text-align:center;border-top: 1px solid black;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+    array.push("<span>计划执行时间</span>");
+    array.push("</th>");
+    array.push("<th style='width: 12%;text-align:center;border-top: 1px solid black;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+    array.push("<span>实际执行时间</span>");
+    array.push("</th>");
+    array.push("<th style='width: 10%;text-align:center;border-top: 1px solid black;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+    array.push("<span>措施状态</span>");
+    array.push("</th>");
+    array.push("<th style='width: 5%;text-align:center;border-top: 1px solid black;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+    array.push("<span>有效</span>");
+    array.push("</th>");
+    array.push("<th style='width: 5%;text-align:center;border-top: 1px solid black;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+    array.push("<span>结果</span>");
+    array.push("</th>");
+    array.push("<th style='width: 19%;text-align:center;border-top: 1px solid black;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+    array.push("<span>附件名</span>");
+    array.push("</th>");
+    array.push("</tr>");
+    array.push(" </table>");
+    $('#pageDiv').append(array.join(''));
+}
+function appendInitiatedActionsContent(){
+	//D6内容
+	var array = new Array();
+	$.each(initiatedActions,function(index,element){
+		array.push("<tr style='width: 100%'>");
+	    array.push("<td style='width: 5%;text-align:center;border-right: 1px solid black;border-left: 1px solid black;border-bottom: 1px solid black;'>");
+	    array.push("<span>"+(index+1)+"</span>");
+	    array.push("</td>");
+	    array.push("<td style='width: 5%;text-align:center;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+	    array.push("<span>"+element.improvingAction+"</span>");
+	    array.push("</td>");
+	    array.push("<td style='width: 15%;text-align:center;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+	    array.push("<span>"+element.actionDescription+"</span>");
+	    array.push("</td>");
+	    array.push("<td style='width: 10%;text-align:center;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+	    array.push("<span>"+element.userName+"</span>");
+	    array.push("</td>");
+	    array.push("<td style='width: 12%;text-align:center;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+	    array.push("<span>"+(element.planExecutionTime?element.planExecutionTime.substr(0,10):"")+"</span>");
+	    array.push("</td>");
+	    array.push("<td style='width: 12%;text-align:center;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+	    array.push("<span>"+(element.actualExecutionTime?element.actualExecutionTime.substr(0,10):"")+"</span>");
+	    array.push("</td>");
+	    array.push("<td style='width: 12%;text-align:center;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+	    array.push("<span>"+getMeaningByValue(element.actionStatus,HQM_8D_ACTION_STATUS)+"</span>");
+	    array.push("</td>");
+	    array.push("<td style='width: 5%;text-align:center;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+	    array.push("<span>"+element.enableFlag+"</span>");
+	    array.push("</td>");
+	    array.push("<td style='width: 5%;text-align:center;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+	    array.push("<span>"+element.evaluation+"</span>");
+	    array.push("</td>");
+	    array.push("<td style='font-size:10px;width: 19%;text-align:center;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+	    array.push("<span style=''>"+(element.fileUrl?(element.fileUrl.split('/')[element.fileUrl.split('/').length-1]):"")+"</span>");
+	    array.push("</td>");
+	    array.push("</tr>");
+	});
+	$('#initiatedActions').append(array.join(''));
+}
+</script>
+<!-- 7dimension -->
+<script>
+var preventionActions = new Array();
+function getPreventionActions(){
+	var rcauseId = -1;
+	//D7info
+	if(orderId=="-1")return;
+	$.ajax({
+        url: '${base.contextPath}/hqm/8d/prevention/actions/select',
+        type: 'POST',
+        data: {
+        	orderId:orderId,
+        },
+        async: false,
+        dataType: "json",
+        success: function (response) {
+            if (response.success) {
+            	if(response.rows.length>0){
+            		preventionActions = response.rows;
+            	}
+            }
+        }
+    });
+}
+function appendPreventionActionsTitle(){
+	//D7标题
+	var array = new Array();
+    array.push("<table style='width: 100%;color: black;'>");
+    array.push("<tr style='width: 100%'>");
+    array.push("<th style='width: 100%;border-left: 1px solid black;border-right: 1px solid black;'>");
+    array.push("<span style='font-size:12px;'>D7&nbsp;预防措施&nbsp;Preventive&nbsp;Actions</span>");
+    array.push("</th>");
+    array.push("</tr>");
+    array.push(" </table>");
+    array.push("<table id='preventionActions' style='width: 100%;color: black;'>");
+    array.push("<tr style='width: 100%'>");
+    array.push("<th style='width: 5%;text-align:center;border: 1px solid black;'>");
+    array.push("<span>NO</span>");
+    array.push("</th>");
+    array.push("<th style='width: 10%;text-align:center;border-top: 1px solid black;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+    array.push("<span>措施</span>");
+    array.push("</th>");
+    array.push("<th style='width: 20%;text-align:center;border-top: 1px solid black;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+    array.push("<span>措施说明</span>");
+    array.push("</th>");
+    array.push("<th style='width: 10%;text-align:center;border-top: 1px solid black;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+    array.push("<span>提出者</span>");
+    array.push("</th>");
+    array.push("<th style='width: 20%;text-align:center;border-top: 1px solid black;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+    array.push("<span>计划下达时间</span>");
+    array.push("</th>");
+    array.push("<th style='width: 20%;text-align:center;border-top: 1px solid black;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+    array.push("<span>实际下达时间</span>");
+    array.push("</th>");
+    array.push("<th style='width: 15%;text-align:center;border-top: 1px solid black;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+    array.push("<span>措施状态</span>");
+    array.push("</th>");
+    array.push("</tr>");
+    array.push(" </table>");
+    $('#pageDiv').append(array.join(''));
+}
+function appendPreventionActionsContent(){
+	//D7内容
+	var array = new Array();
+	$.each(preventionActions,function(index,element){
+		array.push("<tr style='width: 100%'>");
+	    array.push("<td style='width: 5%;text-align:center;border-right: 1px solid black;border-left: 1px solid black;border-bottom: 1px solid black;'>");
+	    array.push("<span>"+(index+1)+"</span>");
+	    array.push("</td>");
+	    array.push("<td style='width: 10%;text-align:center;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+	    array.push("<span>"+element.preventionAction+"</span>");
+	    array.push("</td>");
+	    array.push("<td style='width: 20%;text-align:center;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+	    array.push("<span>"+element.actionDescription+"</span>");
+	    array.push("</td>");
+	    array.push("<td style='width: 10%;text-align:center;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+	    array.push("<span>"+element.userName+"</span>");
+	    array.push("</td>");
+	    array.push("<td style='width: 20%;text-align:center;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+	    array.push("<span>"+(element.planReleaseTime?element.planReleaseTime.substr(0,10):"")+"</span>");
+	    array.push("</td>");
+	    array.push("<td style='width: 20%;text-align:center;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+	    array.push("<span>"+(element.actualReleaseTime?element.actualReleaseTime.substr(0,10):"")+"</span>");
+	    array.push("</td>");
+	    array.push("<td style='font-size:10px;width: 15%;text-align:center;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+	    array.push("<span style=''>"+getMeaningByValue(element.actionStatus,HQM_8D_ACTION_STATUS)+"</span>");
+	    array.push("</td>");
+	    array.push("</tr>");
+	});
+	$('#preventionActions').append(array.join(''));
+}
+</script>
+<!-- 8dimension congratulateTeam -->
+<script>
+var congratulateTeamArray = new Array();
+function getCongratulateTeam(){
+	var rcauseId = -1;
+	//D8info
+	if(orderId=="-1")return;
+	$.ajax({
+        url: '${base.contextPath}/hqm/8d/congratulate/team/select',
+        type: 'POST',
+        data: {
+        	orderId:orderId,
+        },
+        async: false,
+        dataType: "json",
+        success: function (response) {
+            if (response.success) {
+            	if(response.rows.length>0){
+            		congratulateTeamArray = response.rows;
+            	}
+            }
+        }
+    });
+}
+function appendCongratulateTeamTitle(){
+	//D8标题
+	var array = new Array();
+    array.push("<table style='width: 100%;color: black;'>");
+    array.push("<tr style='width: 100%'>");
+    array.push("<th style='width: 100%;border-left: 1px solid black;border-right: 1px solid black;'>");
+    array.push("<span style='font-size:12px;'>D8&nbsp;团队庆祝&nbsp;Congratulate&nbsp;Team</span>");
+    array.push("</th>");
+    array.push("</tr>");
+    array.push(" </table>");
+    array.push("<table id='congratulateTeam' style='width: 100%;color: black;'>");
+    array.push("<tr style='width: 100%'>");
+    array.push("<th style='width: 5%;text-align:center;border: 1px solid black;'>");
+    array.push("<span>NO</span>");
+    array.push("</th>");
+    array.push("<th style='font-size:10px;width: 10%;text-align:center;border-top: 1px solid black;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+    array.push("<span>成员</span>");
+    array.push("</th>");
+    array.push("<th style='width: 10%;text-align:center;border-top: 1px solid black;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+    array.push("<span>临时措施数</span>");
+    array.push("</th>");
+    array.push("<th style='width: 10%;text-align:center;border-top: 1px solid black;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+    array.push("<span>长期措施数</span>");
+    array.push("</th>");
+    array.push("<th style='width: 10%;text-align:center;border-top: 1px solid black;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+    array.push("<span>被执行长期</span>");
+    array.push("</th>");
+    array.push("<th style='width: 10%;text-align:center;border-top: 1px solid black;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+    array.push("<span>有效长期</span>");
+    array.push("</th>");
+    array.push("<th style='width: 10%;text-align:center;border-top: 1px solid black;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+    array.push("<span>预防措施数</span>");
+    array.push("</th>");
+    array.push("<th style='width: 12%;text-align:center;border-top: 1px solid black;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+    array.push("<span>被下达预防数</span>");
+    array.push("</th>");
+    array.push("<th style='width: 12%;text-align:center;border-top: 1px solid black;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+    array.push("<span>执行措施总数</span>");
+    array.push("</th>");
+    array.push("<th style='width: 11%;text-align:center;border-top: 1px solid black;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+    array.push("<span>其它贡献</span>");
+    array.push("</th>");
+    array.push("</tr>");
+    array.push(" </table>");
+    $('#pageDiv').append(array.join(''));
+}
+function appendCongratulateTeamContent(){
+	//D8内容
+	var array = new Array();
+	$.each(congratulateTeamArray,function(index,element){
+		array.push("<tr style='width: 100%'>");
+	    array.push("<td style='width: 5%;text-align:center;border-right: 1px solid black;border-left: 1px solid black;border-bottom: 1px solid black;'>");
+	    array.push("<span>"+(index+1)+"</span>");
+	    array.push("</td>");
+	    array.push("<td style='width: 10%;text-align:center;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+	    array.push("<span>"+element.employeeName+"</span>");
+	    array.push("</td>");
+	    array.push("<td style='width: 10%;text-align:center;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+	    array.push("<span>"+element.immediateActionQty+"</span>");
+	    array.push("</td>");
+	    array.push("<td style='width: 10%;text-align:center;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+	    array.push("<span>"+element.pcActionQty+"</span>");
+	    array.push("</td>");
+	    array.push("<td style='width: 10%;text-align:center;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+	    array.push("<span>"+element.epcActionQty+"</span>");
+	    array.push("</td>");
+	    array.push("<td style='width: 10%;text-align:center;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+	    array.push("<span>"+element.effectivePcActionQty+"</span>");
+	    array.push("</td>");
+	    array.push("<td style='width: 10%;text-align:center;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+	    array.push("<span>"+element.preventionActionQty+"</span>");
+	    array.push("</td>");
+	    array.push("<td style='width: 12%;text-align:center;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+	    array.push("<span>"+element.rpaQty+"</span>");
+	    array.push("</td>");
+	    array.push("<td style='width: 12%;text-align:center;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+	    array.push("<span>"+element.sumActionQty+"</span>");
+	    array.push("</td>");
+	    array.push("<td style='font-size:10px;width: 11%;text-align:center;border-right: 1px solid black;border-bottom: 1px solid black;'>");
+	    array.push("<span style=''>"+element.otherContributions+"</span>");
+	    array.push("</td>");
+	    array.push("</tr>");
+	});
+	$('#congratulateTeam').append(array.join(''));
+}
+</script>
+<script>
+	$(function (){
+		getDimensionInfo();
+		appendTitle();
+		appendTitleContent();
+		getTeamAssembled();
+		appendTeamAssembledTitle();
+		appendTeamAssembledContent();
+		getProblemDescriptionInfo();
+		appendProblemDescriptionTitle();
+		appendProblemDescriptionContent();
+		getActionsHead();
+		appendImmediateActionsTitle();
+		appendImmediateActionsContent();
+		getRootCauseHead();
+		appendRootCauseTitle();
+		appendRootCauseContent();
+		getImprovingActions();
+		appendImprovingActionsTitle();
+		appendImprovingActionsContent();
+		getInitiatedActions();
+		appendInitiatedActionsTitle();
+		appendInitiatedActionsContent();
+		appendPreventionActionsTitle();
+		getPreventionActions();
+		appendPreventionActionsContent();
+		getCongratulateTeam();
+		appendCongratulateTeamTitle();
+		appendCongratulateTeamContent();
+		if(printFlag=='P'){
+			window.print();
+		}
+	});
+</script>
+</body>
+</html>

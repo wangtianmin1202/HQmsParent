@@ -1,0 +1,410 @@
+<#include "../include/header.html">
+<script src="${base.contextPath}/common/code?HCS_SUPPLIER_ONHAND_TYPE=HCS_SUPPLIER_ONHAND_TYPE"></script>
+<script src="${base.contextPath}/lib/prints/doc_print.js" type="text/javascript" charset="UTF-8"></script>
+<body>
+<script type="text/javascript">
+	var supplierId ;
+	var supplierName ;
+	var supplierCode ;
+	var userType = window.parent.supplierId==null ? 'P':'S';
+	$(document).ready(function(){
+		var jsonData = {
+    			"supplierId" : window.parent.selectVal.split("_")[4]
+    	}
+    	$.ajax({
+    		url:"${base.contextPath}/hcs/suppliers/query",
+    		type: "POST",
+    		data: jsonData,
+    		jsonType: "json",
+    		success: function(resultData){
+    			if(resultData.success){
+    				if(resultData.rows != null && resultData.rows.length > 0){
+    					supplierId = resultData.rows[0].supplierId;
+    					supplierName = resultData.rows[0].supplierName;
+    					supplierCode = resultData.rows[0].supplierCode;
+    					
+    					viewModel.model.set("bomUsage",1);
+    					viewModel.model.set("userType",userType);
+    					viewModel.model.set("supplierId",supplierId);
+    					viewModel.model.set("supplierName",supplierName);
+    					$("#supplierId").siblings('span').children('input').val(supplierCode)
+    					$("#userType").kendoComboBox({
+    					 		dataSource: HCS_SUPPLIER_ONHAND_TYPE,
+    					 		valuePrimitive: true,
+    					 		dataTextField: "meaning",
+    					 		dataValueField: "value",
+    					});
+    				}else{
+    					kendo.ui.showInfoDialog({
+    		    			title: '<@spring.message "hap.tip.info"/>',
+    		    			message: '<@spring.message "default.plant.notexist"/>'
+    		    		})
+    		    		return;
+    				}
+    			}
+    		}
+    	})
+		
+		
+		
+	})
+	var viewModel = kendo.observable({
+		model: {
+		},
+		save: function(e){
+			if(!isNotEmpty(viewModel.model.itemCode) || !isNotEmpty(viewModel.model.descriptions) 
+					|| !isNotEmpty(viewModel.model.bomUsage)  || !isNotEmpty(viewModel.model.uom) 
+					|| !isNotEmpty(viewModel.model.itemVersion) || !isNotEmpty(viewModel.model.supplierId)){
+				kendo.ui.showInfoDialog({
+					title: '<@spring.message "hap.tip.info"/>',
+	    			message: '<@spring.message "parameterconfig.requiredfield"/>'
+	    		})
+			}else{
+				var selectVal = window.parent.selectVal;
+				var jsonData = {
+		    			"itemId" : selectVal.split("_")[2],
+		    			"plantId" : selectVal.split("_")[3],
+		    			"supplierId" : selectVal.split("_")[4],
+		    			"itemCode" : viewModel.model.itemCode,
+		    	}
+				//校验
+		    	$.ajax({
+		    		url:"${base.contextPath}/hcs/supplier/bom/components/checkData",
+		    		type: "POST",
+		    		data: jsonData,
+		    		jsonType: "json",
+		    		success: function(resultData){
+		    			if(resultData.success){
+		    				if(resultData.rows != null && resultData.rows.length > 0){
+		    					viewModel.model.set("onhandId",selectVal.split("_")[1])
+		    					viewModel.model.set("bomId",resultData.rows[0].bomId)
+		    					viewModel.model.set("plantId",selectVal.split("_")[3])
+		    					//保存
+		    					var data= viewModel.model.toJSON();
+		    					$.ajax({
+		    				        url: '${base.contextPath}/hcs/supplier/bom/components/addData',
+		    				        type: 'POST',
+		    				        data: data,
+		    				        async: false,
+		    				        dataType: "json",
+		    				        success: function (response) {
+		    				            if (response.success) {
+		    				            	Hap.showToast({
+		    			            			type:'success',
+		    			            			"positionClass": "toast-bottom-right",
+		    			            			message:'<@spring.message "hap.tip.success"/>',
+		    			            			hideDuration:10*1000
+		    			            		})	
+		    				            	window.parent.viewModel.query();
+		    				            	window.parent.$("#line").data("kendoWindow").close();
+		    				            } else {
+		    				            	kendo.ui.showWarningDialog({
+		    				                    message: response.message
+		    				                });
+		    				            }
+		    				        }
+		    				    }); 
+		    				}
+		    			}else{
+	    					if(resultData.message === 'error.srm_purchase_1096'){		    						
+		    					kendo.ui.showInfoDialog({
+		    						title: '<@spring.message "hap.tip.info"/>',
+		    		    			message: '<@spring.message "error.srm_purchase_1096"/>'
+		    		    		})
+	    					}else{
+	    						kendo.ui.showInfoDialog({
+		    						title: '<@spring.message "hap.tip.info"/>',
+		    		    			message: resultData.message
+		    		    		})
+	    					}
+	    				}
+		    		}
+		    	})
+			}
+		},
+		closeWin: function(e){
+	    	window.parent.$("#line").data("kendoWindow").close();
+	    }
+	});
+	//规格长度校验
+	function formatCheck(obj){
+	    if(obj.value.length>240){
+	    	obj.value = obj.value.substring(0,240);
+	    	Hap.showToast({
+				type:'error',
+				"positionClass": "toast-bottom-right",
+				message:'<@spring.message "error.srm_purchase_1086"/>',
+				hideDuration:10*1000
+			})
+	    }
+	}
+	//备注长度校验
+	function remarkCheck(obj){
+	    if(obj.value.length>240){
+	    	obj.value = obj.value.substring(0,240);
+	    	Hap.showToast({
+				type:'error',
+				"positionClass": "toast-bottom-right",
+				message:'<@spring.message "error.srm_purchase_1089"/>',
+				hideDuration:10*1000
+			})
+	    }
+	}
+	//版本长度校验
+	function itemVersionCheck(obj){
+	    if(obj.value.length>30){
+	    	obj.value = obj.value.substring(0,30);
+	    	Hap.showToast({
+				type:'error',
+				"positionClass": "toast-bottom-right",
+				message:'<@spring.message "error.srm_purchase_1087"/>',
+				hideDuration:10*1000
+			})
+	    }
+	}
+	//长度校验
+	function lengthCheck(obj,len,message){
+	    if(obj.value.length>len){
+	    	obj.value = obj.value.substring(0,len);
+	    	Hap.showToast({
+				type:'error',
+				"positionClass": "toast-bottom-right",
+				message:'<@spring.message "'+ message +'"/>',
+				hideDuration:10*1000
+			})
+	    }
+	}
+	//正数
+	function clearNoNum(obj) { 
+	    obj.value = obj.value.replace(/[^\d.]/g,""); //清除"数字"和"."以外的字符  
+	        obj.value = obj.value.replace(/^\./g,""); //验证第一个字符是数字而不是  
+	        obj.value = obj.value.replace(/\.{2,}/g,"."); //只保留第一个. 清除多余的  
+	        obj.value = obj.value.replace(".","$#$").replace(/\./g,"").replace("$#$",".");  
+	        obj.value = obj.value.replace(/^(\-)*(\d+)\.(\d\d).*$/,'$1$2.$3'); //只能输入两个小数  
+	
+	}
+	//不能有中文 长度小于30
+	function clearNoZhCn(obj) { 
+		 //var r = /^[0-9a-zA-Z]*$/g;
+		 var r = /.*[\u4e00-\u9fa5].*/;
+		 if(r.test(obj.value)){
+	        //obj.value = obj.value.replace(/[^\da-zA-Z]/g,"");
+	        obj.value = obj.value.replace(/[^\w\.\/]/ig,"");
+			Hap.showToast({
+   			type:'error',
+   			"positionClass": "toast-bottom-right",
+   			message:'<@spring.message "error.srm_purchase_1087"/>',
+   			hideDuration:10*1000
+		    })
+		 }
+		 if(obj.value.length > 30){
+      	 obj.value = obj.value.substring(0,30) 
+      	 Hap.showToast({
+           			type:'error',
+           			"positionClass": "toast-bottom-right",
+           			message:'<@spring.message "error.srm_purchase_1088"/>',
+           			hideDuration:10*1000
+       		})
+       }
+	}
+</script>
+
+<div id="page-content">
+	<form id="mainform"  class="form-horizontal" method="post" enctype="application/json;charset=UTF-8">
+
+	<div class="row" style="margin-left: 5px;">
+	 	<div class="col-sm-12">
+	 	  	<div class="form-group">
+				<!-- 物料编码 -->
+				<div class="col-sm-4">
+					<label class="col-sm-4 control-label"><@spring.message "supplieronhandquantities.itemCode"/>:</label>
+					<div class="col-sm-8">
+                        <input  style="width:100%" name="itemCode" required oninput="lengthCheck(this,30,'error.srm_purchase_1090')"
+                               data-label="<@spring.message 'supplieronhandquantities.itemCode'/>" id="itemCode"
+                               data-bind="value:model.itemCode" data-role="maskedtextbox">
+						<span data-for="itemCode" class=".k-invalid-msg"></span>
+					</div>
+				</div>
+				<!-- 物料名称 -->
+				<div class="col-sm-4">
+					<label class="col-sm-4 control-label"><@spring.message "supplieronhandquantities.itemName"/>:</label>
+					<div class="col-sm-8">
+                        <input  style="width:100%" name="descriptions" required oninput="lengthCheck(this,300,'error.srm_purchase_1092')"
+                               data-label="<@spring.message 'supplieronhandquantities.itemName'/>" id="descriptions"
+                               data-bind="value:model.descriptions" data-role="maskedtextbox">
+						<span data-for="descriptions" class=".k-invalid-msg"></span>
+					</div>
+				</div>
+				<!-- 规格 -->
+				<div class="col-sm-4">
+					<label class="col-sm-4 control-label"><@spring.message "supplieronhandquantities.format"/>:</label>
+					<div class="col-sm-8">
+                        <input  style="width:100%" name="format" oninput = "formatCheck(this)"
+                               data-label="<@spring.message 'supplieronhandquantities.format'/>" id="format"
+                               data-bind="value:model.format" data-role="maskedtextbox">
+						<span data-for="format" class=".k-invalid-msg"></span>
+					</div>
+				</div>
+            </div>
+			<div class="form-group">
+				<!-- BOM用量 -->
+				<div class="col-sm-4">
+					<label class="col-sm-4 control-label"><@spring.message "supplieronhandquantities.bomUsage"/>:</label>
+					<div class="col-sm-8">
+                        <input  style="width:100%" name="bomUsage" required
+                               data-label="<@spring.message 'supplieronhandquantities.bomUsage'/>" id="bomUsage"
+                               data-bind="value:model.bomUsage" data-role="maskedtextbox">
+						<span data-for="bomUsage" class=".k-invalid-msg"></span>
+					</div>
+				</div>
+				<!-- 单位-->
+				<div class="col-sm-4">
+					<label class="col-sm-4 control-label"><@spring.message "supplieronhandquantities.primatyUom"/>:</label>
+					<div class="col-sm-8">
+                        <input  style="width:100%" name="uom" required oninput="lengthCheck(this,30,'error.srm_purchase_1091')"
+                               data-label="<@spring.message 'supplieronhandquantities.uom'/>" id="uom"
+                               data-bind="value:model.uom" data-role="maskedtextbox">
+						<span data-for="uom" class=".k-invalid-msg"></span>
+					</div>
+				</div>
+				<!-- 版本 -->
+				<div class="col-sm-4">
+					<label class="col-sm-4 control-label"><@spring.message "supplieronhandquantities.itemVersion"/>:</label>
+					<div class="col-sm-8">
+                        <input  style="width:100%" name="itemVersion" required oninput="clearNoZhCn(this)"
+                               data-label="<@spring.message 'supplieronhandquantities.itemVersion'/>" id="itemVersion"
+                               data-bind="value:model.itemVersion" data-role="maskedtextbox">
+						<span data-for="itemVersion" class=".k-invalid-msg"></span>
+					</div>
+				</div>
+			</div>
+			<div class="form-group">
+				<!-- 库存数 -->
+				<div class="col-sm-4">
+					<label class="col-sm-4 control-label"><@spring.message "supplieronhandquantities.stockqty"/>:</label>
+					<div class="col-sm-8">
+                        <input  style="width:100%" name="stockQty" oninput="clearNoNum(this)"
+                               data-label="<@spring.message 'supplieronhandquantities.stockQty'/>" id="stockQty"
+                               data-bind="value:model.stockQty" data-role="maskedtextbox">
+						<span data-for="stockQty" class=".k-invalid-msg"></span>
+					</div>
+				</div>
+				<!-- 在制品数-->
+				<div class="col-sm-4">
+					<label class="col-sm-4 control-label"><@spring.message "supplieronhandquantities.wipQty"/>:</label>
+					<div class="col-sm-8">
+                        <input  style="width:100%" name="wipQty" oninput="clearNoNum(this)"
+                               data-label="<@spring.message 'supplieronhandquantities.wipQty'/>" id="wipQty"
+                               data-bind="value:model.wipQty" data-role="maskedtextbox">
+						<span data-for="wipQty" class=".k-invalid-msg"></span>
+					</div>
+				</div>
+				<!-- 版在外订单数-->
+				<div class="col-sm-4">
+					<label class="col-sm-4 control-label"><@spring.message "supplieronhandquantities.outOrderQty"/>:</label>
+					<div class="col-sm-8">
+                        <input  style="width:100%" name="outOrderQty" oninput="clearNoNum(this)"
+                               data-label="<@spring.message 'supplieronhandquantities.outOrderQty'/>" id="outOrderQty"
+                               data-bind="value:model.outOrderQty" data-role="maskedtextbox">
+						<span data-for="outOrderQty" class=".k-invalid-msg"></span>
+					</div>
+				</div>
+			</div>
+			<div class="form-group">
+				<!-- 生产周期 -->
+				<div class="col-sm-4">
+					<label class="col-sm-4 control-label"><@spring.message "supplieronhandquantities.productionCycle"/>:</label>
+					<div class="col-sm-8">
+                        <input  style="width:100%" name="productionCycle" oninput = "value=value.replace(/[^\d]/g,'')"
+                               data-label="<@spring.message 'supplieronhandquantities.productionCycle'/>" id="productionCycle"
+                               data-bind="value:model.productionCycle" data-role="maskedtextbox">
+						<span data-for="productionCycle" class=".k-invalid-msg"></span>
+					</div>
+				</div>
+				<!-- 采购周期-->
+				<div class="col-sm-4">
+					<label class="col-sm-4 control-label"><@spring.message "supplieronhandquantities.purchaseCycle"/>:</label>
+					<div class="col-sm-8">
+                        <input  style="width:100%" name="purchaseCycle" oninput = "value=value.replace(/[^\d]/g,'')"
+                               data-label="<@spring.message 'supplieronhandquantities.purchaseCycle'/>" id="purchaseCycle"
+                               data-bind="value:model.purchaseCycle" data-role="maskedtextbox">
+						<span data-for="purchaseCycle" class=".k-invalid-msg"></span>
+					</div>
+				</div>
+				<!-- 备注-->
+				<div class="col-sm-4">
+					<label class="col-sm-4 control-label"><@spring.message "supplieronhandquantities.remarks"/>:</label>
+					<div class="col-sm-8">
+                        <input  style="width:100%" name="remarks"  oninput = "remarkCheck(this)"
+                               data-label="<@spring.message 'supplieronhandquantities.remarks'/>" id="remarks"
+                               data-bind="value:model.remarks" data-role="maskedtextbox">
+						<span data-for="remarks" class=".k-invalid-msg"></span>
+					</div>
+				</div>
+			</div>
+			<div class="form-group">
+				<!-- 类型 -->
+				<div class="col-sm-4">
+					<label class="col-sm-4 control-label"><@spring.message "supplieronhandquantities.userType"/>:</label>
+					<div class="col-sm-8">
+                        <input  style="width:100%" name="userType" disabled
+                               data-label="<@spring.message 'supplieronhandquantities.userType'/>" id="userType"
+                               data-bind="value:model.userType">     
+						<span data-for="userType" class=".k-invalid-msg"></span>
+					</div>
+				</div>
+				<!-- 供应商编码-->
+				<div class="col-sm-4">
+					<label class="col-sm-4 control-label"><@spring.message "supplieronhandquantities.supplierCode"/>:</label>
+					<div class="col-sm-8">
+                        <input id="supplierId" style="width: 100%;" disabled  data-bind="value:model.supplierId"/>
+			    	    	 <script>
+			    	    	 		kendo.bind($("#supplierId"),viewModel);
+				                	$("#supplierId").kendoLov($.extend
+				                	    (<@lov"LOV_SUPPLIER_SRM"/>, {
+				                	        textField: 'supplierCode',
+				                	        valueField:'supplierId',
+				                	        query: function(e){
+				                	        	//e.param['enableFlag'] = 'Y'
+				                                e.param['supplierId']= supplierId;
+				                	        },
+				                	        change: function(e){
+												if(isNotEmpty(this._prev)){
+													viewModel.model.set('supplierName', this._dataItem.supplierName)
+												}else{
+													viewModel.model.set('supplierName', '')
+												}
+											}
+				                	}));
+				            </script> 
+						<span data-for="supplierId" class=".k-invalid-msg"></span>
+					</div>
+				</div>
+				<!-- 供应商名称-->
+				<div class="col-sm-4">
+					<label class="col-sm-4 control-label"><@spring.message "supplieronhandquantities.supplierName"/>:</label>
+					<div class="col-sm-8">
+                        <input  style="width:100%" name="supplierName" disabled
+                               data-label="<@spring.message 'supplieronhandquantities.supplierName'/>" id="supplierName"
+                               data-bind="value:model.supplierName" data-role="maskedtextbox">
+						<span data-for="supplierName" class=".k-invalid-msg"></span>
+					</div>
+				</div>
+			</div>
+		</div>
+	  </div>
+
+
+	</form>
+</div>
+<div id="mainBottom" class="text-center" style="bottom: 15px;position: fixed;  float: left;padding-top:15px;border-top:1px solid #ebebeb;width:100%; background: #fff;">
+	        <span class="btn btn-danger" style="float:right;margin-right:30px;" data-bind="click:closeWin"><i class="fa fa-trash-o" style="margin-right:3px;"></i><@spring.message "outbarcodecreate.cancel"/></span>
+        <span class="btn btn-success k-grid-save-changes fa fa-check" data-bind="click:save" style="float:right;margin-right:5px;"><@spring.message " hap.confirm "/></span>
+</div>
+
+<script type="text/javascript">
+    kendo.bind($('#mainBottom'),viewModel);
+	kendo.bind($('#mainform'), viewModel);
+</script>
+</body>
+</html>

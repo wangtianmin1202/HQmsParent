@@ -1,0 +1,268 @@
+<#include "../include/header.html">
+<!--
+ * @description: 检验项多选lov界面 hqm_inspection_attribute
+ * @author: tianmin.wang
+ * @date: 20190918
+ -->
+ <script src="${base.contextPath}/common/code?hqmAttributeCategory=HQM_IQC_ATTRIBUTE_CATEGORY"></script>
+ <script src="${base.contextPath}/common/code?hqmStandardType=HQM_IQC_STANDARD_TYPE"></script>
+<style>
+ span{
+ font-size:14px;
+ }
+</style>
+<script type="text/javascript">
+	var isRepalceFlag = '0';
+    var viewModel = Hap.createGridViewModel("#grid");
+    var selectedDates = new Array();
+    viewModel.save = function(){
+    	var selected = new Array();
+    	$.each(selectedDates,function(index,element){
+    		selected.push(element.groupId);
+    	});
+		if (selected.length == 0) {
+			kendo.ui.showErrorDialog({
+				message : "未选择同步项"
+			});
+			return;
+		}
+		if (isRepalceFlag == "0") {
+			kendo.ui.showErrorDialog({
+				message : "未选择同步类型"
+			});
+			return;
+		}
+		window.parent.getSynchronizeGroup(isRepalceFlag,selected);
+    }
+	viewModel.closeWin = function(){
+    	
+    }
+</script>
+<body>
+<div id="page-content">
+   <div class="container">
+			<div class="row">
+				<div class="pull-left" id="toolbar-btn"
+					style="padding-bottom: 10px;">
+					<span class="btn btn-primary k-grid-add"
+						style="float: left; margin-right: 5px;" data-bind="click:save"><@spring.message
+						"hap.save"/></span> <span data-bind="click:reset" class="btn btn-default"
+						style="float: left;"><@spring.message "hap.reset"/></span>
+				</div>
+				<script>
+					kendo.bind($('#toolbar-btn'), viewModel);
+				</script>
+			</div>
+			<div class="row" style="margin-bottom:5px;">
+
+				<div class="col-xs-2">
+					<span>工序编码</span>
+				</div>
+				<div class="col-xs-10">
+					<input id="groupCode" style="width: 60%;" data-role="maskedtextbox"
+						data-bind="value:model.groupCode" />
+					<script>
+						kendo.bind($("#groupCode"), viewModel);
+					</script>
+				</div>
+
+			</div>
+			
+			<div class="row" style="margin-bottom:5px;">
+				<div class="col-xs-2">
+					<span>工序描述</span>
+				</div>
+				<div class="col-xs-10">
+					<input id="description" style="width: 60%;" data-role="maskedtextbox"
+						data-bind="value:model.description" />
+						<span id="querySpan" 
+						data-bind="click:query" 
+						class="btn btn-primary"
+						style="float: right;"
+						><@spring.message "hap.query"/></span>
+					<script>
+						kendo.bind($("#description"), viewModel);
+						kendo.bind($("#querySpan"), viewModel);
+					</script>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-sm-2"></div>
+				<div class="col-sm-8">
+					<div id="isRepalceFlag" style="margin-top: 5px;"
+						data-bind="enabled: isEnabled,value:isRepalceFlag"></div>
+					<script>
+						kendo.bind("#isRepalceFlag", isRepalceFlag);
+						$("#isRepalceFlag").kendoRadio({
+							layout : '',//vertical
+							readonly : false,
+							items : [ {
+								label : "保留已有项复制",
+								value : "HC"
+							}, {
+								label : "覆盖式复制",
+								value : "RC"
+							} ],
+							change : function(e) {
+								isRepalceFlag = e.values;
+							}
+						});
+					</script>
+				</div>
+				<div class="col-sm-2"></div>
+			</div>
+		</div>
+</div>
+<div class="text-left" style="border: 2px solid #EEEEEE;border-radius:10px;">
+		<span>已选择检验项</span><br>
+		<div id="checkedUserPanel">
+        	
+        </div>
+</div>
+<div style="clear:both">
+        <div id="grid"></div>
+</div>
+<!-- <div id="mainBottom" style="margin-left:90%;bottom: 15px;position: fixed;  float: right;border-top:1px solid #ebebeb;width:10%; background: #fff;"> -->
+<!--         <span class="btn btn-primary" data-bind="click:save" type="submit" style="margin-right:5px"><@spring.message "hap.save"/></span> -->
+<!--         <span class="btn btn-default" data-bind="click:closeWin" type="button" style="margin-right:25px;"><@spring.message "hap.cancel"/></span> -->
+<!-- </div> -->
+
+
+<script type="text/javascript">
+	$(document).keydown(function(event){
+		if (event.keyCode == 13) {
+			viewModel.model.inspectionAttribute = $("#inspectionAttribute").val();
+			viewModel.model.attributeType = $("#attributeType").val();
+			viewModel.query();
+		}
+	});
+// 	kendo.bind($('#mainBottom'),viewModel);
+    Hap.initEnterQuery('#query-form', viewModel.query);
+    var BaseUrl = _basePath;
+    dataSource = new kendo.data.DataSource({
+        transport: {
+        	read: {
+                url: BaseUrl + "/hqm/inspection/group/h/select",
+                type: "POST",
+                dataType: "json"
+            },
+            update: {
+                url: BaseUrl + "/hqm/inspection/group/h/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            destroy: {
+                url: BaseUrl + "/hqm/inspection/group/h/remove",
+                type: "POST",
+                contentType: "application/json"
+            },
+            create: {
+                url: BaseUrl + "/hqm/inspection/group/h/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            parameterMap: function (options, type) {
+                if (type !== "read" && options.models) {
+                    var datas = Hap.prepareSubmitParameter(options, type)
+                    return kendo.stringify(datas);
+                } else if (type === "read") {
+                    return Hap.prepareQueryParameter(viewModel.model.toJSON(), options)
+                }
+            }
+        },
+        batch: true,
+        serverPaging: true,
+        pageSize: 5,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+                id: "groupId",
+                fields: {},
+                editable:function(col){
+                	return false;
+                }
+            }
+        }
+    });
+
+    var grid = $("#grid").kendoGrid({
+        dataSource: dataSource,
+        resizable: true,
+        autoBind: true,
+        scrollable: true,
+        navigatable: false,
+        //selectable: 'multiple,rowbox',
+        dataBound: function () {
+            if (parent.autoResizeIframe) {
+                parent.autoResizeIframe('${RequestParameters.functionCode!}')
+            }
+        },
+        pageable: {
+            pageSizes: [5,10,20,50],
+            refresh: false,
+            buttonCount: 5
+        },
+        columns: [
+        	
+        	{
+		        field: "plantCode",
+		        title: '<@spring.message "inspectiongrouph.plantid"/>',
+		        width: 120,
+                template: function (item) {
+                    return item['plantCode'] || '';
+                },
+            },
+                    {
+                field: "groupCode",
+                title: '<@spring.message "inspectiongrouph.groupcode"/>',
+                width: 120
+            },
+            {
+                field: "description",
+                title: '<@spring.message "inspectiongrouph.description"/>',
+                width: 120
+            },
+            
+        ],
+        editable: true
+    }).data("kendoGrid");
+
+</script>
+<script>
+//var selection = $('#chooseGrid').data('kendoGrid').selectedDataItems();
+function judgeHave(groupId){
+	var count = 0;
+	$.each(selectedDates,function(i,v){
+		if(v.groupId == groupId)count++;
+	});
+	if(count>0)return true;
+	return false;
+}
+function removeHaved(groupId){
+	$.each(selectedDates,function(i,v){
+		if(v.groupId == groupId){
+			selectedDates.splice(selectedDates.indexOf(v),1);
+			return false;
+		}
+	});
+}
+$('#grid').on('click', 'td', function () {
+		var rowIndex = $(this).parent().index();
+        var data = grid.dataSource.data()[rowIndex];
+        if(!judgeHave(data.groupId)){
+        	selectedDates.push(data);
+	        $("#checkedUserPanel").append('<span style="margin-right:10px;background-color:#7AEBBE;border-radius:5px;">&nbsp'+data.groupCode+
+	        '<span user-id="'+data.groupId+'" class="fa fa-trash" style="margin-left:5px;cursor:pointer;font-size:16px;"></span></span>');
+	        $('span[user-id="'+data.groupId+'"]').on('click',function(){
+	        	removeHaved($(this).attr("user-id"));
+	        	$(this).parent().remove();
+	        });
+        }
+    });
+$(function(){
+	$('#grid').height(window.innerHeight*50/100);
+});
+</script>
+</body>
+</html>

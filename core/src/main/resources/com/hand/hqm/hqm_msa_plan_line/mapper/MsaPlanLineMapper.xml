@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_msa_plan_line.mapper.MsaPlanLineMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_msa_plan_line.dto.MsaPlanLine">
+        <result column="MEASURE_PLAN_LINE_ID" property="measurePlanLineId" jdbcType="DECIMAL" />
+        <result column="MEASURE_PLAN_ID" property="measurePlanId" jdbcType="DECIMAL" />
+        <result column="MSA_CONTENT" property="msaContent" jdbcType="VARCHAR" />
+        <result column="MSA_RESULT" property="msaResult" jdbcType="VARCHAR" />
+        <result column="MSA_CONCLUSION" property="msaConclusion" jdbcType="VARCHAR" />
+        <result column="ANALYZE_DATE" property="analyzeDate" jdbcType="DATE" />
+    </resultMap>
+
+
+</mapper>

@@ -1,0 +1,944 @@
+<#include "../include/header.html">
+<script src="${base.contextPath}/lib/prints/doc_print.js" type="text/javascript" charset="UTF-8"></script>
+<script src="${base.contextPath}/common/code?HQM_CONTROL_CHART_TYPE=HQM_CONTROL_CHART_TYPE"></script>
+<script src="${base.contextPath}/lib/js/echarts.common.min.js" type="text/javascript" charset="UTF-8"></script>
+<script type="text/javascript">
+    var parentData = window.parent.parentData;
+    //列
+    var measureDateList;
+	//行
+	var measureNumList;
+	//均值
+	var averageData = new Array();
+	//极差
+	var jcList = new Array();
+	//标准差
+	var bzcList = new Array();
+	//平均极差
+	var averageJc;
+	//平均标准差
+	var averageBzc;
+	//s图能否查看标识
+	var sFlag;
+	var refreshFlag = 'N'
+	//测量值均值
+	var cl
+	var rows = 6;
+	var cols = 6;
+    var viewModel = kendo.observable({
+		model: {
+		},
+		submit: function(e){ 
+			//页面数据
+			var jsonList = [];
+			var len;
+			if(checkStr(measureDateList)){
+				len = measureDateList.length;
+			}else{
+				len = cols;
+			}
+			for(var i=0; i<len; i++){
+				var flag = false;
+				var measureDate;
+				$('#mytable tr').each(function() {
+					var jsonData = {"measureDate" : '',
+									"measureValue" : '',
+									"kid" : null,
+									"measureNum" :null,
+									"sampleDescription" : viewModel.model.sampleDescription,
+									"measuredBy" : viewModel.model.measuredBy,
+									"msaPlanId" : parentData.msaPlanId
+								   };
+					$(this).find('input:eq('+ i +')').each(function(){ 
+						if(flag && checkStr($(this).val())){
+							jsonData.measureValue = $(this).val();	
+							jsonData.measureDate = measureDate + ' 00:00:00';
+							var arr = $(this).attr("name").split("|")
+							jsonData.measureNum = arr[0];
+							if(arr.length>1){
+								jsonData.kid = arr[1];	
+							}
+							jsonList.push(jsonData);
+						}
+						if(!flag){
+							flag = true;
+							//时间
+							measureDate = $(this).val();
+						}
+						
+					});
+				});		
+			}
+			if(jsonList.length == 0){
+				var jsonData = {
+						"measureValue" : null,
+						"sampleDescription" : viewModel.model.sampleDescription,
+						"measuredBy" : viewModel.model.measuredBy,
+						"msaPlanId" : parentData.msaPlanId
+					   };
+				jsonList.push(jsonData);
+			}
+			$.ajax({
+				url:"${base.contextPath}/hqm/msa/stability/value/save",
+				type:"POST",
+				data: kendo.stringify(jsonList),
+				contentType: "application/json",
+				success: function (resultData){
+					if(resultData.success){
+						Hap.showToast({
+                			type:'success',
+                			"positionClass": "toast-bottom-right",
+                			message:"保存成功",
+                			hideDuration:10*1000
+                		})	
+                		parentData.measuredBy = viewModel.model.measuredBy
+                		parentData.sampleDescription = viewModel.model.sampleDescription
+                		window.parent.viewModel.query();
+                		initTable();
+					}else{
+						kendo.ui.showErrorDialog({
+							title: "错误提示",
+			    			message: resultData.message
+			    		})
+					}
+				}
+			})  
+		},
+		//分析
+		analysis: function(){
+			if(viewModel.model.controlChartType === '1'){
+				refreshFlag = 'R'
+				//Xbar-R图
+				showXbar('R')
+			}else if(viewModel.model.controlChartType === '2'){
+				refreshFlag = 'S'
+				//Xbar-s图
+				showXbar('S')
+			}else{
+				kendo.ui.showInfoDialog({
+					title: "提示",
+	    			message: '请先选择控制图类型'
+	    		})
+	    		return;
+			}
+			var msaPlanLine = {
+		  			"measurePlanLineId": parentData.measurePlanLineId
+		  	}
+			$.ajax({
+				url: "${base.contextPath}/hqm/msa/plan/line/updateAnalyzeData",
+				data: msaPlanLine,
+				type: "POST",
+				dataType: "json",
+				success: function(data){
+					if(data.success){
+						viewModel.model.set('analyzeDate',data.rows[0].analyzeDate);
+					}
+				}
+			})
+		},
+		//删除
+		remove: function(){
+			if(!checkStr(parentData.msaPlanId)){
+				kendo.ui.showInfoDialog({
+	    			title: '<@spring.message "dialog.showInfo"/>',
+	    			message: '获取计划信息失败'
+	    		})
+	    		return;
+			}
+			kendo.ui.showConfirmDialog({
+	    		title: '<@spring.message "dialog.showInfo"/>',
+	    		message: '是否确认清除？'
+	    	}).done(function(e){
+	    		if(e.button=='OK'){	    			
+					var jsonData = {
+			    			"msaPlanId" : parentData.msaPlanId
+			    	}
+			    	$.ajax({
+			    		url: "${base.contextPath}/hqm/msa/stability/value/removeByMsaPlanId",
+			    		data: jsonData,
+			    		type: "POST",
+			    		async:false,
+			    		dataType: "json",
+			    		success: function(data){
+			    			if(data.success){
+			    				 Hap.showToast({
+			                         type: 'success',
+			                         "positionClass": "toast-bottom-right",
+			                         message: "删除成功"
+			                     });
+			             		initTable()
+			    			}else{
+			            		kendo.ui.showErrorDialog({
+			                            message: data.message
+			                        });
+			            		
+			            	}
+			    		}
+			    	})
+	    		}
+	    	})
+		},
+		//返回
+		closeWin: function(e){
+        	window.parent.$("#stability").data("kendoWindow").close();
+        },
+        //刷新
+        refresh: function(){
+        	initTable();
+        	if(checkStr(viewModel.model.controlChartType)){
+        		viewModel.analysis()
+        	}else{
+        		$("#picture").empty()
+        		$("#picture2").empty()
+        	}
+        },
+        importExcel : function(){
+        	var newModelWindow = $('#excelimport').kendoWindow({
+                title: '<@spring.message "msaplan.import"/>',
+                width: 300,
+                height: 120,
+                modal: true,
+                actions: ["Minimize", "Maximize", "Close"],
+            }).data('kendoWindow');
+        	newModelWindow.center().open();
+        },
+      //去打印
+        toPrint: function(){
+        	if(viewModel.model.controlChartType === '1'){
+				refreshFlag = 'R'
+				//Xbar-R图
+				showXbar('R')
+			}else if(viewModel.model.controlChartType === '2'){
+				refreshFlag = 'S'
+				//Xbar-s图
+				showXbar('S')
+			}else{
+				kendo.ui.showInfoDialog({
+					title: "提示",
+	    			message: '请先选择控制图类型'
+	    		})
+	    		return;
+			}
+        	var dialog = $("#printWindow").kendoWindow({
+    				actions: ["Close"],
+    				width: "95%",
+    				height: "90%",
+    				title: '<@spring.message "打印msa"/>',
+    				visible: false,
+    				iframe: true,
+    				modal: true,
+    				content: 'stability_save_print.html'
+    			}).data("kendoWindow");
+    			dialog.center().open();
+        }
+	});
+    $(function(){
+    	//计算高度
+    	$("#tableRow").height(window.innerHeight*5/24)
+    	$("#tableRow").width(window.innerWidth*97/100)
+    	//量具名称
+    	viewModel.model.set('measureToolName',parentData.measureToolName);
+    	//量具编号
+    	viewModel.model.set('measureToolNum',parentData.measureToolNum);
+    	//样品名称 
+    	viewModel.model.set('sampleDescription',parentData.sampleDescription);
+    	//待测特性
+    	viewModel.model.set('measureCharacter',parentData.measureCharacter);
+    	//测量人
+    	viewModel.model.set('measuredBy',parentData.measuredBy);
+    	//分析人
+    	viewModel.model.set('userName',parentData.userName);
+    	viewModel.model.set('analyzedBy',parentData.analyzedBy);
+    	//分析日期
+    	viewModel.model.set('analyzeDate',parentData.analyzeDate);
+    	initTable()
+    	
+    	//已关闭隐藏按钮
+    	if(parentData.measurePlanStatus == '3'){
+    		$("#clear").hide();
+    		$("#refresh").hide()
+    		$("#save").hide()
+    		$("#import").hide()
+    		$("#getImport").hide()
+    	}
+    })
+    
+    //加载table数据 
+    function initTable(){
+    	var jsonData = {
+    			"msaPlanId" : parentData.msaPlanId
+    	}
+    	$.ajax({
+    		url: "${base.contextPath}/hqm/msa/stability/value/query",
+    		data: jsonData,
+    		type: "POST",
+    		async:false,
+    		dataType: "json",
+    		success: function(data){
+    			if(data.success){
+    				var lLength=0;
+    				if(data.rows != null && data.rows.length > 0){  
+    					//列
+    					measureDateList = data.rows[0].measureDateList;
+    					//行
+    					measureNumList = data.rows[0].measureNumList;
+    					var dataList = data.rows;
+    					var str = '<tr><th colspan="2" style="text-align: center;width:120px"><@spring.message "msaplan.measure.time"/></th>';
+    					$.each(measureDateList,function(j,x){
+               				//第一行
+               				//str += '<th style="padding:0px"><input name="dateType" type="datetime" style="margin:0px;border:0;background:transparent;width:100%;text-align: center;" class="datetimepicker"   data-role="datetimepicker" value="'+ x +'"/></th>';
+               				str += '<th style="padding:0px;width:200px"><input name="dateType"  style="margin:0px;border:0;background:transparent;width:100%;text-align: center;"  value="'+ x +'"/></th>';
+                		})
+                		str += '</tr>';
+    					//遍历行(第二行开始)
+    					$.each(measureNumList,function(i,y){
+    						if(i == 0){
+		                		str += '<tr><th rowspan="'+ measureNumList.length +'" style="text-align: center"><@spring.message "msaplan.measure.value"/></th><th style="text-align: center">'+ y +'</th>';
+    						}else{
+    							str += '<tr><th style="text-align: center">'+ y +'</th>';
+    						}
+	                		//遍历列
+	                		$.each(measureDateList,function(j,x){
+	                			var flag = true;
+	                			var nameStr = y + "|" ;
+		                		for(var k=0; k<dataList.length; k++){
+		                			if(Number(dataList[k].measureNum) === Number(y) && (new Date(dataList[k].measureDate) - new Date(x) == 0)){	
+		                				nameStr += dataList[k].kid;
+		                				str += '<td><input name="'+ nameStr +'" onkeyup="clearNoNum(this)" onblur="clearNoNum(this)" onfocus="clearNoNum(this)" style="margin:0px;border:0;background:transparent;width:100%;text-align: center;" value="'+ dataList[k].measureValue +'"/></td>';
+		                				dataList.splice(k,1);
+		                				flag = false;
+		                				break;
+		                			}
+		                		}
+		                		if(flag){
+		                			str += '<td><input name="'+ nameStr +'" onkeyup="clearNoNum(this)" onblur="clearNoNum(this)" onfocus="clearNoNum(this)" style="margin:0px;border:0;background:transparent;width:100%;text-align: center;"/></td>';
+		                		}
+		                	})
+		                	str += '</tr>';
+	                	})
+	                	//最后两行
+	                	for(var l=0; l<2; l++){
+	                		var idNum;
+	                		var idStr;
+	                		if(l == 0){
+		                		str += '<tr><th colspan="2" style="text-align: center"><@spring.message "msaplan.measure.average"/></th>';
+		                		idNum = "jz";
+	                		}else{
+	                			str += '<tr><th colspan="2" style="text-align: center"><@spring.message "msaplan.measure.range"/></th>';
+	                			idNum = "jc";
+	                		}
+	                		for(var k=0; k<measureDateList.length; k++){
+	                			idStr = idNum + k;
+	                			str += '<th id="'+ idStr +'" style="text-align: center" ></th>'
+	                		}
+	                		str += '</tr>'
+	                	}
+    					//设置table宽度
+    					$("#mytable").width(window.innerWidth/13*(measureDateList.length+2));
+    					$("table").html("");
+    					$("table").append(str);
+    					kendo.bind($("[name = 'dateType']"),viewModel);
+    					var datePicker = $("[name = 'dateType']").kendoDatePicker({
+    					    format: "{0:yyyy-MM-dd}",
+    					    change: function(){
+    					    }
+    					}); 
+    					for(var i=0;i<datePicker.length;i++){    						
+	    					datePicker[i].disabled=true; 
+    					}
+    					operation()
+    				}else{
+    					var str = '<tr><th colspan="2" style="text-align: center;width:120px"><@spring.message "msaplan.measure.time"/></th>';
+    					for(var i=0; i<cols;i++){
+    						//第一行
+							str += '<th style="padding:0px;width:200px"><input name="dateType"  style="margin:0px;border:0;background:transparent;width:100%;text-align: center;"/></th>';    						
+    					}
+    					str += '</tr>';
+
+    					//行
+    					for(var i=0; i<rows;i++){
+    						if(i == 0){
+    							str += '<th rowspan="'+ rows +'" style="text-align: center"><@spring.message "msaplan.measure.value"/></th><th style="text-align: center">'+ (i+1) +'</th>	';
+    						}else{
+    							str += '<th style="text-align: center">'+ (i+1) +'</th>';
+    						}
+    						//列
+    						for(var j=0; j<cols; j++){
+    								str += '<td><input name="'+ (i+1) +'|" onkeyup="clearNoNum(this)" onblur="clearNoNum(this)" onfocus="clearNoNum(this)" style="margin:0px;border:0;background:transparent;width:100%;text-align: center;"/></td>';
+    							
+    						}
+    						str += '</tr>'
+    					}
+    					//最后两行
+	                	for(var l=0; l<2; l++){
+	                		var idNum;
+	                		var idStr;
+	                		if(l == 0){
+		                		str += '<tr><th colspan="2" style="text-align: center"><@spring.message "msaplan.measure.average"/></th>';
+		                		idNum = "jz";
+	                		}else{
+	                			str += '<tr><th colspan="2" style="text-align: center"><@spring.message "msaplan.measure.range"/></th>';
+	                			idNum = "jc";
+	                		}
+	                		for(var k=0; k<cols; k++){
+	                			idStr = idNum + k;
+	                			str += '<th id="'+ idStr +'" style="text-align: center" ></th>'
+	                		}
+	                		str += '</tr>'
+	                	}
+	                	//设置table宽度
+    					$("#mytable").width(window.innerWidth/13*(cols+2));
+	                	$("table").html("");
+    					$("table").append(str);
+    					kendo.bind($("[name = 'dateType']"),viewModel);
+    					var datePicker = $("[name = 'dateType']").kendoDatePicker({
+    					    format: "{0:yyyy-MM-dd}",
+    					    change: function(){
+    					    }
+    					}); 
+    					for(var i=0;i<datePicker.length;i++){    						
+	    					datePicker[i].disabled=true; 
+    					}
+    				}
+    				if(parentData.measurePlanStatus == '3'){
+    		    		$("input").attr('readOnly','true')
+    		    	}
+    			}
+    		}
+    	}) 
+    }
+    function clearNoNum(obj) { 
+        obj.value = obj.value.replace(/[^\d.]/g,""); //清除"数字"和"."以外的字符  
+            obj.value = obj.value.replace(/^\./g,""); //验证第一个字符是数字而不是  
+            obj.value = obj.value.replace(/\.{2,}/g,"."); //只保留第一个. 清除多余的  
+            obj.value = obj.value.replace(".","$#$").replace(/\./g,"").replace("$#$",".");  
+            obj.value = obj.value.replace(/^(\-)*(\d+)\.(\d\d).*$/,'$1$2.$3'); //只能输入两个小数  
+
+    }
+    //均值 极差运算
+    function operation(){
+    	sFlag = true;
+    	//清空均值
+    	averageData = [];
+    	//清空极差
+    	jcList = [];
+    	//清空标准差
+    	bzcList = [];
+    	//极差和
+    	var jcSum = 0;
+    	var jc;
+    	var len;
+		if(checkStr(measureDateList)){
+			len = measureDateList.length;
+		}else{
+			len = cols;
+		}
+		
+    	for(var i=0; i<len; i++){
+    		//相同测量日期 测量值数
+    		var count = 0;
+			var sum = 0;
+			var flag = false;
+			var max = 0;
+			var min = 0;
+			var sameFlag;
+			var numFlag = true;
+			//测量值集合
+			var valueList = [];
+			$('#mytable tr').each(function() { 
+				$(this).find('input:eq('+ i +')').each(function(){ 
+					if(flag){
+						//判断是否有值
+						if(checkStr($(this).val())){
+							count ++;
+							sum = parseFloat(sum) + parseFloat(nvl($(this).val(),0));	
+						}
+						if(numFlag && checkStr($(this).val())){
+							max = parseFloat(nvl($(this).val(),0));
+							min = parseFloat($(this).val());
+							numFlag = false;
+							sameFlag = '1';
+							valueList.push($(this).val())
+						}else if(!numFlag && checkStr($(this).val()) && parseFloat(max) <= parseFloat($(this).val())){
+							sameFlag = '2';
+							max = parseFloat(nvl($(this).val(),0));
+							valueList.push($(this).val())
+						}else if(!numFlag && checkStr($(this).val()) && parseFloat(min) > parseFloat($(this).val())){
+							sameFlag = '2';
+							min = parseFloat($(this).val());
+							valueList.push($(this).val())
+						}
+					}else{
+						//第一行为日期，跳过
+						flag = true
+					}
+					
+				});
+			});	
+			//均值
+			var average = sum/count;
+			$('#jz'+ i +'').text(average.toFixed(3));
+			averageData.push(average.toFixed(3))
+			
+			//标准差
+			if(valueList.length == 1){
+				sFlag = false;	
+			}else if(sFlag){
+				var sum = 0;
+				for(var j=0; j<valueList.length; j++){
+					sum += Math.pow(average - valueList[j],2)//平方
+				}
+				bzcList.push(Math.sqrt(sum.toFixed(5)/(valueList.length-1)).toFixed(5))//平方根
+			}
+			
+			//极差
+			if(sameFlag === '1' && max == min){
+				$('#jc'+ i +'').text(max.toFixed(3));
+				jcList.push(max.toFixed(3))
+				jcSum += max;
+			}else if(sameFlag === '2'){
+				$('#jc'+ i +'').text((max-min).toFixed(3));
+				jcList.push((max-min).toFixed(3))
+				jcSum += max-min;
+			}
+			
+		} 
+    	//平均极差
+    	averageJc = jcSum/len;
+    	
+    }
+    function checkStr(str){
+		if(str == null || str === '' ||typeof(str) == "undefined"){
+    		return false;
+    	}
+		return true;
+    }
+    
+    $(document).ready(function() {
+    	var msaPlanId = parentData.msaPlanId;
+		$("#files1").kendoUpload({
+			async: {
+            saveUrl: "${base.contextPath}/hqm/msa/stability/value/upload?${_csrf.parameterName}=${_csrf.token}",//
+			autoUpload: true
+			},
+			upload : function(e){
+				e.data = {
+						"msaPlanId": msaPlanId
+				}
+			},
+            success : function(e){
+            	var response = e.response;
+            	if(response.success){
+                    Hap.showToast({
+                        type: 'success',
+                        "positionClass": "toast-bottom-right",
+                        message: "上传成功"
+                    });
+            		initTable()
+            		//kendo.ui.showInfoDialog({message: "导入成功"});
+            		
+            	}else{
+            		kendo.ui.showErrorDialog({
+                            message: response.message
+                        });
+            		
+            	}
+            },
+			showFileList:false,
+						});
+					});
+</script>
+<body>
+<div style="display:none">
+	<iframe id="iframePrint" ></iframe>
+</div>
+<div id="printWindow"></div>
+<div id="page-content" style="heigth:100%">
+	<div id="head" style="heigth:100%">
+		<form class="form-horizontal" style="heigth:100%">
+			<div id="form" style="heigth:100%">
+					<div class="row" style=";height:10%">
+					    <div class="pull-left" id="toolbar-btn" style="padding-bottom:10px;">
+					    	<span id="save" class="btn btn-success k-grid-save-changes" style="float:left;margin-right:5px;"
+                          	data-bind="click:submit"><i class="fa fa-save" style="margin-right:3px;"></i><@spring.message "hap.save"/></span>
+                          	<span id="analyze" type="button" class="btn btn-primary"
+                            style="float:left;margin-right:5px" data-bind="click:analysis"><i  style="margin-right:3px;"></i><@spring.message "msaplan.analyze"/></span>
+    						<span id="getImport" class="btn btn-primary" style="float:left;width:120px;margin-right:5px;margin-left: 5px;" onclick="modelDownload()" type="submit"><@spring.message "excel.getexceltemplate"/></span>
+                            <span id="import"  data-bind="click:importExcel" class="btn btn-primary fa fa-upload" style="float:left;margin-right:5px;">&nbsp;<@spring.message "hap.import"/></span>
+					    	<span id="clear" class="btn btn-danger" style="float:left;margin-right:5px" data-bind="click:remove"><i class="fa fa-trash-o" style="margin-right:3px;"></i><@spring.message "hap.clear"/></span>
+					    	<span id="refresh" class="btn btn-default k-grid-save-changes"  style="float:left;margin-right:5px;" data-bind="click:refresh"><i class="fa fa-refresh" style="margin-right: 3px;"></i><@spring.message "hap.refresh"/></span>
+					    	<span class="btn btn-success k-grid-save-changes" data-bind="click:toPrint"  style="float:left;margin-right:5px;"><i class="fa fa-print" style="margin-right:3px;"></i><@spring.message "hap.print"/></span>
+					    	<span type="button" class="btn btn-primary"
+                            style="float:left;margin-right:5px" data-bind="click:closeWin"><i class="fa fa-undo" style="margin-right:3px;"></i><@spring.message "hap.back"/></span>
+					    </div>
+					    <script>kendo.bind($('#toolbar-btn'), viewModel);</script>
+					    <div class="pull-right" id="query-form" style="padding-bottom:10px;">
+					           	<!-- 控制图类型 -->
+					            <lable class="control-lable" style="text-align:right;padding:0px;margin-top:1%"><@spring.message "msaplan.control.chart.type"/>:</lable>
+					            <input id="controlChartType" style="width:150px;margin-right:30px;" data-bind="value:model.controlChartType">
+					            <script>
+					                 $("#controlChartType").kendoComboBox({
+					              	    dataTextField: "meaning",
+					              	    dataValueField: "value",
+					              	    valuePrimitive: true,
+					              	    dataSource: HQM_CONTROL_CHART_TYPE,
+					              	    /* select: function(){
+					              	    	showXbar();
+					              	    } */
+					              		});
+					            </script>
+					        <div style="clear:both"></div>
+					    </div>
+					    <script>kendo.bind($('#query-form'), viewModel);</script>
+				    </div>
+				    <div class="row" style="height:10%;margin-top: 5px;font-size:14px">
+				    		<!-- 量具名称 -->
+				    		<div class="col-sm-3" style="padding:0px">
+						    	    <lable class="col-xs-5 control-lable" style="text-align:right;padding:0px;margin-top:1%"><@spring.message "msaplan.measuretoolname"/>:</lable>
+						    	    <div class="col-xs-7"  style="padding:0px">
+							    	    <input id=measureToolName style="width:200px" disabled="disabled"    data-role="maskedtextbox" type="text" data-bind="value:model.measureToolName" />
+							    	    <script>kendo.bind($("#measureToolName"),viewModel);</script>
+						    	    </div>
+						    </div>
+							<!-- 量具编号 -->
+						    <div class="col-sm-3" style="padding:0px">
+						    	    <lable class="col-xs-5 control-lable" style="text-align:right;padding:0px;margin-top:1%"><@spring.message "msaplan.measuretoolnum"/>:</lable>
+						    	    <div class="col-xs-7"  style="padding:0px">
+							    	    <input id="measureToolNum" style="width:200px" disabled="disabled"    data-role="maskedtextbox" type="text" data-bind="value:model.measureToolNum" />
+							    	    <script>kendo.bind($("#measureToolNum"),viewModel);</script>
+						    	    </div>
+						    </div>
+						    <!-- 样品名称 -->
+						    <div class="col-sm-3" style="padding:0px">
+						    	    <lable class="col-xs-5 control-lable" style="text-align:right;padding:0px;margin-top:1%"><@spring.message "msaplan.sampledescription"/>:</lable>
+						    	    <div class="col-xs-7"  style="padding:0px">
+							    	    <input id="sampleDescription" style="width:200px"    data-role="maskedtextbox" type="text" data-bind="value:model.sampleDescription" />
+							    	    <script>kendo.bind($("#sampleDescription"),viewModel);</script>
+						    	    </div>
+						    </div>
+						    <div class="col-sm-3" style="padding:0px">
+						    </div>
+				    </div>
+				    <div class="row" style="height:10%;margin-top: 5px;font-size:14px">
+						    <!-- 待测特性 -->
+						    <div class="col-sm-3" style="padding:0px">
+						    	    <lable class="col-xs-5 control-lable" style="text-align:right;padding:0px;margin-top:1%"><@spring.message "msaplan.measurecharacter"/>:</lable>
+						    	    <div class="col-xs-7"  style="padding:0px">
+							    	    <input id="measureCharacter" style="width:200px" disabled="disabled"    data-role="maskedtextbox" type="text" data-bind="value:model.measureCharacter" />
+							    	    <script>kendo.bind($("#measureCharacter"),viewModel);</script>
+						    	    </div>
+						    </div>
+						    <!-- 测量人 -->
+						    <div class="col-sm-3" style="padding:0px">
+						    	    <lable class="col-xs-5 control-lable" style="text-align:right;padding:0px;margin-top:1%"><@spring.message "msaplan.measuredby"/>:</lable>
+						    	    <div class="col-xs-7" style="padding:0px">
+							    	    <input id="measuredBy"  style="width:200px"  data-role="maskedtextbox" type="text" data-bind="value:model.measuredBy" />
+						    	    	<script>kendo.bind($("#measuredBy"),viewModel);</script>
+						    	    </div>
+						    </div>
+						    
+						    <!-- 分析人 -->
+						    <div class="col-sm-3" style="padding:0px">
+						    	    <lable class="col-xs-5 control-lable" style="text-align:right;padding:0px;margin-top:1%"><@spring.message "msaplan.analyzedby"/>:</lable>
+						    	    <div class="col-xs-7" style="padding:0px">
+							    	    <input id="userName" style="width:200px" disabled="disabled" data-role="maskedtextbox" type="text" data-bind="value:model.userName" type="text"  />
+						    	    	<script>kendo.bind($("#userName"),viewModel);</script>
+						    	    </div>				    	    
+						    </div>
+
+				    </div>
+				    <div class="row" style="height:10%;margin-top: 5px;font-size:14px">
+						    <!-- 分析日期 -->
+						    <div class="col-sm-3" style="padding:0px">
+						    	    <lable class="col-xs-5 control-lable" style="text-align:right;padding:0px;margin-top:1%"><@spring.message "msaplanline.analyzeDate"/>：</lable>
+						    	    <div class="col-xs-7" style="padding:0px">
+							    	    <input  disabled id="analyzeDate" style="width:200px" data-role="maskedtextbox" type="text" data-bind="value:model.analyzeDate" type="text"  /> 
+						    	    	<script>kendo.bind($("#analyzeDate"),viewModel);</script>
+						    	    </div>				    	    
+						    </div>	
+			     	</div>
+				    <div id="tableRow" class="row" style="height:35%;margin-top:10px">
+				    	<div style=" height:100%;width:100%; overflow:scroll;">
+							<table id="mytable" style='color: black;table-layout: fixed;font-size: small;text-align: center;border-color:#697882;overflow:scroll' border='2px'>
+								<!-- <tr>
+									<th style="width:20%"></th>
+									<th style="text-align: center;width:80%">分析内容</th>
+								</tr> 
+								<tr>
+									<td style="width:20%"><input type="radio" name="check" value="" style="margin-top:5%"></td>
+									<td style="width:80%"></td>
+								</tr> -->
+							</table>
+						</div>
+				    </div>
+				    <div class="row" style="margin-top:10px;">
+				    	<div id="picture" class="form-group col-sm-6" style="height:350px;">
+					    	<div id="picture" style="height:100%;width:100%;">
+					    	
+					    	</div>
+				    	</div>
+				    	<div id="picture2" class="form-group col-sm-6" style="height:350px">
+							<div id="" style="height:100%;width:100%;">
+					    	
+					    	</div>
+				    	</div>
+				    </div>
+			</div>
+		</form>
+	</div>
+</div>
+<div id="excelimport" style="display:none">
+	<form id="mainform" class="form-horizontal">
+	<div class="row" style="width:95%">
+		<div class="form-group">
+			<label class="col-sm-3 control-label"><@spring.message "attachcategory.attachment"/></label>
+			<div class="col-sm-7" style="margin-left: 20%">
+			<div class="demo-section k-content">
+				<input name="files" id="files1" type="file" accept=".xlsx" />
+			</div>
+
+			<script>
+				
+				</script>
+			</div>
+		</div>
+	</div>
+	</form>
+</div>
+<script>
+    function modelDownload() {//EXCEL模板下载
+        window.location.href="${base.contextPath}/resources/files/稳定性数据导入模板.xlsx";
+    }
+</script>
+
+<script type="text/javascript">
+	var messageResult = '';
+	var UCL;
+	var LCL;
+	var R_UCL;
+	var R_LCL;
+	var S_UCL;
+	var S_LCL;
+	//展示Xbar图
+	function showXbar(type){
+		if(type == 'S' && (!sFlag)){
+			kendo.ui.showInfoDialog({
+				title: "提示",
+    			message: 'S图无法查看'
+    		})
+    		return;
+		}
+		var xData = [];
+		for(var i=0; i<measureDateList.length; i++){
+			xData.push(i+1)
+		}
+		var averageDataSum = 0;
+		for(var i=0; i<averageData.length; i++){
+			averageDataSum += parseFloat(averageData[i])
+		}
+		//所有测量值均值
+		cl = averageDataSum/averageData.length;
+		
+		var jsonData = {
+				"n" : measureNumList.length
+		}
+		//各组标准差的平均值
+		var averageSum = 0;	
+		for(var i=0; i<bzcList.length; i++){
+			averageSum += Number(bzcList[i]);
+		}
+		averageBzc = averageSum/bzcList.length;
+		//获取控制图系数
+		$.ajax({
+    		url:"${base.contextPath}/hqm/control/chart/value/query",
+    		type: "POST",
+    		data: jsonData,
+    		jsonType: "json",
+    		async:false,
+    		success: function(resultData){
+    			if(resultData.success){
+    				data = resultData.rows[0]
+    				
+    				/* Xbar图 */
+    				//UCL
+    				UCL = (cl + data.a2*averageJc).toFixed(3);
+    				//LCL
+    				LCL = (cl - data.a2*averageJc).toFixed(3);
+    				var resultFlag = true;
+    				XbarR(averageData,UCL,LCL,cl,xData,'<@spring.message "msaplan.xbar.chart"/>','<@spring.message "msaplan.sample.average"/>','picture');
+    				for(var i=0; i< averageData.length;i++){
+    					if(parseFloat(averageData[i])>parseFloat(UCL) || parseFloat(averageData[i])<parseFloat(LCL)){
+    						resultFlag = false;
+    						break;
+    					}
+    				}
+    				if(type === 'R'){
+    					/* R图 */
+        				R_UCL = (averageJc*data.d4).toFixed(3);
+        				R_LCL = (averageJc*data.d3).toFixed(3);
+        				for(var i=0; i< jcList.length;i++){
+        					if(parseFloat(jcList[i])>parseFloat(R_UCL) || parseFloat(jcList[i])<parseFloat(R_LCL)){
+        						resultFlag = false;
+        						break;
+        					}
+        				}
+        				XbarR(jcList,R_UCL,R_LCL,averageJc,xData,'<@spring.message "msaplan.Range.chart"/>','<@spring.message "msaplan.sample.range"/>','picture2');
+    				}else if(type === 'S'){
+    					/* S图 */
+        				S_UCL = (averageBzc*data.b4).toFixed(3);
+        				S_LCL = (averageBzc*data.b3).toFixed(3);
+        				for(var i=0; i< bzcList.length;i++){
+        					if(parseFloat(bzcList[i])>parseFloat(S_UCL) || parseFloat(bzcList[i])<parseFloat(S_LCL)){
+        						resultFlag = false;
+        						break;
+        					}
+        				}
+        				XbarR(bzcList,S_UCL,S_LCL,averageBzc,xData,'<@spring.message "msaplan.standard.deviation.chart"/>','<@spring.message "msaplan.sample.standard.deviation"/>','picture2');
+    				}
+    				//MSA结论
+    				var msaResult = '';
+    				var msaConclusion;
+    				if(resultFlag){
+    					msaResult = 'OK';
+    					msaConclusion = '所有点均在控制限内，该测量系统稳定'
+    				}else{
+    					msaResult = 'NG';
+    					msaConclusion = '存在点不在控制限内，该测量系统不稳定'
+    				}
+
+    				messageResult = msaConclusion;
+    				if(parentData.measurePlanStatus != '3'){    					
+	    				var msaPlanLine = {
+	    		    			"measurePlanId" : parentData.msaPlanId,
+	    		    			"msaContent" : '1',
+	    		    			"msaResult":msaResult,
+	    		    			"msaConclusion": msaConclusion
+	    		    	}
+	    				$.ajax({
+	    		    		url: "${base.contextPath}/hqm/msa/plan/line/updateResult",
+	    		    		data: msaPlanLine,
+	    		    		type: "POST",
+	    		    		dataType: "json",
+	    		    		success: function(data){
+	    		    			if(data.success){
+	    		    				window.parent.viewModel.query();
+	    		    			}
+	    		    		}
+	    		    	})
+    				}
+    			}
+    		}
+    	})
+		
+		
+	}
+//R图
+/*  
+ * dataList: 数据体
+ * UCL：不同图的UCL
+ * LCL：不同图的LCL
+ * CL：数据平均值
+ * LCL：x轴：测量次数的总个数
+ * title： 标题
+ * name: 数据描述
+ * id: div id
+ */
+function XbarR(dataList,UCL,LCL,CL,xData,title,name,id){
+	dataList.push(UCL);
+	dataList.push(LCL);
+	option = {
+		    title: {
+		        text: title,
+		        //subtext: '纯属虚构'
+		    },
+		    tooltip: {
+		        trigger: 'axis'
+		    },
+		    legend: {
+		        data:[name]
+		    },
+		    toolbox: {
+		        show: true,
+		        feature: {
+		            /* dataZoom: {
+		                yAxisIndex: 'none'
+		            }, */
+		            dataView: {readOnly: false},
+		            magicType: {type: ['line', 'bar']},
+		            restore: {},
+		            saveAsImage: {}
+		        }
+		    },
+		    xAxis:  {
+		        type: 'category',
+		        boundaryGap: false,
+		        data: xData
+		    },
+		    yAxis: {
+		    	name: name,
+		        type: 'value',
+		        axisLabel: {
+		            formatter: '{value}'
+		        },
+		        min:'dataMin'
+		    },
+		    series: [
+		        {
+		            name:name,
+		            type:'line',
+		            data:dataList,
+		            markPoint: {
+		                data: [
+		                    {type: 'max', name: '最大值'},
+		                    {type: 'min', name: '最小值'}
+		                ]
+		            },
+		            markLine: {
+		                data: [
+		                    {
+		                    	yAxis: CL, 
+		                    	name: '平均值',
+		                    	label:{
+		                    			normal: {formatter: '平均值('+ CL +')'}
+		                    	},
+		                    	lineStyle:{
+		                    		color: 'green'
+		                    	}
+		                    },
+		                    {
+		                    	yAxis: UCL,  
+		                    	name: 'UCL',
+		                    	label:{
+		                    		normal: {formatter: 'UCL('+ UCL +')'}
+		                    	},
+		                    	lineStyle:{
+		                    		color: 'red',
+		                    		type: 'solid'
+		                    	}
+		                    },
+		                    {
+		                    	yAxis: LCL,  
+		                    	name: 'LCL',
+		                    	label:{
+		                    		normal: {formatter: 'LCL('+ LCL +')'}
+		                    	},
+		                    	lineStyle:{
+		                    		color: 'red',
+		                    		type: 'solid'
+		                    	}
+		                    }
+		                ]
+		            }
+		        },
+		    ]
+		};
+	$("#"+ id +"").empty();
+	$("#"+ id +"").append('<div id="'+ id +'a" style="height:100%;width:100%"></div>')
+	var myChart = echarts.init(document.getElementById(id+'a'));
+	myChart.setOption(option);
+	dataList.splice(dataList.length-2,2);
+}
+
+</script>
+</body>
+</html>

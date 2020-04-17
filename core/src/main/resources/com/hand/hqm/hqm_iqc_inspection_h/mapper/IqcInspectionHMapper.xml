@@ -1,0 +1,707 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_iqc_inspection_h.mapper.IqcInspectionHMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_iqc_inspection_h.dto.IqcInspectionH">
+        <result column="HEADER_ID" property="headerId" jdbcType="DECIMAL" />
+        <result column="INSPECTION_NUM" property="inspectionNum" jdbcType="VARCHAR" />
+        <result column="SOURCE_TYPE" property="sourceType" jdbcType="VARCHAR" />
+        <result column="TASK_FROM" property="taskFrom" jdbcType="VARCHAR" />
+        <result column="SOURCE_ORDER" property="sourceOrder" jdbcType="VARCHAR" />
+        <result column="RECEIVE_DATE" property="receiveDate" jdbcType="DATE" />
+        <result column="IS_URGENCY" property="isUrgency" jdbcType="VARCHAR" />
+        <result column="SAMPLE_PLAN" property="samplePlan" jdbcType="VARCHAR" />
+        <result column="INSPECTION_STATUS" property="inspectionStatus" jdbcType="VARCHAR" />
+        <result column="INSPECTION_RES" property="inspectionRes" jdbcType="VARCHAR" />
+        <result column="PLANT_ID" property="plantId" jdbcType="DECIMAL" />
+        <result column="ITEM_ID" property="itemId" jdbcType="DECIMAL" />
+        <result column="SUPPLIER_ID" property="supplierId" jdbcType="DECIMAL" />
+        <result column="RECEIVE_QTY" property="receiveQty" jdbcType="DECIMAL" />
+        <result column="INSPECTION_DATE" property="inspectionDate" jdbcType="DATE" />
+        <result column="ITEM_EDITION" property="itemEdition" jdbcType="VARCHAR" />
+        <result column="VERSION_NUM" property="versionNum" jdbcType="VARCHAR" />
+        <result column="INSPECTOR_ID" property="inspectorId" jdbcType="VARCHAR" />
+        <result column="NONCONFORMING_ORDER" property="nonconformingOrder" jdbcType="VARCHAR" />
+        <result column="SOURCE_INSPEC_ID" property="sourceInspecId" jdbcType="VARCHAR" />
+        <result column="REMARK" property="remark" jdbcType="VARCHAR" />
+        <result column="INSTRUCTION" property="instruction" jdbcType="VARCHAR" />
+        <result column="SAMPLE_SIZE" property="sampleSize" jdbcType="DECIMAL" />
+        <result column="SCORE_FLAG" property="scoreFlag" jdbcType="VARCHAR" />
+        <result column="PRODUCTION_BATCH" property="productionBatch" jdbcType="VARCHAR" />
+        <result column="OK_QTY" property="okQty" jdbcType="DECIMAL" />
+        <result column="NG_QTY" property="ngQty" jdbcType="DECIMAL" />
+        <result column="INSPECTION_DES" property="inspectionDes" jdbcType="VARCHAR" />
+        <result column="INSPECTION_ITEM_IMG" property="inspectionItemImg" jdbcType="VARCHAR" />
+        <result column="INSPECTION_JUDGE" property="inspectionJudge" jdbcType="VARCHAR" />
+        <result column="APPROVAL_RESULT" property="approvalResult" jdbcType="VARCHAR" />
+        <result column="RECIPIENT_ID" property="recipientId" jdbcType="VARCHAR" />
+        
+        <result column="INSPECTION_TYPE" property="inspectionType" jdbcType="VARCHAR" /> 
+        <result column="SOLVE_WAY" property="solveWay" jdbcType="VARCHAR" />
+        <result column="APPROVAL_DES" property="approvalDes" jdbcType="VARCHAR" />
+        
+        <result column="ITEM_DESCRIPTIONS" property="itemDescriptions" jdbcType="VARCHAR" />
+        <result column="ITEM_CODE" property="itemCode" jdbcType="VARCHAR" />
+        <result column="PLANT_CODE" property="plantCode" jdbcType="VARCHAR" />
+        <result column="SUPPLIER_CODE" property="supplierCode" jdbcType="VARCHAR" />
+        <result column="SUPPLIER_NAME" property="supplierName" jdbcType="VARCHAR" />
+        <result column="ITEM_CATEGORY_DESCRIPTION" property="itemCategoryDescription" jdbcType="VARCHAR" />
+        <result column="USER_NAME" property="userName" jdbcType="VARCHAR" />
+        
+        <result column="INSPECTOR_USER_NAME" property="inspectorUserName" jdbcType="VARCHAR" />
+        <result column="RECIPIENT_USER_NAME" property="recipientUserName" jdbcType="VARCHAR" />
+        <result column="NO_NUM" property="noNum" jdbcType="VARCHAR" />
+        
+        <result column="ORDER_CODE" property="orderCode" jdbcType="VARCHAR" />
+        <result column="ORDER_ID" property="orderId" jdbcType="DECIMAL" />
+        
+        <result column="PLAN_TIME" property="planTime" jdbcType="DATE" />
+        <result column="creation_date" property="creationDate" jdbcType="DATE" />
+        <!-- 业务字段 -->
+        <result column="ITEM_NAME" property="itemName" jdbcType="VARCHAR" />
+        <result column="INSPECTION_ATTRIBUTE" property="inspectionAttribute" jdbcType="VARCHAR" />
+        <result column="ATTRIBUTE_TYPE" property="attributeType" jdbcType="VARCHAR" />
+        <result column="STANDARD_TYPE" property="standardType" jdbcType="VARCHAR" />
+        <result column="QUALITY_CHARACTER_GRADE" property="qualityCharacterGrade" jdbcType="VARCHAR" />
+        <result column="SAMPLE_WAY_ID" property="sampleWayId" jdbcType="DECIMAL" />
+        <result column="DESCRIPTION" property="description" jdbcType="VARCHAR" />
+        <result column="STANDRAD_UOM" property="standradUom" jdbcType="VARCHAR" />
+        <result column="STANDRAD_FROM" property="standradFrom" jdbcType="DECIMAL" />
+        <result column="STANDRAD_TO" property="standradTo" jdbcType="DECIMAL" />
+        <result column="ATTRIBUTE_INSPECTION_RES" property="attributeInspectionRes" jdbcType="VARCHAR" />
+        <result column="LINE_ID" property="lineId" jdbcType="DECIMAL" />
+        <result column="ORDER_NUM" property="orderNum" jdbcType="VARCHAR" />
+        <result column="DATA" property="dataInfo" jdbcType="VARCHAR" />
+        <result column="JUDGEMENT" property="judgement" jdbcType="VARCHAR" />
+        
+        <result column="INSPECTIONDATEFROM" property="inspectionDateFrom" jdbcType="VARCHAR" />
+        <result column="INSPECTIONDATETO" property="inspectionDateTo" jdbcType="VARCHAR" />
+        <result column="CREATIONDATEFROM" property="creationDateFrom" jdbcType="VARCHAR" />
+        <result column="CREATIONDATETO" property="creationDateTo" jdbcType="VARCHAR" />
+        <result column="INSPECTOR_EMPLOYEE_NAME" property="inspectorEmployeeName" jdbcType="VARCHAR" />
+        <result column="TEMPLATE_HEAD_ID" property="templateHeadId" jdbcType="DECIMAL" />
+        <result column="PASS_QUANTITY" property="passQuantity" jdbcType="DECIMAL" />
+        <result column="NG_QUANTITY" property="ngQuantity" jdbcType="DECIMAL" />
+        <result column="DETAIL_STATUS" property="detailStatus" jdbcType="VARCHAR" />
+        <result column="SERIAL_NUMBER" property="serialNumber" jdbcType="VARCHAR" />
+        
+        <result column="MAIN_INSPECTOR_ID" property="mainInspectorId" jdbcType="DECIMAL" />
+        <result column="MAIN_INSPECTOR_EMPLOYEE_NAME" property="mainInspectorEmployeeName" jdbcType="VARCHAR" />
+        <result column="REMARK_INSPECTOR_ID" property="remarkInspectorId" jdbcType="DECIMAL" />
+        <result column="REMARK_INSPECTOR_EMPLOYEE_NAME" property="remarkInspectorEmployeeName" jdbcType="VARCHAR" />
+    </resultMap>
+
+<select id="selectMaxNumber" resultMap="BaseResultMap"
+            parameterType="com.hand.hqm.hqm_iqc_inspection_h.dto.IqcInspectionH">
+SELECT t.inspection_num
+  FROM hqm_iqc_inspection_h t
+ WHERE 1 = 1
+   AND t.inspection_num LIKE concat(#{inspectionNum}, '%')
+ ORDER BY t.inspection_num DESC
+</select>
+
+<select id="selectByNumber" resultMap="BaseResultMap"
+            parameterType="com.hand.hqm.hqm_iqc_inspection_h.dto.IqcInspectionH">
+SELECT t.*,
+       hi.descriptions     AS item_descriptions,
+       hi.item_code,
+       hp.plant_code,
+       hs.supplier_code,
+       hs.supplier_name,
+       su.user_name        AS inspector_user_name,
+       suu.user_name       AS recipient_user_name,
+       he.name             AS inspector_employee_name,
+       hno.no_num,
+       hdo.order_code,
+       hdo.order_id,
+       main_user.user_id   AS main_inspector_id,
+       main_hr.name        AS main_inspector_employee_name,
+       remark_user.user_id AS remark_inspector_id,
+       remark_hr.name      AS remark_inspector_employee_name
+  FROM hqm_iqc_inspection_h t
+  LEFT JOIN (SELECT hn.* FROM hqm_nonconforming_order hn WHERE hn.inspection_type = 'IQC') hno
+    ON t.header_id = hno.inspection_id
+  LEFT JOIN sys_user su
+    ON t.inspector_id = su.user_id
+  LEFT JOIN hr_employee he
+    ON su.employee_id = he.employee_id
+  LEFT JOIN sys_user suu
+    ON t.recipient_id = suu.user_id
+  LEFT JOIN hqm_8d_order hdo
+    ON t.inspection_num = hdo.source_order, hcm_item hi, hcm_plant hp, hcs_suppliers hs
+  LEFT JOIN hqm_supplier_inspector_rel hsir
+    ON hs.supplier_id = hsir.supplier_id
+  LEFT JOIN sys_user main_user --主检验员
+    ON hsir.inspector_id = main_user.user_id
+  LEFT JOIN hr_employee main_hr
+    ON main_user.employee_id = main_hr.employee_id
+  LEFT JOIN sys_user remark_user --备用检验员
+    ON hsir.pre_inspector_id = remark_user.user_id
+  LEFT JOIN hr_employee remark_hr
+    ON remark_user.employee_id = remark_hr.employee_id
+ WHERE 1 = 1
+   AND t.item_id = hi.item_id
+   AND t.plant_id = hi.plant_id
+   AND t.plant_id = hp.plant_id
+   AND t.supplier_id = hs.supplier_id
+   <if test="inspectionNum != null">
+   AND t.inspection_num LIKE concat('%',concat(#{inspectionNum},'%'))
+   </if>
+   <if test="itemId != null">
+   AND t.item_id = #{itemId}
+   </if>
+   <if test="plantId != null">
+   AND t.plant_id = #{plantId}
+   </if>
+   <if test="supplierId != null">
+   AND t.supplier_id = #{supplierId}
+   </if>
+   <if test="ngQueryFlag != null">
+   AND t.inspection_status = #{inspectionStatus}
+   AND t.creation_date > nvl((SELECT SYSDATE - cvb.value
+                               FROM sys_code_b scb
+                               JOIN sys_code_value_b cvb
+                                 ON scb.code_id = cvb.code_id
+                              WHERE scb.code = 'HQM_IQC_LOOK_TIME'
+                                AND rownum = 1),
+                             SYSDATE)
+   </if>
+   <if test="approvalResult != null">
+   AND t.approval_result = #{approvalResult}
+   </if>
+   <if test="isUrgency != null">
+   AND t.is_urgency = #{isUrgency}
+   </if>
+   <if test="headerId != null">
+   AND t.header_id = #{headerId}
+   </if>
+   <if test="inspectorEmployeeName != null">
+      AND (he.name LIKE concat('%', concat(#{inspectorEmployeeName}, '%'))
+   OR main_hr.name LIKE concat('%', concat(#{inspectorEmployeeName}, '%'))
+   OR remark_hr.name LIKE concat('%', concat(#{inspectorEmployeeName}, '%')))
+   </if>
+<!--    <if test="inspectionStatus == null or inspectionStatus == ''"> -->
+<!--    AND t.inspection_status = '2' -->
+<!--    </if> -->
+   <choose>
+    <when test="inspectionStatus!=null and inspectionStatus == 'AUDIT'">
+      AND t.inspection_status IN ('4')
+    </when> 
+    <when test="inspectionStatus!=null and inspectionStatus == 'INPUT'">
+      AND t.inspection_status IN ('2','3')
+    </when>
+    <when test="inspectionStatus!=null and inspectionStatus != 'AUDIT' and inspectionStatus != 'INPUT'">
+      AND t.inspection_status = #{inspectionStatus}
+    </when>
+   </choose>
+   <if test="inspectionJudge != null">
+   AND decode(t.inspection_judge,NULL,'OK',t.inspection_judge) = #{inspectionJudge}
+   </if>
+   <if test="inspectionRes != null">
+   AND t.inspection_res = #{inspectionRes}
+   </if>
+   <if test="inspectorId != null">
+   AND t.t.inspector_id = #{inspectorId}
+   </if>
+   <if test="inspectionDateFrom != null">
+   AND t.inspection_date >= to_date(#{inspectionDateFrom},'yyyy-mm-dd hh24:mi:ss')
+   </if>
+   <if test="inspectionDateTo != null">
+   AND t.inspection_date &lt;= to_date(#{inspectionDateTo},'yyyy-mm-dd hh24:mi:ss')
+   </if>
+   <if test="supplierId != null">
+   AND t.supplier_id = #{supplierId}
+   </if>
+   <if test="inspectorUserName != null">
+    AND EXISTS (SELECT 1
+          FROM hr_employee he
+         WHERE he.employee_id = su.employee_id
+           AND he.name LIKE concat('%', concat(#{inspectorUserName}, '%')))
+   </if>
+   <!-- ORDER BY t.is_urgency DESC, t.creation_date DESC -->
+   ORDER BY t.header_id DESC
+</select>
+<select id="selectforother" resultMap="BaseResultMap"  parameterType="com.hand.hqm.hqm_iqc_inspection_h.dto.IqcInspectionH">
+SELECT t.header_id,
+       t.inspection_num,
+       t.source_type,
+       t.task_from,
+       t.source_order,
+       t.receive_date,
+       t.is_urgency,
+       t.sample_plan,
+       t.inspection_status,
+       t.inspection_res,
+       t.plant_id,
+       t.item_id,
+       t.supplier_id,
+       t.receive_qty,
+       t.inspection_date,
+       t.version_num,
+       t.inspector_id,
+       t.nonconforming_order,
+       t.source_inspec_id,
+       t.remark,
+       t.instruction,
+       t.sample_size,
+       t.score_flag,
+       t.production_batch,
+       t.ok_qty,
+       t.ng_qty,
+       t.inspection_des,
+       t.inspection_item_img,
+       t.inspection_judge,
+       t.approval_result,
+       t.recipient_id,
+       t.inspection_type,
+       t.solve_way,
+       t.approval_des,
+       hi.descriptions       AS item_descriptions,
+       hi.item_code,
+       hp.plant_code,
+       hs.supplier_code,
+       hs.supplier_name,
+       hic.description       AS item_category_description,
+       su.user_name          AS inspector_user_name,
+       suu.user_name         AS recipient_user_name
+  FROM hqm_iqc_inspection_h t
+  LEFT JOIN sys_user su
+    ON t.inspector_id = su.user_id
+  LEFT JOIN sys_user suu
+    ON t.recipient_id = suu.user_id, hcm_item hi, hcm_plant hp, hcm_item_category_assign hica,
+ hcm_item_category hic, hcs_suppliers hs
+ WHERE 1 = 1
+   AND t.item_id = hi.item_id
+   AND t.plant_id = hi.plant_id
+   AND t.item_id = hica.item_id
+   AND t.plant_id = hica.plant_id
+   AND hica.category_id = hic.category_id
+   AND t.plant_id = hp.plant_id
+   AND t.supplier_id = hs.supplier_id
+   <if test="inspectionNum != null" > 
+   AND t.inspection_num LIKE concat(#{inspectionNum}, '%')
+   </if>
+   <if test="itemId != null">
+   AND t.item_id = #{itemId}
+   </if>
+   <if test="isUrgency != null">
+   AND t.is_urgency = #{isUrgency}
+   </if>
+   <if test="inspectionStatus != null">
+   AND t.inspection_status = #{inspectionStatus}
+   </if>
+    <if test="inspectionDate != null">
+   AND   t.inspection_date = #{inspectionDate}
+   </if>
+</select>
+<select id="getLimitCount" resultMap="BaseResultMap"  parameterType="com.hand.hqm.hqm_iqc_inspection_h.dto.IqcInspectionH">
+SELECT ta.inspection_judge
+  FROM (SELECT rownum AS row_num, tc.inspection_judge
+          FROM (SELECT rownum AS row_number, t.inspection_judge, t.inspection_num, t.inspection_date
+                  FROM hqm_iqc_inspection_h t
+                 WHERE t.item_id = #{itemId}
+		           AND t.supplier_id = #{supplierId}
+		           AND t.plant_id = #{plantId}
+                   AND t.source_type = '0'
+                   AND t.inspection_status = '5'
+                   AND t.sample_plan = #{samplePlan}
+                    AND t.inspection_num &lt;> #{inspectionNum}
+                 ORDER BY t.inspection_date DESC) tc) ta
+ WHERE 1 = 1
+   AND ta.row_num &lt; (SELECT tb.switch_rule_value_n
+                       FROM hqm_sample_switch_rule tb
+                      WHERE 1 = 1
+                        AND tb.source_sample_type = 'S'
+                        AND tb.inspection_judge = #{inspectionJudge})
+</select>
+
+<select id="selectFornon" resultMap="BaseResultMap"  parameterType="com.hand.hqm.hqm_iqc_inspection_h.dto.IqcInspectionH">
+SELECT *
+	FROM (SELECT            h.header_id,
+	                        h.inspection_num
+							,h.plant_id
+							,hp.plant_code
+							,h.inspection_type
+							,h.item_id AS item_id
+							,hi.item_code AS item_code
+							,hi.descriptions AS item_descriptions
+							,h.inspection_judge
+							,h.inspection_status
+							,h.approval_result
+							,h.inspector_id
+							,su.user_name
+							,h.inspection_date
+					FROM hqm_iqc_inspection_h h, hcm_item hi, sys_user su, hcm_plant hp
+				 WHERE hi.item_id = h.item_id
+					 AND hi.plant_id = h.plant_id
+					 AND su.user_id(+) = h.inspector_id
+					 AND hp.plant_id = h.plant_id
+				UNION ALL
+				SELECT      p.header_id,  
+				           p.inspection_num
+							,p.plant_id
+							,hp.plant_code
+							,p.inspection_type
+							,NULL AS item_id
+							,'' AS item_code
+							,'' AS item_descriptions 
+							,p.inspection_judge
+							,p.inspection_status
+							,p.approval_result
+							,p.inspector_id
+							,su.user_name
+							,p.inspection_date
+					FROM hqm_pqc_inspection_h p, sys_user su, hcm_plant hp
+				 WHERE su.user_id(+) = p.inspector_id
+					 AND hp.plant_id = p.plant_id
+				UNION ALL
+				SELECT  f.header_id , 
+				f.inspection_num
+							,f.plant_id
+							,hp.plant_code
+							,f.inspection_type
+							,f.item_id AS item_id
+							,hi.item_code AS item_code
+							,hi.descriptions AS item_descriptions
+							,f.inspection_judge
+							,f.inspection_status
+							,f.approval_result
+							,to_char(f.inspector_id) as inspector_id 
+							,su.user_name
+							,f.inspection_date
+					FROM hqm_fqc_inspection_h f, hcm_item hi, sys_user su, hcm_plant hp
+				 WHERE su.user_id(+) = f.inspector_id
+					 AND hi.item_id = f.item_id
+					 AND hp.plant_id = f.plant_id
+					 AND hi.plant_id = f.plant_id) t
+ WHERE 1 = 1
+ and t.inspection_status= '5'  
+   <if test="inspectionNum != null" > 
+   AND t.inspection_num LIKE concat(#{inspectionNum}, '%')
+   </if>
+   <if test="itemId != null">
+   AND t.item_id = #{itemId}
+   </if>
+    <if test="inspectionDate!= null">
+   AND   to_date(to_char(t.inspection_date,'yyyy-mm-dd'),'yyyy-mm-dd')  = #{inspectionDate}
+   </if>
+</select>
+<!-- 检验单综合查询iqc -->
+<select id="qmsQuery" resultMap="BaseResultMap"  parameterType="com.hand.hqm.hqm_iqc_inspection_h.dto.IqcInspectionH">
+	select qmsh.header_id,
+	       qmsh.inspection_num,
+	       qmsh.inspection_status,
+	       qmsh.item_id,
+	       hi.ITEM_CODE,
+	       hi.descriptions ITEM_NAME,
+	       qmsh.supplier_id,
+	       hs.supplier_code,
+	       hs.supplier_name,
+	       qmsh.creation_date,
+	       qmsh.inspection_date,
+	       qmsh.inspector_id,
+	       qmsh.production_batch,
+	       qmsh.receive_qty,
+	       qmsh.sample_plan,
+	       qmsh.sample_size,
+	       qmsh.source_order,
+	       qmsh.inspection_judge,
+	       qmsh.approval_result,
+	       qmsh.solve_way,
+	       qmsl.inspection_attribute,
+	       qmsl.attribute_type,
+	       qmsl.standard_type,
+	       qmsl.quality_character_grade,
+	       qmsl.sample_way_id,
+	       hsm.description,
+	       qmsl.standrad_from,
+	       qmsl.standrad_to,
+	       qmsl.standrad_uom,
+	       qmsl.attribute_inspection_res,
+	       qmsl.line_id,
+	       qmsd.order_num,
+	       qmsd.data,
+	       qmsd.judgement,
+	       he.name user_name,
+	       qmsd.SERIAL_NUMBER
+	from hqm_iqc_inspection_h qmsh
+	left join hcm_item hi on qmsh.item_id = hi.ITEM_ID
+	left join hcs_suppliers hs on qmsh.supplier_id = hs.supplier_id
+	left join hqm_iqc_inspection_l qmsl on qmsh.header_id = qmsl.header_id
+	left join hqm_sample_manage hsm on qmsl.sample_way_id = hsm.sample_way_id
+	left join hqm_iqc_inspection_d qmsd on qmsl.line_id = qmsd.line_id
+	left join sys_user su on qmsh.inspector_id = su.user_id
+	left join hr_employee he on su.employee_id = he.employee_id
+	where 1=1
+	<if test="plantId!=null">
+		and qmsh.plant_id = #{plantId}
+	</if>
+	<if test="itemId!=null">
+		and qmsh.item_id = #{itemId}
+	</if>
+	<if test="sourceType!=null">
+		and qmsh.source_type = #{sourceType}
+	</if>
+	<if test="inspectionStatus!=null">
+		and qmsh.inspection_status = #{inspectionStatus}
+	</if>
+	<if test="supplierId!=null">
+		and qmsh.supplier_id = #{supplierId}
+	</if>
+	<if test="inspectionNum!=null">
+		and qmsh.inspection_num LIKE concat('%',concat(#{inspectionNum,jdbcType=VARCHAR},'%'))
+	</if>
+	<if test="inspectionJudge!=null">
+		and qmsh.inspection_judge = #{inspectionJudge}
+	</if>
+	<if test="creationDateFrom!=null">
+		and to_date(to_char(qmsh.creation_date ,'yyyy-mm-dd'),'yyyy-mm-dd') &gt;= to_date(#{creationDateFrom}, 'yyyy-mm-dd hh24:mi:ss')
+	</if>
+	<if test="creationDateTo!=null">
+		and to_date(to_char(qmsh.creation_date ,'yyyy-mm-dd'),'yyyy-mm-dd') &lt;= to_date(#{creationDateTo}, 'yyyy-mm-dd hh24:mi:ss')
+	</if>
+	<if test="inspectionDateFrom!=null">
+		and to_date(to_char(qmsh.inspection_date ,'yyyy-mm-dd'),'yyyy-mm-dd') &gt;= to_date(#{inspectionDateFrom}, 'yyyy-mm-dd hh24:mi:ss')
+	</if>
+	<if test="inspectionDateTo!=null">
+		and to_date(to_char(qmsh.inspection_date ,'yyyy-mm-dd'),'yyyy-mm-dd') &lt;= to_date(#{inspectionDateTo}, 'yyyy-mm-dd hh24:mi:ss')
+	</if>
+	<if test="inspectorId!=null">
+		and qmsh.inspector_id = #{inspectorId}
+	</if>
+	<if test="approvalResult!=null">
+		and qmsh.approval_result = #{approvalResult}
+	</if>
+	<if test="inspectionAttribute!=null">
+		and qmsl.inspection_attribute LIKE concat('%',concat(#{inspectionAttribute,jdbcType=VARCHAR},'%'))
+	</if>
+	<if test="attributeInspectionRes!=null">
+		and qmsl.attribute_inspection_res = #{attributeInspectionRes}
+	</if>
+	<if test="attributeType!=null">
+		and qmsl.attribute_type = #{attributeType}
+	</if>
+	<if test="judgement!=null">
+		and qmsd.judgement = #{judgement}
+	</if>
+	<if test="standardType!=null">
+		and qmsl.standard_type = #{standardType}
+	</if>
+	<if test="description">
+		and hsm.description = #{description}
+	</if>  
+</select>
+<!-- 检验单综合查询fqc -->
+<select id="qmsFqcQuery" resultMap="BaseResultMap"  parameterType="com.hand.hqm.hqm_iqc_inspection_h.dto.IqcInspectionH">
+	select qmsh.header_id,
+	       qmsh.inspection_num,
+	       qmsh.inspection_status,
+	       qmsh.item_id,
+	       hi.ITEM_CODE,
+	       hi.descriptions ITEM_NAME,
+	       qmsh.creation_date,
+	       qmsh.inspection_date,
+	       qmsh.inspector_id,
+	       qmsh.production_batch,
+	       qmsh.produce_qty receive_qty,
+	       qmsh.sample_plan,
+	       qmsh.sample_qty sample_size,
+	       qmsh.source_order,
+	       qmsh.inspection_judge,
+	       qmsh.approval_result,
+	       qmsh.solve_way,
+	       qmsl.inspection_attribute,
+	       
+	       qmsl.attribute_type,
+	       qmsl.standard_type,
+	       qmsl.quality_character_grade,
+	       qmsl.sample_way_id,
+	       hsm.description,
+	       qmsl.standrad_from,
+	       qmsl.standrad_to,
+	       qmsl.standrad_uom,
+	       qmsl.attribute_inspection_res,
+	       qmsl.line_id,
+	       qmsd.order_num,
+	       qmsd.data,
+	       qmsd.judgement,
+	       he.name user_name,
+	       qmsd.SERIAL_NUMBER
+	from hqm_fqc_inspection_h qmsh
+	left join hcm_item hi on qmsh.item_id = hi.ITEM_ID
+	left join hqm_fqc_inspection_l qmsl on qmsh.header_id = qmsl.header_id
+	left join hqm_sample_manage hsm on qmsl.sample_way_id = hsm.sample_way_id
+	left join hqm_fqc_inspection_d qmsd on qmsl.line_id = qmsd.line_id
+	left join sys_user su on qmsh.inspector_id = su.user_id
+	left join hr_employee he on su.employee_id = he.employee_id
+	where 1=1
+	<if test="plantId!=null">
+		and qmsh.plant_id = #{plantId}
+	</if>
+	<if test="itemId!=null">
+		and qmsh.item_id = #{itemId}
+	</if>
+	<if test="sourceType!=null">
+		and qmsh.source_type = #{sourceType}
+	</if>
+	<if test="inspectionStatus!=null">
+		and qmsh.inspection_status = #{inspectionStatus}
+	</if>
+	<if test="inspectionNum!=null">
+		and qmsh.inspection_num LIKE concat('%',concat(#{inspectionNum,jdbcType=VARCHAR},'%'))
+	</if>
+	<if test="inspectionJudge!=null">
+		and qmsh.inspection_judge = #{inspectionJudge}
+	</if>
+	<if test="creationDateFrom!=null">
+		and to_date(to_char(qmsh.creation_date ,'yyyy-mm-dd'),'yyyy-mm-dd') &gt;= to_date(#{creationDateFrom}, 'yyyy-mm-dd hh24:mi:ss')
+	</if>
+	<if test="creationDateTo!=null">
+		and to_date(to_char(qmsh.creation_date ,'yyyy-mm-dd'),'yyyy-mm-dd') &lt;= to_date(#{creationDateTo}, 'yyyy-mm-dd hh24:mi:ss')
+	</if>
+	<if test="inspectionDateFrom!=null">
+		and to_date(to_char(qmsh.inspection_date ,'yyyy-mm-dd'),'yyyy-mm-dd') &gt;= to_date(#{inspectionDateFrom}, 'yyyy-mm-dd hh24:mi:ss')
+	</if>
+	<if test="inspectionDateTo!=null">
+		and to_date(to_char(qmsh.inspection_date ,'yyyy-mm-dd'),'yyyy-mm-dd') &lt;= to_date(#{inspectionDateTo}, 'yyyy-mm-dd hh24:mi:ss')
+	</if>
+	<if test="inspectorId!=null">
+		and qmsh.inspector_id = #{inspectorId}
+	</if>
+	<if test="approvalResult!=null">
+		and qmsh.approval_result = #{approvalResult}
+	</if>
+	<if test="inspectionAttribute!=null">
+		and qmsl.inspection_attribute LIKE concat('%',concat(#{inspectionAttribute,jdbcType=VARCHAR},'%'))
+	</if>
+	<if test="attributeInspectionRes!=null">
+		and qmsl.attribute_inspection_res = #{attributeInspectionRes}
+	</if>
+	<if test="attributeType!=null">
+		and qmsl.attribute_type = #{attributeType}
+	</if>
+	<if test="judgement!=null">
+		and qmsd.judgement = #{judgement}
+	</if>
+	<if test="standardType!=null">
+		and qmsl.standard_type = #{standardType}
+	</if>
+	<if test="description">
+		and hsm.description = #{description}
+	</if>  
+</select>
+<!-- 检验单综合查询pqc -->
+<select id="qmsPqcQuery" resultMap="BaseResultMap"  parameterType="com.hand.hqm.hqm_iqc_inspection_h.dto.IqcInspectionH">
+	select qmsh.header_id,
+	       qmsh.inspection_num,
+	       qmsh.inspection_status,
+	       qmsh.item_id,
+	       hi.ITEM_CODE,
+	       hi.descriptions ITEM_NAME,
+	       qmsh.creation_date,
+	       qmsh.inspection_date,
+	       qmsh.inspector_id,
+	       qmsh.production_batch,
+	       qmsh.production_qty receive_qty,
+	       qmsh.source_order,
+	       qmsh.inspection_judge,
+	       qmsh.approval_result,
+	       qmsh.solve_way,
+	       hia.inspection_attribute,
+	       hia.attribute_type,
+	       hia.standard_type,
+	       hia.quality_character_grade,
+	       qmsc.sample_way_id,
+	       hsm.description,
+	       qmsc.standrad_from,
+	       qmsc.standrad_to,
+	       qmsc.standrad_uom,
+	       qmsc.attribute_inspection_res,
+	       qmsc.line_id,
+	       qmsd.order_num,
+	       qmsd.data,
+	       qmsd.judgement,
+	       he.name user_name,
+	       qmsd.SERIAL_NUMBER
+	from hqm_pqc_inspection_h qmsh
+	left join hcm_item hi on qmsh.item_id = hi.ITEM_ID
+	left join hqm_pqc_inspection_l qmsl on qmsh.header_id = qmsl.header_id
+	left join hqm_pqc_inspection_c qmsc on qmsl.line_id = qmsc.line_id
+	left join hqm_sample_manage hsm on qmsc.sample_way_id = hsm.sample_way_id
+	left join hqm_pqc_inspection_d qmsd on qmsc.connect_id = qmsd.connect_id
+	left join hqm_inspection_attribute hia on qmsc.attribute_id = hia.attribute_id
+	left join sys_user su on qmsh.inspector_id = su.user_id
+	left join hr_employee he on su.employee_id = he.employee_id
+	where 1=1
+	<if test="plantId!=null">
+		and qmsh.plant_id = #{plantId}
+	</if>
+	<if test="itemId!=null">
+		and qmsh.item_id = #{itemId}
+	</if>
+	<if test="sourceType!=null">
+		and qmsh.source_type = #{sourceType}
+	</if>
+	<if test="inspectionStatus!=null">
+		and qmsh.inspection_status = #{inspectionStatus}
+	</if>
+	<if test="inspectionNum!=null">
+		and qmsh.inspection_num LIKE concat('%',concat(#{inspectionNum,jdbcType=VARCHAR},'%'))
+	</if>
+	<if test="inspectionJudge!=null">
+		and qmsh.inspection_judge = #{inspectionJudge}
+	</if>
+	<if test="creationDateFrom!=null">
+		and to_date(to_char(qmsh.creation_date ,'yyyy-mm-dd'),'yyyy-mm-dd') &gt;= to_date(#{creationDateFrom}, 'yyyy-mm-dd hh24:mi:ss')
+	</if>
+	<if test="creationDateTo!=null">
+		and to_date(to_char(qmsh.creation_date ,'yyyy-mm-dd'),'yyyy-mm-dd') &lt;= to_date(#{creationDateTo}, 'yyyy-mm-dd hh24:mi:ss')
+	</if>
+	<if test="inspectionDateFrom!=null">
+		and to_date(to_char(qmsh.inspection_date ,'yyyy-mm-dd'),'yyyy-mm-dd') &gt;= to_date(#{inspectionDateFrom}, 'yyyy-mm-dd hh24:mi:ss')
+	</if>
+	<if test="inspectionDateTo!=null">
+		and to_date(to_char(qmsh.inspection_date ,'yyyy-mm-dd'),'yyyy-mm-dd') &lt;= to_date(#{inspectionDateTo}, 'yyyy-mm-dd hh24:mi:ss')
+	</if>
+	<if test="inspectorId!=null">
+		and qmsh.inspector_id = #{inspectorId}
+	</if>
+	<if test="approvalResult!=null">
+		and qmsh.approval_result = #{approvalResult}
+	</if>
+	<if test="inspectionAttribute!=null">
+		and hia.inspection_attribute LIKE concat('%',concat(#{inspectionAttribute,jdbcType=VARCHAR},'%'))
+	</if>
+	<if test="attributeInspectionRes!=null">
+		and qmsc.attribute_inspection_res = #{attributeInspectionRes}
+	</if>
+	<if test="attributeType!=null">
+		and hia.attribute_type = #{attributeType}
+	</if>
+	<if test="judgement!=null">
+		and qmsd.judgement = #{judgement}
+	</if>
+	<if test="standardType!=null">
+		and hia.standard_type = #{standardType}
+	</if>
+	<if test="description">
+		and hsm.description = #{description}
+	</if>  
+</select>
+
+
+<!-- 根据物料组ID 找模板 临时检验项 -->
+<select id="selectByCategoryId" resultMap="BaseResultMap"
+            parameterType="com.hand.hqm.hqm_temporary_inspection.dto.TemporaryInspection">
+SELECT t.*
+  FROM hqm_iqc_inspection_h t
+  JOIN hcm_item_category_assign hica
+    ON t.item_id = hica.item_id
+   AND t.plant_id = hica.plant_id
+ WHERE 1 = 1
+   AND t.inspection_status != '5'
+   AND t.plant_id = #{plantId}
+   AND hica.category_id = #{categoryId}
+</select>
+
+</mapper>

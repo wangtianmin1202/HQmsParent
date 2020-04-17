@@ -1,0 +1,442 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_dfmea_detail.mapper.DfmeaDetailMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_dfmea_detail.dto.DfmeaDetail">
+        <result column="FMEA_ID" property="fmeaId" jdbcType="DECIMAL" />
+        <result column="BRANCH_ID" property="branchId" jdbcType="DECIMAL" />
+        <result column="PARENT_BRANCH_ID" property="parentBranchId" jdbcType="DECIMAL" />
+        <result column="RANKS" property="ranks" jdbcType="DECIMAL" />
+        <result column="BRANCH_NAME" property="branchName" jdbcType="VARCHAR" />
+        <result column="INVALID_CONSEQUENCE" property="invalidConsequence" jdbcType="VARCHAR" />
+        <result column="FAILURE_CONSEQUENCES" property="failureConsequences" jdbcType="VARCHAR" />
+        <result column="SEVERITY" property="severity" jdbcType="DECIMAL" />
+        <result column="SPECIAL_CHARACTERISTIC_TYPE" property="specialCharacteristicType" jdbcType="VARCHAR" />
+        <result column="FAILURE_REASON" property="failureReason" jdbcType="VARCHAR" />
+        <result column="PREVENTIVE_MEASURE" property="preventiveMeasure" jdbcType="VARCHAR" />
+        <result column="OCCURRENCE" property="occurrence" jdbcType="DECIMAL" />
+        <result column="DETECTION_MEASURE" property="detectionMeasure" jdbcType="VARCHAR" />
+        <result column="DETECTION" property="detection" jdbcType="DECIMAL" />
+        <result column="RPN" property="rpn" jdbcType="DECIMAL" />
+        <result column="SUGGEST_MEASURE" property="suggestMeasure" jdbcType="VARCHAR" />
+        <result column="CHARGE_ID" property="chargeId" jdbcType="DECIMAL" />
+        <result column="ESTIMATED_FINISH_TIME" property="estimatedFinishTime" jdbcType="DATE" />
+        <result column="MEASURE_RESULT" property="measureResult" jdbcType="VARCHAR" />
+        <result column="POST_OCCURRENCE" property="postOccurrence" jdbcType="DECIMAL" />
+        <result column="POST_DETECTION" property="postDetection" jdbcType="DECIMAL" />
+        <result column="POST_RPN" property="postRpn" jdbcType="DECIMAL" />
+        <result column="USE_NAME" property="useName" jdbcType="DECIMAL" />
+        
+        <result column="POST_SEVERITY" property="postSeverity" jdbcType="DECIMAL" />
+        <result column="FUNCTION_NAME" property="functionName" jdbcType="VARCHAR" />
+        <result column="STRUCTURE_NAME" property="structureName" jdbcType="VARCHAR" />
+        <result column="ROWNUM" property="rownum" jdbcType="DECIMAL" />
+        <result column="FMEA_CODE" property="fmeaCode" jdbcType="VARCHAR" />
+        <result column="FMEA_NAME" property="fmeaName" jdbcType="VARCHAR" />
+        <result column="FMEA_USE_NAME" property="fmeaUseName" jdbcType="VARCHAR" />
+        <result column="CURRENT_VERSION" property="currentVersion" jdbcType="VARCHAR" />
+         <result column="USE_NAMES" property="useNames" jdbcType="VARCHAR" />
+        <result column="ANALYSIS_OBJECT" property="analysisObject" jdbcType="VARCHAR" />     
+        <result column="LAST_UPDATE_DATE" property="lastUpdateDate" jdbcType="DATE" />
+        <result column="FMEA_TYPE" property="fmeaType" jdbcType="VARCHAR" />
+        <result column="kid" property="kid" jdbcType="DECIMAL" />
+    </resultMap>
+
+    <select id="query" resultMap="BaseResultMap">
+		SELECT h.*,su.user_name AS USE_NAME
+	   FROM hqm_dfmea_detail h , sys_user su
+         where h.charge_id =su.user_id(+)
+	</select>
+	
+	<select id="selectParentInvalid" parameterType="com.hand.hqm.hqm_dfmea_detail.dto.DfmeaDetail" resultMap="BaseResultMap">
+       SELECT h.*,su.user_name AS USE_NAME
+	FROM hqm_dfmea_detail h , sys_user su
+         where h.charge_id = su.user_id(+)
+         	 AND h.parent_branch_id IS NULL
+            <if test="branchName != null and branchName != ''">
+                and h.branch_name like concat('%',concat(#{branchName,jdbcType=VARCHAR},'%'))
+            </if>
+             <if test="fmeaId != null ">
+                and h.fmea_id = #{fmeaId} 
+            </if>
+            <if test="fmeaId == null ">   
+                and 1=2       
+            </if> 
+    </select>
+    
+    <select id="selectInvalidByParent" parameterType="com.hand.hqm.hqm_dfmea_detail.dto.DfmeaDetail" resultMap="BaseResultMap">
+       SELECT h.*,su.user_name AS USE_NAME
+	FROM hqm_dfmea_detail h , sys_user su
+         where h.charge_id =su.user_id(+)  
+         and   h.parent_branch_id =#{parentBranchId}
+    </select>
+    
+    <select id="myselect" parameterType="com.hand.hqm.hqm_dfmea_detail.dto.DfmeaDetail" resultMap="BaseResultMap">
+      /*从最下层找上层  */
+select rownum ,b.* from ( SELECT  a.*
+	FROM (SELECT t.branch_name
+							,tl.branch_name AS function_name
+							,tll.branch_name AS structure_name
+							, CASE
+									WHEN t.post_rpn IS NULL THEN
+									 t.rpn
+									ELSE
+									 t.post_rpn
+								END AS rpn
+							, CASE
+									WHEN t.post_severity IS NULL THEN
+									 t.severity
+									ELSE
+									 t.post_severity
+								END AS severity
+							, CASE
+									WHEN t.post_occurrence IS NULL THEN
+									 t.occurrence
+									ELSE
+									 t.post_occurrence
+								END AS occurrence
+							, CASE
+									WHEN t.post_detection IS NULL THEN
+									 t.detection
+									ELSE
+									 t.post_detection
+								END AS detection  
+					FROM hqm_dfmea_detail t, hqm_dfmea_detail tl, hqm_dfmea_detail tll 
+				 WHERE t.fmea_id =  #{fmeaId}
+					 AND t.ranks = 3   
+					 AND tl.branch_id = t.parent_branch_id
+					 AND tl.parent_branch_id = tll.branch_id)  a 
+ ORDER BY a.rpn DESC) b 
+ 
+    </select>
+    
+    <select id="queryCondition" parameterType="com.hand.hqm.hqm_dfmea_detail.dto.DfmeaDetail" resultMap="BaseResultMap"> 
+	SELECT * FROM
+	(SELECT a.fmea_name,
+	       a.fmea_code,
+	       a.branch_name structure_name,
+	       b.branch_name function_name,
+	       c.branch_name
+	       ,c.invalid_consequence
+	       ,c.severity
+	       ,c.special_characteristic_type
+	       ,c.failure_reason
+	       ,c.preventive_measure
+	       ,c.occurrence
+	       ,c.detection_measure
+	       ,c.detection
+	       ,c.rpn
+	       ,c.charge_id
+	       ,c.suggest_measure
+	       ,su.user_name use_name
+	       ,c.estimated_finish_time
+	       ,c.measure_result
+	       ,c.post_severity
+	       ,c.post_occurrence
+	       ,c.post_detection
+	       ,c.post_rpn
+	  FROM (SELECT hdd.fmea_id,
+	               hf.fmea_name,
+	               hf.fmea_code,
+	               hdd.ranks,
+	               hdd.branch_id,
+	               hdd.parent_branch_id,
+	               hdd.branch_name
+	          FROM hqm_fmea hf
+	          LEFT JOIN hqm_dfmea_detail hdd
+	            ON hf.kid = hdd.fmea_id
+	         WHERE hdd.ranks = 1
+	         AND hf.fmea_type = 'D') a
+	  LEFT JOIN (SELECT hdd.fmea_id,
+	                    hf.fmea_name,
+	                    hdd.ranks,
+	                    hdd.branch_id,
+	                    hdd.parent_branch_id,
+	                    hdd.branch_name
+	               FROM hqm_fmea hf
+	               LEFT JOIN hqm_dfmea_detail hdd
+	                 ON hf.kid = hdd.fmea_id
+	              WHERE hdd.ranks = 2) b
+	    ON a.branch_id = b.parent_branch_id
+	  LEFT JOIN (SELECT hdd.fmea_id,
+	                    hf.fmea_name,
+	                    hdd.ranks,
+	                    hdd.branch_id,
+	                    hdd.parent_branch_id,
+	                    hdd.branch_name
+	                    ,hdd.invalid_consequence
+	                    ,hdd.severity
+	                    ,hdd.special_characteristic_type
+	                    ,hdd.failure_reason
+	                    ,hdd.preventive_measure
+	                    ,hdd.occurrence
+	                    ,hdd.detection_measure
+	                    ,hdd.detection
+	                    ,hdd.rpn
+	                    ,hdd.suggest_measure
+	                    ,hdd.charge_id
+	                    ,hdd.estimated_finish_time
+	                    ,hdd.measure_result
+	                    ,hdd.post_severity
+	                    ,hdd.post_occurrence
+	                    ,hdd.post_detection
+	                    ,hdd.post_rpn
+	               FROM hqm_fmea hf
+	               LEFT JOIN hqm_dfmea_detail hdd
+	                 ON hf.kid = hdd.fmea_id
+	              WHERE hdd.ranks = 3) c 
+	    ON b.branch_id = c.parent_branch_id
+	    LEFT JOIN sys_user su 
+	    on su.user_id = c.charge_id
+	    ) temp
+	    where 1=1 
+	    <if test="rpn != null">
+	     AND temp.rpn &gt;= #{rpn}
+	   </if>
+	    <if test="postRpn != null">
+	     AND temp.post_rpn &gt;= #{postRpn}
+	   </if>
+	   <if test="fmeaCode != null">
+	     AND temp.fmea_code LIKE concat('%',concat(#{fmeaCode},'%'))
+	   </if>
+	   <if test="fmeaName != null"> 
+	     AND temp.fmea_name LIKE concat('%',concat(#{fmeaName},'%'))
+	   </if>
+	   <if test="structureName != null"> 
+	     AND temp.structure_name LIKE concat('%',concat(#{structureName},'%'))
+	   </if>
+	   <if test="functionName != null"> 
+	     AND temp.function_Name LIKE concat('%',concat(#{functionName},'%'))
+	   </if>
+	   <if test="branchName != null"> 
+	     AND temp.branch_name LIKE concat('%',concat(#{branchName},'%'))
+	   </if>
+	   <if test="failureReason != null"> 
+	     AND temp.failure_reason LIKE concat('%',concat(#{failureReason},'%'))
+	   </if>
+	   <if test="failureConsequences != null"> 
+	     AND temp.invalid_consequence LIKE concat('%',concat(#{failureConsequences},'%'))
+	   </if>
+	   <if test="preventiveMeasure != null"> 
+	     AND temp.preventive_measure LIKE concat('%',concat(#{preventiveMeasure},'%')) 
+	   </if>
+	   <if test="detectionMeasure != null"> 
+	     AND temp.detection_measure LIKE concat('%',concat(#{detectionMeasure},'%'))  
+	   </if>
+	   <if test="chargeId  != null"> 
+	     AND temp.charge_id = #{chargeId}
+	   </if>
+	   <if test="suggestMeasure  != null"> 
+	     AND temp.suggest_Measure LIKE concat('%',concat(#{suggestMeasure},'%')) 
+	   </if>
+	   <if test="measureResult  != null"> 
+	     AND temp.measure_result LIKE concat('%',concat(#{measureResult},'%')) 
+	   </if>
+	   <if test="estimatedFinishTimeStart != null">
+	     AND temp.estimated_finish_time &gt;= to_date(#{estimatedFinishTimeStart}, 'yyyy-mm-dd hh24:mi:ss')
+	   </if>
+	    <if test="estimatedFinishTimeEnd != null">
+	     AND temp.estimated_finish_time &lt;= to_date(#{estimatedFinishTimeEnd}, 'yyyy-mm-dd hh24:mi:ss')
+	   </if>
+	   <if test="postDetectionList != null"> 
+	     AND temp.post_detection IN
+	     <foreach collection="postDetectionList" index="index" item="postDetection" open="(" separator="," close=")">
+            #{postDetection}
+        </foreach>
+	   </if>
+	   <if test="severityList  != null"> 
+	     AND temp.severity IN
+	     <foreach collection="severityList" index="index" item="severity" open="(" separator="," close=")">
+            #{severity}
+        </foreach>
+	   </if>
+	   <if test="occurrenceList  != null"> 
+	     AND temp.occurrence IN
+	     <foreach collection="occurrenceList" index="index" item="occurrence" open="(" separator="," close=")">
+            #{occurrence}
+        </foreach>
+	   </if>
+	   <if test="detectionList != null"> 
+	     AND temp.detection IN
+	     <foreach collection="detectionList" index="index" item="detection" open="(" separator="," close=")">
+            #{detection}
+        </foreach>
+	   </if>
+	   <if test="postSeverityList  != null"> 
+	     AND temp.post_severity IN
+	     <foreach collection="postSeverityList" index="index" item="postSeverity" open="(" separator="," close=")">
+            #{postSeverity}
+        </foreach>
+	   </if>
+	   <if test="postOccurrenceList  != null"> 
+	     AND temp.post_occurrence IN
+	     <foreach collection="postOccurrenceList" index="index" item="postOccurrence" open="(" separator="," close=")">
+            #{postOccurrence}
+        </foreach>
+	   </if>
+	   <if test="specialCharacteristicTypeList  != null"> 
+	     AND temp.special_characteristic_type IN
+	     <foreach collection="specialCharacteristicTypeList" index="index" item="specialCharacteristicType" open="(" separator="," close=")">
+            #{specialCharacteristicType}
+        </foreach>
+	   </if>
+    </select>
+    
+    <select id="queryprintData" parameterType="com.hand.hqm.hqm_dfmea_detail.dto.DfmeaDetail" resultMap="BaseResultMap">
+    SELECT h.branch_name AS function_name
+			,h1.branch_name AS structure_name
+			,h2.branch_name
+			,h2.failure_consequences
+			,h2.severity
+			,h2.special_characteristic_type   
+			,h2.failure_reason
+			,h2.preventive_measure
+			,h2.occurrence
+			,h2.detection_measure
+			,h2.detection
+			,h2.rpn
+			,h2.suggest_measure
+			,su.user_name as useName 
+			,h2.estimated_finish_time
+			,h2.measure_result
+			,h2.post_severity  
+			,h2.post_occurrence
+			,h2.post_detection
+			,h2.post_rpn
+	FROM hqm_dfmea_detail h, hqm_dfmea_detail h1, hqm_dfmea_detail h2, sys_user su
+ WHERE h.parent_branch_id IS NULL
+	 AND h.branch_id = h1.parent_branch_id
+	 AND h1.branch_id = h2.parent_branch_id  
+	 AND h2.charge_id = su.user_id(+) 
+	 AND h.fmea_id =  #{fmeaId}    
+    </select>  
+    
+    <select id="commitSelect" parameterType="com.hand.hqm.hqm_dfmea_detail.dto.DfmeaDetail" resultMap="BaseResultMap"> 
+   SELECT hd.*
+	FROM hqm_dfmea_detail hd
+ WHERE NOT EXISTS (SELECT 1
+					FROM hqm_invalid hi
+				 WHERE hi.invalid_name = hd.branch_name
+					 AND hi.ranks = 1)
+	 AND hd.fmea_id = #{fmeaId}  
+	 AND hd.ranks = 1
+    </select>
+    
+    
+   <select id="Selectbyparentbranch" parameterType="com.hand.hqm.hqm_dfmea_detail.dto.DfmeaDetail" resultMap="BaseResultMap">
+SELECT t1.*
+	FROM hqm_dfmea_detail t1
+ WHERE 1 = 1
+	 AND t1.parent_branch_id = #{branchId}  
+UNION ALL
+SELECT t2.*
+	FROM hqm_dfmea_detail t2, hqm_dfmea_detail t3
+ WHERE 1 = 1
+	 AND t2.parent_branch_id = t3.branch_id
+	 AND t3.parent_branch_id = #{branchId}    
+ </select>   
+    
+    <select id="checkStructure" parameterType="com.hand.hqm.hqm_dfmea_detail.dto.DfmeaDetail" resultType="Integer">
+        SELECT
+		    count(*)
+        FROM
+            hqm_dfmea_detail hi 
+        WHERE 
+            hi.branch_name =#{branchName} 
+            and hi.fmea_id = #{fmeaId}   
+            and hi.parent_branch_id IS NULL
+    </select>
+    
+    <select id="checkFunctionAndInvalid" parameterType="com.hand.hqm.hqm_dfmea_detail.dto.DfmeaDetail" resultType="Integer">
+        SELECT
+		    count(*)
+        FROM
+            hqm_dfmea_detail hi
+        WHERE
+            hi.branch_name =#{branchName}
+            and hi.parent_branch_id = #{parentBranchId}
+            and hi.fmea_id = #{fmeaId}   
+    </select>
+
+    <select id="queryHeaderData" parameterType="Float" resultMap="BaseResultMap">
+   SELECT hf.kid
+			,hf.fmea_code
+			,hf.fmea_name
+			,hf.fmea_type
+			,hf.analysis_object
+			,su.user_name as FMEA_USE_NAME  
+			,hf.current_version
+			,HF.ANALYSIS_OBJECT
+			,strcat(su2.user_name) as USE_NAMES
+			,hf.last_update_date
+	FROM hqm_fmea hf, sys_user su, hqm_fmea_staff hfs, sys_user su2, sys_user su3 
+ WHERE hf.charge_id = su.user_id
+     AND hf.created_by = su3.user_id
+	 AND hfs.fmea_id(+) = hf.kid
+	 AND hfs.staff_id = su2.user_id(+)
+     and hf.kid= #{kid}      
+
+  GROUP BY hf.kid
+				 ,hf.fmea_code
+				 ,hf.fmea_name
+				 ,hf.fmea_type
+				 ,hf.analysis_object
+				 ,su.user_name
+				 ,hf.current_version
+			     ,su3.user_name
+			     ,hf.last_update_date  
+	order by 	hf.LAST_UPDATE_DATE desc    	        
+</select> 
+     
+ <select id="getparentIdsec" parameterType="com.hand.hqm.hqm_dfmea_detail.dto.DfmeaDetail" resultType="Long">
+    SELECT hi.invalid_id
+	 FROM hqm_dfmea_detail hd, hqm_dfmea_detail hd2, hqm_invalid hi
+	WHERE hd.branch_id = hd2.parent_branch_id
+		AND hd.branch_name = hi.invalid_name 
+    and hd2.branch_id= #{branchId}            
+</select> 
+
+ <select id="getparentIdthd" parameterType="com.hand.hqm.hqm_dfmea_detail.dto.DfmeaDetail" resultType="Long">
+    SELECT hi.invalid_id
+	 FROM hqm_dfmea_detail hd, hqm_dfmea_detail hd2, hqm_invalid hi
+	WHERE hd.branch_id = hd2.parent_branch_id
+		AND hd.branch_name = hi.invalid_name 
+    and hd2.branch_id= #{branchId}   
+    and hi.parent_invalid_id = #{parentBranchId}   
+</select>   
+ 
+<select id="getparentIdfromthd" parameterType="com.hand.hqm.hqm_dfmea_detail.dto.DfmeaDetail" resultType="Long"> 
+     SELECT hi.invalid_id
+	 FROM hqm_dfmea_detail hd, hqm_dfmea_detail hd2, hqm_dfmea_detail hd3, hqm_invalid hi
+	WHERE hd.branch_id = hd2.parent_branch_id
+    and hd3.branch_id=hd.parent_branch_id
+		AND hd3.branch_name = hi.invalid_name 
+    and hd2.branch_id= #{branchId}       
+</select>  
+<update id="updateDfmeaDetail"  parameterType="com.hand.hqm.hqm_pfmea_detail.dto.PfmeaDetail">
+	UPDATE HQM_DFMEA_DETAIL SET 
+   		<if test="branchName != null">
+   			BRANCH_NAME = #{branchName},
+		</if>
+	       INVALID_CONSEQUENCE         = #{invalidConsequence},
+	       SEVERITY                    = #{severity},
+	       SPECIAL_CHARACTERISTIC_TYPE = #{specialCharacteristicType},
+	       FAILURE_REASON              = #{failureReason},
+	       PREVENTIVE_MEASURE          = #{preventiveMeasure},
+	       OCCURRENCE                  = #{occurrence},
+	       DETECTION_MEASURE           = #{detectionMeasure},
+	       DETECTION                   = #{detection},
+	       RPN                         = #{rpn},
+	       SUGGEST_MEASURE             = #{suggestMeasure},
+	       CHARGE_ID                   = #{chargeId},
+	       ESTIMATED_FINISH_TIME       = #{estimatedFinishTime},
+	       MEASURE_RESULT              = #{measureResult},
+	       POST_OCCURRENCE             = #{postOccurrence},
+	       POST_SEVERITY               = #{postSeverity},
+	       POST_DETECTION              = #{postDetection},
+	       POST_RPN                    = #{postRpn}
+ 	 WHERE BRANCH_ID = #{branchId}
+</update>
+ 
+
+</mapper>

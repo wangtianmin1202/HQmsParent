@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.dimension.hqm_dimension_initiated_actions.mapper.DimensionInitiatedActionsMapper">
+    <resultMap id="BaseResultMap" type="com.hand.dimension.hqm_dimension_initiated_actions.dto.DimensionInitiatedActions">
+        <result column="STEP" property="step" jdbcType="DECIMAL" />
+        <result column="ACTION_ID" property="actionId" jdbcType="DECIMAL" />
+        <result column="ORDER_ID" property="orderId" jdbcType="DECIMAL" />
+        <result column="PC_ACTION_ID" property="pcActionId" jdbcType="DECIMAL" />
+        <result column="PLAN_EXECUTION_TIME" property="planExecutionTime" jdbcType="DATE" />
+        <result column="ACTUAL_EXECUTION_TIME" property="actualExecutionTime" jdbcType="DATE" />
+        <result column="ACTION_STATUS" property="actionStatus" jdbcType="VARCHAR" />
+        <result column="REMARK" property="remark" jdbcType="VARCHAR" />
+        <result column="ENABLE_FLAG" property="enableFlag" jdbcType="VARCHAR" />
+        <result column="EVALUATION" property="evaluation" jdbcType="VARCHAR" />
+        
+        
+        <result column="IMPROVING_ACTION" property="improvingAction" jdbcType="VARCHAR" />
+        <result column="ACTION_DESCRIPTION" property="actionDescription" jdbcType="VARCHAR" />
+        <result column="USER_ID" property="userId" jdbcType="DECIMAL" />
+        <result column="USER_NAME" property="userName" jdbcType="VARCHAR" />
+        
+        <result column="FILE_ID" property="fileId" jdbcType="DECIMAL"/>
+        <result column="FILE_URL" property="fileUrl" jdbcType="VARCHAR" />
+        <result column="EMPLOYEE_NAME" property="employeeName" jdbcType="VARCHAR" />
+    </resultMap>
+<select id="reSelect" resultMap="BaseResultMap" parameterType="com.hand.dimension.hqm_dimension_initiated_actions.dto.DimensionInitiatedActions">
+
+SELECT t.*,
+       ia.improving_action,
+       ia.action_description,
+       ia.user_id,
+       suu.user_name,
+       he.name AS employee_name,
+       fi.file_id,
+       fi.file_url
+  FROM hqm_8d_initiated_actions t
+  LEFT JOIN hqm_8d_upload_files fi
+    ON t.action_id = fi.action_id
+   AND t.order_id = fi.order_id
+   AND fi.step = 6
+   AND fi.type = 'S6', hqm_8d_improving_actions ia, sys_user su,hr_employee he,sys_user suu
+ WHERE t.pc_action_id = ia.action_id
+ 	AND t.created_by = suu.user_id
+ 	AND su.employee_id = he.employee_id
+   AND ia.user_id = su.user_id
+   <if test="orderId !=null">
+   AND t.order_id = #{orderId}
+   </if>
+	<if test="orderId ==null">
+   AND t.order_id = -1
+   </if>
+
+</select>
+
+</mapper>

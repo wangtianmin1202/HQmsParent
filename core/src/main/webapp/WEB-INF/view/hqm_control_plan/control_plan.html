@@ -1,0 +1,367 @@
+<#include "../include/header.html">
+<script src="${base.contextPath}/common/code?HQM_LEVEL_PFMEA_TYPE=HQM_LEVEL_PFMEA_TYPE"></script>
+<script type="text/javascript">
+    var viewModel = Hap.createGridViewModel("#grid");
+    viewModel.save1= function() {
+    	viewModel.save();
+    	viewModel.query();
+    	//$("#grid").data("kendoGrid").dataSource.read();
+    }
+</script>
+<body>
+<div id="page-content">
+    <div class="pull-left" id="toolbar-btn" style="padding-bottom:10px;">
+<!--         <span class="btn btn-primary k-grid-add" style="float:left;margin-right:5px;" data-bind="click:create"><@spring.message "hap.new"/></span> -->
+        <span class="btn btn-success k-grid-save-changes" data-bind="click:save1" style="float:left;margin-right:5px;"><@spring.message "hap.save"/></span>
+<!--         <span  data-bind="click:remove" class="btn btn-danger" style="float:left;"><@spring.message "hap.delete"/></span> -->
+        <!-- <span  onclick="detail()" class="btn btn-success" style="float:left;">明细</span> -->
+    </div>
+    <script>kendo.bind($('#toolbar-btn'), viewModel);</script>
+    <div id="queryPanel" class="pull-right" id="query-form" style="padding-bottom:10px;">
+    
+    	<div class="k-query-simple" id="query-form">
+            <input type="text" data-role="maskedtextbox" style="float:left;width:150px;margin-right:5px;" placeholder='<@spring.message "fmea.control.plan.code"/>' data-bind="value:model.controlPlanCode" class="k-textbox">
+            <input type="text" data-role="maskedtextbox" style="float:left;width:150px;margin-right:5px;" placeholder='<@spring.message "fmea.control.plan.control.objet"/>' data-bind="value:model.controlObject" class="k-textbox">
+            <input type="text" placeholder='<@spring.message "fmea.control.plan.editor"/>' data-bind="value:model.writer"  id="writer">
+            <input type="text" placeholder='<@spring.message "fmea.control.plan.main.member"/>' data-bind="value:model.mainStaff"  id="mainStaff">
+        </div>
+        <script>kendo.bind($('#query-form'), viewModel);</script>    
+        <div class="k-query-detail" id="query-form2">
+            <div class="rows" style="margin-top:5px">
+            <input type="text" data-role="datepicker" style="margin-right:5px;" placeholder='<@spring.message "fmea.control.plan.edit.time.from"/>' data-bind="value:model.creationStartTime" class="datetpicker">
+		    <input type="text" data-role="datepicker" style="margin-right:5px;" placeholder='<@spring.message "fmea.control.plan.edit.time.to"/>' data-bind="value:model.creationEndTime" class="datetpicker">
+            </div>
+        </div>
+        <script>kendo.bind($('#query-form2'), viewModel);</script>
+        <div style="clear:both"></div>
+    </div>
+    <script>
+    kendo.bind($('#query-form'), viewModel);
+    $('#queryPanel').kendoQueryPanel({
+        queryFunction: function () {
+            viewModel.query();
+        },
+        resetFunction: function () {
+            viewModel.reset();
+        }
+    });
+    
+    $("#writer").kendoLov($.extend
+    	    (<@lov"LOV_EMPLOYEE"/>, {
+    	        textField: 'name',
+    	        valueField:'employeeId',
+    	        select:function(e){
+    	        	viewModel.model.set('writerId', e.item.employeeId);
+    	        	viewModel.model.set('writer', e.item.name);
+                },
+  
+    	}));
+    
+    $("#mainStaff").kendoLov($.extend
+    	    (<@lov"LOV_EMPLOYEE"/>, {
+    	        textField: 'name',
+    	        valueField:'employeeId',
+    	        select:function(e){
+    	        	viewModel.model.set('mainStaffId', e.item.employeeId);
+    	        	viewModel.model.set('mainStaff', e.item.name);
+                },
+  
+    	}));
+    
+    
+    function selectStaff(controlPlanId,mainStaff){
+        var dialog = $("#staffWindow").kendoWindow({
+        	width: "50%",
+   	        height: "65%",
+	        title: '<@spring.message "fmea.personnel.selection"/>',
+	        visible: false,
+	        iframe: true,
+	        modal: true,
+	        content: 'control_plan_staff.html?controlPlanId='+controlPlanId+'&mainStaff='+mainStaff
+    }).data("kendoWindow");     
+    dialog.center().open(); 
+    }
+    
+    function editDetail(id,controlVersion,lastUpdateDate,controlPlanCode,controlObject){
+   		var grid = $("#grid").data("kendoGrid");
+   		dataList = grid.selectedDataItems();
+   		var dialog = $("#detailWindow").kendoWindow({
+   	        width: "95%",
+   	        height: "90%",
+   	        title: '<@spring.message "fmea.detail"/>',
+   	        visible: false,
+   	        iframe: true,
+   	        modal: true,
+   	        content: 'control_plan_features_tree.html?controlPlanId='+id+'&controlVersion='+controlVersion+'&lastUpdateDate='+lastUpdateDate+'&controlPlanCode='+controlPlanCode+'&controlObject='+controlObject,
+   	        close: function() {
+             $('#grid').data('kendoGrid').dataSource.read();
+         } 
+   	    }).data("kendoWindow");
+   	    dialog.center().open();
+    };
+    
+    function planHis(controlPlanId){
+        var dialog = $("#planHisWindow").kendoWindow({
+        	width: "35%",
+   	        height: "50%",
+	        title: '<@spring.message "fmea.control.plan.histioric.version"/>',
+	        visible: false,
+	        iframe: true,
+	        modal: true,
+	        content: 'control_plan_his.html?controlPlanId='+controlPlanId
+    }).data("kendoWindow");     
+    dialog.center().open(); 
+    }
+
+	function loadData(controlPlanId, mainStaffId, mainStaff) {
+		var data = $("#grid").data("kendoGrid")._data;
+		if(controlPlanId==0){
+			$("#grid").data("kendoGrid").dataSource.data()[0].set("mainStaff", "sssssssss");
+		}
+		for (var i = 0; i < data.length; i++) {
+			 if (data[i].controlPlanId == controlPlanId) {
+				$("#grid").data("kendoGrid").dataSource.data()[i].set("mainStaff", mainStaff);
+				$("#grid").data("kendoGrid").dataSource.data()[i].set("mainStaffId", mainStaffId);
+		}
+	}
+	};
+    </script>
+    <div style="clear:both">
+        <div id="grid"></div>
+    </div>
+</div>
+<div id="detailWindow"></div>
+<div id="staffWindow"></div>
+<div id="planHisWindow"></div>
+<script type="text/javascript">
+    Hap.initEnterQuery('#query-form', viewModel.query);
+    var BaseUrl = _basePath;
+    dataSource = new kendo.data.DataSource({
+        transport: {
+            read: {
+                url: BaseUrl + "/hqm/control/plan/query",
+                type: "POST",
+                dataType: "json",
+                async:false
+            },
+            update: {
+                url: BaseUrl + "/hqm/control/plan/submit",
+                type: "POST",
+                contentType: "application/json",
+                async:false
+            },
+            destroy: {
+                url: BaseUrl + "/hqm/control/plan/remove",
+                type: "POST",
+                contentType: "application/json",
+                async:false
+            },
+            create: {
+                url: BaseUrl + "/hqm/control/plan/submit",
+                type: "POST",
+                contentType: "application/json",
+                async:false
+            },
+            parameterMap: function (options, type) {
+                if (type !== "read" && options.models) {
+                    var datas = Hap.prepareSubmitParameter(options, type)
+                    return kendo.stringify(datas);
+                } else if (type === "read") {
+                    return Hap.prepareQueryParameter(viewModel.model.toJSON(), options)
+                }
+            }
+        },
+        batch: true,
+        serverPaging: true,
+        pageSize: 20,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+                id: "controlPlanId",
+                fields: {
+                	controlObject: {validation: {required: true}},
+                	writer: {validation: {required: true}},
+                },
+                editable : function(col) {
+                	if(col=="controlPlanCode"){
+                		return false;
+                	}
+                	if(col=="creationDate"){
+                		return false;
+                	}
+                	if(col=="lastUpdateDate"){
+                		return false;
+                	}
+                	if(col=="controlVersion"){
+                		return false;
+                	}
+                	if(col=="controlVersionTime"){
+                		return false;
+                	}
+                	/* if(col=="mainStaff"){
+                		return false;
+                	} */
+    				return true;
+    			}
+            }
+        }
+    });
+
+    $("#grid").kendoGrid({
+        dataSource: dataSource,
+        resizable: true,
+        scrollable: true,
+        navigatable: false,
+        selectable: 'multiple, rowbox',
+        dataBound: function () {
+            if (parent.autoResizeIframe) {
+                parent.autoResizeIframe('${RequestParameters.functionCode!}')
+            }
+        },
+        pageable: {
+            pageSizes: [5, 10, 20, 50],
+            refresh: true,
+            buttonCount: 5
+        },
+        columns: [
+            {
+                field: "controlPlanId",
+                title: 'pk值',
+                width: 10,
+                hidden:true
+            },
+                    {
+                field: "controlPlanCode",
+                title: '<@spring.message "fmea.control.plan.code"/>',
+                width: 80
+            },
+                    {
+                field: "controlPlanType",
+                title: '<@spring.message "fmea.control.plan.type"/>',
+                width: 80,
+                template: function (dataItem) {
+                	var v= (dataItem.controlPlanType == "" || dataItem.controlPlanType == null ? "" : dataItem.controlPlanType);
+                	$.each(HQM_LEVEL_PFMEA_TYPE, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return v;
+                        }
+                    });
+                    return v;
+                }
+            },
+            {
+                field: "controlObject",
+                title: '<@spring.message "fmea.control.plan.control.objet"/>',
+                width: 150
+            },
+            //产品类别
+            {
+                field: "productType",
+                title: '<@spring.message "sampleaccount.producttype"/>',
+                width: 80
+            },
+            //产品代码
+            {
+                field: "productCode",
+                title: '<@spring.message "sampleaccount.productcode"/>',
+                width: 80
+            },
+            //产品名称
+            {
+                field: "productName",
+                title: '<@spring.message "sampleaccount.productname"/>',
+                width: 80
+            },
+            {
+                field: "writerId",
+                title: '<@spring.message "fmea.control.plan.editor"/>',
+                width: 10,
+                hidden:true
+            },
+            {
+                field: "writer",
+                title: '<@spring.message "fmea.control.plan.editor"/>',
+                width: 50,
+                editor: function (container, options) {
+                    $('<input style="background-color:#fff8c5" name="' + options.field + '"/>')
+                            .appendTo(container)
+                            .kendoLov($.extend(<@lov "LOV_EMPLOYEE"/>, {
+                        query: function (e) {
+                            e.param['enabledFlag'] = 'Y'
+                        },
+                        select:function(e){
+                            options.model.employeeNameEdit = true;
+                            options.model.set('writerId', e.item.employeeId);
+                            options.model.set('writer', e.item.name);
+                        },
+                        change:function(e){
+                        },
+                        textField: 'name',
+                        model: options.model
+                    }));
+                },
+            },
+            {
+                field: "creationDate",
+                title: '<@spring.message "fmea.control.plan.edit.time"/>',
+                width: 80
+            },
+            {
+                field: "controlVersion",
+                title: '<@spring.message "fmea.control.plan.current.version"/>',
+                width: 40
+            },
+            {
+                field: "lastUpdateDate",
+                title: '<@spring.message "fmea.control.plan.last.revised.time"/>',
+                width: 80
+            },
+            {
+                field: "mainStaffId",
+                title: '主要参与人员id',
+                width: 10,
+                hidden:true
+            },
+            {
+                field: "mainStaff",
+                title: '<@spring.message "fmea.control.plan.main.member"/>',
+                width: 150,
+                editor: function (container, options) {
+                    // $('<span>'+options.model.itemDescriptions+'</span>')
+                    //     .appendTo(container);
+                    $('<span data-bind="text:mainStaff"></span>').appendTo(container);
+                },
+            },
+            {
+                title: '<@spring.message "fmea.operating"/>',
+                width: 100,
+                headerAttributes: {
+                    style: "text-align: center"
+                },
+                attributes: {
+                    style: "text-align: center;"
+                },
+                template:function (dataItem) {
+
+                	if(dataItem.controlPlanId!=null&&dataItem.controlPlanId!=""){
+                		return  '<a href="#" style="color:blue" onclick="selectStaff(\''+dataItem.controlPlanId+'\',\''+dataItem.mainStaff+'\')">'+'<@spring.message "fmea.personnel.selection"/>'+'</a>&nbsp;&nbsp;&nbsp;&nbsp;'+
+           		       '<a href="javascript:void(0)" style="color:blue" onclick="editDetail(\'' + dataItem.controlPlanId +'\',\''+dataItem.controlVersion+'\',\''+dataItem.lastUpdateDate+'\',\''+dataItem.controlPlanCode+'\',\''+dataItem.controlObject+'\')">'+'<@spring.message "fmea.detail"/>'+'</a>&nbsp;&nbsp;&nbsp;&nbsp;'+
+           		       '<a href="javascript:void(0)" style="color:blue" onclick="planHis(' + dataItem.controlPlanId +')">'+'<@spring.message "fmea.control.plan.histioric.version"/>'+'</a>'
+                	}else{
+                		return  '<a href="javascript:void(0)" style="color:blue" onclick="editDetail(\'' + dataItem.controlPlanId +'\',\''+dataItem.controlVersion+'\',\''+dataItem.lastUpdateDate+'\',\''+dataItem.controlPlanCode+'\',\''+dataItem.controlObject+'\')">'+'<@spring.message "fmea.detail"/>'+'</a>&nbsp;&nbsp;&nbsp;&nbsp;'+
+           		       '<a href="javascript:void(0)" style="color:blue" onclick="planHis(' + dataItem.controlPlanId +')">'+'<@spring.message "fmea.control.plan.histioric.version"/>'+'</a>'
+                	}
+              		
+                }
+            }
+                    
+                    
+        ],
+        editable: true
+    });
+    Hap.autoResizeGrid('#grid');
+    </script>
+</body>
+</html>

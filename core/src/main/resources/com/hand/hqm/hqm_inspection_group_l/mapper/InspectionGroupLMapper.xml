@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_inspection_group_l.mapper.InspectionGroupLMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_inspection_group_l.dto.InspectionGroupL">
+        <result column="LINE_ID" property="lineId" jdbcType="DECIMAL" />
+        <result column="GROUP_ID" property="groupId" jdbcType="DECIMAL" />
+        <result column="ATTRIBUTE_ID" property="attributeId" jdbcType="DECIMAL" />
+        <result column="PRECISION" property="precision" jdbcType="DECIMAL" />
+        <result column="STANDRAD_FROM" property="standradFrom" jdbcType="VARCHAR" />
+        <result column="STANDRAD_TO" property="standradTo" jdbcType="VARCHAR" />
+        <result column="STANDRAD_UOM" property="standradUom" jdbcType="VARCHAR" />
+        <result column="TEXT_STANDRAD" property="textStandrad" jdbcType="VARCHAR" />
+        <result column="INSPECTION_TOOL" property="inspectionTool" jdbcType="VARCHAR" />
+        <result column="INSPECTION_METHOD" property="inspectionMethod" jdbcType="VARCHAR" />
+        <result column="FILL_IN_TYPE" property="fillInType" jdbcType="VARCHAR" />
+        <result column="SAMPLE_WAY_ID" property="sampleWayId" jdbcType="DECIMAL" />
+        <result column="ENABLE_TYPE" property="enableType" jdbcType="VARCHAR" />
+        <result column="ENABLE_TIME" property="enableTime" jdbcType="DATE" />
+        <result column="DISABLE_TIME" property="disableTime" jdbcType="DATE" />
+        <result column="ENABLE_FLAG" property="enableFlag" jdbcType="VARCHAR" />
+        <result column="REMARK" property="remark" jdbcType="VARCHAR" />
+        
+        <result column="GROUP_CODE" property="groupCode" jdbcType="VARCHAR" />
+        <result column="DESCRIPTION" property="description" jdbcType="VARCHAR" />
+        <result column="PLANT_ID" property="plantId" jdbcType="DECIMAL" />
+        <result column="PLANT_CODE" property="plantCode" jdbcType="VARCHAR" />
+        <result column="HEAD_ENABLE_FLAG" property="headEnableFlag" jdbcType="VARCHAR" />
+        <result column="HEAD_REMARK" property="headRemark" jdbcType="VARCHAR" />
+        <result column="INSPECTION_ATTRIBUTE" property="inspectionAttribute" jdbcType="VARCHAR" />
+        <result column="ATTRIBUTE_TYPE" property="attributeType" jdbcType="VARCHAR" />
+        <result column="QUALITY_CHARACTER_GRADE" property="qualityCharacterGrade" jdbcType="VARCHAR" />
+        <result column="STANDARD_TYPE" property="standardType" jdbcType="VARCHAR" />
+        <result column="SAMPLE_WAY_CODE" property="sampleWayCode" jdbcType="VARCHAR" />
+        <result column="IDS" property="ids" jdbcType="VARCHAR" />
+        <result column="INSPECTION_ATTRIBUTE" property="inspectionAttribute" jdbcType="VARCHAR" />
+
+    </resultMap>       
+
+   <select id="myselect" resultMap="BaseResultMap" parameterType="com.hand.hqm.hqm_inspection_group_l.dto.InspectionGroupL"> 
+  SELECT t.plant_id
+			,hp.plant_code
+			,t.group_id
+			,l.line_id
+			,t.group_code
+			,t.description
+			,l.attribute_id
+			,t.remark AS head_remark
+			,t.enable_flag AS head_enable_flag
+			,hia.inspection_attribute
+			,hia.attribute_type
+			,hia.quality_character_grade
+			,hia.standard_type
+			,l.precision
+			,l.standrad_from
+			,l.standrad_to
+			,l.standrad_uom
+			,l.text_standrad
+			,l.inspection_tool
+			,l.inspection_method
+			,l.fill_in_type
+			,l.sample_way_id
+			,hsm.sample_way_code
+			,l.enable_type
+			,l.enable_time
+			,l.disable_time
+			,l.enable_flag
+			,l.remark
+	FROM hqm_inspection_group_h t
+			,hcm_plant hp
+			,hqm_inspection_group_l l
+			,hqm_inspection_attribute hia
+			,hqm_sample_manage hsm
+ WHERE hp.plant_id = t.plant_id
+	 AND hia.attribute_id = l.attribute_id(+)
+	 AND t.group_id = l.group_id
+	 AND hsm.sample_way_id(+) = l.sample_way_id
+	 AND t.group_id = #{groupId}    
+    </select>    
+   
+ <select id="selecthead" resultMap="BaseResultMap" parameterType="com.hand.hqm.hqm_inspection_group_l.dto.InspectionGroupL"> 
+       SELECT t.plant_id
+			,hp.plant_code
+			,t.group_id
+			,t.group_code
+			,t.description  
+			,t.remark AS head_remark
+			,t.enable_flag AS head_enable_flag
+	FROM hqm_inspection_group_h t
+			,hcm_plant hp   
+ WHERE hp.plant_id = t.plant_id
+            AND t.group_id  = #{groupId}   
+    </select>   
+   
+   
+    <select id="selectcount" resultType="Integer" parameterType="com.hand.hqm.hqm_inspection_group_l.dto.InspectionGroupL"> 
+     SELECT COUNT(1)
+	FROM hqm_inspection_group_l l
+ WHERE l.sample_way_id IS NULL
+	 AND l.group_id = #{groupId}    
+    </select>   
+    
+    
+    <select id="selectTb" resultMap="BaseResultMap" parameterType="com.hand.hqm.hqm_inspection_group_l.dto.InspectionGroupL"> 
+  SELECT t.plant_id
+			,hp.plant_code
+			,t.group_id
+			,l.line_id
+			,l.attribute_id
+			,t.group_code
+			,t.description
+			,t.remark AS head_remark
+			,t.enable_flag AS head_enable_flag
+			,hia.inspection_attribute
+			,hia.attribute_type
+			,hia.quality_character_grade
+			,hia.standard_type
+			,l.precision
+			,l.standrad_from
+			,l.standrad_to
+			,l.standrad_uom
+			,l.text_standrad  
+			,l.inspection_tool
+			,l.inspection_method
+			,l.fill_in_type
+			,l.sample_way_id
+			,hsm.sample_way_code
+			,l.enable_type
+			,l.enable_time
+			,l.disable_time
+			,l.enable_flag
+			,l.remark
+	FROM hqm_inspection_group_h t
+			,hcm_plant hp
+			,hqm_inspection_group_l l
+			,hqm_inspection_attribute hia
+			,hqm_sample_manage hsm
+ WHERE hp.plant_id = t.plant_id
+	 AND hia.attribute_id = l.attribute_id(+)
+	 AND t.group_id = l.group_id
+	 AND hsm.sample_way_id(+) = l.sample_way_id
+	 <if test="ids!=null">
+	 AND t.group_id in ${ids}   
+	 </if>  
+	 <if test="groupId!=null">
+	 and t.group_id &lt;&gt; #{groupId}   
+	 </if>
+    </select>       
+       <select id="selectheadincopy" resultMap="BaseResultMap" parameterType="com.hand.hqm.hqm_inspection_group_l.dto.InspectionGroupL"> 
+  SELECT t.plant_id
+			,hp.plant_code
+			,t.group_id
+			,t.group_code
+			,t.description
+	FROM hqm_inspection_group_h t
+			,hcm_plant hp
+ WHERE hp.plant_id = t.plant_id
+	 <if test="groupId!=null">
+	 and t.group_id &lt;&gt; #{groupId}   
+	 </if>
+    </select>
+
+</mapper> 

@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hand.hqm.hqm_nonconforming_order.mapper.NonconformingOrderMapper">
+  <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_nonconforming_order.dto.NonconformingOrder">
+    <result column="NO_ID" property="noId" jdbcType="DECIMAL" />
+    <result column="NO_NUM" property="noNum" jdbcType="VARCHAR" />
+    <result column="INSPECTION_TYPE" property="inspectionType" jdbcType="VARCHAR" />
+    <result column="SOURCE_ORDER" property="sourceOrder" jdbcType="VARCHAR" />
+    <result column="INSPECTION_ID" property="inspectionId" jdbcType="DECIMAL" />
+    <result column="PLANT_ID" property="plantId" jdbcType="DECIMAL" />
+    <result column="ITEM_ID" property="itemId" jdbcType="DECIMAL" />
+    <result column="SUPPLIER_ID" property="supplierId" jdbcType="DECIMAL" />
+    <result column="NG_GROUP_ID" property="ngGroupId" jdbcType="DECIMAL" />
+    <result column="NG_MENBER_ID" property="ngMenberId" jdbcType="DECIMAL" />
+    <result column="NONCONFORMING_DESC" property="nonconformingDesc" jdbcType="VARCHAR" />
+    <result column="NO_SOURCE_TYPE" property="noSourceType" jdbcType="VARCHAR" />
+    <result column="NO_STATUS" property="noStatus" jdbcType="VARCHAR" />
+    <result column="DEAL_METHOD" property="dealMethod" jdbcType="VARCHAR" />
+    <result column="DEAL_DATE" property="dealDate" jdbcType="DATE" />
+    <result column="PRODUCTION_BATCH" property="productionBatch" jdbcType="VARCHAR" />
+    <result column="RECEIVE_DATE" property="receiveDate" jdbcType="DATE" />
+    <result column="TOTALITY_QTY" property="totalityQty" jdbcType="DECIMAL" />
+    <result column="NONCONFORMING_QTY" property="nonconformingQty" jdbcType="DECIMAL" />
+    <result column="SAMPLE_SIZE" property="sampleSize" jdbcType="DECIMAL" />
+    <result column="NONCONFORMING_RATE" property="nonconformingRate" jdbcType="VARCHAR" />
+    <result column="INSPECTION_DATE" property="inspectionDate" jdbcType="DATE" />
+    <result column="APPROVAL_DEPARTMENT1" property="approvalDepartment1" jdbcType="VARCHAR" />
+    <result column="APPROVAL_DEPARTMENT2" property="approvalDepartment2" jdbcType="VARCHAR" />
+    <result column="APPROVAL_OPINION" property="approvalOpinion" jdbcType="VARCHAR" />
+    <result column="APPROVAL_ID" property="approvalId" jdbcType="DECIMAL" />
+    <result column="REMARK" property="remark" jdbcType="VARCHAR" />
+    <result column="STANDARD_OP_ID" property="standardOpId" jdbcType="DECIMAL" />
+
+    <result column="ISSUE_SOURCE_TYPE" property="issueSourceType" jdbcType="VARCHAR" />
+    <result column="ISSUE_TYPE" property="issueType" jdbcType="VARCHAR" />
+
+    <result column="ITEM_DESCRIPTIONS" property="itemDescriptions" jdbcType="VARCHAR" />
+    <result column="ITEM_CODE" property="itemCode" jdbcType="VARCHAR" />
+    <result column="PLANT_CODE" property="plantCode" jdbcType="VARCHAR" />
+    <result column="SUPPLIER_CODE" property="supplierCode" jdbcType="VARCHAR" />
+    <result column="SUPPLIER_NAME" property="supplierName" jdbcType="VARCHAR" />
+    <result column="NG_GROUP_CODE" property="ngGroupCode" jdbcType="VARCHAR" />
+    <result column="NG_GROUP_NAME" property="ngGroupName" jdbcType="VARCHAR" />
+    <result column="NG_CODE" property="ngCode" jdbcType="VARCHAR" />
+    <result column="NG_APPEARANCE" property="ngAppearance" jdbcType="VARCHAR" />
+    <result column="USER_NAME" property="userName" jdbcType="VARCHAR" />
+    <result column="INSPECTION_CODE" property="inspectionCode" jdbcType="VARCHAR" />
+    <result column="INSPECTION_DATE_BEGIN" property="inspectionDateBegin" jdbcType="DATE" />
+    <result column="INSPECTION_DATE_END" property="inspectionDateEnd" jdbcType="DATE" />
+    <result column="DEAL_DATE_BEGIN" property="dealDateBegin" jdbcType="DATE" />
+    <result column="DEAL_DATE_END" property="dealDateEnd" jdbcType="DATE" />
+    
+    <result column="REWORK_TYPE" property="reworkType" jdbcType="DATE" />
+    <result column="RECHECK_SAMPLE_WAY" property="recheckSampleWay" jdbcType="VARCHAR" />
+    
+    <result column="PROCESS_INSTANCE_ID" property="processInstanceId" jdbcType="VARCHAR" />
+  </resultMap>
+  
+  <select id="myselect" resultMap="BaseResultMap" parameterType="com.hand.hqm.hqm_nonconforming_order.dto.NonconformingOrder">
+    SELECT t.no_id,
+       t.no_num,
+       t.process_instance_id,
+       t.inspection_type,
+       t.source_order,
+       t.inspection_id,
+       CASE t.inspection_type
+         WHEN 'IQC' THEN
+          (SELECT iqc.inspection_num
+             FROM hqm_iqc_inspection_h iqc
+            WHERE iqc.header_id = t.inspection_id)
+         WHEN 'PQC' THEN
+          (SELECT pqc.inspection_num
+             FROM hqm_pqc_inspection_h pqc
+            WHERE pqc.header_id = t.inspection_id)
+         WHEN 'FQC' THEN
+          (SELECT fqc.inspection_num
+             FROM hqm_fqc_inspection_h fqc
+            WHERE fqc.header_id = t.inspection_id)
+       END AS inspection_code,
+       t.plant_id,
+       hp.plant_code,
+       t.item_id,
+       hi.item_code,
+       hi.descriptions AS item_descriptions,
+       t.supplier_id,
+       hs.supplier_code,
+       hs.supplier_name,
+       t.ng_group_id,
+       hn.ng_group_code,
+       hn.ng_group_name,
+       hng.ng_code,
+       hng.ng_appearance,
+       t.ng_menber_id,
+       t.nonconforming_desc,
+       t.no_source_type,
+       t.no_status,
+       t.deal_method,
+       t.deal_date,
+       t.production_batch,
+       t.receive_date,
+       t.totality_qty,
+       t.nonconforming_qty,
+       t.sample_size,
+       t.nonconforming_rate,
+       t.inspection_date,
+       t.approval_id,
+       su.user_name,
+       t.approval_department1,
+       t.approval_department2,
+       t.remark,
+       t.approval_opinion,
+       t.issue_source_type,
+       t.issue_type,
+       t.recheck_sample_way
+  FROM hqm_nonconforming_order t
+  LEFT JOIN hcm_item hi
+    ON t.item_id = hi.item_id
+   AND t.plant_id = hi.plant_id
+  LEFT JOIN hcs_suppliers hs
+    ON t.supplier_id = hs.supplier_id
+  LEFT JOIN sys_user su
+    ON t.approval_id = su.user_id
+  LEFT JOIN hqm_ng_group hn
+    ON hn.ng_group_id = t.ng_group_id
+  LEFT JOIN hqm_ng_group_member hng
+    ON hng.ng_group_id = t.ng_group_id
+   AND hng.ng_menber_id = t.ng_menber_id, hcm_plant hp
+ WHERE 1 = 1
+   AND hp.plant_id = t.plant_id
+    <if test="itemId != null">
+     AND t.item_id=#{itemId}
+     </if>
+    <if test="inspectionId != null"> 
+     AND t.inspection_id=#{inspectionId} 
+     </if>
+    <if test="plantId != null">
+     AND t.plant_id=#{plantId}
+     </if>
+    <if test="supplierId != null">
+     AND t.supplier_id=#{supplierId}
+     </if>
+    <if test="inspectionType != null">
+     AND t.inspection_type = #{inspectionType} 
+     </if>
+    <if test="noNum != null">
+     AND t.no_num=#{noNum}
+     </if>
+    <if test="inspectionDateBegin != null">
+       and t.inspection_date &gt;= to_date(to_char(#{inspectionDateBegin},'yyyy-mm-dd hh24:mi:ss') ,'yyyy-mm-dd hh24:mi:ss')
+     </if>
+    <if test="inspectionDateEnd != null">
+       and t.inspection_date &lt;= to_date(to_char(#{inspectionDateBegin},'yyyy-mm-dd hh24:mi:ss'), 'yyyy-mm-dd hh24:mi:ss')
+     </if>
+    <if test="dealDateBegin != null"> 
+      AND t.deal_date &gt;= to_date(to_char(#{dealDateBegin},'yyyy-mm-dd hh24:mi:ss'), 'yyyy-mm-dd hh24:mi:ss')
+     </if>
+    <if test="dealDateEnd != null">
+       AND t.deal_date &lt;= to_date(to_char(#{dealDateEnd},'yyyy-mm-dd hh24:mi:ss'), 'yyyy-mm-dd hh24:mi:ss')
+     </if>
+    <if test="sourceOrder != null">
+     AND t.source_order=#{sourceOrder}
+     </if>
+    <if test="dealMethod != null">
+     AND t.deal_method=#{dealMethod}
+     </if>
+    <if test="ngGroupId != null">
+     AND t.ng_group_id=#{ngGroupId}
+     </if>
+    <if test="ngMenberId != null">
+     AND t.ng_menber_id=#{ngMenberId} 
+     </if>
+    <if test="noId != null">
+     AND t.no_id=#{noId}
+     </if>
+     <if test="issueSourceType == '-2'">
+     AND t.issue_source_type IS NULL
+     </if>
+     <if test="issueSourceType != '-1' and issueSourceType != '-2' and issueSourceType != null">
+     AND t.issue_source_type = #{issueSourceType}
+     </if>
+    ORDER BY t.last_update_date desc
+  </select>
+
+  <select id="selectMaxNumber" resultMap="BaseResultMap" parameterType="com.hand.hqm.hqm_nonconforming_order.dto.NonconformingOrder">
+SELECT t.no_num
+  FROM hqm_nonconforming_order t
+ WHERE 1 = 1
+   AND t.no_num LIKE concat(#{noNum}, '%')
+ ORDER BY t.no_num
+
+  DESC
+</select>
+</mapper>

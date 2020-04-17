@@ -1,0 +1,461 @@
+<#include "../include/header.html">
+<!-- 一个备注版本 可能会用到 -->
+<script src="${base.contextPath}/common/code?yesNo=SYS.YES_NO"></script>
+<script src="${base.contextPath}/common/code?hqmDefaultPlant=HQM_DEFAULT_PLANT"></script>
+<script src="${base.contextPath}/common/code?HCS_PURCHASE_ITEM_TYPE=HCS_PURCHASE_ITEM_TYPE"></script>
+
+<script type="text/javascript">
+    var viewModel = Hap.createGridViewModel("#grid");
+    var user = {};
+    var defaultPlant = {};
+</script>
+<body>
+<script type="text/javascript">
+    viewModel.stExcelImport = function(){//stExcel文件导入
+    	$("#stFiles").trigger('click');
+    }
+    viewModel.jitExcelImport = function(){//jitExcel文件导入
+    	$("#jitFiles").trigger('click');
+    }
+    viewModel.jitDownload = function(){//
+    	$("#excelIframe").attr("src","${base.contextPath}/resources/files/JIT_DEMAND_TEMPLATE.xlsx");
+    }
+    viewModel.stDownload = function(){//
+    	$("#excelIframe").attr("src","${base.contextPath}/resources/files/ST_DEMAND_TEMPLATE.xlsx");
+    }
+
+    viewModel.confirm = function(){//确认
+    	
+    }
+    
+	
+	viewModel.cancel = function(){//取消
+    	
+    }
+	
+	viewModel.generate = function(){//生成发运计划
+    	
+    }
+    
+    function detail(supplyPlanId){//明细
+    	
+    }
+    
+	function split(supplyPlanId){//拆分
+    	
+    }
+    
+    function getUserInfo(){
+    	$.ajax({
+	        url: '${base.contextPath}/user/sys/query',
+	        type: 'POST',
+	        data: {
+	        	userId:'${Session.userId}'
+	        },
+	        async: false,
+	        dataType: "json",
+	        success: function (response) {
+	            if (response.success) {
+	            	user = response.rows[0];
+	            } else {
+	            	kendo.ui.showWarningDialog({
+	                    message: response.message
+	                });
+	            }
+	        }
+	    });
+    }
+    
+    function getDefaultPlant(){//hqmDefaultPlant
+    	$.ajax({
+	        url: '${base.contextPath}/hcm/plant/query',
+	        type: 'POST',
+	        data: {
+	        	plantCode :hqmDefaultPlant[0].meaning
+	        },
+	        async: false,
+	        dataType: "json",
+	        success: function (response) {
+	            if (response.success) {
+	            	defaultPlant = response.rows[0];
+	            } else {
+	            	kendo.ui.showWarningDialog({
+	                    message: response.message
+	                });
+	            }
+	        }
+	    });
+    }
+</script>
+<iframe id="excelIframe" class="multi-download" style="display:none"></iframe>
+<div id="page-content">
+    <div class="pull-left" id="toolbar-btn" style="padding-bottom:10px;">
+	    <span class="btn btn-primary" style="margin-right:5px;" data-bind="click:stExcelImport"><@spring.message "supplyplan.st.excel.import"/></span>
+	    <span class="btn btn-primary" style="margin-right:5px;" data-bind="click:jitExcelImport"><@spring.message "supplyplan.jit.excel.import"/></span>
+	    <span class="btn btn-primary" style="margin-right:5px;" data-bind="click:stDownload"><@spring.message "supplyplan.st.download"/></span>
+	    <span class="btn btn-primary" style="margin-right:5px;" data-bind="click:jitDownload"><@spring.message "supplyplan.jit.download"/></span>
+        <span class="btn btn-primary k-grid-add" style="margin-right:5px;" data-bind="click:create"><@spring.message "hap.new"/></span>
+        <span class="btn btn-success k-grid-save-changes" data-bind="click:save" style="margin-right:5px;"><@spring.message "hap.save"/></span>
+	    <span class="btn btn-primary" style="margin-right:5px;" data-bind="click:confirm"><@spring.message "supplyplan.confirm"/></span>
+	    <span class="btn btn-primary" style="margin-right:5px;" data-bind="click:cancel"><@spring.message "supplyplan.cancel"/></span>
+	    <span class="btn btn-primary" style="margin-right:5px;" data-bind="click:generate"><@spring.message "supplyplan.generate"/></span>
+        <span  data-bind="click:remove" class="btn btn-danger" style="margin-right:5px;"><@spring.message "hap.delete"/></span>
+    </div>
+    <script>kendo.bind($('#toolbar-btn'), viewModel);</script>
+    <div id="queryPanel" class="pull-right" id="query-form" style="padding-bottom:10px;">
+    	<div class="k-query-simple" id="query-form">
+            <input type="text" data-role="maskedtextbox" style="float:left;width:150px;margin-right:5px;" placeholder='<@spring.message "supplyplan.supplyplannum"/>'
+                   data-bind="value:model.supplyPlanNum" class="k-textbox">
+        </div>
+        <script>kendo.bind($('#query-form'), viewModel);</script>
+        <div class="k-query-detail" id="query-form2">
+            <div class="rows" style="margin-top:5px">
+            </div>
+        </div>
+        <script>kendo.bind($('#query-form2'), viewModel);</script>
+    </div>
+    <script>
+    $('#queryPanel').kendoQueryPanel({
+        queryFunction: function () {
+            viewModel.query();
+        },
+        resetFunction: function () {
+            viewModel.reset();
+        }
+    });
+    </script>
+    <div style="clear:both">
+        <div id="grid"></div>
+    </div>
+</div>
+<div style="display:none;">
+<div id="excelimportst" style="display:none">
+	<form id="mainform" class="form-horizontal">
+	<div class="row" style="width:95%">
+		<div class="form-group">
+			<label class="col-sm-3 control-label"><@spring.message "attachcategory.attachment"/></label>
+			<div class="col-sm-7">
+			<div class="demo-section k-content">
+				<input name="files" id="stFiles" type="file" accept=".xlsx" />
+			</div>
+			<script>
+					$("#stFiles").kendoUpload({
+						async: {
+                        saveUrl: "${base.contextPath}/hcs/supply/plan/st/excelimport/upload?${_csrf.parameterName}=${_csrf.token}",//
+						autoUpload: true
+						},
+						upload       : function(e){
+						},
+                        success      : function(e){
+                        	var response = e.response;
+                        	if(response.success){
+                        		//$("#grid").data("kendoGrid").dataSource.data(response.rows);
+                        		kendo.ui.showInfoDialog({message: "导入成功"+response.rows.length});
+                        	}else{
+                        		kendo.ui.showErrorDialog({
+                                        message: response.message
+                                    });
+                        		
+                        	}
+                        },
+						showFileList:false,
+						});
+				</script>
+			</div>
+		</div>
+	</div>
+	</form>
+</div>
+<div id="excelimportjit" style="display:none">
+	<form id="mainform" class="form-horizontal">
+	<div class="row" style="width:95%">
+		<div class="form-group">
+			<label class="col-sm-3 control-label"><@spring.message "attachcategory.attachment"/></label>
+			<div class="col-sm-7">
+			<div class="demo-section k-content">
+				<input name="files" id="jitFiles" type="file" accept=".xlsx" />
+			</div>
+			<script>
+					$("#jitFiles").kendoUpload({
+						async: {
+                        saveUrl: "${base.contextPath}/hcs/supply/plan/jit/excelimport/upload?${_csrf.parameterName}=${_csrf.token}",//
+						autoUpload: true
+						},
+						upload       : function(e){
+						},
+                        success      : function(e){
+                        	var response = e.response;
+                        	if(response.success){
+                        		//$("#grid").data("kendoGrid").dataSource.data(response.rows);
+                        		kendo.ui.showInfoDialog({message: "导入成功"+response.rows.length});
+                        	}else{
+                        		kendo.ui.showErrorDialog({
+                                        message: response.message
+                                    });
+                        		
+                        	}
+                        },
+						showFileList:false,
+						});
+				</script>
+			</div>
+		</div>
+	</div>
+	</form>
+</div>
+</div>
+<script type="text/javascript">
+    Hap.initEnterQuery('#query-form', viewModel.query);
+    var BaseUrl = _basePath;
+    dataSource = new kendo.data.DataSource({
+        transport: {
+            read: {
+                url: BaseUrl + "/hcs/supply/plan/select",
+                type: "POST",
+                dataType: "json"
+            },
+            update: {
+                url: BaseUrl + "/hcs/supply/plan/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            destroy: {
+                url: BaseUrl + "/hcs/supply/plan/remove",
+                type: "POST",
+                contentType: "application/json"
+            },
+            create: {
+                url: BaseUrl + "/hcs/supply/plan/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            parameterMap: function (options, type) {
+                if (type !== "read" && options.models) {
+                    var datas = Hap.prepareSubmitParameter(options, type)
+                    return kendo.stringify(datas);
+                } else if (type === "read") {
+                	if(user.userType == 'S'){
+                		viewModel.model.supplierId = user.supplierId;
+                	}
+                    return Hap.prepareQueryParameter(viewModel.model.toJSON(), options)
+                }
+            }
+        },
+        batch: true,
+        serverPaging: true,
+        pageSize: 20,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+                id: "supplyPlanId",
+                fields: {
+                	status : {
+                		defaultValue : 'N',
+                	},
+                },
+            }
+        }
+    });
+</script>
+<script>
+    var grid = $("#grid").kendoGrid({
+        dataSource: dataSource,
+        autoBind : false,
+        resizable: true,
+        scrollable: true,
+        navigatable: false,
+        sortable:true,
+        selectable: 'multiple, rowbox',
+        dataBound: function () {
+            if (parent.autoResizeIframe) {
+                parent.autoResizeIframe('${RequestParameters.functionCode!}')
+            }
+        },
+        pageable: {
+            pageSizes: [20, 50,200,500],
+            buttonCount: 5
+        },
+        columns: [
+        	{
+                title: '<@spring.message "supplyplan.demandsplit"/>',//拆分
+                width: 80,
+                template : function(item){
+                	if(item.status == 'N' && user.userType == 'S'){
+                		return '<a href="#" style="color:blue;text-decoration:underline;" onclick="split('+(item.supplyPlanId?item.supplyPlanId : '-1')+')>'+
+                		'拆分</a>';
+                	}else{
+                		return '';
+                	}
+                }
+            },   
+                    {
+                field: "supplyPlanNum",
+                title: '<@spring.message "supplyplan.supplyplannum"/>',//批号
+                width: 120,
+                editable: function (dataItem) {
+                    return false;
+                }
+            },
+                    {
+                field: "upplyPlanLineNum",
+                title: '<@spring.message "supplyplan.upplyplanlinenum"/>',//行号
+                width: 120,
+                editable: function (dataItem) {
+                    return false;
+                }
+            },
+                    {
+                field: "itemCode",
+                title: '<@spring.message "supplyplan.itemid"/>',//物料编码
+                width: 120,
+                template: function (dataItem) {
+                    return dataItem['itemCode'] || ''
+                },
+                editor: function (container, options) {
+                	if(user.userType == 'S'){
+                		container.append(options.model.itemCode);
+                		return;
+                	}
+                    $('<input required name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoLov($.extend(<@lov "LOV_ITEM/> ,{
+                        query: function (e) {
+                            e.param['plantId'] = defaultPlant.plantId;
+                        },
+                        model: options.model,
+                        textField:'itemCode',
+                        select:function(e) {
+                            var v = this.value();
+                            if (v == undefined  || v == ""){
+                            	options.model.itemId = null;
+                                options.model.set('itemDescriptions','');
+                            }else{
+                                options.model.itemId = e.item.itemId;
+                                options.model.set('itemDescriptions',e.item.itemName);
+                                options.model.set('purchaseType',e.item.purchaseType);
+                                
+                            }
+                        }
+                    }));
+                },
+            },
+            {
+                field: "itemDescriptions",
+                title: '<@spring.message "supplyplan.itemdescriptions"/>',//物料描述
+                width: 120,
+                editor: function (container, options) {
+                	return;
+                }
+            },
+                    
+                    {
+                field: "purchaseType",
+                title: '<@spring.message "supplyplan.purchasetype"/>',//物料属性
+                width: 120,
+                template: function (dataItem) {
+                    var v = dataItem.purchaseType ? dataItem.purchaseType : "";
+                    $.each(HCS_PURCHASE_ITEM_TYPE, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return v;
+                        }
+                    })
+                    return v;
+                },
+                editor: function (container, options) {
+                	return;
+                }
+            },
+            {
+                field: "requireTime",
+                title: '<@spring.message "supplyplan.requiretime"/>',//需求时间
+                width: 120
+            },
+            {
+                field: "requireQty",
+                title: '<@spring.message "supplyplan.requireqty"/>',//需求数量
+                width: 120
+            },
+            {
+                field: "primaryUom",
+                title: '<@spring.message "supplyplan.primaryuom"/>',//单位
+                width: 120
+            },
+            {
+                field: "status",
+                title: '<@spring.message "supplyplan.status"/>',//状态
+                width: 120
+            },
+            {
+                field: "remarks",
+                title: '<@spring.message "supplyplan.remarks"/>',//供货计划备注
+                width: 120
+            },
+            {
+                field: "supplierDeliveryTime",
+                title: '<@spring.message "supplyplan.supplierdeliverytime"/>',//供应商交期
+                width: 120
+            },
+            {
+                field: "supplierDeliveryQty",
+                title: '<@spring.message "supplyplan.supplierdeliveryqty"/>',//供应商数量
+                width: 120
+            },
+            {
+                field: "supplierRemarks",
+                title: '<@spring.message "supplyplan.supplierremarks"/>',//供应商备注
+                width: 120
+            },
+            {
+                field: "needConfirm",
+                title: '<@spring.message "supplyplan.needconfirm"/>',//需确认
+                width: 120
+            },
+            {
+                field: "canShip",
+                title: '<@spring.message "supplyplan.canship"/>',//可发运
+                width: 120
+            },
+            {
+                field: "shipPlanFlag",
+                title: '<@spring.message "supplyplan.shipplanflag"/>',//发运计划标识
+                width: 120
+            },
+            {
+                field: "plantDescriptions",
+                title: '<@spring.message "supplyplan.plantid"/>',//工厂
+                width: 120
+            },
+                    {
+                field: "supplierCode",
+                title: '<@spring.message "supplyplan.suppliercode"/>',//供应商描述
+                width: 120
+            },
+                    {
+                field: "supplierName",
+                title: '<@spring.message "supplyplan.suppliername"/>',//供应商编码
+                width: 120
+            }, 
+            {
+                title: '<@spring.message "supplyplan.demanddetail"/>',//供货需求明细
+                width: 80,
+                template : function(item){
+                	return '<a href="#" style="color:blue;text-decoration:underline;" onclick="detail('+(item.supplyPlanId?item.supplyPlanId : '-1')+')>明细</a>';
+                }
+            },       
+        ],
+        editable: true
+    }).data('kendoGrid');
+
+</script>
+<script>
+$(function(){
+	getUserInfo();
+	getDefaultPlant();
+	grid.dataSource.fetch();
+});
+
+</script>
+</body>
+</html>

@@ -1,0 +1,361 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.spc.repository.mapper.SampleSubgroupRMapper">
+
+ <resultMap id="ListSePointDataResultMap" type="com.hand.spc.repository.dto.SePointDataDTO">
+        <result column="sample_subgroup_id" property="sampleSubgroupId" jdbcType="DECIMAL"/>
+        <result column="subgroup_num" property="subgroupNum" jdbcType="DECIMAL"/>
+        <result column="subgroup_bar" property="subgroupBar" jdbcType="DECIMAL"/>
+        <result column="subgroup_r" property="subgroupR" jdbcType="DECIMAL"/>
+        <result column="subgroup_max" property="subgroupMax" jdbcType="DECIMAL"/>
+        <result column="subgroup_min" property="subgroupMin" jdbcType="DECIMAL"/>
+        <result column="subgroup_sigma" property="subgroupSigma" jdbcType="DECIMAL"/>
+        <result column="subgroup_me" property="subgroupMe" jdbcType="DECIMAL"/>
+        <result column="subgroup_rm" property="subgroupRm" jdbcType="DECIMAL"/>
+        <result column="sample_subgroup_time" property="sampleSubgroupTime" jdbcType="TIMESTAMP"/>
+        <collection property="sampleDataList" ofType="com.hand.spc.repository.dto.SampleDataR">
+            <result column="sample_data_id" property="sampleDataId" jdbcType="DECIMAL"/>
+            <result column="sample_value" property="sampleValue" jdbcType="DECIMAL"/>
+            <result column="sample_time" property="sampleTime" jdbcType="TIMESTAMP"/>
+        </collection>
+    </resultMap>
+    
+    
+    
+    <resultMap id="BaseResultMap1" type="com.hand.spc.repository.dto.SampleSubgroupR">
+        <result column="SAMPLE_SUBGROUP_ID" property="sampleSubgroupId" jdbcType="DECIMAL" />
+        <result column="TENANT_ID" property="tenantId" jdbcType="DECIMAL" />
+        <result column="SITE_ID" property="siteId" jdbcType="DECIMAL" />
+        <result column="SUBGROUP_NUM" property="subgroupNum" jdbcType="DECIMAL" />
+        <result column="ENTITY_CODE" property="entityCode" jdbcType="VARCHAR" />
+        <result column="ENTITY_VERSION" property="entityVersion" jdbcType="VARCHAR" />
+        <result column="SUBGROUP_SIZE" property="subgroupSize" jdbcType="DECIMAL" />
+        <result column="EXIST_NUM" property="existNum" jdbcType="DECIMAL" />
+        <result column="SAMPLE_SUBGROUP_TIME" property="sampleSubgroupTime" jdbcType="DATE" />
+        <result column="SAMPLE_CALCULATE_STATUS" property="sampleCalculateStatus" jdbcType="VARCHAR" />
+        <result column="SAMPLE_MODIFIED" property="sampleModified" jdbcType="VARCHAR" />
+        <result column="MAIN_STATISTIC_VALUE" property="mainStatisticValue" jdbcType="DECIMAL" />
+        <result column="SECOND_STATISTIC_VALUE" property="secondStatisticValue" jdbcType="DECIMAL" />
+        <result column="SUBGROUP_BAR" property="subgroupBar" jdbcType="DECIMAL" />
+        <result column="SAMPLE_DATAS" property="sampleDatas" jdbcType="VARCHAR" />
+       
+    </resultMap>
+
+    <select id="queryPreSubgroupStatistic" resultMap="BaseResultMap1">
+        SELECT
+        pss.sample_subgroup_id,
+        pss.subgroup_num,
+        pss.tenant_id,
+        pss.site_id,
+        pss.entity_code,
+        pss.entity_version,
+        pss.object_version_number,
+        pss.sample_subgroup_time,
+        psta.subgroup_bar,
+        CASE #{chartType}
+        WHEN 'XBAR-R' THEN
+        psta.subgroup_bar
+        WHEN 'XBAR-S' THEN
+        psta.subgroup_bar
+        WHEN 'Me-R' THEN
+        psta.subgroup_me
+        WHEN 'X-Rm' THEN
+        psta.subgroup_bar
+        END main_statistic_value,
+        CASE #{chartType}
+        WHEN 'XBAR-R' THEN
+        psta.subgroup_r
+        WHEN 'XBAR-S' THEN
+        psta.subgroup_sigma
+        WHEN 'Me-R' THEN
+        psta.subgroup_r
+        WHEN 'X-Rm' THEN
+        psta.subgroup_rm
+        END second_statistic_value
+        FROM
+        pspc_sample_subgroup pss,
+        pspc_subgroup_statistic psta
+        WHERE
+        psta.tenant_id = pss.tenant_id
+        AND psta.site_id = pss.site_id
+        AND psta.sample_subgroup_id = pss.sample_subgroup_id
+        AND pss.tenant_id = #{tenantId}
+        AND pss.site_id = #{siteId}
+        AND pss.entity_code = #{entityCode}
+        AND pss.entity_version = #{entityVersion}
+        AND pss.subgroup_num &lt;= #{maxSubgroupNum}
+        AND pss.subgroup_num &gt;= #{minSubgroupNum}
+        ORDER BY
+        pss.subgroup_num
+    </select>
+
+    <select id="queryMaxSubgroupNum" resultType="java.lang.Long">
+        SELECT max(pss.subgroup_num)
+        FROM
+            pspc_sample_subgroup pss
+        WHERE
+            pss.tenant_id = #{tenantId}
+            AND pss.site_id = #{siteId}
+            AND pss.entity_code = #{entityCode}
+            AND pss.entity_version = #{entityVersion}
+            AND pss.sample_subgroup_time &gt;= #{startDate}
+            AND pss.sample_subgroup_time &lt;= #{endDate}
+    </select>
+
+
+    <select id="querySampleSubgroupByCPK" parameterType="com.hand.spc.repository.dto.CPKAnalyseReqDTO"
+            resultType="com.hand.spc.repository.dto.SampleSubgroupR">
+        SELECT
+        sample_subgroup_id,
+        tenant_id,
+        site_id,
+        subgroup_num,
+        entity_code,
+        entity_version,
+        subgroup_size,
+        exist_num,
+        sample_subgroup_time,
+        sample_calculate_status,
+        sample_modified,
+        object_version_number,
+        creation_date,
+        created_by,
+        last_updated_by,
+        last_update_date
+        FROM
+        pspc_sample_subgroup
+        WHERE
+        tenant_id = #{tenantId}
+        AND site_id = #{siteId}
+        AND entity_code = #{entityCode}
+        AND entity_version = #{entityVersion}
+
+        <if test="startDate != null">
+            AND sample_subgroup_time &gt;= #{startDate}
+        </if>
+        <if test="endDate != null">
+            AND sample_subgroup_time &lt;= #{endDate}
+        </if>
+        <if test="startDate == null and endDate == null">
+            LIMIT 0,#{size}
+
+        </if>
+    </select>
+
+    <select id="querySampleSubgroupByAD" parameterType="com.hand.spc.repository.dto.AndersonDarlingDTO"
+            resultType="com.hand.spc.repository.dto.SampleSubgroupR">
+        SELECT
+        sample_subgroup_id,
+        tenant_id,
+        site_id,
+        subgroup_num,
+        entity_code,
+        entity_version,
+        subgroup_size,
+        exist_num,
+        sample_subgroup_time,
+        sample_calculate_status,
+        sample_modified,
+        object_version_number,
+        creation_date,
+        created_by,
+        last_updated_by,
+        last_update_date
+        FROM
+        pspc_sample_subgroup
+        WHERE
+        tenant_id = #{tenantId}
+        AND site_id = #{siteId}
+        AND entity_code = #{entityCode}
+        AND entity_version = #{entityVersion}
+
+        <if test="startDate != null">
+            AND sample_subgroup_time &gt;= #{startDate}
+        </if>
+        <if test="endDate != null">
+            AND sample_subgroup_time &lt;= #{endDate}
+        </if>
+        <if test="startDate == null and endDate == null">
+            LIMIT 0,#{size}
+
+        </if>
+    </select>
+
+    <select id="listSePointData" parameterType="com.hand.spc.repository.dto.SeRequestDTO"
+            resultMap="ListSePointDataResultMap">
+        SELECT
+        pss.sample_subgroup_id,
+        pss.subgroup_num,
+        psta.subgroup_bar,
+        psta.subgroup_r,
+        psta.subgroup_max,
+        psta.subgroup_min,
+        psta.subgroup_sigma,
+        psta.subgroup_me,
+        psta.subgroup_rm,
+        pss.sample_subgroup_time,
+        psd.sample_data_id,
+        psd.sample_value,
+        psd.sample_time
+        FROM
+        pspc_sample_subgroup pss,
+        pspc_subgroup_statistic psta,
+        pspc_sample_subgroup_relation pssr,
+        pspc_sample_data psd
+        WHERE
+        psta.tenant_id = pss.tenant_id
+        AND psta.site_id = pss.site_id
+        AND psta.sample_subgroup_id = pss.sample_subgroup_id
+        AND pssr.tenant_id = pss.tenant_id
+        AND pssr.site_id = pss.site_id
+        AND pssr.sample_subgroup_id = pss.sample_subgroup_id
+        AND psd.tenant_id = pssr.tenant_id
+        AND psd.site_id = pssr.site_id
+        AND psd.sample_data_id = pssr.sample_data_id
+        AND pss.tenant_id = #{tenantId}
+        AND pss.site_id = #{siteId}
+        AND pss.entity_code = #{entityCode}
+        AND pss.entity_version = #{entityVersion}
+        AND pss.subgroup_num &gt;= #{minSubgroupNum}
+        AND pss.subgroup_num &lt;= #{maxSubgroupNum}
+        <if test="startDate != null">
+            AND pss.sample_subgroup_time &gt;= #{startDate}
+        </if>
+        <if test="endDate != null">
+            AND pss.sample_subgroup_time &lt;= #{endDate}
+        </if>
+        ORDER BY
+        pss.subgroup_num,
+        psd.sample_time
+    </select>
+
+<!--     <insert id="batchInsertRows" parameterType="java.util.List"> -->
+<!--         INSERT INTO pspc_sample_subgroup ( -->
+<!--         sample_subgroup_id, -->
+<!--         tenant_id, -->
+<!--         site_id, -->
+<!--         subgroup_num, -->
+<!--         entity_code, -->
+<!--         entity_version, -->
+<!--         subgroup_size, -->
+<!--         exist_num, -->
+<!--         sample_subgroup_time, -->
+<!--         sample_calculate_status, -->
+<!--         sample_modified -->
+<!--         ) -->
+<!--         VALUES -->
+<!--         <foreach collection="list" item="item" index="index" separator=","> -->
+<!--               ( -->
+<!--             #{item.sampleSubgroupId}, -->
+<!--             #{item.tenantId}, -->
+<!--             #{item.siteId}, -->
+<!--             #{item.subgroupNum}, -->
+<!--             #{item.entityCode}, -->
+<!--             #{item.entityVersion}, -->
+<!--             #{item.subgroupSize}, -->
+<!--             #{item.existNum}, -->
+<!--             #{item.sampleSubgroupTime}, -->
+<!--             #{item.sampleCalculateStatus}, -->
+<!--             #{item.sampleModified} -->
+<!--               ) -->
+<!--         </foreach> -->
+<!--     </insert> -->
+    
+    
+    <insert id="batchInsertRows" parameterType="java.util.List">
+    <foreach collection="list" item="item" index="index" open="begin" close=";end;" separator=";">
+         INSERT INTO pspc_sample_subgroup (
+        sample_subgroup_id,
+        tenant_id,
+        site_id,
+        subgroup_num,
+        entity_code,
+        entity_version,
+        subgroup_size,
+        exist_num,
+        sample_subgroup_time,
+        sample_calculate_status,
+        sample_modified
+        )
+        VALUES(
+            #{item.sampleSubgroupId},
+            #{item.tenantId},
+            #{item.siteId},
+            #{item.subgroupNum},
+            #{item.entityCode},
+            #{item.entityVersion},
+            #{item.subgroupSize},
+            #{item.existNum},
+            #{item.sampleSubgroupTime},
+            #{item.sampleCalculateStatus},
+            #{item.sampleModified})
+        </foreach>
+    </insert>
+
+    <select id="queryDateForDataCompare" parameterType="com.hand.spc.repository.dto.EntityR" resultType="com.hand.spc.repository.dto.SampleDataR">
+    SELECT
+        pe.entity_code,
+        pe.entity_version,
+        ssr.sample_value,
+        ssr.sample_data_id,
+        pss.sample_subgroup_time as sampleTime
+    FROM
+        pspc_entity pe,
+        pspc_sample_subgroup pss,
+        PSPC_SAMPLE_SUBGROUP_RELATION ssr
+    WHERE
+        pe.entity_code = pss.entity_code
+        AND pe.entity_version = pss.entity_version
+        AND pss.sample_subgroup_id = ssr.sample_subgroup_id
+        AND pe.tenant_id =#{tenantId}
+        AND pe.site_id =#{siteId}
+        AND pe.entity_code = #{entityCode}
+        AND pe.entity_version =#{entityVersion}
+        <if test="startDate != null">
+            AND pss.sample_subgroup_time &gt;= #{startDate}
+        </if>
+        <if test="endDate != null">
+            AND pss.sample_subgroup_time &lt;= #{endDate}
+        </if>
+        ORDER BY ssr.sample_data_id
+        <if test="endDate == null and startDate == null and endDate != '' and startDate != '' ">
+            LIMIT 0,#{size}
+        </if>
+    </select>
+
+    <select id="queryDateForCorrelationAnalysis" parameterType="com.hand.spc.repository.dto.EntityR" resultType="com.hand.spc.repository.dto.SampleDataR">
+        SELECT
+        pe.entity_code,
+        pe.entity_version,
+        ssr.sample_value,
+        pss.subgroup_num,
+        ssr.sample_data_id,
+        psd.sample_time as sampleTime
+        FROM
+        pspc_entity pe,
+        pspc_sample_subgroup pss,
+        PSPC_SAMPLE_SUBGROUP_RELATION ssr,
+        PSPC_SAMPLE_data psd
+        WHERE
+        pe.entity_code = pss.entity_code
+        AND pe.entity_version = pss.entity_version
+        AND pss.sample_subgroup_id = ssr.sample_subgroup_id
+        AND ssr.sample_data_id = psd.sample_data_id
+        AND pe.tenant_id =#{tenantId}
+        AND pe.site_id =#{siteId}
+        AND pe.entity_code = #{entityCode}
+        AND pe.entity_version =#{entityVersion}
+        <if test="startDate != null">
+            AND pss.sample_subgroup_time &gt;= #{startDate}
+        </if>
+        <if test="endDate != null">
+            AND pss.sample_subgroup_time &lt;= #{endDate}
+        </if>
+        ORDER BY pss.subgroup_num DESC, ssr.sample_data_id  DESC
+        <if test="endDate == null and startDate == null and endDate != '' and startDate != '' ">
+            LIMIT 0,#{size}
+        </if>
+    </select>
+
+
+</mapper>

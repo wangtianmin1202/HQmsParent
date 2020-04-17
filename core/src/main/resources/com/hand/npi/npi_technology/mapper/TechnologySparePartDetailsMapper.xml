@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.npi.npi_technology.mapper.TechnologySparePartDetailsMapper">
+    <resultMap id="BaseResultMap" type="com.hand.npi.npi_technology.dto.TechnologySparePartDetails">
+        <result column="SPARE_PART_DETAILS_ID" property="sparePartDetailsId" jdbcType="DECIMAL" />
+        <result column="DETAILS_CODE" property="detailsCode" jdbcType="VARCHAR" />
+        <result column="DETAILS_NAME" property="detailsName" jdbcType="VARCHAR" />
+        <result column="DETAILS_VALUE" property="detailsValue" jdbcType="VARCHAR" />
+        <result column="DETAILS_UNIT" property="detailsUnit" jdbcType="VARCHAR" />
+        <result column="DETAILS_COST" property="detailsCost" jdbcType="VARCHAR" />
+        <result column="SPARE_PART_ID" property="sparePartId" jdbcType="DECIMAL" />
+        <result column="spare_part_code" property="sparePartCode" jdbcType="VARCHAR" />
+    </resultMap>
+
+	<select id="queryByCondition" resultMap="BaseResultMap">
+		select
+			t.*,
+			tp.spare_part_code as spare_part_code
+		from NPI_TECHNOLOGY_SPARE_PART_DETAILS t
+		left join NPI_TECHNOLOGY_SPARE_PART tp on tp.SPARE_PART_ID = t.SPARE_PART_ID
+		<where>
+			<if test="list != null and list.size > 0"> 
+                and t.SPARE_PART_ID in 
+					<foreach collection="list" index="index" item="item" open="(" separator="," close=")">
+               			#{item}
+           			</foreach>
+            </if>
+            <if test="dto.sparePartDetailsId != null "> 
+                and t.SPARE_PART_DETAILS_ID = #{dto.sparePartDetailsId}
+            </if>
+			<if test="dto.detailsCode != null "> 
+                and t.DETAILS_CODE like concat('%',concat(#{dto.detailsCode},'%'))
+            </if>
+            <if test="dto.detailsName != null "> 
+                and t.DETAILS_NAME like concat('%',concat(#{dto.detailsName},'%'))
+            </if>
+		</where>
+	</select>
+	
+	<select id="getCodeSeq" resultType="string">
+		select lpad(SEQ_NPI_TECH_PART_DETAIL_CODE.NEXTVAL,6,'0') from dual
+	</select>
+	
+	<select id="hasChild" resultType="java.lang.Long">
+		select count(1) from NPI_TECHNOLOGY_SPARE_PART_DETAILS t where t.spare_part_id = #{parentId} 
+	</select>
+</mapper>

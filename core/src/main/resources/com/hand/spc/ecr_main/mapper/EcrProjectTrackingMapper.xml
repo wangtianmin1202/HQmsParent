@@ -1,0 +1,327 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.spc.ecr_main.mapper.EcrProjectTrackingMapper">
+    <resultMap id="BaseResultMap" type="com.hand.spc.ecr_main.dto.EcrProjectTracking">
+        <result column="PROJECT_TARGET_ID" property="projectTargetId" jdbcType="DECIMAL" />
+        <result column="ECRNO" property="ecrno" jdbcType="VARCHAR" />
+        <result column="TASK_NUMBER" property="taskNumber" jdbcType="VARCHAR" />
+        <result column="TASK_NAME" property="taskName" jdbcType="VARCHAR" />
+        <result column="TASK_STANDARD_DAYS" property="taskStandardDays" jdbcType="DECIMAL" />
+        <result column="STATUS" property="status" jdbcType="VARCHAR" />
+        <result column="DUE_DATE" property="dueDate" jdbcType="DATE" />
+        <result column="ACTUAL_START_DATE" property="actualStartDate" jdbcType="DATE" />
+        <result column="ACTUAL_END_DATE" property="actualEndDate" jdbcType="DATE" />
+        <result column="PLAN_START_DATE" property="planStartDate" jdbcType="DATE" />
+        <result column="PLAN_END_DATE" property="planEndDate" jdbcType="DATE" />
+        <result column="TASK_LEADER" property="taskLeader" jdbcType="VARCHAR" />
+
+        <result column="issue_type" property="issueType" jdbcType="VARCHAR" />
+        <result column="plan_change_time" property="planChangeTime" jdbcType="VARCHAR" />
+        <result column="MAIN_DUTY" property="mainDuty" jdbcType="VARCHAR" />
+        <result column="issue" property="issue" jdbcType="VARCHAR" />
+        <result column="ISSUE_MSG" property="issueMsg" jdbcType="VARCHAR" />
+        
+        <result column="ACT_FINISHED_DATE" property="actFinishedDate" jdbcType="DATE" />
+        <result column="STD_COST" property="stdCost" jdbcType="DECIMAL" />
+        <result column="STD_PRICE_UNIT" property="stdPriceUnit" jdbcType="DECIMAL" />
+        <result column="STD_COST_CURRENCY" property="stdCostCurrency" jdbcType="VARCHAR" />
+        <result column="STD_PRIME_COST" property="stdPrimeCost" jdbcType="DECIMAL" />
+        <result column="ACT_COST" property="actCost" jdbcType="DECIMAL" />
+        <result column="ACT_PRICE_UNIT" property="actPriceUnit" jdbcType="DECIMAL" />
+        <result column="ACT_COST_CURRENCY" property="actCostCurrency" jdbcType="VARCHAR" />
+        <result column="ACT_PRIME_COST" property="actPrimeCost" jdbcType="DECIMAL" />
+        
+        <result column="ITEM_PRICE" property="itemPrice" jdbcType="DECIMAL" />
+        <result column="ITEM_QTY" property="itemQty" jdbcType="DECIMAL" />
+        <result column="ECR_USE" property="ecrUse" jdbcType="DECIMAL" />
+        <result column="BOM_USE" property="bomUse" jdbcType="DECIMAL" />
+        <result column="YEAR_PLAN_QTY" property="yearPlanQty" jdbcType="DECIMAL" />
+        <result column="WORK_COST" property="workCost" jdbcType="DECIMAL" />
+        
+        <result column="ITEM_ID" property="itemId" jdbcType="VARCHAR" />
+        <result column="UNIT_PRICE" property="unitPrice" jdbcType="DECIMAL" />
+        <result column="PRICE_UNIT" property="priceUnit" jdbcType="DECIMAL" />
+        <result column="QUANTITY" property="quantity" jdbcType="DECIMAL" />
+        
+        <result column="QTP_ID" property="qtpId" jdbcType="DECIMAL" />
+        <result column="QTP_SEQ" property="qtpSeq" jdbcType="DECIMAL" />
+
+    </resultMap>
+    
+    <!-- 查询 skuCode -->
+	<select id="selectSkuCode"  resultType="java.lang.String">
+		select SKU_CODE from hpm_ecr_solution_sku 
+		where SKU_ID = #{itemId}
+	</select>
+
+	<!-- 查询本表信息 -->
+	<select id="selectGrid" resultMap="BaseResultMap">
+	    select PROJECT_TARGET_ID,ECRNO,
+			   TASK_NUMBER,TASK_NAME,TASK_STANDARD_DAYS,
+			   STATUS,DUE_DATE,
+			   ACTUAL_START_DATE,ACTUAL_END_DATE,
+			   PLAN_START_DATE,PLAN_END_DATE,
+			   TASK_LEADER
+		 from HPM_ECR_PROJECT_TRACKING
+			 where ECRNO = #{ecrno}
+		 order by to_number(TASK_NUMBER) ASC
+	</select>
+
+	<!-- ECR查询头信息 -->
+	<select id="selectInfo" resultMap="BaseResultMap">
+	    select m.ecrno, 
+		    m.issue_type, 
+		    m.ecn_release_date as plan_change_time,
+		    i.MAIN_DUTY,
+		    m.issue,
+		    s.ISSUE_MSG
+	    from HPM_ECR_MAIN m,
+		     hpm_ecr_influencedmaterial i,
+		     hpm_ecr_solution_main s
+	    where m.ecrno = i.ecrno
+		    and m.ecrno = s.ecrno(+)
+		    and m.ecrno = #{ecrno}
+	</select>
+
+	<!-- ECR受影响物料价格趋势查询报表 -->
+	<select id="selectInfluence" resultMap="BaseResultMap">
+		select m.ecrno,
+		       m.ACT_FINISHED_DATE,
+		       ss.STD_COST,
+		       ss.STD_PRICE_UNIT,
+		       ss.STD_COST_CURRENCY,
+		       ss.ACT_COST,
+		       ss.ACT_PRICE_UNIT,
+		       ss.ACT_COST_CURRENCY,
+		       sm.ISSUE_MSG
+	  from hpm_ecr_main m, hpm_ecr_solution_main sm, hpm_ecr_solution_sku ss
+	  where ss.sku_id = 317
+		   and ss.ecrno = sm.ecrno
+		   and m.ecrno = sm.ecrno
+	  group by m.ecrno,
+		    m.ACT_FINISHED_DATE,
+		    ss.STD_COST,
+		    ss.STD_PRICE_UNIT,
+		    ss.STD_COST_CURRENCY,
+		    ss.ACT_COST,
+		    ss.ACT_PRICE_UNIT,
+		    ss.ACT_COST_CURRENCY,
+		    sm.ISSUE_MSG
+	 order by m.ACT_FINISHED_DATE asc
+	</select>
+
+
+	<!-- =========================== 计算实际成本 ================================ -->
+	<!-- 查询前一次的实际价格 -->
+	<select id="selectLastActualPrice" resultType="java.lang.Double">
+		select ACT_COST from hpm_ecr_solution_sku
+	    where ecrno &lt;&gt; #{ecrno}
+    		  and sku_id = #{skuId}
+    		  and rownum=1
+    	order by last_update_date
+	</select>
+	
+	<!-- 查询标准价格 -->
+	<select id="selectStdPrice" resultMap="BaseResultMap">
+		select i.UNIT_PRICE, i.PRICE_UNIT, d.QUANTITY
+		from hpm_ecr_solution_sku sku,npi_mbom_main m,hcm_item i,npi_mbom_detail d
+		where i.item_id = m.item_id 
+		  and i.plant_id = m.plant_id
+		  and sku.sku_id = m.sku_id
+		  and m.sku_id = d.sku_id
+		  and sku.ecrno  =  #{ecrno}
+		  and sku.sku_id = #{skuId}
+	</select>
+	
+	<!-- 查询SKU物料成本变化  -->
+	<select id="selectCostChange" resultMap="BaseResultMap">
+	  	select s.ITEM_PRICE,s.ITEM_QTY,skur.ECR_USE,skur.BOM_USE,sku.YEAR_PLAN_QTY 
+	    from hpm_ecr_solution_sku sku,
+			  hpm_ecr_solution_sku_relation skur,
+			  hpm_ecr_solution s
+		  where 1=1
+			  and sku.item_id = s.MATERIAL_ID
+			  and sku.ITEM_SKU_KID = skur.ITEM_SKU_ID
+			  and sku.item_id = skur.ITEM_ECR_ID
+		      and sku.ecrno  =  #{ecrno}
+			  and sku.sku_id = #{skuId}
+	</select>
+	
+	<!-- 查询 SKU 工时变化 -->
+	<select id="selectWorkTimeChange" resultMap="BaseResultMap">
+		select ECRNO,SKU_ID,WORK_COST from hpm_ecr_solution_sku
+		where sku_id = #{skuId}
+		      and ecrno = #{ecrno}
+	</select>
+	
+	<!-- 查询 stdPriceUnit -->
+	<select id="selectStdPriceUnit" resultType="java.lang.Double">
+		select STD_PRICE_UNIT 
+		from hpm_ecr_solution_sku 
+		where rownum = 1
+		      and sku_id = #{skuId}
+		      and ecrno  =  #{ecrno} 
+	</select>
+	
+	<!--  保存到实际成本（ hpm_ecr_item_sku_b） -->
+	<update id="updateCostItem">
+		update hpm_ecr_item_sku_b 
+		set ACT_COST = #{actCost}
+		where sku_id = #{skuId}
+			and ecrno = #{ecrno}
+	</update>
+	
+	<!--  保存到实际成本（hpm_ecr_solution_sku） -->
+	<update id="updateCostSolution">
+		update hpm_ecr_solution_sku 
+		set ACT_COST = #{actCost}
+		where sku_id = #{skuId}
+			and ecrno = #{ecrno}
+	</update>
+	<!-- =========================== 计算实际成本 ================================ -->
+
+
+	<!-- =========================== QTP 任务 ================================ -->
+	<!-- 查询技术文件状态已完成 -->
+	<select id="selectFileItemId" resultType="java.lang.Integer">		
+		select count(1) 
+		from HPM_ECR_TECHNICAL_FILE_HEADER h 
+		where FILE_TYPE in ('DFMEA','SPEC','SIP')
+			and h.STATUS = 'FINISHED'
+			and h.ecrno=#{ecrno}
+      		and not exists (select 'Y' from hpm_ecr_qtp e where e.ecrno=h.ecrno)	
+	</select>
+	
+	
+	
+	<!-- 查询物料数据1 -->
+	<select id="selectSku" resultMap="BaseResultMap">
+		select sku_id as item_id, ecrno from hpm_ecr_solution_sku
+		where sku_id = #{itemId}
+	</select>
+	
+	<!-- 查询物料数据2 -->
+	<select id="selectItem" resultMap="BaseResultMap">
+		select MATERIAL_ID as item_id, ecrno from hpm_ecr_solution
+		where MATERIAL_ID = #{itemId}	
+	</select>
+	
+	<!-- 查询QTP次序 -->
+	<select id="selectQtpSeq"  resultType="java.lang.Long">
+	    select QTP_SEQ from(
+		    select QTP_SEQ 
+		    from HPM_ECR_QTP
+		    where ecrno = #{ecrno}	
+				and item_id = #{itemId}
+		    order by QTP_SEQ DESC
+	    ) where rownum = 1
+	</select>
+	
+	<!-- 保存QTP -->
+	<insert id="insertQtp">
+		insert into HPM_ECR_QTP(qtp_id,ecrno,item_id,qtp_seq,
+			CREATED_BY,CREATION_DATE,LAST_UPDATED_BY,LAST_UPDATE_DATE) 
+		values(HPM_ECR_QTP_S.nextval,#{ecrno},#{itemId},#{qtpSeq},
+			#{request.userId},sysdate,#{request.userId},sysdate
+		)
+	</insert>
+	
+	<!-- 保存QTP -->
+	<insert id="insertQtpSelect" keyProperty="qtpId" keyColumn="QTP_ID" useGeneratedKeys="true">
+		insert into HPM_ECR_QTP(qtp_id,ecrno,item_id,qtp_seq,
+			CREATED_BY,CREATION_DATE,LAST_UPDATED_BY,LAST_UPDATE_DATE) 
+		values(HPM_ECR_QTP_S.nextval,#{ecrno},#{itemId},#{qtpSeq},
+			#{request.userId},sysdate,#{request.userId},sysdate
+		)
+	</insert>
+	
+	<!-- 查询申请页面的产品品类 -->
+	<select id="selectCategory"  resultType="java.lang.String">
+	  select p.CATEGORY
+	  from hpm_project_line pl,hpm_project p
+	  where  p.PROJECT_ID = pl.PROJECT_ID
+	  		and pl.sku_code = #{itemId}
+	</select>
+	
+	<!-- 查询物料主负责人 -->
+	<select id="selectMainDuty"  resultType="java.lang.String">
+	    select MAIN_DUTY from hpm_ecr_main
+		where ecrno = #{ecrno}
+	</select>
+	
+	<!-- 更新QTP主负责人 -->
+	<update id="updateQtpDutyby">
+		update HPM_ECR_QTP set
+			LAST_UPDATED_BY = #{request.userId},
+			LAST_UPDATE_DATE = sysdate,
+			DUTYBY = #{mainDuty}
+		where ecrno = #{ecrno}
+		and item_id = #{itemId}
+		and qtp_seq = #{qtpSeq}
+	</update>
+	<!-- =========================== QTP 任务 ================================ -->
+	
+	
+	<!-- =========================== VTP 任务 ================================ -->
+		<!-- 查询技术文件状态已完成 -->
+		<select id="selectFilesItemId" resultType="java.lang.String" parameterType="java.util.List">
+			select count(1) 
+			from HPM_ECR_TECHNICAL_FILE_HEADER h 
+			where FILE_TYPE in (
+				<foreach collection="types" item="type" index="index" separator=",">
+				    #{type}
+				</foreach>
+				)
+				and h.STATUS = 'FINISHED'
+				and ecrno = #{ecrno}
+		</select>
+		
+		<!-- 查询 QTP 表状态-->
+		<select id="selectQtpStatus" resultType="java.lang.String">
+			select status from (
+			  select status from HPM_ECR_QTP
+			  where item_id = #{itemId}
+			        and ecrno = #{ecrno}
+			  order by qtp_seq desc
+			) where rownum = 1	
+		</select>
+			
+		<!-- 查询VTP次序 -->
+		<select id="selectVtpSeq"  resultType="java.lang.Long">
+		    select VTP_SEQ from(
+	          select VTP_SEQ from HPM_ECR_VTP
+	          where SKU_CODE = #{itemId}
+	              and ecrno = #{ecrno}
+	          order by VTP_SEQ DESC
+	        ) where rownum = 1
+		</select>
+		
+		<!-- 保存VTP -->
+		<insert id="insertVtp">
+			insert into HPM_ECR_VTP(KID, ecrno, SKU_CODE, VTP_SEQ,
+			            CREATED_BY, CREATION_DATE, LAST_UPDATED_BY, 
+			            LAST_UPDATE_DATE)
+			values(HPM_ECR_VTP_S.nextval, #{ecrno}, #{itemId}, #{vtpSeq}, 
+			         #{request.userId}, sysdate, #{request.userId}, sysdate)
+		</insert>
+	
+		<!-- 查询 VTP 主负责人 -->
+		<select id="selectVtpMainDuty"  resultType="java.lang.String">
+			  select EMPLOYEE_ID from hpm_ecr_task_user
+			  where RULE_TYPE = 'SKU'
+			  	and RULE_CODE = #{itemId}
+		</select>
+		
+		<!-- 更新 VTP 主负责人 -->
+		<update id="updateVtpDutyby">
+		    update HPM_ECR_VTP set
+		      LAST_UPDATED_BY = #{request.userId},
+		      LAST_UPDATE_DATE = sysdate,
+		      DUTYBY = #{mainDuty}
+		    where ecrno = #{ecrno}
+		    and SKU_CODE = #{itemId}
+		    and vtp_seq = #{vtpSeq}
+		</update>
+	<!-- =========================== VTP 任务 ================================ -->
+</mapper>

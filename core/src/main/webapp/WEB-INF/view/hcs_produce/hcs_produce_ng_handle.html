@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<!--
+  description  制程监控不合格处置界面
+  @author KOCDZX0 2020/03/19 4:18 PM 
+-->
+<#include "../include/header.html">
+<script src="${base.contextPath}/common/code?nGstatus=HQM_PRODUCT_NG_STATUS"></script>
+<script type="text/javascript">
+    var BaseUrl = _basePath;
+    var produceLineId = '${RequestParameters.produceLineId!0}';
+    var attachment = '${RequestParameters.attachment!""}';
+    var viewModel = Hap.createGridViewModel(null,{
+        model:{},
+        closeWin:function(e) {
+            window.parent.$("#div3").data("kendoWindow").close();
+        },
+        save:function(){
+            var data = viewModel.model.toJSON();
+            data.__status = "update";
+            var validator = $("#mainForm").data("kendoValidator");
+            if(validator.validate()) {
+                Hap.request({
+                    url: BaseUrl + "/hcs/item/station/produce/line/add",
+                    data: kendo.stringify(data),
+                    success:function(data){
+                        if(data.success){
+                            kendo.ui.showInfoDialog({
+                                title:$l('hap.tip.info'),
+                                message:'<@spring.message "hap.tip.success"/>'
+                            })
+                            viewModel.closeWin();
+                        }
+                    }
+                })
+            }
+        },
+        queryInfo:function(){
+            if(produceLineId != 0){
+                $.ajax({
+                    url:BaseUrl+"/hcs/item/station/produce/line/listQuery?produceLineId="+produceLineId,
+                    success:function(data){
+                        var a0 = data.rows[0] || {};
+                        for(var k in a0){
+                            viewModel.model.set(k,a0[k]);
+                        }
+                    }
+                })
+            }
+        }
+    });
+    viewModel.queryInfo();
+</script>
+
+<body>
+
+<div id="page-content">
+    <form id = "mainForm" style="paddiing-bottom:50px;padding-top:15px" class="form-horizontal" method="post" enctype="application/json;charset=UTF-8">
+        <div class="row">
+            <div class="col-sm-12">
+                <!-- 行号+ 不合格项目+数量 -->
+                <div class="row" style="margin-top:15px">
+                    <div class="col-sm-6">
+                        <label class="col-sm-3 control-label"><@spring.message "hcs.produce.linenumber"/>:</label>
+                        <div class="col-sm-9">
+                            <input disabled style="width:100%" name="lineNumber"
+                                   id="lineNumber"
+                                   data-bind="value:model.lineNumber" data-role="maskedtextbox" >
+                            <span data-for="lineNumber" class="k-state-disabled"></span>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="col-sm-3 control-label"><@spring.message "hcs.produce.ngproject"/>:</label>
+                        <div class="col-sm-9">
+                            <input disabled style="width:100%" name="ngProject"
+                                   id="ngProject"
+                                   data-bind="value:model.ngProject" data-role="maskedtextbox" >
+                            <span data-for="ngProject" class="k-state-disabled"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="row" style="margin-top:15px">
+                    <div class="col-sm-6">
+                        <label class="col-sm-3 control-label"><@spring.message "hcs.produce.ngqty"/>:</label>
+                        <div class="col-sm-9">
+                            <input disabled style="width:100%" name="ngQty"
+                                   id="ngQty"
+                                   data-bind="value:model.ngQty" data-role="maskedtextbox" >
+                            <span data-for="ngQty" class="k-state-disabled"></span>
+                        </div>
+                    </div>
+                </div>
+                <!-- 原因分析-->
+                <div class="row" style="margin-top:15px">
+                    <div class="col-sm-6">
+                        <label class="col-sm-3 control-label"><@spring.message "hcs.produce.reason"/>:</label>
+                        <div class="col-sm-9">
+                            <textarea id="reason" name="textarea" rows="4" required style="width:261%;" data-bind="value:model.reason"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <!-- 改善措施-->
+                <div class="row" style="margin-top:15px">
+                    <div class="col-sm-6">
+                        <label class="col-sm-3 control-label"><@spring.message "hcs.produce.solution"/>:</label>
+                        <div class="col-sm-9">
+                            <textarea id="solution" name="textarea" rows="4"  style="width:261%;" data-bind="value:model.solution"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <!-- 完成时间+ 完成状态 -->
+                <div class="row" style="margin-top:15px">
+                    <div class="col-sm-6">
+                        <label class="col-sm-3 control-label"><@spring.message "hcs.produce.finisheddate"/>:</label>
+                        <div class="col-sm-9">
+                            <input  style="width:100%" name="finishedDate"
+                                   id="finishedDate"
+                                   data-bind="value:model.finishedDate" data-role="maskedtextbox" >
+                            <script type="text/javascript">
+                                $("#finishedDate").kendoDatePicker({
+                                    format: "yyyy-MM-dd",
+                                    change: function() {
+                                        viewModel.model.finishedDate = this.value().format("yyyy-MM-dd");
+                                    }
+                                });
+                            </script>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="col-sm-3 control-label"><@spring.message "hcs.produce.status"/>:</label>
+                        <div class="col-sm-9">
+                            <input required style="width:100%" name="status"
+                                   id="status"
+                                   data-bind="value:model.status,text:model.statusMeaning" >
+                            <span data-for="status" class="k-state-disabled"></span>
+                        </div>
+                        <script type="text/javascript">
+                            $("#status").kendoComboBox({
+                                dataTextField: "meaning",
+                                dataValueField: "value",
+                                valuePrimitive: true,
+                                dataSource: nGstatus,
+                                select:function (e) {
+                                    var item = e.dataItem;
+                                    if(item.value == 'OVER'){
+                                        $("#solution").attr('required',true)
+                                        $("#finishedDate").attr('required',true)
+                                    }else{
+                                        $("#solution").attr('required',false)
+                                        $("#finishedDate").attr('required',false)
+                                    }
+                                }
+                            });
+                        </script>
+                    </div>
+                    <!--上传附件-->
+                    <div class="row" style="margin-top:15px">
+                        <div class="col-sm-12" style="padding-left: 25px;">
+                            <label class="col-sm-1 control-label" style="padding-left: 25px;padding-right: -6; padding-left: 15px; padding-right: -10; padding-right: 0px; border-left-width: 40px;width: 11%;padding-top: 40px;"><@spring.message "hcs.certificate.fileupload"/>:</label>
+                            <div class="col-sm-11 demo-section k-content" style="margin-top: 15px;padding-left: 20px;margin-left: 0px;width: 89%;">
+                                <input name="files" id="uploadFiles" type="file" style="width: 100%;height: 100px" accept=".xlsx,.pdf,.doc,.png,.pptx" />
+                            </div>
+                        </div>
+                        <script>
+                            //下载文件
+                            function fileDownloadFunction(attachment){
+                                window.open(attachment);
+                            }
+                            //删除文件
+                            function fileRemove(certificateDetailId){
+                                kendo.ui.showConfirmDialog({
+                                    title: '<@spring.message "hap.tip.info"/>',
+                                    message: '<@spring.message "hap.tip.delete_confirm"/>'
+                                }).done(function(e){
+                                    if(e.button=='OK'){
+                                        var jsonList = [{
+                                            "produceLineId":produceLineId
+                                        }]
+                                        $.ajax({
+                                            url: BaseUrl + "/hcs/item/station/produce/line/delfile",
+                                            type: "POST",
+                                            contentType: "application/json",
+                                            data: kendo.stringify(jsonList),
+                                            success: function(resultData){
+                                                if(resultData.success){
+                                                    Hap.showToast({
+                                                        type:'success',
+                                                        "positionClass": "toast-bottom-right",
+                                                        message:'<@spring.message "hap.mesg_delete"/>',
+                                                        hideDuration:10*1000
+                                                    })
+                                                    $("#filesContentDiv").html('');
+                                                }else{
+                                                    kendo.ui.showErrorDialog({
+                                                        title: '<@spring.message "hap.error"/>',
+                                                        message: resultData.message
+                                                    })
+                                                }
+                                            }
+                                        })
+                                    }
+                                })
+                            }
+
+
+                            //文件上传
+                            var upFileData = {
+                                produceLineId: produceLineId,
+                            };
+                            $("#uploadFiles").kendoUpload({
+                                async: {
+                                    saveUrl: "${base.contextPath}/hcs/item/station/produce/line/upload?${_csrf.parameterName}=${_csrf.token}",
+                                    autoUpload: true,
+                                },
+                                multiple:false,
+                                showFileList:true,
+                                upload: function(e){
+                                    e.data = upFileData;
+                                },
+                                success: function(e){
+                                    var response = e.response;
+                                    if(response.success){
+                                        Hap.showToast({
+                                            type:'success',
+                                            "positionClass": "toast-bottom-right",
+                                            message:'<@spring.message "qcfiles.uploadsuccess"/>',
+                                            hideDuration:10*1000
+                                        })
+                                    }else{
+                                        kendo.ui.showErrorDialog({
+                                            message: response.message,
+                                        });
+                                    }
+                                },
+                            });
+
+                            //在文件后拼接下载、删除按钮
+                            $(function(){
+                                if(attachment == ""){
+                                    $("#filesContentDiv").html('');
+                                }else{
+                                    $("#filesContentDiv").html('');
+                                    var appStr = '' +
+                                        '<span style="font-size:12px;">' + attachment + '</span>' +
+                                        '<span class="fa fa-trash" style="font-size:16px;cursor:pointer;margin-left:5px;" onclick="fileRemove(\''+produceLineId+'\')"></span>' +
+                                        '<span class="fa fa-download" style="font-size:16px;cursor:pointer;margin-left:5px;" onclick="fileDownloadFunction(\''+attachment+'\')"></span><br>';
+                                    $("#filesContentDiv").append(appStr);
+                                }
+                            })
+
+                            $("div .k-dropzone").append('<div id="filesContentDiv" class="row"></div>');
+                            $("div .k-dropzone").css("margin-bottom","5px");
+                        </script>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </form>
+    <div style="clear:both">
+        <div id="grid"></div>
+    </div>
+    <div id="mainBottom" class="text-right" style="bottom:15px;position:fixed;float:left;padding-top:15px;border-top:1px solid #e8e1eb;
+		width:100%;background:#fff;margin-right:30px">
+        <span class="btn btn-primary" data-bind="click:save" type="submit" style="margin-right:5px">保存</span>
+        <span class="btn btn-default" data-bind="click:closeWin" type="button" style="margin-right:25px">取消</span>
+    </div>
+    <script>
+        kendo.bind($('#mainForm'), viewModel);
+        kendo.bind($('#mainBottom'), viewModel);
+    </script>
+    <script>
+        $('#mainForm').kendoValidator({
+            messages:{
+                required:'<@spring.message "hap.validation.notempty"/>'
+            },
+            invalidMessageType:"tooltip"
+        });
+    </script>
+</div>
+</body>
+</html>

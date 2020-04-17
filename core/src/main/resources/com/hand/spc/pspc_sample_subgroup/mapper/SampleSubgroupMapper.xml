@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.spc.pspc_sample_subgroup.mapper.SampleSubgroupMapper">
+    <resultMap id="BaseResultMap" type="com.hand.spc.pspc_sample_subgroup.dto.SampleSubgroup">
+        <result column="SAMPLE_SUBGROUP_ID" property="sampleSubgroupId" jdbcType="DECIMAL" />
+        <result column="TENANT_ID" property="tenantId" jdbcType="DECIMAL" />
+        <result column="SITE_ID" property="siteId" jdbcType="DECIMAL" />
+        <result column="SUBGROUP_NUM" property="subgroupNum" jdbcType="DECIMAL" />
+        <result column="ENTITY_CODE" property="entityCode" jdbcType="VARCHAR" />
+        <result column="ENTITY_VERSION" property="entityVersion" jdbcType="VARCHAR" />
+        <result column="SUBGROUP_SIZE" property="subgroupSize" jdbcType="DECIMAL" />
+        <result column="EXIST_NUM" property="existNum" jdbcType="DECIMAL" />
+        <result column="SAMPLE_SUBGROUP_TIME" property="sampleSubgroupTime" jdbcType="DATE" />
+        <result column="SAMPLE_CALCULATE_STATUS" property="sampleCalculateStatus" jdbcType="VARCHAR" />
+        <result column="SAMPLE_MODIFIED" property="sampleModified" jdbcType="VARCHAR" />
+    </resultMap>
+    <select id="querySampleSubgroupByCPK" resultMap="BaseResultMap" parameterType="com.hand.spc.pspc_cpk_analysis.dto.CPKAnalyseReqDTO">
+        SELECT
+            sample_subgroup_id,
+            tenant_id,
+            site_id,
+            subgroup_num,
+            entity_code,
+            entity_version,
+            subgroup_size,
+            exist_num,
+            sample_subgroup_time,
+            sample_calculate_status,
+            sample_modified,
+            object_version_number,
+            creation_date,
+            created_by,
+            last_updated_by,
+            last_update_date
+        FROM
+          pspc_sample_subgroup
+        WHERE
+         1=1
+        AND entity_code = #{entityCode}
+        AND entity_version = #{entityVersion}
+
+        <if test="startDate != null">
+            AND sample_subgroup_time &gt;= #{startDate}
+        </if>
+        <if test="endDate != null">
+            AND sample_subgroup_time &lt;= #{endDate}
+        </if>
+        <if test="startDate == null and endDate == null">
+            AND rownum &lt;= 50
+        </if>
+    </select>
+
+
+</mapper>

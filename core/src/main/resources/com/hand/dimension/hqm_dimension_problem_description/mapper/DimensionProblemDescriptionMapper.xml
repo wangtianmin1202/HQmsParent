@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.dimension.hqm_dimension_problem_description.mapper.DimensionProblemDescriptionMapper">
+    <resultMap id="BaseResultMap" type="com.hand.dimension.hqm_dimension_problem_description.dto.DimensionProblemDescription">
+        <result column="STEP" property="step" jdbcType="DECIMAL" />
+        <result column="PROBLEM_ID" property="problemId" jdbcType="DECIMAL" />
+        <result column="ORDER_ID" property="orderId" jdbcType="DECIMAL" />
+        <result column="ITEM_ID" property="itemId" jdbcType="DECIMAL" />
+        <result column="ITEM_ID_COMPONENT" property="itemIdComponent" jdbcType="DECIMAL" />
+        <result column="OCCUR_TIME" property="occurTime" jdbcType="DATE" />
+        <result column="OCCUR_PLACE" property="occurPlace" jdbcType="VARCHAR" />
+        <result column="PROD_LINE_ID" property="prodLineId" jdbcType="DECIMAL" />
+        <result column="NG_GROUP_ID" property="ngGroupId" jdbcType="DECIMAL" />
+        <result column="NG_MEMBER_ID" property="ngMemberId" jdbcType="DECIMAL" />
+        <result column="PROBLEM_QTY" property="problemQty" jdbcType="DECIMAL" />
+        <result column="PROBLEM_DESCRIPTION" property="problemDescription" jdbcType="VARCHAR" />
+        <result column="PROBLEM_SOURCE" property="problemSource" jdbcType="VARCHAR" />
+        <result column="PROBLEM_LEVEL" property="problemLevel" jdbcType="VARCHAR" />
+        <result column="SUPPLIER_ID" property="supplierId" jdbcType="DECIMAL" />
+        
+        <result column="ITEM_CODE" property="itemCode" jdbcType="VARCHAR" />
+        <result column="ITEM_CODE_DES" property="itemCodeDes" jdbcType="VARCHAR" />
+        <result column="ITEM_COMPONENT_CODE" property="itemComponentCode" jdbcType="VARCHAR" />
+        <result column="ITEM_COMPONENT_DES" property="itemComponentDes" jdbcType="VARCHAR" />
+        
+        <result column="PRODLINE_CODE" property="prodlineCode" jdbcType="VARCHAR" />
+        <result column="NG_MEMBER_CODE" property="ngMemberCode" jdbcType="VARCHAR" />
+        <result column="PRODLINE_DES" property="prodlineDes" jdbcType="VARCHAR" />
+        <result column="NG_GROUP_CODE" property="ngGroupCode" jdbcType="VARCHAR" />
+          
+        <result column="SOURCE_ORDER" property="sourceOrder" jdbcType="VARCHAR" />
+        <result column="ORDER_CODE" property="orderCode" jdbcType="VARCHAR" />
+        <result column="ORDER_STATUS" property="orderStatus" jdbcType="VARCHAR" />
+        <result column="DIMENSION_CREATION_DATE" property="dimensionCreationDate" jdbcType="DATE" />
+        <result column="DIMENSION_LAST_UPDATE_DATE" property="dimensionLastUpdateDate" jdbcType="DATE" />
+        <result column="SUPPLIER_CODE" property="supplierCode" jdbcType="VARCHAR" />
+         <result column="SUPPLIER_DES" property="supplierDes" jdbcType="VARCHAR" />
+        <result column="ORDER_THEME" property="orderTheme" jdbcType="VARCHAR" />
+        
+        <result column="SUPPLIER_NAME" property="supplierName" jdbcType="VARCHAR" />
+        
+        <result column="PRODUCT_TYPE" property="productType" jdbcType="VARCHAR" />
+        <result column="PRODUCT_SERIES" property="productSeries" jdbcType="VARCHAR" />
+        <result column="SERIAL_NUMBER" property="serialNumber" jdbcType="VARCHAR" />
+        <result column="ITEM_ATTRIBUTE" property="itemAttribute" jdbcType="VARCHAR" />
+        <result column="FAILURE_CODE" property="failureCode" jdbcType="VARCHAR" />
+        <result column="SOFTWARE_VERSION" property="softwareVersion" jdbcType="VARCHAR" />
+        <result column="FAILURE_EFFECT_CODE" property="failureEffectCode" jdbcType="VARCHAR" /> 
+        <result column="PROJECT_PHASE" property="projectPhase" jdbcType="VARCHAR" />
+        <result column="ISSUE_TYPE" property="issueType" jdbcType="VARCHAR" />
+        
+        <result column="PROBLEM_DISCOVER" property="problemDiscover" jdbcType="DECIMAL" />
+        <result column="SOFTWARE_FLAG" property="softwareFlag" jdbcType="VARCHAR" />
+        <result column="PRODUCT_CODE" property="productCode" jdbcType="VARCHAR" />
+        <result column="PROBLEM_TYPE" property="problemType" jdbcType="VARCHAR" />
+        <result column="EXPECTED_COMPLETE_TIME" property="expectedCompleteTime" jdbcType="DATE" />
+        
+    </resultMap>
+<!-- 查询 -->
+<select id="reSelect" resultMap="BaseResultMap"
+            parameterType="com.hand.dimension.hqm_dimension_problem_description.dto.DimensionProblemDescription">
+            SELECT t.*,
+       ngg.ng_code        AS ng_member_code,
+       ngg.ng_group_code
+      
+  FROM hqm_8d_problem_description t
+  JOIN hqm_8d_order hdo  
+    ON t.order_id = hdo.order_id
+  LEFT JOIN (SELECT nggl.ng_menber_id, nggl.ng_group_id, ngl.ng_group_code, nggl.ng_code
+               FROM hqm_ng_group_member nggl, hqm_ng_group ngl
+              WHERE nggl.ng_group_id = ngl.ng_group_id) ngg
+    ON t.ng_member_id = ngg.ng_menber_id
+   AND t.ng_group_id = ngg.ng_group_id
+ WHERE 1 = 1
+<if test="orderId !=null">
+	AND t.order_id = #{orderId}
+</if>
+<if test="orderId ==null">
+	AND t.order_id = -1
+</if>
+</select>
+<!-- 相同物料的所有数据 -->
+<select id="sameItemDimension" resultMap="BaseResultMap"
+            parameterType="com.hand.dimension.hqm_dimension_problem_description.dto.DimensionProblemDescription">
+            SELECT o.order_id,
+            o.order_code,
+       o.order_status,
+       o.source_order,
+       o.order_theme,
+       o.creation_date    AS dimension_creation_date,
+       o.last_update_date AS dimension_last_update_date
+  FROM hqm_8d_problem_description t, hqm_8d_order o
+ WHERE t.order_id = o.order_id
+<if test="itemId !=null">
+	AND t.item_id = #{itemId}
+</if>
+<if test="itemIdComponent !=null">
+	AND t.item_id_component = #{itemIdComponent}
+</if>
+</select>
+<!-- 相同nggroup组的所有数据 -->
+<select id="sameItemDimensionNgCodeGroup" resultMap="BaseResultMap"
+            parameterType="com.hand.dimension.hqm_dimension_problem_description.dto.DimensionProblemDescription">
+            SELECT COUNT(1) AS step, ngg.ng_code AS ng_member_code
+  FROM hqm_8d_problem_description t, hqm_ng_group_member ngg, hqm_ng_group ng
+ WHERE 1 = 1
+   AND t.ng_member_id = ngg.ng_menber_id
+   AND t.ng_group_id = ng.ng_group_id
+   AND ngg.ng_group_id = ng.ng_group_id
+<if test="itemId !=null">
+	AND t.item_id = #{itemId}
+</if>
+<if test="itemIdComponent !=null">
+	AND t.item_id_component = #{itemIdComponent}
+</if>
+GROUP BY ngg.ng_code
+</select>
+</mapper>

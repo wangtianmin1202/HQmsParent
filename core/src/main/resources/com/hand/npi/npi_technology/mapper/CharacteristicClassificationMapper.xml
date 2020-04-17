@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.npi.npi_technology.mapper.CharacteristicClassificationMapper">
+    <resultMap id="BaseResultMap" type="com.hand.npi.npi_technology.dto.CharacteristicClassification">
+        <result column="CHARACTERISTIC_ID" property="characteristicId" jdbcType="DECIMAL" />
+        <result column="CHARACTERISTIC_NAME" property="characteristicName" jdbcType="VARCHAR" />
+        <result column="METERING_COUNT" property="meteringCount" jdbcType="VARCHAR" />
+        <result column="MSA" property="msa" jdbcType="VARCHAR" />
+        <result column="SPC" property="spc" jdbcType="VARCHAR" />
+    </resultMap>
+
+
+</mapper>

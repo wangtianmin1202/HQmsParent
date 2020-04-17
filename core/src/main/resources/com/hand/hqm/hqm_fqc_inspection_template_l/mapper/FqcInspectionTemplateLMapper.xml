@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_fqc_inspection_template_l.mapper.FqcInspectionTemplateLMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_fqc_inspection_template_l.dto.FqcInspectionTemplateL">
+        <result column="LINE_ID" property="lineId" jdbcType="DECIMAL" />
+        <result column="HEADER_ID" property="headerId" jdbcType="DECIMAL" />
+        <result column="ATTRIBUTE_ID" property="attributeId" jdbcType="DECIMAL" />
+        <result column="ATTRIBUTE_TYPE" property="attributeType" jdbcType="VARCHAR" />
+        <result column="INSPECTION_ATTRIBUTE" property="inspectionAttribute" jdbcType="VARCHAR" />
+        <result column="ORDER_CODE" property="orderCode" jdbcType="DECIMAL" />
+        <result column="ENABLE_TYPE" property="enableType" jdbcType="VARCHAR" />
+        <result column="SAMPLE_PROCEDURE_TYPE" property="sampleProcedureType" jdbcType="VARCHAR" />
+        <result column="INSPECTION_LEVELS" property="inspectionLevels" jdbcType="VARCHAR" />
+        <result column="QUALITY_CHARACTER_GRADE" property="qualityCharacterGrade" jdbcType="VARCHAR" />
+        <result column="ACCEPTANCE_QUALITY_LIMIT" property="acceptanceQualityLimit" jdbcType="VARCHAR" />
+        <result column="STANDARD_TYPE" property="standardType" jdbcType="VARCHAR" />
+        <result column="TEXT_STANDRAD" property="textStandrad" jdbcType="VARCHAR" />
+        <result column="STANDRAD_FROM" property="standradFrom" jdbcType="DECIMAL" />
+        <result column="STANDRAD_TO" property="standradTo" jdbcType="DECIMAL" />
+        <result column="STANDRAD_UOM" property="standradUom" jdbcType="VARCHAR" />
+        <result column="FREQUENCY_TYPE" property="frequencyType" jdbcType="VARCHAR" />
+        <result column="FREQUENCY" property="frequency" jdbcType="DECIMAL" />
+        <result column="INSPECTION_TOOL" property="inspectionTool" jdbcType="VARCHAR" />
+        <result column="REMARK" property="remark" jdbcType="VARCHAR" />
+        <result column="ENABLE_TIME" property="enableTime" jdbcType="DATE" />
+        <result column="DISABLE_TIME" property="disableTime" jdbcType="DATE" />
+        <result column="SOURCE_TYPE" property="sourceType" jdbcType="VARCHAR" />
+        <result column="HISTORY_NUM" property="historyNum" jdbcType="DECIMAL" />
+        <result column="IS_SYNC" property="isSync" jdbcType="VARCHAR" />
+        <result column="FILL_IN_TYPE" property="fillInType" jdbcType="VARCHAR" />
+        <result column="ENABLE_FLAG" property="enableFlag" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE1" property="globalAttribute1" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE2" property="globalAttribute2" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE3" property="globalAttribute3" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE4" property="globalAttribute4" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE5" property="globalAttribute5" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE6" property="globalAttribute6" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE7" property="globalAttribute7" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE8" property="globalAttribute8" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE9" property="globalAttribute9" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE10" property="globalAttribute10" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE11" property="globalAttribute11" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE12" property="globalAttribute12" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE13" property="globalAttribute13" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE14" property="globalAttribute14" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE15" property="globalAttribute15" jdbcType="VARCHAR" />
+    </resultMap>
+<select id="myselect" resultMap="BaseResultMap" parameterType="com.hand.hqm.hqm_fqc_inspection_template_l.dto.FqcInspectionTemplateL">
+
+SELECT t.header_id,
+       t.line_id,
+       t.attribute_id,
+       hice.attribute_type,
+       hice.inspection_attribute,
+       t.order_code,
+       hice.sample_procedure_type,
+       hice.inspection_levels,
+       hice.quality_character_grade,
+       hice.acceptance_quality_limit,
+       hice.standard_type,
+       t.enable_type,
+       t.text_standrad,
+       t.standrad_from,
+       t.standrad_to,
+       t.standrad_uom,
+       hice.frequency_type,
+       hice.frequency,
+       hice.inspection_tool,
+       hice.remark,
+       t.enable_time,
+       t.disable_time,
+       hice.source_type,
+       t.history_num,
+       t.is_sync,
+       hice.fill_in_type
+  FROM hqm_fqc_inspection_template_l t,
+  	   hqm_inspection_attribute hice
+ WHERE 1 = 1
+   AND t.attribute_id = hice.attribute_id
+   <if test="headerId!=null">
+   AND t.header_id = #{headerId}
+   </if>
+   <if test="headerId==null">
+   AND t.header_id = -1
+   </if>
+   ORDER BY t.disable_time NULLS FIRST,t.order_code
+
+</select>
+
+</mapper>

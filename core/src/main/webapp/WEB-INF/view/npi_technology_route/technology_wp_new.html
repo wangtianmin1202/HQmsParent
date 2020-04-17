@@ -1,0 +1,1445 @@
+<#include "../include/header.html">
+
+<script src="${base.contextPath}/common/code?YES_NO=SYS.YES_NO" type="text/javascript"></script>
+<script src="${base.contextPath}/common/code?NPI_METERING_COUNT=NPI_METERING_COUNT"></script>
+<script src="${base.contextPath}/common/code?NPI_ROUTE_LINE=NPI_ROUTE_LINE"></script>
+<script src="${base.contextPath}/common/code?NPI_ROUTE_EQUIP_STATUS=NPI_ROUTE_EQUIP_STATUS"></script>
+
+<script type="text/javascript">
+	function otherVali(){
+		if(viewModel.model.inOutMake == undefined){
+			kendo.ui.showWarningDialog({
+				message: "内制/外制未选择！"
+			});
+			return false;
+		}
+		if(viewModel.model.lineType == undefined){
+			kendo.ui.showWarningDialog({
+				message: "主线/辅线未选择！"
+			});
+			return false;
+		}
+		if(viewModel.model.autoFlag == undefined){
+			kendo.ui.showWarningDialog({
+				message: "自动/手动未选择！"
+			});
+			return false;
+		}
+		return true;
+	}
+	
+	var BaseUrl = _basePath;
+	var routeId = '${RequestParameters.routeId!0}';
+	var skuId = '${RequestParameters.skuId!0}';
+    var viewModel = Hap.createGridViewModel(null,{
+    	model:{
+    		'routeId':routeId
+    	},
+    	closeWin:function(e) {
+    		window.parent.$("#newWpWindow").data("kendoWindow").close();
+    	},
+		save:function(){
+			var validator = $("#mainForm").data("kendoValidator");
+    		if(validator.validate()&&otherVali()) {
+    			//return;
+    		}else{
+    			return;
+    		}
+    		viewModel.model.__status = 'add';
+    		viewModel.model.skuId = skuId;
+    		var headData = viewModelComposeHead.model.toJSON();
+    		viewModel.model.matList = $("#matGrid").data("kendoGrid").dataSource._data;
+    		viewModel.model.staDetail = headData;
+    		viewModel.model.specDetail = $("#compGrid").data("kendoGrid").dataSource._data;
+            /* Hap.submitForm({
+                url: '${base.contextPath}/npi/technology/working/procedure/addData',
+                formModel: viewModel.model,
+                grid: {"matList": $("#matGrid"),"staDetail":kendo.stringify(headData)},
+                success: function (data) {
+                	viewModel.closeWin();
+                }
+            }); */
+    		$.ajax({
+                url: '${base.contextPath}/npi/technology/working/procedure/addData',
+                type: "POST",
+                contentType: "application/json",
+                data : kendo.stringify(viewModel.model),
+                success: function (data) {
+                	if(data.success){
+                		viewModel.closeWin();
+                	}else{
+                		kendo.ui.showErrorDialog({message:data.message});
+                	}
+                }
+            });
+    	},
+    	saveAndAdd:function(){
+			var validator = $("#mainForm").data("kendoValidator");
+    		if(validator.validate()&&otherVali()) {
+    			//return;
+    		}else{
+    			return;
+    		}
+    		viewModel.model.__status = 'add';
+    		var headData = viewModelComposeHead.model.toJSON();
+    		viewModel.model.matList = $("#matGrid").data("kendoGrid").dataSource._data;
+    		viewModel.model.staDetail = headData;
+    		$.ajax({
+                url: '${base.contextPath}/npi/technology/working/procedure/addData',
+                type: "POST",
+                contentType: "application/json",
+                data : kendo.stringify(viewModel.model),
+                success: function (data) {
+                	if(data.success){
+                		//保存并新建操作,清除页面上所有的信息
+                    	$("#matGrid").data("kendoGrid").dataSource.data([]); 
+                    	$("#compGrid").data("kendoGrid").dataSource.data([]); 
+                    	$("#equipGrid").data("kendoGrid").dataSource.data([]); 
+    		        	var formData = viewModel.model.toJSON();
+    		            for (var k in formData) {
+    		                viewModel.model.set(k, null);
+    		            }
+    		            for (var k in headData) {
+                            viewModelComposeHead.model.set(k, null);
+    		            }
+                	}else{
+                		kendo.ui.showErrorDialog({message:data.message});
+                	}
+                }
+            });
+    	}
+    });
+    var viewModelComposeHead = Hap.createGridViewModel(null,{
+    	model:{
+    	},
+    });
+    var viewModelMat = Hap.createGridViewModel("#matGrid",{
+        model:{},
+        save:function () {
+        },
+        remove: function () {
+                Hap.deleteGridSelection({
+                    grid: $('#matGrid')
+                });
+        },
+    });
+    var viewModelComp = Hap.createGridViewModel("#compGrid",{
+        model:{},
+        save:function () {
+        },
+        remove: function () {
+                Hap.deleteGridSelection({
+                    grid: $('#compGrid')
+                });
+        },
+    });
+    var viewModelEquip = Hap.createGridViewModel("#equipGrid",{
+        model:{},
+        save:function () {
+        },
+        remove: function () {
+                Hap.deleteGridSelection({
+                    grid: $('#equipGrid')
+                });
+        },
+    });
+    
+    $("#uploadFiles").kendoUpload({
+		async: {
+			saveUrl: "${base.contextPath}/npi/sop/route/ref/upload?${_csrf.parameterName}=${_csrf.token}",//
+			autoUpload: false,
+		},
+		multiple:false,
+		showFileList:true,
+		validation: {
+	        maxFileSize: 20971520
+	    },
+		upload: function(e){
+			//e.data = upFileData;
+		},
+	    success: function(e){
+	    	var response = e.response;
+            if(response.success){
+            	kendo.ui.showInfoDialog({message: "导入成功"});
+            	var fileId = response.message;
+            	viewModel.model.set('fileId',fileId);
+            }else{
+            	kendo.ui.showErrorDialog({message:"失败原因:"+response.message+"请重新上传文件"});
+            }
+	     },	
+	});
+</script>
+
+<body>
+	<div id="page-content">
+		<form id = "mainForm" style="paddiing-bottom:50px;padding-top:15px" class="form-horizontal" method="post" enctype="application/json;charset=UTF-8">
+			<div class="row">
+				<div class="col-sm-4" >
+					<div class="col-sm-12" style="padding-top:15px">
+						<div class="form-group">
+							<div class="col-sm-12">
+								<label class="col-sm-4 control-label">工序编码</label>
+								<div class="col-sm-8">
+									<input style="width:100%" id="wpCode"  data-role="maskedtextbox" class="k-textbox"
+										data-bind="value:model.wpCode"   placeholder='------------auto------------' disabled>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="col-sm-12">
+						<div class="form-group">
+							<div class="col-sm-12">
+								<label class="col-sm-4 control-label">线体编号</label>
+								<div class="col-sm-8">
+									<input style="width:100%" id="lineCode"
+										data-bind="value:model.lineCode" required>
+										<script type="text/javascript">
+											$("#lineCode").kendoNumericTextBox({
+												min:0,
+											});
+										</script>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="col-sm-12">
+						<div class="form-group">
+							<div class="col-sm-12">
+								<label class="col-sm-4 control-label">标准工时(S)</label>
+								<div class="col-sm-8">
+									<input style="width:100%" id="standardWorkingHours"
+										data-bind="value:model.standardWorkingHours" required>
+										<script type="text/javascript">
+											$("#standardWorkingHours").kendoNumericTextBox({
+												min:0,
+											});
+										</script>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="col-sm-12">
+						<div class="form-group">
+							<div class="col-sm-12">
+								<label class="col-sm-4 control-label">SOP动画</label>
+								<div class="col-sm-6">
+									<input style="width:100%" id="sopId"  data-role="maskedtextbox" class="k-textbox"
+										data-bind="value:model.sopId" readOnly="readOnly">
+								</div>
+								<div class="col-sm-2">
+									<span class="btn btn-primary fa fa-upload" style="float:right;" onclick="fileUpload()"></span>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="col-sm-4" >
+					<div class="col-sm-12" style="padding-top:15px">
+						<div class="form-group">
+							<div class="col-sm-12">
+								<label class="col-sm-4 control-label">工序名称</label>
+								<div class="col-sm-8">
+									<input style="width:100%" id="wpName"  data-role="maskedtextbox" class="k-textbox"
+										data-bind="value:model.wpName"  required>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="col-sm-12">
+						<div class="form-group">
+							<div class="col-sm-12">
+								<label class="col-sm-4 control-label">前置工序</label>
+								<div class="col-sm-8">
+									<input style="width:100%" id="preWorkingProcedure"  data-role="maskedtextbox" class="k-textbox"
+										data-bind="value:model.preWorkingProcedure">
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="col-sm-12">
+						<div class="form-group">
+							<div class="col-sm-12">
+								<label class="col-sm-4 control-label">工序版本</label>
+								<div class="col-sm-8">
+									<input style="width:100%" id="versionNumber"  data-role="maskedtextbox" class="k-textbox"
+										data-bind="value:model.versionNumber"   placeholder='------------auto------------' disabled>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="col-sm-12">
+						<div class="form-group">
+							<div class="col-sm-12">
+								<label class="col-sm-4 control-label"></label>
+								<div class="col-sm-8">
+									<a href="javascript:queryEbomData()" ><h4 style="text-decoration: underline">查看E-BOM信息</h4></a>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="col-sm-4" >
+					<div class="col-sm-12" style="padding-top:15px">
+						<div class="form-group">
+							<div class="col-sm-12">
+								<label class="col-sm-4 control-label">主线/辅线</label>
+								<div class="col-sm-8"  style="margin-top:5px;>
+									<div style="width:100%" id="lineType""
+										data-bind="enabled: isEnabled,value:model.lineType">
+									<script>
+				                        $("#lineType").kendoRadio({
+											layout: '',//vertical
+											readonly: false,
+											items: [{
+														label: '主线',
+														value: "mainLine"
+													}, {
+														label: '辅线',
+														value: "auxiLine"
+													}],
+										});
+									</script>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="col-sm-12">
+						<div class="form-group">
+							<div class="col-sm-12">
+								<label class="col-sm-4 control-label">内制/外制</label>
+								<div class="col-sm-8" style="margin-top:5px;>
+									<input style="width:100%" id="inOutMake"
+										data-bind="enabled: isEnabled,value:model.inOutMake" >
+									<script>
+				                        $("#inOutMake").kendoRadio({
+											layout: '',//vertical
+											readonly: false,
+											items: [{
+														label: '内制',
+														value: "IN"
+													}, {
+														label: '外制',
+														value: "OUT"
+													}],
+										});
+									</script>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="col-sm-12">
+						<div class="form-group">
+							<div class="col-sm-12">
+								<label class="col-sm-4 control-label">自动/手动</label>
+								<div class="col-sm-8" style="margin-top:5px;>
+									<input style="width:100%" id="autoFlag"
+										data-bind="enabled: isEnabled,value:model.autoFlag"">
+									<script>
+				                        $("#autoFlag").kendoRadio({
+											layout: '',//vertical
+											readonly: false,
+											items: [{
+														label: '手动',
+														value: "noAuto"
+													}, {
+														label: '自动',
+														value: "auto"
+													}],
+										});
+									</script>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</form>
+		<div >
+			<span>工艺步骤</span>
+		</div>
+		<div class="row">
+			<div id="matGrid" class="col-sm-8" style="height:250px;border: 2px solid #EEEEEE;border-radius:10px;">
+				<div id="page-matcontent">
+				    <div class="pull-left" id="matToolbar-btn" style="padding-bottom:10px;">
+						<span class="btn btn-primary k-grid-add" style="float:left;margin-right:5px;" onclick="createMatNumber('mat')">取物料</span>
+						<span class="btn btn-primary k-grid-add" style="float:left;margin-right:5px;" onclick="createMatNumber('com')">取组件</span>
+				        <span data-bind="click:remove" class="btn btn-danger" style="float:left;"><@spring.message "hap.delete"/></span>
+				    </div>
+				    <script>kendo.bind($('#matToolbar-btn'), viewModelMat);</script>
+				</div>
+			</div>
+			<div id ="standardAction" class="col-sm-3" style="height:250px;border: 2px solid #EEEEEE;border-radius:10px;">
+					<div class="col-sm-12">
+							<div class="col-sm-12" style="padding-top:10px;height:40px">
+								<div class="form-group">
+									<div class="col-sm-12">
+										<label class="col-sm-4 control-label">标准动作</label>
+										<div class="col-sm-8">
+											<input style="width:100%" id="standardActionId" data-bind="value:model.standardActionId">
+											<script type="text/javascript">
+												$("#standardActionId").kendoComboBox({
+						                        	filter:"contains",
+						    						valuePrimitive:true,
+						    						dataTextField:"text",
+													dataValueField:"value",
+						    						dataSource:{
+						    							transport:{
+						    								read:_basePath + "/npi/technology/queryStandardActionName",
+						    							}
+						    						},
+						    						select:function(e) {
+							                        	//每次修改的时候 将标准动作的一些属性值set到其余的数据中
+							                        	//这里带出标准动作的一些值
+							                        	var id= e.dataItem.value;
+							                        	$.ajax({
+							                    			url:_basePath + "/hqm/technology/standard/action/query?standardActionId="+id,
+							                    			async:false,
+							                    			success:function(data){
+							                    				debugger;
+							                    				//这里的kendoui不一定会双向绑定,所以使用jquery手动赋值
+							                    				if(viewModelComposeHead.model.actionTimes != null || viewModelComposeHead.model.actionTimes != undefined ){
+							                    					viewModelComposeHead.model.matterWorkHours = viewModelComposeHead.model.actionTimes*data.rows[0].standardWorkingHours;
+							                    				}else{
+							                    					viewModelComposeHead.model.matterWorkHours = data.rows[0].standardWorkingHours;
+							                    				}
+							                    				viewModelComposeHead.model.matterWorkHoursUnit=data.rows[0].standardWorkingHours;
+							                    				viewModelComposeHead.model.actionName=data.rows[0].actionName;
+							                    				$("#compMatterWorkHours").data('kendoNumericTextBox').value(viewModelComposeHead.model.matterWorkHours);
+							                    			}
+							                    		});
+							                        	//这里需要从spec里面带出值  通过标准动作和上面的物料属性 去spec里面查找带出
+							                        	//获取到上面的所有物料属性的ids
+							                        	var matGridData = $("#matGrid").data("kendoGrid").dataSource._data;
+							                        	var materielIds=[];
+							                    		$.each(matGridData,function(index,item){
+							                    			materielIds[index]=item.materielIds;
+							                    		});
+							                    		//对数据进行排序
+							                    		var arr2 = materielIds.sort(function(a,b){
+													    	if (a>b) {
+													              return 1;
+													    	}else if(a<b){
+													             return -1
+													    	}else{
+													             return 0;
+													    	}    
+													    })
+							                        	$.ajax({
+							                    			url:_basePath + "/npi/technology/wpaction/getSpecMatAttr?materielIds="+arr2.join(',') +'&id='+id,
+							                    			async:false,
+							                    			success:function(data){
+							                    				if(data.rows.length == 0){
+							                    					kendo.ui.showWarningDialog({
+							                    						message: "未找到匹配数据！"
+							                    					});
+							                    				}else{
+								                    				$("#compGrid").data("kendoGrid").dataSource.data(data.rows);
+							                    				}
+							                    			}
+							                    		});
+							                        	
+							                        }
+						    					});
+											</script>
+										</div>
+									</div>
+								</div>
+							</div>
+							<div class="col-sm-12" style="padding-top:10px;height:40px">
+								<div class="form-group">
+									<div class="col-sm-12">
+										<label class="col-sm-4 control-label">动作次数</label>
+										<div class="col-sm-8">
+											<input style="width:100%" id="actionTimes" data-bind="value:model.actionTimes">
+												<script type="text/javascript">
+													$("#actionTimes").kendoNumericTextBox({
+														min:0,
+														change:function(e){
+															viewModelComposeHead.model.matterWorkHours=viewModelComposeHead.model.matterWorkHoursUnit*this.value();
+															$("#compMatterWorkHours").data('kendoNumericTextBox').value(viewModelComposeHead.model.matterWorkHours);
+														}
+													});
+												</script>
+										</div>
+									</div>
+								</div>
+							</div>
+							<div class="col-sm-12" style="padding-top:10px;height:40px">
+								<div class="form-group">
+									<div class="col-sm-12">
+										<label class="col-sm-4 control-label">标准工时参考值</label>
+										<div class="col-sm-8">
+											<input style="width:100%" id="compMatterWorkHours" data-bind="value:model.matterWorkHours" readonly="readonly">
+												<script type="text/javascript">
+													$("#compMatterWorkHours").kendoNumericTextBox({
+														min:0,
+													});
+												</script>
+										</div>
+									</div>
+								</div>
+							</div>
+							<div class="col-sm-12" style="padding-top:10px;height:40px">
+								<div class="form-group">
+									<div class="col-sm-12">
+										<label class="col-sm-4 control-label">标准工时</label>
+										<div class="col-sm-8">
+											<input style="width:100%" id="standardTime" data-bind="value:model.standardWorkingHours" required>
+												<script type="text/javascript">
+													$("#standardTime").kendoNumericTextBox({
+														min:0,
+													});
+												</script>
+										</div>
+									</div>
+								</div>
+							</div>
+							<div class="col-sm-12" >
+								<div class="form-group">
+									<div class="col-sm-12" style="padding-top:10px;height:40px">
+										<label class="col-sm-4 control-label">组合件名称</label>
+										<div class="col-sm-8">
+											<input style="width:100%" id="assItemName"  data-role="maskedtextbox" class="k-textbox"
+												data-bind="value:model.assItemName">
+										</div>
+									</div>
+								</div>
+							</div>
+							<div class="col-sm-12" style="padding-top:10px;height:40px">
+								<div class="form-group">
+									<div class="col-sm-3">
+									</div>
+									<div class="col-sm-6">
+										<div style="margin:0 auto;">
+											<span class="btn btn-primary k-grid-add" style="margin:0 auto;" onclick="addEquipmentByStandard()">添加工装设备</span>
+										</div>
+									</div>
+									<!--<div class="col-sm-6">
+										<div style="margin:0 auto;">
+											<span class="btn btn-primary k-grid-add" style="margin:0 auto;" onclick="createCompose()">存为组合件</span>
+										</div>
+									</div>-->
+								</div>
+							</div>
+					</div>
+			</div>
+		</div>
+		<form id = "compForm" style="paddiing-bottom:50px;padding-top:15px" class="form-horizontal" method="post" enctype="application/json;charset=UTF-8">
+			<div class="row">
+				<div class="col-sm-6"  style="height:240px;border: 2px solid #EEEEEE;border-radius:10px;">
+					<div style="clear:both">
+						<div id="equipGrid" style="height:240px;"></div>
+					</div>
+				</div>
+				<div class="col-sm-6" style="height:240px;border: 2px solid #EEEEEE;border-radius:10px;">
+					<div style="clear:both">
+						<div id="compGrid" style="height:240px;"></div>
+					</div>
+				</div>
+			</div>
+		</form>
+	</div>
+	<div id="newMatAttrWindow"></div>
+	<div id="eBomViewWindow"></div>
+	<div id="newEquipWindow"></div>
+	<div id="mainBottom" class="text-right" style="bottom:15px;position:fixed;float:left;padding-top:15px;border-top:1px solid #e8e1eb;
+		width:100%;background:#fff;margin-right:30px">
+		<span class="btn btn-primary" data-bind="click:save" type="submit" style="margin-right:5px">保存</span>
+		<span class="btn btn-primary" data-bind="click:saveAndAdd" type="submit" style="margin-right:5px">保存并新建下一道工序</span>
+		<span class="btn btn-default" data-bind="click:closeWin" type="button" style="margin-right:25px">取消</span>
+	</div>
+	<div hidden class="demo-section k-content">
+		<input name="files"  id="uploadFiles" type="file" accept=".wmv,.rmvb,.jpeg,.jpg,.mp4" />
+	</div>
+	<script>
+		kendo.bind($('#mainForm'), viewModel);
+		kendo.bind($('#mainBottom'), viewModel);
+		kendo.bind($('#compForm'), viewModelComposeHead);
+		kendo.bind($('#standardAction'), viewModelComposeHead);
+	</script>
+	<script>
+		$('#mainForm').kendoValidator({
+			messages:{
+				required:'<@spring.message "hap.validation.notempty"/>'
+			},
+			invalidMessageType:"tooltip"
+		});
+	</script>
+<script>
+    var BaseUrl = _basePath;
+    var dataSourceMat = new kendo.data.DataSource({
+        transport: {
+            read: {
+                url: BaseUrl + "/hqm/technology/standard/action/query1",
+                type: "POST",
+                dataType: "json"
+            },
+            destroy: {
+                url: BaseUrl + "/hqm/technology/standard/action/remove",
+                type: "POST",
+                contentType: "application/json"
+            },
+            create:{
+                url: BaseUrl + "/hqm/technology/standard/action/add",
+                type: "POST",
+                contentType: "application/json",
+                async: true
+            },
+            parameterMap: function (options, type) {
+                if (type !== "read" && options.models) {
+                    var datas = Hap.prepareSubmitParameter(options, type);
+                    return kendo.stringify(datas);
+                } else if (type === "read") {
+                    return Hap.prepareQueryParameter(viewModel.model.toJSON(), options)
+                }
+            }
+        },
+        batch: true,
+        serverPaging: true,
+        pageSize: 20,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+                //id: "standardActionId",
+                fields: {
+                	materielNumber :{validation:{required:true}},
+                	auxActionId :{validation:{required:true}},
+                	//matAttribute :{validation:{required:true}},
+                	qty :{validation:{required:true}},
+                	assemblingDetail :{validation:{required:true}},
+                	matterWorkHours :{validation:{required:true}},
+                	standardWorkingHours :{validation:{required:true}},
+                	status :{validation:{required:true}},
+                	//equipment :{validation:{required:true}},
+                	lowerLimit :{validation:{required:true}},
+                	upperLimit :{validation:{required:true}},
+                	unit :{validation:{required:true}},
+                	measurementMethod :{validation:{required:true}},
+                },
+                editable:function(col){
+                	if(col == 'matterWorkHours') {
+                		return false;
+                	}
+                	return true;
+                }
+            }
+        }
+    });
+    var dataSourceComp = new kendo.data.DataSource({
+        transport: {
+            read: {
+                url: BaseUrl + "/hqm/technology/standard/action/query1",
+                type: "POST",
+                dataType: "json"
+            },
+            destroy: {
+                url: BaseUrl + "/hqm/technology/standard/action/remove",
+                type: "POST",
+                contentType: "application/json"
+            },
+            create:{
+                url: BaseUrl + "/hqm/technology/standard/action/add",
+                type: "POST",
+                contentType: "application/json",
+                async: true
+            },
+            parameterMap: function (options, type) {
+                if (type !== "read" && options.models) {
+                    var datas = Hap.prepareSubmitParameter(options, type);
+                    return kendo.stringify(datas);
+                } else if (type === "read") {
+                    return Hap.prepareQueryParameter(viewModel.model.toJSON(), options)
+                }
+            }
+        },
+        batch: true,
+        serverPaging: true,
+        pageSize: 20,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+                //id: "standardActionId",
+                fields: {
+                	matAttribute :{validation:{required:true}},
+                	qty :{validation:{required:true}},
+                	assemblingDetail :{validation:{required:true}},
+                	matterWorkHours :{validation:{required:true}},
+                	meteringCount :{validation:{required:true}},
+                	standardWorkingHours :{validation:{required:true}},
+                	status :{validation:{required:true}},
+                	equipment :{validation:{required:true}},
+                	lowerLimit :{validation:{required:true}},
+                	upperLimit :{validation:{required:true}},
+                	unit :{validation:{required:true}},
+                	measurementMethod :{validation:{required:true}},
+                },
+                editable:function(col){
+                	if(col == 'standardActionId' || col == 'standardWorkingHours'|| col == 'actionName'
+                		|| col == 'status' || col == 'equipment'|| col == 'equipmentName') {
+                		return true;
+                	}
+                	return false;	
+                }
+            }
+        }
+    });
+    var dataSourceEquip = new kendo.data.DataSource({
+        transport: {
+            read: {
+                url: BaseUrl + "/hqm/technology/standard/action/query",
+                type: "POST",
+                dataType: "json"
+            },
+            parameterMap: function (options, type) {
+                if (type !== "read" && options.models) {
+                    var datas = Hap.prepareSubmitParameter(options, type);
+                    return kendo.stringify(datas);
+                } else if (type === "read") {
+                    return Hap.prepareQueryParameter(viewModel.model.toJSON(), options)
+                }
+            }
+        },
+        batch: true,
+        serverPaging: true,
+        pageSize: 20,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+                //id: "standardActionId",
+                fields: {
+                	qty :{validation:{required:true}},
+                },
+                editable:function(col){
+                	if(col == 'materielNumberName' ||col == 'actionName') {
+                		return false;
+                	}
+                	return true;	
+                }
+            }
+        }
+    });
+
+</script>
+
+<script>
+	function createMatNumber(matType){
+		//取物料
+		var grid = $("#matGrid").data("kendoGrid");
+		var oldLength = grid.dataSource._data.length;
+    	grid.addRow();
+    	var newLength = grid.dataSource._data.length;
+    	if(oldLength != newLength){
+            grid.dataSource._data[0].matType=matType;
+		}
+	}
+	function createCompose(){
+		//将行表数据存为组合件
+		var grid = $("#compGrid").data("kendoGrid");
+		var selections = grid.selectedDataItems();
+		if(selections.length == 0){
+			kendo.ui.showWarningDialog({
+				message: "请至少选择一条数据！"
+			});
+			return;
+		}
+		if(viewModelComposeHead.model.assItemName == null || viewModelComposeHead.model.assItemName == undefined){
+			kendo.ui.showWarningDialog({
+				message: "组合件名称未输入!"
+			});
+			return;
+		}
+		//获取名称等
+		Hap.submitForm({
+            url: '${base.contextPath}/npi/compose/product/addData',
+            formModel: viewModelComposeHead.model,
+            grid: {"matList": $("#matGrid")},
+            success: function (data) {
+            	//viewModel.closeWin();
+            }
+        });
+	}
+	
+	function fileUpload(){
+		$("#uploadFiles").trigger("click");
+    }
+	function editMat(uid,matType){
+		//传uid 和 物料类型过去 组件和物料获取属性的方式不同
+		var row=$("#matGrid").data("kendoGrid").dataSource.getByUid(uid);
+	    var itemId = row.itemId;
+	    debugger;
+		if(itemId == null || itemId == undefined){
+			kendo.ui.showWarningDialog({
+				message: "请先选择物料!"
+			});
+			return ;
+		}
+		var url='wp_materiel_data_query.html?uid='+uid+'&matType='+matType+'&itemId='+itemId;
+		var newDataWindow = $("#newMatAttrWindow").kendoWindow({
+			actions:["close"],
+			width:800,
+			height:500,
+			title:'物料属性选择',
+			content:url,
+			iframe:true,
+			visible:false,
+			resizable:true,
+			modal:true,
+			close:function(){
+				//$("#leftGrid").data('kendoGrid').dataSource.read();
+			}
+			
+		}).data("kendoWindow");
+		newDataWindow.center().open();
+    }
+	
+	//辅助动作添加工装设备
+	function addEquipment(uid){
+		debugger;
+		var row=$("#matGrid").data("kendoGrid").dataSource.getByUid(uid)
+    	var grid = $("#equipGrid").data("kendoGrid");
+        var oldLength = grid.dataSource._data.length;
+        grid.addRow();
+        var newLength = grid.dataSource._data.length;
+        if(oldLength == newLength){
+            return ;
+        }
+    	grid.dataSource._data[0].parentUid=uid;
+    	grid.dataSource._data[0].__status = "add";
+    	//新的行的物料编码和动作需要带出
+    	grid.dataSource._data[0].actionName = row.actionName;
+    	grid.dataSource._data[0].actionId = row.auxActionId;
+    	grid.dataSource._data[0].materielNumberName = row.materielNumberName;
+    	var gridPat = $("#matGrid").data("kendoGrid");
+    	for(var i =0 ;i < gridPat.dataSource._data.length; i++){
+			if(gridPat.dataSource._data[i].uid == uid){
+				var equipList = gridPat.dataSource._data[i].equipList;
+				if(equipList == null){
+					var arrayObj = new Array();
+					arrayObj.push(grid.dataSource._data[0]);
+					gridPat.dataSource._data[i].equipList = arrayObj;
+				}else{
+					gridPat.dataSource._data[i].equipList.push(grid.dataSource._data[0]);
+				}
+			}
+        }
+    	$("#equipGrid").data("kendoGrid").refresh();
+	}
+	//标准动作添加工装设备
+	function addEquipmentByStandard(){
+		debugger;
+		var uid='9893df82-e551-4b37-bef0-245ece8a553d';
+		//var row=$("#matGrid").data("kendoGrid").dataSource.getByUid(uid)
+		var row=viewModelComposeHead.model;
+		if(row.standardActionId == null || row.standardActionId == undefined ){
+			kendo.ui.showWarningDialog({
+				message: "标准动作未选择！"
+			});
+		}
+    	var grid = $("#equipGrid").data("kendoGrid");
+        var oldLength = grid.dataSource._data.length;
+        grid.addRow();
+        var newLength = grid.dataSource._data.length;
+        if(oldLength == newLength){
+            return ;
+        }
+    	grid.dataSource._data[0].parentUid=uid;
+    	grid.dataSource._data[0].__status = "add";
+    	//新的行的物料编码和动作需要带出
+    	grid.dataSource._data[0].actionName = row.actionName;
+    	grid.dataSource._data[0].actionId = row.standardActionId;
+    	grid.dataSource._data[0].materielNumberName = row.materielNumberName;
+    	var gridPat = viewModelComposeHead.model;
+		var equipList = gridPat.equipList;
+		if(equipList == null){
+			var arrayObj = new Array();
+			arrayObj.push(grid.dataSource._data[0]);
+			gridPat.equipList = arrayObj;
+		}else{
+			gridPat.equipList.push(grid.dataSource._data[0]);
+		}
+    	$("#equipGrid").data("kendoGrid").refresh();
+	}
+	//删除工装设备
+	function delEquipment(uid){
+    	$("#equipGrid").data("kendoGrid").refresh();
+    	var grid = $("#equipGrid").data("kendoGrid");
+    	grid.removeRow("tr[data-uid="+uid+"]");
+	}
+	
+	function createNewEquip(uid){
+		//传uid 和 物料类型过去 组件和物料获取属性的方式不同
+		var row=$("#equipGrid").data("kendoGrid").dataSource.getByUid(uid);
+		var url='equipment_create.html?uid='+uid;
+		var newDataWindow = $("#newEquipWindow").kendoWindow({
+			actions:["close"],
+			width:800,
+			height:500,
+			title:'新建工装/工具/设备',
+			content:url,
+			iframe:true,
+			visible:false,
+			resizable:true,
+			modal:true,
+			close:function(){
+				//$("#leftGrid").data('kendoGrid').dataSource.read();
+			}
+			
+		}).data("kendoWindow");
+		newDataWindow.center().open();
+    }
+	
+	function queryEbomData(){
+		var url='wp_e_bom_view.html?skuId='+skuId;
+		var eBomViewWindow = $("#eBomViewWindow").kendoWindow({
+			actions:["close"],
+			width:800,
+			height:500,
+			title:'当前工艺路径可用E-BOM数据查看',
+			content:url,
+			iframe:true,
+			visible:false,
+			resizable:true,
+			modal:true,
+			close:function(){
+			}
+			
+		}).data("kendoWindow");
+		eBomViewWindow.center().open();
+	}
+
+    var matGrid = $("#matGrid").kendoGrid({
+        dataSource: dataSourceMat,
+        resizable: true,
+        scrollable: true,
+        navigatable: false,
+        //sortable:true,
+        autoBind:false,
+        selectable: 'multiple, rowbox',
+        dataBound: function () {
+            if (parent.autoResizeIframe) {
+                parent.autoResizeIframe('${RequestParameters.functionCode!}')
+            }
+        },
+        columns: [
+            {
+                field: "auxActionId",
+                title: '辅助动作',
+                width: 120,
+                headerAttributes: {
+                    style: "text-align: center"
+                },
+                attributes: {
+                    style: "text-align: center"
+                },
+                template: function (item) {
+                    return item['actionName'] || ''
+                },
+                editor: function (container, options) {
+                		$('<input required name="' + options.field + '"/>').appendTo(container).kendoComboBox({
+                        	filter:"contains",
+    						valuePrimitive:true,
+    						dataTextField:"text",
+							dataValueField:"value",
+    						dataSource:{
+    							transport:{
+    								read:_basePath + "/npi/technology/queryAuxiliaryActionName",
+    							}
+    						},
+    						select:function(e) {
+	                        	options.model.set('actionName',e.dataItem.text);
+	                        	//options.model.set('auxActionId',e.dataItem.value); 这里set值没效果
+	                        	var id=e.dataItem.value
+	                        	$.ajax({
+	                    			url:_basePath + "/hqm/technology/auxiliary/action/query?auxActionId="+id,
+	                    			async:false,
+	                    			success:function(data){
+	                    				//这里下拉框和lov的获取到的options不同 下拉框获取的是自己那个字段的，和lov的不一样，这里方法是通过uid获取到数据，然后手动set数据，然后刷新grid(不然数据不显示)
+	                    				var row=$("#matGrid").data("kendoGrid").dataSource.getByUid(options.model.uid);
+	                    				row.matterWorkHours=data.rows[0].standardWorkingHours;
+	                    				row.matterWorkHoursUnit=data.rows[0].standardWorkingHours;
+	                    				row.assemblingDetail=data.rows[0].assemblingDetail;
+	                    				row.measurementMethod=data.rows[0].standardTestMethod;
+	                    				row.auxActionId=id;
+	                    				$("#matGrid").data("kendoGrid").refresh();
+	                    			}
+	                    		});
+	                        }
+    					});
+                	}
+            },
+            {
+                field: "materielNumber",
+                title: '物料/组件',
+                width: 120,
+                headerAttributes: {
+                    style: "text-align: center"
+                },
+                attributes: {
+                    style: "text-align: center"
+                },
+                /* template: function (dataItem) {
+                    return dataItem['']||'';
+                }, */
+                editor: function (container, options) {
+                	if(options.model.matType == 'mat'){
+                		$('<input name="' + options.field + '"/>')
+	                        .appendTo(container)
+	                        .kendoLov($.extend(<@lov "ROUTE_GET_MAT_LOV"/>, {
+	                        query: function (e) {
+	                            e.param['itemId'] = skuId;
+	                            //e.param['roleFastCode']= 'SRM_USER_MANAGEMENT';
+	                        },
+	                        textField: 'partNumber',
+	                        model: options.model,
+	                        select:function(e) {
+	                            debugger;
+	                        	options.model.set('itemId',e.item.itemId);
+	                        	options.model.set('materielNumber',e.item.partNumber);
+	                        	options.model.set('materielNumberName',e.item.partDescription);
+	                        	options.model.set('itemDetailVersion',e.item.itemVersion);
+	                        }
+	                    }));
+                	}else{
+                		$('<input name="' + options.field + '"/>')
+	                        .appendTo(container)
+	                        .kendoLov($.extend(<@lov "ROUTE_GET_COMP_LOV"/>, {
+	                        query: function (e) {
+	                            /* e.param['enableFlag'] = 'Y'
+	                            e.param['roleFastCode']= 'SRM_USER_MANAGEMENT'; */
+	                        },
+	                        textField: 'detailsName', 
+	                        model: options.model,
+	                        select:function(e) {
+                                debugger;
+                                options.model.set('itemId',e.item.assItemId);
+                                options.model.set('materielNumber',e.item.assItemCode);
+                                options.model.set('materielNumberName',e.item.assItemName);
+	                        }
+	                    }));
+                	}
+            	}
+            },
+            {
+                field: "materielNumberName",
+                title: '物料/组件名称',
+                width: 120,
+                headerAttributes: {
+                    style: "text-align: center"
+                },
+                attributes: {
+                    style: "text-align: center"
+                }
+            },
+            {
+                field: "matAttribute",
+                title: '物料属性',
+                width: 120,
+                headerAttributes: {
+                    style: "text-align: center"
+                },
+                attributes: {
+                    style: "text-align: center"
+                },
+                editor: function (container, options) {
+                    $('<span class="k-widget k-lov k-header">'
+	                    +'<span tabindex="-1" unselectable="on" class="k-dropdown-wrap k-state-default">'
+	                    +'<input name="'
+	                    + options.field
+	                    +'" class="k-input" type="text" role="lov" title=" '+ options.model.matAttribute
+	                    +'" aria-expanded="false" disabled="true" readonly="readonly" data-bind="value: '
+	                    + options.field 
+	                    +'" style="width:100%;">'
+	                    +'<span unselectable="on" class="k-select" aria-label="select" role="button" tabindex="-1"'
+	                    +' onclick="editMat('
+	                    +"'"+options.model.uid+'\',\''+options.model.matType+"'"+')">'
+	                    +'<span class="k-icon k-i-search"></span>'+'</span></span></span>').appendTo(container);
+            	}
+            },
+            {
+                field: "qty",
+                title: '数量',
+                width: 60,
+                headerAttributes: {
+                    style: "text-align: center"
+                },
+                attributes: {
+                    style: "text-align: center"
+                },
+                editor: function (container, options) {
+                    $('<input required name="' + options.field + '"/>').appendTo(container).kendoNumericTextBox({
+						min:0,
+		                change:function(dataItem){
+		                    //则相应的标准工时参照值=辅助动作的标准工时*2 数量变化时 js有调整
+		                    var row=$("#matGrid").data("kendoGrid").dataSource.getByUid(options.model.uid);
+            				row.matterWorkHours=row.matterWorkHoursUnit*this.value();
+            				$("#matGrid").data("kendoGrid").refresh();
+		                }
+					});
+                } 
+            },
+            {
+            	field: "assemblingDetail",
+                title: '装配要求明细',
+                width: 135,
+                headerAttributes: {
+                    style: "text-align: center"
+                },
+                attributes: {
+                    style: "text-align: center;overflow-y:auto;"
+                },
+                template:function(dataItem){
+                	if(dataItem.assemblingDetail!=null&& dataItem.assemblingDetail!=''){
+                		var returnDateItem = dataItem.assemblingDetail.replace(/\r\n/g, '##').replace(/\n/g, '##').replace(/\s/g, '##');
+                		returnDateItem = returnDateItem.replace(/##/g,'<br>');
+                		return returnDateItem;
+                	}else{
+                		return '';
+                	}
+                }
+            },
+            {
+                field: "matterWorkHours",
+                title: '标准工时参考值',
+                width: 120,
+                headerAttributes: {
+                    style: "text-align: center"
+                },
+                attributes: {
+                    style: "text-align: center"
+                }
+            },
+            {
+                field: "standardWorkingHours",
+                title: '标准工时',
+                width: 120,
+                headerAttributes: {
+                    style: "text-align: center"
+                },
+                attributes: {
+                    style: "text-align: center"
+                },
+                editor: function (container, options) {
+                    $('<input required name="' + options.field + '"/>').appendTo(container).kendoNumericTextBox({
+						min:0,
+					});
+                } 
+            },
+            {
+            	field: "measurementMethod",
+                title: '标准/测量方法',
+                width: 120,
+                headerAttributes: {
+                    style: "text-align: center"
+                },
+                attributes: {
+                    style: "text-align: center"
+                }
+            },
+            {
+                title: '操作',
+                width: 120,
+                headerAttributes: {
+                    style: "text-align: center"
+                },
+                attributes: {
+                    style: "text-align: center"
+                },
+                template:function (dataItem) { 
+                	return '<span class="btn btn-primary k-grid-add" onclick="addEquipment(\''+dataItem.uid+'\')" >添加工装设备</span>';
+                }
+            }
+        ],
+        editable: true
+    }).data("kendoGrid");
+    var compGrid = $("#compGrid").kendoGrid({
+        dataSource: dataSourceComp,
+        resizable: true,
+        scrollable: true,
+        navigatable: false,
+        //sortable:true,
+        autoBind:false,
+        selectable: 'multiple, rowbox',
+        dataBound: function () {
+            if (parent.autoResizeIframe) {
+                parent.autoResizeIframe('${RequestParameters.functionCode!}')
+            }
+        },
+        pageable: {
+            pageSizes: [5, 10, 20, 50],
+            refresh: true,
+            buttonCount: 5
+        },
+        columns: [
+            {
+                field: "specRequirement",
+                title: '装配要求明细',
+                width: 135,
+                headerAttributes: {
+                    style: "text-align: center"
+                },
+                attributes: {
+                    style: "text-align: center;overflow-y:auto;"
+                },
+                template:function(dataItem){
+                	if(dataItem.specRequirement!=null&& dataItem.specRequirement!=''){
+                		var returnDateItem = dataItem.specRequirement.replace(/\r\n/g, '##').replace(/\n/g, '##').replace(/\s/g, '##');
+                		returnDateItem = returnDateItem.replace(/##/g,'<br>');
+                		return returnDateItem;
+                	}else{
+                		return '';
+                	}
+                }
+            },{
+                field: "meteringCount",
+                title: '计量/计数',
+                width: 90,
+                headerAttributes: {
+                    style: "text-align: center"
+                },
+                attributes: {
+                    style: "text-align: center"
+                },
+                template: function (dataItem) {
+                    var v = dataItem.meteringCount ? dataItem.meteringCount : "";
+                    $.each(NPI_METERING_COUNT, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return v;
+                        }
+                    });
+                    return v;
+                },
+                editor: function (container, options) {
+                    $('<input required name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            dataTextField: "meaning",
+                            dataValueField: "value",
+                            valuePrimitive: true,
+                            dataSource: NPI_METERING_COUNT
+                        });
+                }
+            },
+            {
+                field: "lowerLimit",
+                title: '下限',
+                width: 70,
+                headerAttributes: {
+                    style: "text-align: center"
+                },
+                attributes: {
+                    style: "text-align: center"
+                }
+            },
+            {
+                field: "upperLimit",
+                title: '上限',
+                width: 70,
+                headerAttributes: {
+                    style: "text-align: center"
+                },
+                attributes: {
+                    style: "text-align: center"
+                }
+            },
+            {
+                field: "unit",
+                title: '单位',
+                width: 70,
+                headerAttributes: {
+                    style: "text-align: center"
+                },
+                attributes: {
+                    style: "text-align: center"
+                }
+            },
+            {
+                field: "msa",
+                title: 'MSA',
+                width: 120,
+                headerAttributes: {
+                    style: "text-align: center"
+                },
+                attributes: {
+                    style: "text-align: center"
+                }
+            },
+            {
+                field: "spc",
+                title: 'SPC',
+                width: 120,
+                headerAttributes: {
+                    style: "text-align: center"
+                },
+                attributes: {
+                    style: "text-align: center"
+                }
+            }
+        ],
+        editable: true
+    }).data("kendoGrid");
+    var equipGrid = $("#equipGrid").kendoGrid({
+        dataSource: dataSourceEquip,
+        resizable: true,
+        scrollable: true,
+        navigatable: false,
+        //sortable:true,
+        autoBind:false,
+        //selectable: 'multiple, rowbox',
+        dataBound: function () {
+            if (parent.autoResizeIframe) {
+                parent.autoResizeIframe('${RequestParameters.functionCode!}')
+            }
+        },
+        pageable: {
+            pageSizes: [5, 10, 20, 50],
+            refresh: true,
+            buttonCount: 5
+        },
+        columns: [
+        	{
+                field: "actionName",
+                title: '动作',
+                width: 100,
+                headerAttributes: {
+                    style: "text-align: center"
+                },
+                attributes: {
+                    style: "text-align: center"
+                }
+            },
+            {
+                field: "materielNumberName",
+                title: '物料编码',
+                width: 100,
+                headerAttributes: {
+                    style: "text-align: center"
+                },
+                attributes: {
+                    style: "text-align: center"
+                }
+            },
+        	{
+                field: "status",
+                title: '工装/工具/设备状态',
+                width: 150,
+                headerAttributes: {
+                    style: "text-align: center"
+                },
+                attributes: {
+                    style: "text-align: center"
+                },
+                template: function (dataItem) {
+                    var v = dataItem.status ? dataItem.status : "";
+                    $.each(NPI_ROUTE_EQUIP_STATUS	, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return v;
+                        }
+                    });
+                    return v;
+                },
+                editor: function (container, options) {
+                    $('<input required name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            dataTextField: "meaning",
+                            dataValueField: "value",
+                            valuePrimitive: true,
+                            dataSource: NPI_ROUTE_EQUIP_STATUS	
+                        });
+                }
+            },
+            {
+                field: "equipmentCode",
+                title: '工装/工具/设备编码',
+                width: 150,
+                headerAttributes: {
+                    style: "text-align: center"
+                },
+                attributes: {
+                    style: "text-align: center"
+                },
+                editor: function (container, options) {
+                	if(options.model.status == 'add'){
+                		//新增时添加临时编码
+                		$('<span class="k-widget k-lov k-header">'
+        	                    +'<span tabindex="-1" unselectable="on" class="k-dropdown-wrap k-state-default">'
+        	                    +'<input name="'
+        	                    + options.field
+        	                    +'" class="k-input" type="text" role="lov" title=" '+ options.model.matAttribute
+        	                    +'" aria-expanded="false" disabled="true" readonly="readonly" data-bind="value: '
+        	                    + options.field 
+        	                    +'" style="width:100%;">'
+        	                    +'<span unselectable="on" class="k-select" aria-label="select" role="button" tabindex="-1"'
+        	                    +' onclick="createNewEquip('
+        	                    +"'"+options.model.uid+'\',\''+options.model.matType+"'"+')">'
+        	                    +'<span class="k-icon k-i-search"></span>'+'</span></span></span>').appendTo(container);
+                	}else{
+                		$('<input name="' + options.field + '"/>')
+	                        .appendTo(container)
+	                        .kendoLov($.extend(<@lov "SPARE_PART_CODE_DETAIL"/>, {
+	                        query: function (e) {
+	                            /* e.param['enableFlag'] = 'Y'
+	                            e.param['roleFastCode']= 'SRM_USER_MANAGEMENT'; */
+	                        },
+	                        textField: 'detailsName', 
+	                        model: options.model,
+	                        select:function(e) {
+	                        }
+	                    }));
+                	}
+            	}
+            },
+            {
+                field: "equipmentName",
+                title: '工装/工具/设备名称',
+                width: 150,
+                headerAttributes: {
+                    style: "text-align: center"
+                },
+                attributes: {
+                    style: "text-align: center"
+                }
+            },
+            {
+                field: "qty",
+                title: '数量',
+                width: 50,
+                headerAttributes: {
+                    style: "text-align: center"
+                },
+                attributes: {
+                    style: "text-align: center"
+                },
+                editor: function (container, options) {
+                    $('<input required name="' + options.field + '"/>').appendTo(container).kendoNumericTextBox({
+						min:0,
+					});
+                }
+            },
+            {
+                title: '删除',
+                width: 50,
+                headerAttributes: {
+                    style: "text-align: center"
+                },
+                attributes: {
+                    style: "text-align: center"
+                },
+                template:function (dataItem) { 
+                	return '<span class="btn btn-primary k-grid-add" onclick="delEquipment(\''+dataItem.uid+'\')" >删除</span>';
+                }
+            }
+        ],
+        editable: true
+    }).data("kendoGrid");
+	//Hap.autoResizeGrid("#matGrid");
+	//Hap.autoResizeGrid("#compGrid");
+</script>
+</div>
+</body>
+</html>

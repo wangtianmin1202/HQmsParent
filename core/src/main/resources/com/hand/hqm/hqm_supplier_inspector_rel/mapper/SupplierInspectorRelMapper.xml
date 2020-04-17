@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_supplier_inspector_rel.mapper.SupplierInspectorRelMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_supplier_inspector_rel.dto.SupplierInspectorRel">
+        <result column="REL_ID" property="relId" jdbcType="DECIMAL" />
+        <result column="PLANT_ID" property="plantId" jdbcType="DECIMAL" />
+        <result column="SUPPLIER_ID" property="supplierId" jdbcType="DECIMAL" />
+        <result column="INSPECTOR_ID" property="inspectorId" jdbcType="DECIMAL" />
+        <result column="PRE_INSPECTOR_ID" property="preInspectorId" jdbcType="DECIMAL" />
+        <result column="SQE_INSPECTOR_ID" property="sqeInspectorId" jdbcType="DECIMAL" />
+        <result column="ENABLE_FLAG" property="enableFlag" jdbcType="VARCHAR" />
+        
+        <result column="INS_EMPLOYEE_NAME" property="insEmployeeName" jdbcType="VARCHAR" />
+        <result column="PRE_EMPLOYEE_NAME" property="preEmployeeName" jdbcType="VARCHAR" />
+        <result column="SQE_EMPLOYEE_NAME" property="sqeEmployeeName" jdbcType="VARCHAR" />
+        <result column="PRE_SQE_EMPLOYEE_NAME" property="preSqeEmployeeName" jdbcType="VARCHAR" />
+        
+        <result column="PLANT_CODE" property="plantCode" jdbcType="VARCHAR" />
+        <result column="SUPPLIER_CODE" property="supplierCode" jdbcType="VARCHAR" />
+        <result column="SUPPLIER_NAME" property="supplierName" jdbcType="VARCHAR" />
+        <result column="PRE_SQE" property="preSqe" jdbcType="DECIMAL" />
+    </resultMap>
+
+<!-- 主界面查询 -->
+<select id="reSelect" resultMap="BaseResultMap" parameterType="com.hand.hqm.hqm_supplier_inspector_rel.dto.SupplierInspectorRel">
+WITH su_employee AS
+ (SELECT su.user_id, su.user_name, he.employee_id, he.name AS employee_name
+    FROM sys_user su
+    JOIN hr_employee he
+      ON su.employee_id = he.employee_id)
+SELECT t.rel_id,
+       t.plant_id,
+       t.supplier_id,
+       t.inspector_id,
+       t.pre_inspector_id,
+       t.sqe_inspector_id,
+       t.enable_flag,
+       t.object_version_number,
+       t.request_id,
+       t.program_id,
+       t.pre_sqe,
+       se_ins.employee_name     AS ins_employee_name,
+       se_pre.employee_name     AS pre_employee_name,
+       se_sqe.employee_name     AS sqe_employee_name,
+       se_pre_sqe.employee_name AS pre_sqe_employee_name,
+       hp.plant_code,
+       hs.supplier_code,
+       hs.supplier_name
+  FROM hqm_supplier_inspector_rel t
+  JOIN su_employee se_ins
+    ON t.inspector_id = se_ins.user_id
+  LEFT JOIN su_employee se_pre
+    ON t.pre_inspector_id = se_pre.user_id
+  LEFT JOIN su_employee se_sqe
+    ON t.sqe_inspector_id = se_sqe.user_id
+  LEFT JOIN su_employee se_pre_sqe
+    ON t.pre_sqe = se_pre_sqe.user_id
+  JOIN hcm_plant hp
+    ON t.plant_id = hp.plant_id
+  JOIN hcs_suppliers hs
+    ON t.supplier_id = hs.supplier_id
+ WHERE 1 = 1
+ <if test="supplierId != null">
+ AND t.supplier_id = #{supplierId}
+ </if>
+ <if test="inspectorId != null">
+ AND (t.inspector_id = #{inspectorId} OR t.pre_inspector_id = #{inspectorId} OR t.sqe_inspector_id = #{inspectorId})
+ </if>
+</select>
+<!-- 批量更更新主检验员 -->
+<update id="batchUpdateIns" parameterType="com.hand.hqm.hqm_supplier_inspector_rel.dto.SupplierInspectorRel">
+UPDATE hqm_supplier_inspector_rel t SET t.inspector_id = #{newUserId} WHERE t.inspector_id = #{oldUserId}
+
+</update>
+<!-- 批量更新次检验员 -->
+<update id="batchUpdatePre" parameterType="com.hand.hqm.hqm_supplier_inspector_rel.dto.SupplierInspectorRel">
+UPDATE hqm_supplier_inspector_rel t SET t.pre_inspector_id = #{newUserId} WHERE t.pre_inspector_id = #{oldUserId}
+
+</update>
+<!-- 批量更新次SQE -->
+<update id="batchUpdateSqe" parameterType="com.hand.hqm.hqm_supplier_inspector_rel.dto.SupplierInspectorRel">
+UPDATE hqm_supplier_inspector_rel t SET t.sqe_inspector_id = #{newUserId} WHERE t.sqe_inspector_id = #{oldUserId}
+
+</update>
+</mapper>

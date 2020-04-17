@@ -1,0 +1,318 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.spc.ecr_main.mapper.EcrSolutionSkuMapper">
+    <resultMap id="BaseResultMap" type="com.hand.spc.ecr_main.dto.EcrSolutionSku">
+        <result column="ITEM_SKU_KID" property="itemSkuKid" jdbcType="DECIMAL" />
+        <result column="SKU_ID" property="skuId" jdbcType="DECIMAL" />
+        <result column="PRODUCT_TYPE" property="productType" jdbcType="VARCHAR" />
+        <result column="PRODUCTS" property="products" jdbcType="VARCHAR" />
+        <result column="WORK_COST" property="workCost" jdbcType="DECIMAL" />
+        <result column="ECRNO" property="ecrno" jdbcType="VARCHAR" />
+        <result column="YEAR_PLAN_QTY" property="yearPlanQty" jdbcType="DECIMAL" />
+        <result column="BOM_USE" property="bomUse" jdbcType="DECIMAL" />
+        <result column="ECR_USE" property="ecrUse" jdbcType="DECIMAL" />
+        <result column="SUB_ITEM_FLAG" property="subItemFlag" jdbcType="VARCHAR" />
+        <result column="SUB_ITEM" property="subItem" jdbcType="VARCHAR" />
+        <result column="FIRST_RECIEVE_TIME" property="firstRecieveTime" jdbcType="DATE" />
+        <result column="FIRST_USING_TIME" property="firstUsingTime" jdbcType="DATE" />
+        <result column="ITEM_ID" property="itemId" jdbcType="DECIMAL" />
+        <result column="ITEM_CHANGE_TYPE" property="itemChangeType" jdbcType="VARCHAR" />
+        <result column="SKU_CODE" property="skuCode" jdbcType="VARCHAR" />
+        <result column="SKU_DESCRIPTION" property="skuDescrition" jdbcType="VARCHAR" />
+           
+         <result column="std_cost" property="stdCost" jdbcType="DECIMAL" />
+        <result column="std_price_unit" property="stdPriceUnit" jdbcType="DECIMAL" />
+        <result column="std_cost_currency" property="stdCostCurrency" jdbcType="VARCHAR" />
+        <result column="act_price_unit" property="actPriceUnit" jdbcType="DECIMAL" />
+        <result column="act_cost" property="actCost" jdbcType="DECIMAL" />        
+        <result column="act_cost_currency" property="actCostCurrency" jdbcType="VARCHAR" />
+        
+    </resultMap>
+
+
+
+
+
+ <resultMap id="getHeadMap" type="com.hand.spc.ecr_main.view.EcrSolutionSkuV0">
+        <result column="sku_id" property="skuId" jdbcType="VARCHAR" />
+        <result column="descriptions" property="skuDescription" jdbcType="VARCHAR" />
+        <result column="year_qty" property="sumYears" jdbcType="VARCHAR" />
+        <result column="sum_cost" property="sumItemCost" jdbcType="VARCHAR" />
+        <result column="work_cost" property="sumWorkCost" jdbcType="VARCHAR" />
+        <result column="item_sku_kid" property="itemSkuId" jdbcType="VARCHAR" /> 
+        
+    </resultMap>  
+    
+	<select id="getHeadSql" resultMap="getHeadMap">
+		  sELECT heisb.sku_id,
+               heisb.item_sku_kid,
+               HI.descriptions,
+               heisb.year_plan_qty year_qty,
+               sum(has.item_pirce / has.item_qty * 
+                   nvl(heisb.ecr_use, heisb.bom_use)) sum_cost,
+               nvl(heisb.work_cost, 0) work_cost
+          FROM hpm_ecr_solution_sku          heisb,
+               npi_mbom_main                       hb,
+               hcm_item                      hi,
+               hcs_asl                       ha,
+               hcs_asl_control               has,
+               hpm_ecr_solution_sku_relation hesr
+         WHERE heisb.sku_id = hb.item_id
+           AND hb.item_id = hi.ITEM_ID
+           AND hesr.item_ecr_id = ha.item_id
+           AND ha.asl_id = has.asl_id
+           AND heisb.item_sku_kid = hesr.item_sku_id
+	         and heisb.ecrno = #{ecrno}
+	     group by hi.descriptions,heisb.sku_id,heisb.item_sku_kid,heisb.year_plan_qty,heisb.work_cost
+	</select>
+	
+ <resultMap id="getLineMap" type="com.hand.spc.ecr_main.view.EcrSolutionSkuV1">
+        <result column="ITEM_CODE" property="itemCode" jdbcType="VARCHAR" />
+        <result column="descriptions" property="itemDesc" jdbcType="VARCHAR" />
+        <result column="price" property="price" jdbcType="VARCHAR" />
+        <result column="bom_use" property="bomUse" jdbcType="VARCHAR" />
+        <result column="ecr_use" property="ecrUse" jdbcType="VARCHAR" /> 
+        <result column="item_id" property="itemId" jdbcType="VARCHAR" /> 
+         <result column="PRIMARY_UOM" property="uom" jdbcType="VARCHAR" />
+        <result column="item_change_type" property="itemChangeType" jdbcType="VARCHAR" />
+        <result column="sub_item_flag" property="subItemFlag" jdbcType="VARCHAR" />
+        <result column="sub_item" property="subItem" jdbcType="VARCHAR" /> 
+         <result column="item_sku_kid" property="itemSkuKid" jdbcType="VARCHAR" />
+         <result column="relation_id" property="relationId" jdbcType="VARCHAR" />
+         
+    </resultMap>      
+ 
+	<select id="getLineSql"  resultMap="getLineMap">
+			select   hi.item_id,heisb.item_sku_kid, hi.ITEM_CODE,
+		             hi.descriptions,
+		             has.item_pirce / has.item_qty price,
+		             hesr.bom_use,
+		             hesr.ecr_use,
+		             hi.PRIMARY_UOM,
+		             hesr.item_change_type,
+		             hesr.sub_item_flag,
+		             hesr.sub_item,hesr.relation_id
+		        from hpm_ecr_solution_sku heisb,
+		             hcm_item           hi,
+		             hcs_asl            ha,
+		             hcs_asl_control    has, 
+		             hpm_ecr_solution_sku_relation hesr
+		       where hesr.item_ecr_id = hi.ITEM_ID
+		         and ha.item_id = hesr.item_ecr_id
+		         and ha.asl_id = has.asl_id 
+		         and hesr.item_sku_id=heisb.item_sku_kid
+		         and hesr.item_sku_id = #{itemSkuId} 
+	</select>
+	
+	
+	 <resultMap id="getRfqMap" type="com.hand.spc.ecr_main.view.EcrSolutionSkuV1">
+        <result column="ITEM_CODE" property="itemCode" jdbcType="VARCHAR" />
+        <result column="descriptions" property="itemDesc" jdbcType="VARCHAR" />
+        <result column="price" property="price" jdbcType="VARCHAR" />
+        <result column="bom_use" property="bomUse" jdbcType="VARCHAR" />
+        <result column="ecr_use" property="ecrUse" jdbcType="VARCHAR" /> 
+        <result column="item_id" property="itemId" jdbcType="VARCHAR" /> 
+         <result column="PRIMARY_UOM" property="uom" jdbcType="VARCHAR" />
+        <result column="item_change_type" property="itemChangeType" jdbcType="VARCHAR" />
+        <result column="sub_item_flag" property="subItemFlag" jdbcType="VARCHAR" />
+        <result column="sub_item" property="subItem" jdbcType="VARCHAR" /> 
+         <result column="item_sku_kid" property="itemSkuKid" jdbcType="VARCHAR" />
+         <result column="relation_id" property="relationId" jdbcType="VARCHAR" />
+         <result column="sku_code" property="skuCode" jdbcType="VARCHAR" />   
+    </resultMap>            
+	<select id="getDetailRfq"  resultMap="getRfqMap">
+			select   hi.item_id,heisb.item_sku_kid, hi.ITEM_CODE,
+                 hi.descriptions,
+                 has.item_pirce / has.item_qty price,
+                 hesr.bom_use,
+                 hesr.ecr_use,
+                 hi.PRIMARY_UOM,
+                 hesr.item_change_type,
+                 hesr.sub_item_flag,
+                 hesr.sub_item,
+                 hesr.relation_id,
+                 hisk.descriptions sku_code
+            from hpm_ecr_solution_sku heisb,
+                 hcm_item           hi,
+                 hcs_asl            ha,
+                 hcs_asl_control    has, 
+                 hpm_ecr_solution_sku_relation hesr,
+                 hcm_item  hisk
+           where hesr.item_ecr_id = hi.ITEM_ID
+             and ha.item_id = hesr.item_ecr_id
+             and ha.asl_id = has.asl_id 
+             and hesr.item_sku_id=heisb.item_sku_kid
+             and hisk.ITEM_ID=heisb.sku_id 
+             and hesr.item_ecr_id=#{itemId}
+             and heisb.ecrno=#{ecrno}
+	</select>
+	 <resultMap id="getDropListMap" type="com.hand.spc.ecr_main.view.EcrSolutionSkuV1">
+        <result column="ITEM_CODE" property="itemCode" jdbcType="VARCHAR" />       
+        <result column="item_id" property="itemId" jdbcType="VARCHAR" />
+        </resultMap>              
+	<select id="getSolutionList"  resultMap="getDropListMap">						
+			select distinct hi.ITEM_ID, hi.ITEM_CODE
+			  from hpm_ecr_solution_sku          hess,
+			       hpm_ecr_solution_sku_relation hessr,
+			       hcm_item                      hi
+			 where hessr.item_sku_id = hess.item_sku_kid
+			   and hi.ITEM_ID = hessr.item_ecr_id
+			   and hess.ecrno = #{ecrno}
+			 
+					   
+	</select>
+	<select id="getRfqCommitList"  resultMap="getDropListMap" >		
+		select distinct hi.ITEM_ID, hi.ITEM_CODE,hess.ecrno
+		  from hpm_ecr_solution_sku          hess,
+		       hpm_ecr_solution_sku_relation hessr,
+		       hcm_item                      hi
+		 where hessr.item_sku_id = hess.item_sku_kid
+		   and hi.ITEM_ID = hessr.item_ecr_id
+		   and not exists
+		  and not exists (select 'Y'
+		          from hpm_ecr_solution_sku_relation e
+		         where e.item_sku_id = hess.item_sku_kid
+		           and e.item_change_type is null)
+		         and hess.ecrno = #{ecrno}
+	</select>
+	
+	
+	<select id="getItemLov" resultMap="getLineMap" parameterType="com.hand.spc.ecr_main.view.EcrSolutionSkuV1">
+		select     hi.item_id, hi.ITEM_CODE,
+	           hi.descriptions,
+	           has.item_pirce / has.item_qty price, 
+	           hi.PRIMARY_UOM
+	      from hcm_item           hi,
+	           hcs_asl            ha,
+	           hcs_asl_control    has
+	     where   ha.item_id = hi.item_id
+	       and ha.asl_id = has.asl_id              
+		    <if test="itemCode">
+                and hi.ITEM_CODE=#{itemCode}
+            </if>
+            <if test="itemDesc">
+                and hi.descriptions=#{itemDesc}
+            </if>
+	</select>
+	<update id="updateByEcrnoAndItemId" parameterType="com.hand.spc.ecr_main.dto.EcrSolutionSku">
+				update hpm_ecr_solution_sku t
+			   set t.bom_use          = nvl(#{bomUse}, t.bom_use),
+			       t.ecr_use          = nvl(#{ecrUse}, t.ecr_use),
+			       t.sub_item_flag    = nvl(#{subItemFlag}, t.sub_item_flag),
+			       t.sub_item         = nvl(#{subItem}, t.sub_item),
+			       t.work_cost        = nvl(#{workCost}, t.work_cost),
+			       t.item_change_type = nvl(#{itemChangeType}, t.item_change_type),
+			       t.last_updated_by  = #{lastUpdatedBy},
+			       t.last_update_date = sysdate
+			 where t.item_id = #{itemId}
+			   and t.ecrno = #{ecrno}        			       
+	</update>
+	
+	<update id="updateByEcrnoAndSkuId" parameterType="com.hand.spc.ecr_main.dto.EcrSolutionSku">
+				update hpm_ecr_solution_sku t
+			   set t.bom_use          = nvl(#{bomUse}, t.bom_use),
+			       t.ecr_use          = nvl(#{ecrUse}, t.ecr_use),
+			       t.sub_item_flag    = nvl(#{subItemFlag}, t.sub_item_flag),
+			       t.sub_item         = nvl(#{subItem}, t.sub_item),
+			       t.work_cost        = nvl(#{workCost}, t.work_cost),
+			       t.item_change_type = nvl(#{itemChangeType}, t.item_change_type),
+			       t.last_updated_by  = #{lastUpdatedBy},
+			       t.last_update_date = sysdate
+			 where t.sku_id = #{skuId}
+			   and t.ecrno = #{ecrno}
+	</update>
+
+	
+	<select id="getCompletedQty" resultType="java.lang.Float">
+		  select nvl(sum(hmo.mo_qty),0)
+       from hps_make_order hmo, hps_mo_execute hme     
+      where hmo.ITEM_ID = #{itemId}
+        and nvl(hmo.item_version, '-1') = nvl(#{itemVersion}, '-1')
+        and hme.make_order_id = hmo.make_order_id
+        and hme.completed_start_time &gt;= trunc(sysdate, 'yyyy')
+        and hme.completed_end_time &gt;= trunc(sysdate, 'yyyy')
+	</select>
+	
+	<select id="getCompletedMonthQty" resultType="java.lang.Float">
+		  select nvl(sum(hmo.mo_qty),0)
+       from hps_make_order hmo, hps_mo_execute hme, hcm_item hi     
+      where  hmo.ITEM_ID = #{itemId}
+        and nvl(hmo.item_version, '-1') = nvl(#{itemVersion}, '-1')
+        and hme.make_order_id = hmo.make_order_id
+        and hme.completed_start_time &gt;= trunc(sysdate, 'mm')
+        and hme.completed_end_time &gt;= trunc(sysdate, 'mm')
+        and hme.completed_start_time &lt;trunc( trunc(sysdate, 'mm')+31)
+        and hme.completed_end_time &lt; trunc( trunc(sysdate, 'mm')+31)          
+	</select>
+	
+		
+	<select id="getForecastQty" resultType="java.lang.Float">		
+	    select nvl(sum(hfd.forecast_quantity),0)
+	       from HPS_FORECAST_DEMAND hfd
+	      where hfd.demand_date &gt;= trunc(sysdate, 'mm')
+	        and hfd.demand_date &lt; trunc(trunc(sysdate, 'yyyy') + 366, 'yyyy')
+	        and hfd.item_id= #{itemId}
+	        and nvl(hfd.item_version,'-1')= nvl(#{itemVersion} ,'-1')             
+	</select>
+	
+	<update id="updateEcrYearQty"  parameterType="com.hand.spc.ecr_main.dto.EcrSolutionSku"> 				
+		update hpm_ecr_solution_sku t
+		   set t.last_update_date = sysdate,
+		       t.last_updated_by  = #{lastUpdatedBy},
+		       t.year_plan_qty    = #{yearPlanQty}
+		 where t.sku_id = #{skuId}
+		   and t.ecrno = #{ecrno} 
+	</update>
+
+
+
+	<resultMap id="getSingleMap" type="com.hand.hcm.hcm_item_b.dto.ItemB"> 
+        <result column="ITEM_CODE" property="itemCode" jdbcType="VARCHAR" />               
+        <result column="descriptions" property="itemDescriptions" jdbcType="VARCHAR" />
+    </resultMap>
+
+	<select id="getSingle" resultMap="getSingleMap">
+		select t.ITEM_CODE,t.descriptions from   hcm_item t where t.item_id=#{itemId} AND  rownum=1
+	</select>
+	
+	
+	
+	
+	<resultMap id="getQtysMap" type="com.hand.spc.ecr_main.view.EcrApsTmpV0">
+        <result column="month" property="month" jdbcType="VARCHAR" />
+        <result column="qty" property="qty" jdbcType="VARCHAR" /> 
+        
+    </resultMap>  
+	
+	
+	
+	<select id="getCompletedQtys" resultMap="getQtysMap">
+		  select nvl(sum(hmo.mo_qty),0) qty, trunc(hme.completed_end_time,'mm') month
+		       from hps_make_order hmo, hps_mo_execute hme, hcm_item hi     
+		      where  hmo.ITEM_ID = #{itemId}
+		        and nvl(hmo.item_version, '-1') = nvl(#{itemVersion}, '-1')
+		        and hme.make_order_id = hmo.make_order_id
+		        and hme.completed_start_time &gt;= trunc(sysdate, 'mm')
+		        and hme.completed_end_time &gt;= trunc(sysdate, 'mm')
+		        and hme.completed_start_time &lt; trunc( trunc(sysdate, 'mm')+31)
+		        and hme.completed_end_time &lt; trunc( trunc(sysdate, 'mm')+31)  
+		        group by trunc(hme.completed_end_time,'mm')
+		        order by trunc(hme.completed_end_time,'mm')   
+	</select>
+	
+		
+	<select id="getForecastQtys" resultMap="getQtysMap">		
+    select nvl(sum(hfd.forecast_quantity),0) qty,trunc(hfd.demand_date,'mm') month
+       from HPS_FORECAST_DEMAND hfd
+      where hfd.demand_date &gt;= trunc(sysdate, 'mm')
+        and hfd.demand_date &lt; trunc(trunc(sysdate, 'yyyy') + 366, 'yyyy')
+        and hfd.item_id=#{itemId}
+        and nvl(hfd.item_version,'-1')= nvl(#{itemVersion} ,'-1')  
+        group by   trunc(hfd.demand_date,'mm')
+        order   by   trunc(hfd.demand_date,'mm')       
+	</select>
+	
+	
+	
+</mapper>

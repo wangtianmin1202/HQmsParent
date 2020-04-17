@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.dimension.hqm_dimension_team_assembled.mapper.DimensionTeamAssembledMapper">
+    <resultMap id="BaseResultMap" type="com.hand.dimension.hqm_dimension_team_assembled.dto.DimensionTeamAssembled">
+        <result column="KID" property="kid" jdbcType="DECIMAL" />
+        <result column="STEP" property="step" jdbcType="DECIMAL" />
+        <result column="ORDER_ID" property="orderId" jdbcType="DECIMAL" />
+        <result column="MEMBER_ID" property="memberId" jdbcType="DECIMAL" />
+        <result column="MEMBER_ROLE" property="memberRole" jdbcType="VARCHAR" />
+        <result column="REMARK" property="remark" jdbcType="VARCHAR" />
+        <result column="MEASURE_ID" property="measureId" jdbcType="DECIMAL" />
+        <result column="MEASURE_TYPE" property="measureType" jdbcType="VARCHAR" />
+        
+        
+        <result column="employee_name" property="employeeName" jdbcType="VARCHAR" />
+        <result column="employee_email" property="employeeEmail" jdbcType="VARCHAR" />
+        <result column="employee_mobil" property="employeeMobil" jdbcType="VARCHAR" />
+        <result column="org_position_name" property="orgPositionName" jdbcType="VARCHAR" />
+        <result column="org_unit_des" property="orgUnitDes" jdbcType="VARCHAR" />
+        <result column="EMPLOYEE_ID" property="employeeId" jdbcType="DECIMAL" />
+        <result column="USER_ID" property="userId" jdbcType="DECIMAL" />
+    </resultMap>
+
+<select id="queryMemberTotalNum" resultType = "java.lang.Integer">
+     SELECT SUM(COL) TOTAL
+  FROM ( SELECT COUNT(1) COL
+   		   FROM (SELECT T.ORDER_ID, L.PRINCIPAL_ID, L.ENABLE_FLAG
+                  FROM HQM_8D_ROOT_CAUSE T
+                  LEFT JOIN HQM_8D_ROOT_CAUSE_L L
+                    ON T.RCAUSE_ID = L.RCAUSE_ID) TEMP         
+          WHERE temp.ENABLE_FLAG = 'Y'
+           AND temp.PRINCIPAL_ID = #{memberId}
+           AND temp.ORDER_ID = #{orderId}
+        UNION ALL
+        SELECT COUNT(1) COL
+          FROM HQM_8D_IMMEDIATE_ACTIONS_HEAD
+         WHERE ENABLE_FLAG = 'Y'
+           AND PRINCIPAL_ID = #{memberId}
+           AND ORDER_ID = #{orderId}
+        UNION ALL
+        SELECT COUNT(1) COL
+          FROM HQM_8D_IMPROVING_ACTIONS
+         WHERE ENABLE_FLAG = 'Y'
+           AND PRINCIPAL_ID = #{memberId}
+           AND ORDER_ID = #{orderId}
+        UNION ALL
+        SELECT COUNT(1) COL
+          FROM HQM_8D_PREVENTION_ACTIONS
+         WHERE ENABLE_FLAG = 'Y'
+           AND PRINCIPAL_ID = #{memberId}
+           AND ORDER_ID = #{orderId})
+</select>
+
+<select id="myselect" resultMap="BaseResultMap"
+            parameterType="com.hand.dimension.hqm_dimension_team_assembled.dto.DimensionTeamAssembled">
+SELECT DISTINCT t.*, he.*
+  FROM hqm_8d_team_assembled t,
+       (SELECT hea.employee_id,
+               hre.name AS employee_name,
+               hre.email AS employee_email,
+               hre.mobil AS employee_mobil          
+          FROM hr_employee hre, hr_employee_assign hea
+         WHERE hre.employee_id = hea.employee_id ) he
+ WHERE 1 = 1  
+   AND t.member_id = he.employee_id
+   <if test="orderId!=null">
+   	AND t.order_id = #{orderId}
+   </if>
+</select>
+<select id="mulLovSelect" resultMap="BaseResultMap"
+            parameterType="com.hand.dimension.hqm_dimension_team_assembled.dto.DimensionTeamAssembled">
+SELECT DISTINCT t.member_id, he.*
+  FROM hqm_8d_team_assembled t,
+       (SELECT hea.employee_id,
+               hre.name AS employee_name,
+               hre.email AS employee_email,
+               hre.mobil AS employee_mobil,
+               listagg(hrb.name) within GROUP(ORDER BY hea.employee_id) AS org_position_name,
+               listagg(orb.description) within GROUP(ORDER BY hea.employee_id) org_unit_des
+          FROM hr_employee hre, hr_employee_assign hea, hr_org_position_b hrb, hr_org_unit_b orb
+         WHERE hre.employee_id = hea.employee_id
+           AND hea.position_id = hrb.position_id
+           AND hrb.unit_id = orb.unit_id
+         GROUP BY hea.employee_id, hre.name, hre.email, hre.mobil) he
+ WHERE 1 = 1
+   AND t.member_id = he.employee_id
+   <if test="employeeName != null">
+   	AND he.employee_name LIKE concat('%',concat(#{employeeName},'%'))
+   </if>
+   <if test="orgUnitDes != null">
+   	AND he.org_unit_des LIKE concat('%',concat(#{orgUnitDes},'%'))
+   </if>
+   </select>
+</mapper>

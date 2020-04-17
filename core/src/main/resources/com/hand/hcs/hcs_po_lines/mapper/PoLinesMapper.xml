@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hcs.hcs_po_lines.mapper.PoLinesMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hcs.hcs_po_lines.dto.PoLines">
+        <result column="PO_LINE_ID" property="poLineId" jdbcType="DECIMAL" />
+        <result column="PO_HEADER_ID" property="poHeaderId" jdbcType="DECIMAL" />
+        <result column="ORG_ID" property="orgId" jdbcType="DECIMAL" />
+        <result column="LINE_NUM" property="lineNum" jdbcType="DECIMAL" />
+        <result column="PLANT_ID" property="plantId" jdbcType="DECIMAL" />
+        <result column="ITEM_ID" property="itemId" jdbcType="DECIMAL" />
+        <result column="EDITION" property="edition" jdbcType="VARCHAR" />
+        <result column="UNIT_CODE" property="unitCode" jdbcType="VARCHAR" />
+        <result column="QUANTITY" property="quantity" jdbcType="DECIMAL" />
+        <result column="CANCELED_FLAG" property="canceledFlag" jdbcType="VARCHAR" />
+        <result column="CLOSED_CODE" property="closedCode" jdbcType="VARCHAR" />
+        <result column="CLOSED_DATE" property="closedDate" jdbcType="DATE" />
+        <result column="CLOSED_FLAG" property="closedFlag" jdbcType="VARCHAR" />
+        <result column="CLOSED_BY" property="closedBy" jdbcType="VARCHAR" />
+        <result column="CLOSED_REASON" property="closedReason" jdbcType="VARCHAR" />
+        <result column="ENABLE_FLAG" property="enableFlag" jdbcType="VARCHAR" />
+        <result column="LINE_STATUS" property="lineStatus" jdbcType="VARCHAR" />
+        <result column="LINE_AGENT_DESC" property="lineAgentDesc" jdbcType="VARCHAR" />
+        <result column="LINE_SUPPLIER_DESC" property="lineSupplierDesc" jdbcType="VARCHAR" />
+        <result column="SOURCE_ID" property="sourceId" jdbcType="DECIMAL" />
+        <result column="SOURCE_HEADER_ID" property="sourceHeaderId" jdbcType="DECIMAL" />
+        <result column="SOURCE_REFERENCE" property="sourceReference" jdbcType="VARCHAR" />
+        <result column="SOURCE_CODE" property="sourceCode" jdbcType="VARCHAR" />
+        <result column="DESCRIPTIONS" property="descriptions" jdbcType="VARCHAR" />
+        <result column="CID" property="cid" jdbcType="DECIMAL" />
+        <result column="UNIT_PRICE" property="unitPrice" jdbcType="DECIMAL" />
+        <result column="CURRENCY" property="currency" jdbcType="VARCHAR" />
+        <result column="TAX_RATE" property="taxRate" jdbcType="VARCHAR" />
+        <result column="LINE_TOTAL_PRICE" property="lineTotalPrice" jdbcType="DECIMAL" />
+        <result column="PRICE_UNIT" property="priceUnit" jdbcType="VARCHAR" />
+        <result column="ALLOWANCE" property="allowance" jdbcType="DECIMAL" />
+        <result column="NEED_BY_DATE" property="needByDate" jdbcType="DATE" />
+        
+        <!-- 业务字段 -->
+        <result column="SHIPMENT_NUM" property="shipmentNum" jdbcType="VARCHAR" />
+        <result column="ITEM_CODE" property="itemCode" jdbcType="VARCHAR" />
+        <result column="ITEM_NAME" property="itemName" jdbcType="VARCHAR" />
+        <result column="ITEM_EDITION" property="itemEdition" jdbcType="DECIMAL" />
+        <result column="LINE_LOCATION_DESC" property="lineLocationDesc" jdbcType="VARCHAR" />
+        <result column="LINE_LOCATION_SUPPLIER_DESC" property="lineLocationSupplierDesc" jdbcType="VARCHAR" />
+        <result column="LINE_LOCATION_ID" property="lineLocationId" jdbcType="DECIMAL" />
+        <result column="PACKING_QTY" property="packingQty" jdbcType="DECIMAL" />
+        <result column="PROMISED_DATE" property="promisedDate" jdbcType="DATE" />        
+        <result column="SHIPMENT_STATUS" property="shipmentStatus" jdbcType="VARCHAR" />
+        <result column="SHIPPED" property="shipped" jdbcType="VARCHAR" />
+        <result column="CONFIRM_TIME" property="confirmTime" jdbcType="TIMESTAMP" />
+        <result column="CONFIRM_NAME" property="confirmName" jdbcType="VARCHAR" /> 
+        <result column="PO_STATUS" property="poStatus" jdbcType="VARCHAR" /> 	
+        <result column="SUPPLIER_ID" property="supplierId" jdbcType="DECIMAL" /> 	
+        <result column="receiveQty" property="receiveQty" jdbcType="DECIMAL" />
+        <result column="PACK_QTY" property="packQty" jdbcType="DECIMAL" />
+        <result column="jprice" property="jprice" jdbcType="DECIMAL" />
+        <result column="PRIMARY_UOM" property="primaryUom" jdbcType="DECIMAL" /> 	
+        <result column="refunded_qty" property="refundedQty" jdbcType="DECIMAL" /> 
+    </resultMap>
+	
+	<!-- 明细信息查询 -->
+	<select id="query" resultMap="BaseResultMap" parameterType="com.hand.hcs.hcs_po_lines.dto.PoLines">
+SELECT hpl.line_num,
+       
+       hpl.item_id,
+       hi.item_code,
+       hi.descriptions item_name,
+       hpl.edition,
+       hpl.quantity,
+       hpl.unit_code,
+       
+       hpl.line_agent_desc,
+       hpl.po_line_id,
+       hpl.po_header_id,
+       hpl.plant_id,
+       
+       hpl.unit_price,
+       hpl.currency,
+       hpl.tax_rate,
+       
+       hpl.line_status,
+       nvl((SELECT SUM((CASE
+                        WHEN dl.line_status IN ('N', 'S', 'P') THEN
+                         dl.ship_quantity
+                        WHEN dl.line_status IN ('R', 'Q') THEN
+                         dl.receive_quantity
+                      END)) shipped
+             FROM hcs_delivery_ticket_l dl
+            WHERE dl.line_status IN ('N', 'S', 'P', 'R', 'Q')
+              AND dl.po_line_id = hpl.po_line_id
+            GROUP BY dl.po_line_id),
+           0) shipped,
+       nvl((SELECT SUM(dl.receive_quantity)
+             FROM hcs_delivery_ticket_l dl
+            WHERE dl.line_status IN ('R', 'Q')
+              AND dl.po_line_id = hpl.po_line_id
+            GROUP BY dl.po_line_id),
+           0) receiveqty,
+       
+       hph.po_status,
+       hpl.line_total_price,
+       hpl.price_unit,
+       hi.pack_qty,
+       round((hpl.unit_price * hpl.quantity / hpl.price_unit), 2) jprice,
+       (SELECT nvl(SUM(rol.quantity_refunded), 0)
+          FROM hcs_refund_order_h roh
+          LEFT JOIN hcs_refund_order_l rol
+            ON roh.ro_header_id = rol.ro_header_id
+           AND rol.ro_line_num = hpl.line_num
+         WHERE roh.refund_order_status != 'R'
+           AND rol.ro_line_status != 'R'
+           AND roh.refund_order_num = hph.po_number) refunded_qty
+  FROM hcs_po_lines hpl
+
+  JOIN hcm_item hi
+    ON hpl.item_id = hi.item_id
+  JOIN hcs_po_headers hph
+    ON hpl.po_header_id = hph.po_header_id
+
+ WHERE hi.plant_id = hph.plant_id
+   AND hi.plant_id = hpl.plant_id
+   AND hpl.po_header_id = #{poHeaderId}
+
+	</select>
+	
+	<!-- 可发运计划数量 以quantity字段承载结果-->
+	<select id="selectCanShipQty" resultMap="BaseResultMap" parameterType="com.hand.hcs.hcs_po_lines.dto.PoLines">
+SELECT h.supplier_id,
+       l.item_id,
+       l.plant_id,
+       SUM(nvl(l.quantity, 0) - NVL((CASE
+                                   WHEN NVL(ll.quantity,0) >= NVL(lll.quantity,0) THEN
+                                    NVL(ll.quantity,0)
+                                   ELSE
+                                    NVL(lll.quantity,0)
+                                 END),0) + nvl(refunded_quantity.quantity, 0)) AS quantity
+  FROM hcs_po_headers h
+  LEFT JOIN hcs_po_lines l
+    ON h.po_header_id = l.po_header_id
+   AND l.line_status = 'A'
+  LEFT JOIN (SELECT SUM(CASE
+                          WHEN dtll.line_status IN ('N', 'P', 'S') THEN
+                           NVL(dtll.ship_quantity,0)
+                          WHEN dtll.line_status IN ('Q', 'R') THEN
+                           NVL(dtll.receive_quantity,0)
+                          ELSE
+                           0
+                        END) AS quantity,
+                    hpll.po_line_id
+               FROM hcs_po_line_locations hpll
+               JOIN hcs_delivery_ticket_l dtll
+                 ON dtll.line_location_id = hpll.line_location_id
+              WHERE hpll.shipment_status IN ('A', 'C')
+              GROUP BY hpll.po_line_id) ll
+    ON ll.po_line_id = l.po_line_id
+  LEFT JOIN (SELECT SUM(NVL(hplll.quantity,0)) AS quantity, hplll.po_line_id
+               FROM hcs_po_line_locations hplll
+              WHERE hplll.shipment_status IN ('A', 'C')
+              GROUP BY hplll.po_line_id) lll
+    ON lll.po_line_id = l.po_line_id
+  LEFT JOIN (SELECT roh.refund_order_num, rol.ro_line_num, SUM(rol.quantity_refunded) AS quantity
+               FROM hcs_refund_order_h roh, hcs_refund_order_l rol
+              WHERE roh.ro_header_id = rol.ro_header_id
+                AND roh.refund_order_status != 'R'
+                AND rol.ro_line_status != 'R'
+              GROUP BY roh.refund_order_num, rol.ro_line_num) refunded_quantity
+    ON h.po_number = refunded_quantity.refund_order_num
+   AND l.line_num = refunded_quantity.ro_line_num
+ WHERE 1 = 1
+   AND h.po_status = 'A'
+ AND h.supplier_id = #{supplierId}
+ AND l.item_id = #{itemId}
+ AND l.plant_id = #{plantId}
+ GROUP BY h.supplier_id, l.item_id, l.plant_id
+	</select>
+	
+	<!-- 物料 工厂 供应商 所有的po行 -->
+	<select id="selectCanShipData" resultMap="BaseResultMap" parameterType="com.hand.hcs.hcs_po_lines.dto.PoLines">
+  SELECT h.supplier_id,
+       l.item_id,
+       l.plant_id,
+       nvl(l.quantity, 0) + nvl(refunded_quantity.quantity, 0) - nvl(ll.quantity, 0) AS quantity,
+       h.plant_id,
+       hib.primary_uom,
+       l.po_line_id,
+       h.po_header_id
+  FROM hcs_po_headers h
+  LEFT JOIN hcs_po_lines l
+    ON h.po_header_id = l.po_header_id
+    AND l.line_status = 'A'
+  LEFT JOIN hcm_item_b hib
+    ON h.plant_id = hib.plant_id
+   AND l.item_id = hib.item_id
+  LEFT JOIN (SELECT SUM(CASE
+                          WHEN dtll.line_status IN ('N', 'P', 'S') THEN
+                           nvl(dtll.ship_quantity,0)
+                          WHEN dtll.line_status IN ('Q', 'R') THEN
+                           nvl(dtll.receive_quantity,0)
+                          ELSE
+                           0
+                        END) AS quantity,
+                    hpll.po_line_id
+               FROM hcs_po_line_locations hpll
+               JOIN hcs_delivery_ticket_l dtll
+                 ON dtll.line_location_id = hpll.line_location_id
+              WHERE hpll.shipment_status IN ('A', 'C')
+              GROUP BY hpll.po_line_id) ll
+    ON ll.po_line_id = l.po_line_id
+  LEFT JOIN (SELECT roh.refund_order_num, rol.ro_line_num, SUM(rol.quantity_refunded) AS quantity
+               FROM hcs_refund_order_h roh, hcs_refund_order_l rol
+              WHERE roh.ro_header_id = rol.ro_header_id
+                AND roh.refund_order_status != 'R'
+                AND rol.ro_line_status != 'R'
+              GROUP BY roh.refund_order_num, rol.ro_line_num) refunded_quantity
+    ON h.po_number = refunded_quantity.refund_order_num
+   AND l.line_num = refunded_quantity.ro_line_num
+ WHERE 1 = 1
+ 	AND h.po_status = 'A'
+   AND h.supplier_id = #{supplierId}
+   AND l.item_id = #{itemId}
+   AND l.plant_id = #{plantId}
+ ORDER BY h.po_number, l.line_num
+	</select>
+</mapper>

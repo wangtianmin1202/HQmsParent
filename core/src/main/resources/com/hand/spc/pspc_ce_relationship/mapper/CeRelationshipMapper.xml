@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.spc.pspc_ce_relationship.mapper.CeRelationshipMapper">
+    <resultMap id="BaseResultMap" type="com.hand.spc.pspc_ce_relationship.dto.CeRelationship">
+        <result column="ce_relationship_id" property="ceRelationshipId" jdbcType="DECIMAL" />
+        <result column="tenant_id" property="tenantId" jdbcType="DECIMAL" />
+        <result column="site_id" property="siteId" jdbcType="DECIMAL" />
+        <result column="ce_group_id" property="ceGroupId" jdbcType="DECIMAL" />
+        <result column="ce_parameter_id" property="ceParameterId" jdbcType="DECIMAL" />
+        <result column="sequence" property="sequence" jdbcType="DECIMAL" />
+    </resultMap>
+
+    <select id="selectRelationshipByGroupId" parameterType="java.lang.Long" resultMap="BaseResultMap">
+        select pcr.ce_relationship_id,
+               pcr.ce_group_id,
+               pcr.ce_parameter_id
+              ,pcp.ce_parameter
+              ,pcp.ce_parameter_name
+        FROM   pspc_ce_relationship pcr
+              ,pspc_ce_parameter    pcp
+        WHERE  pcr.ce_parameter_id = pcp.ce_parameter_id
+          AND pcr.ce_group_id = #{ceGroupId}
+    </select>
+
+    <select id="selectRelationshipForUniqueCheck" parameterType="com.hand.spc.pspc_ce_relationship.dto.CeRelationship" resultMap="BaseResultMap">
+        select pcr.ce_relationship_id,
+               pcr.ce_group_id,
+               pcr.ce_parameter_id
+        FROM   pspc_ce_relationship pcr
+        WHERE  pcr.ce_parameter_id = #{ceParameterId}
+          AND  pcr.ce_group_id = #{ceGroupId}
+          <if test='__status == "update"'>
+              AND pcr.ce_relationship_id &lt;&gt; #{ceRelationshipId}
+          </if>
+    </select>
+
+</mapper>

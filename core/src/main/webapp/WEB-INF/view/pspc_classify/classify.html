@@ -1,0 +1,1164 @@
+<#include "../include/header.html">
+<script src="${base.contextPath}/common/code?CLASSIFY_GROUP_TYPE=PSPC.CLASSIFY.GROUP.TYPE" type="text/javascript"></script>
+<script type="text/javascript">
+    var viewModel = {};
+    //用于判断分类项和控制要素是新增还是编辑
+    viewModel.operateStatus = '';
+    viewModel.commonStr = ["ADD-RELATION","ADD","EDIT"];
+    var classifyViewModel = Hap.createGridViewModel("#classifyGrid");
+    var ceParameterViewModel = Hap.createGridViewModel("#ceParameterGrid");
+    //红色*
+    var spanRed = '<span style='+'color:red'+'>&nbsp;&nbsp;*</span>';
+    //TAB页的ID
+    var tabIdList = ['classifyGrid-div','ceParameterGrid'];
+</script>
+<style>
+    .head-div{
+        margin-top: 10px;
+    }
+    .head-div div{
+        height: 30px;
+    }
+    .head-div label{
+        color: black;
+        font-size: 14px;
+        line-height: 30px;
+        text-align: right;
+        width: 100%;
+    }
+    .head-div input{
+        width:150px;
+        /*margin-right:5px;*/
+    }
+    .dialog-div label{
+        color: black;
+        font-size: 14px;
+        line-height: 30px;
+        text-align: right;
+    }
+    .dialog-div input{
+        width:150px;
+    }
+    td a{
+        color:#204d74;
+    }
+    .dialog-div .row{
+        margin-top: 20px;
+    }
+    .btn-foot{
+        width: 95%;
+        position: absolute;
+        bottom: 20px;
+    }
+    .dialog-div
+</style>
+<body>
+<div id="page-content">
+    <div class="pull-right" id="query-form" style="padding-bottom:10px;">
+    <span class="btn btn-primary k-grid-add" id="head-add"
+          style="float:left;margin-right:5px;"
+          onclick="addNewHead()"><@spring.message "hap.new"/></span>
+    <span class="btn btn-success k-grid-save-changes" onclick="classifyGroupSave()" style="float:left;margin-right:5px;"><@spring.message "hap.save"/></span>
+    <span   class="btn btn-danger" onclick="deleteGroup()" style="float:left;"><@spring.message "hap.delete"/></span>
+    <div style="clear:both"></div>
+</div>
+<!-- 上方头信息 -->
+<div style="clear:both;width: 100%" class="container">
+    <!-- 分类组 -->
+    <div class="head-div row">
+        <div class="col-md-2">
+            <label><span style='color:red'>*&nbsp;&nbsp;</span><@spring.message "pspcclassify.groupcode"/>：</label>
+        </div>
+        <div class="col-md-2">
+            <input type="text" id="pscpcGroup" style="clear: both;width: 180px" required="required">
+        </div>
+        <script>
+            $("#pscpcGroup").kendoLov($.extend(<@lov "PSPC_PSPC_CLASSIFY_GROUP2"/>,{
+                textField: 'classifyGroup',
+                select:function (e) {
+                    classifyViewModel.model.classifyGroupId = e.item.classifyGroupId;
+                    ceParameterViewModel.model.classifyGroupId = e.item.classifyGroupId;
+                    //分类组信息赋值
+                    $('#classifyDescHead').val(e.item.description);
+                    $('#classifyTypeHead').data('kendoComboBox').value(e.item.classifyType);
+                    $.each(CLASSIFY_GROUP_TYPE, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (e.item.classifyType || '').toLowerCase()) {
+                            $('#classifyTypeHead').data('kendoComboBox').text(n.meaning);
+                        }
+                    });
+                    var check = ("Y"==e.item.classifyStatus)?true:false;
+                    document.getElementById('classifyEnable').checked =check;
+
+                    viewModel.lovValue = e.item.classifyGroupId;
+                }
+            }));
+        </script>
+        <div class="col-md-2">
+            <span class="btn btn-default" style="float:left;margin-right:5px;" onclick="reset()"><@spring.message "hap.reset"/></span>
+            <span class="btn btn-primary k-grid-add" style="float:left;margin-right:5px;" onclick="queryClassify()"><@spring.message "hap.query"/></span>
+        </div>
+    </div>
+    <!-- 分类组描述 -->
+    <div class="head-div row">
+        <div class="col-md-2">
+            <label><@spring.message "pspcclassify.groupdes"/>：</label>
+        </div>
+        <div class="col-md-2">
+            <input class="k-textbox" id="classifyDescHead">
+        </div>
+    </div>
+    <!-- 分类组类型 -->
+    <div class="head-div row">
+        <div class="col-md-2">
+            <label ><span style='color:red'>*&nbsp;&nbsp;</span><@spring.message "pspcclassify.grouptype"/>：</label>
+        </div>
+        <div class="col-md-2">
+            <input type="text" data-role="maskedtextbox" id="classifyTypeHead">
+        </div>
+        <script>
+            $("#classifyTypeHead").kendoComboBox({
+                dataTextField: "meaning",
+                dataValueField: "value",
+                valuePrimitive: true,
+                dataSource:CLASSIFY_GROUP_TYPE,
+                select:function (e) {
+                    console.log(e);
+                }
+            });
+        </script>
+    </div>
+    <!-- 有效性 -->
+    <div class="head-div row">
+        <div class="col-md-2">
+            <label ><@spring.message "pspcclassify.enable"/>：</label>
+        </div>
+        <div class="col-md-2">
+            <input id="classifyEnable" checked="true" type="checkbox" style="width: 20px;height: 20px;top: 50%;
+                                            transform: translateY(-50%);
+                                            position: relative;">
+        </div>
+    </div>
+</div>
+    <!-- 分类项和控制要素 tab页切换 -->
+    <div style="margin-top: 10px">
+        <ul class="nav nav-tabs" id="mytab" style="height: 39px">
+            <li class="active" data-gridid="classifyGrid-div" >
+                <a href="#showTreeUnit" data-toggle="tab">
+                    <@spring.message "pspcclassify.classifycode"/>
+                </a>
+            </li>
+            <li class="" data-gridid="ceParameterGrid">
+                <a href="#showTreeUnit" data-toggle="tab" ><@spring.message "pspcclassify.cecode"/></a>
+            </li>
+            <span class="btn btn-primary k-grid-add" id="line-add"
+                  style="float:left;margin-right:5px;position: relative;top: 50%;transform: translateY(-50%);float: right"
+                  onclick="addClassifyRelation()"><@spring.message "hap.new"/></span>
+        </ul>
+        <div id="tabContent" class="tab-content">
+            <div class="tab-pane fade in active" style="margin-top: 10px;" id="maintain">
+                <div id="page-content1">
+                    <div id='grid-container' style="clear: both">
+                        <div id="classifyGrid-div">
+                            <div style="height: 40px">
+                                <span class="btn btn-primary k-grid-add" id="addClassify"
+                                      style="margin-right:5px;float: left"
+                                      onclick="addNew()"><@spring.message "pspcclassify.newclassificationitem"/></span>
+                            </div>
+                            <div id="classifyGrid"></div>
+                        </div>
+                        <div id="ceParameterGrid" style="display: none"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="showTreeUnit" class="tab-pane fade">
+                <div id="treeList"></div>
+            </div>
+        </div>
+    </div>
+</div>
+<div style="clear: both"></div>
+<!-- 分类组新增弹窗 -->
+<div id="classifyGroupDialog" class="dialog-div" style="display: none">
+    <div class="container" style="width: 95%">
+        <!-- 分类组 -->
+        <div class="head-div row">
+            <div class="col-md-2">
+                <label><span style='color:red'>*&nbsp;&nbsp;</span>分类组：</label>
+            </div>
+            <div class="col-md-2">
+                <input type="text" class="k-textbox" id="pscpcGroup-add"  required="required">
+            </div>
+        </div>
+        <!-- 分类组描述 -->
+        <div class="head-div row">
+            <div class="col-md-2">
+                <label><@spring.message "pspcjudgementgroup.description"/>：</label>
+            </div>
+            <div class="col-md-2">
+                <input class="k-textbox" id="classifyDescHead-add">
+            </div>
+        </div>
+        <!-- 分类组类型 -->
+        <div class="head-div row">
+            <div class="col-md-2">
+                <label ><span style='color:red'>*&nbsp;&nbsp;</span><@spring.message "pspcattachment.attachmenttyp"/>：</label>
+            </div>
+            <div class="col-md-2">
+                <input type="text" data-role="maskedtextbox" id="classifyTypeHead-add">
+            </div>
+            <script>
+                $("#classifyTypeHead-add").kendoComboBox({
+                    dataTextField: "meaning",
+                    dataValueField: "value",
+                    valuePrimitive: true,
+                    dataSource:CLASSIFY_GROUP_TYPE,
+                    select:function (e) {
+                        console.log(e);
+                    }
+                });
+            </script>
+        </div>
+        <!-- 有效性 -->
+        <div class="head-div row">
+            <div class="col-md-2">
+                <label ><@spring.message "pspcclassify.enable"/>：</label>
+            </div>
+            <div class="col-md-2">
+                <input id="classifyEnable-add" checked="true" type="checkbox" style="width: 20px;height: 20px;top: 50%;
+                                            transform: translateY(-50%);
+                                            position: relative;">
+            </div>
+        </div>
+    </div>
+    <div class="btn-foot">
+        <div class="pull-right">
+            <span class="btn btn-default" onclick="closeDialog('classifyGroupDialog')" style="float:left;margin-right:10px;" ><@spring.message "hap.cancel"/></span>
+            <span class="btn btn-primary k-grid-add" onclick="classifyGroupAddSave()" style="float:left;margin-right:5px;" ><@spring.message "hap.ok"/></span>
+        </div>
+    </div>
+</div>
+<script>
+    var classifyGroupDialog = $("#classifyGroupDialog").kendoWindow({
+        width: 500,
+        height: 300,
+        title: '新增分类组',
+        visible: false,
+        modal: true,
+        actions: [
+            "Close"
+        ],
+        close:function() {
+        }
+    }).data("kendoWindow");
+</script>
+<!-- 分类项弹窗 -->
+<div id="classifyDialog" class="dialog-div" style="display: none">
+    <div class="container" style="width: 95%">
+        <div class="row">
+            <label class="col-sm-2 col-md-2"><span style='color:red'>*&nbsp;&nbsp;</span><@spring.message "pspcclassify.classifycode"/>:</label>
+            <div class="col-sm-2 sol-md-2" id="classifyItem-div">
+                <input  id="classifyItem" class="k-textbox" required="required">
+            </div>
+            <div class="col-sm-2 sol-md-2" id="classifyItem-lov-div" style="display: none">
+                <input  id="classifyItem-lov" required="required" style="display: none">
+            </div>
+        </div>
+        <script>
+            $("#classifyItem-lov").kendoLov($.extend(<@lov "PSPC_CLASSIFY_BY_CEPARAMTER"/>,{
+                textField: 'classifyCode',
+                valueField:'classifyId',
+                select:function (e) {
+                    $('#classifyDesc').val(e.item.description);
+                }
+            }));
+        </script>
+        <div class="row">
+            <label class="col-sm-2 col-md-2"><@spring.message "pspcclassify.groupdes"/>:</label>
+            <div class="col-sm-2 sol-md-2">
+                <input class="k-textbox" id="classifyDesc">
+            </div>
+        </div>
+    </div>
+    <div class="btn-foot">
+        <div class="pull-right">
+            <span class="btn btn-default" onclick="closeDialog('classifyDialog')" style="float:left;margin-right:10px;" ><@spring.message "hap.cancel"/></span>
+            <span class="btn btn-primary k-grid-add" onclick="classifySave()" style="float:left;margin-right:5px;" ><@spring.message "hap.ok"/></span>
+        </div>
+    </div>
+</div>
+<script>
+    var classifyDialog = $("#classifyDialog").kendoWindow({
+        width: 500,
+        height: 300,
+        title: '编辑分类项',
+        visible: false,
+        modal: true,
+        actions: [
+            "Close"
+        ],
+        close:function() {
+            //关闭后清空数据
+            $('#classifyItem-lov').data('kendoLov').value('');
+            $('#classifyItem-lov').data('kendoLov').text('');
+            $('#classifyItem').val('');
+            $('#classifyDesc').val('');
+            $('#classifyItem-lov').attr('disabled',false).data('kendoLov').enable(true);
+
+            viewModel.operateStatus = '';
+        }
+    }).data("kendoWindow");
+</script>
+
+<!-- 控制要素弹窗 -->
+<div id="ceParameterDialog" class="dialog-div" style="display: none">
+    <div class="container" style="width: 95%">
+
+        <div class="row">
+            <label class="col-sm-3 col-md-3"><span style='color:red'>*&nbsp;&nbsp;</span><@spring.message "pspccountsampledata.ceparameter"/>:</label>
+            <div class="col-sm-2 sol-md-2">
+                <input  id="ceParameter" required>
+            </div>
+        </div>
+        <script>
+            $("#ceParameter").kendoLov($.extend(<@lov "PSPC_PSPC_CE_PARAMETER"/>,{
+                textField: 'ceParameter',
+                valueField:'ceParameterId',
+                select:function (e) {
+                    $('#ceParameterName').val(e.item.ceParameterName);
+                    $('#ceParameterUom').val(e.item.uom);
+                    if(e.item.remark){
+                        $('#ceParameterRemark').val(e.item.remark.replace(/<br\/>/g,"\n").replace(/\&nbsp\;/g," "));
+                    }
+
+                }
+            }));
+        </script>
+        <div class="row">
+            <label class="col-sm-3 col-md-3"><@spring.message "pspcclassify.cecode"/>:</label>
+            <div class="col-sm-2 sol-md-2">
+                <input class="k-textbox" id="ceParameterName">
+            </div>
+        </div>
+        <div class="row">
+            <label class="col-sm-3 col-md-3"><@spring.message "pspcclassify.uom"/>:</label>
+            <div class="col-sm-2 sol-md-2">
+                <input class="k-textbox" id="ceParameterUom">
+            </div>
+        </div>
+        <div class="row">
+            <label class="col-sm-3 col-md-3"><@spring.message "pspcclassify.remark"/>:</label>
+            <div class="col-sm-2 sol-md-2">
+                <textarea id="ceParameterRemark">
+
+                </textarea>
+            </div>
+        </div>
+    </div>
+    <div class="btn-foot">
+        <div class="pull-right">
+            <span class="btn btn-default" onclick="closeDialog('ceParameterDialog')" style="float:left;margin-right:10px;" ><@spring.message "hap.cancel"/></span>
+            <span class="btn btn-primary k-grid-add" onclick="ceParameterSave()" style="float:left;margin-right:5px;" ><@spring.message "hap.ok"/></span>
+        </div>
+    </div>
+</div>
+<script>
+    var ceParameterDialog = $("#ceParameterDialog").kendoWindow({
+        width: 500,
+        height: 300,
+        title: '新建控制要素关系',
+        visible: false,
+        modal: true,
+        actions: [
+            "Close"
+        ],
+        close:function() {
+            //关闭后清空数据
+            $('#ceParameter').data('kendoLov').value('');
+            $('#ceParameter').data('kendoLov').text('');
+            $('#ceParameterName').val('');
+            $('#ceParameterUom').val('');
+            $('#ceParameterRemark').val('');
+            //将控制要素lov启用
+            $('#ceParameter').attr('disabled',false).data('kendoLov').enable(true);
+
+            viewModel.operateStatus = '';
+        }
+    }).data("kendoWindow");
+</script>
+<script type="text/javascript">
+    var BaseUrl = _basePath;
+    //分类项数据源
+    var classifyDataSource = new kendo.data.DataSource({
+        transport: {
+            read: {
+                url: BaseUrl + "/pspc/classify/query/classify",
+                type: "POST",
+                dataType: "json"
+            },
+            update: {
+                url: BaseUrl + "/pspc/classify/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            destroy: {
+                url: BaseUrl + "/pspc/classify/remove",
+                type: "POST",
+                contentType: "application/json"
+            },
+            create: {
+                url: BaseUrl + "/pspc/classify/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            parameterMap: function (options, type) {
+                if (type !== "read" && options.models) {
+                    var datas = Hap.prepareSubmitParameter(options, type)
+                    return kendo.stringify(datas);
+                } else if (type === "read") {
+                    return Hap.prepareQueryParameter(classifyViewModel.model.toJSON(), options)
+                }
+            }
+        },
+        batch: true,
+        serverPaging: true,
+        pageSize: 5,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+                id: "classifyId",
+                fields: {}
+            }
+        }
+    });
+    //分类项列
+    var classifyColumns = [
+        {
+            field: "classifyCode",
+            title: '<@spring.message "pspcclassify.classifycode"/>',
+            width: 120
+        },
+        {
+            field: "description",
+            title: '<@spring.message "pspcclassify.description"/>',
+            width: 120
+        },
+        {
+            field: "",
+            title: '<@spring.message "pspcclassify.operation"/>',
+            width: 120,
+            template:function (dataItem) {
+                return '<label>' +
+                    '<a href="#" onclick="classifyEdit('+dataItem.classifyId+',\''+dataItem.classifyCode+'\',\''+dataItem.description+'\')">编辑</a>' +
+                    '&nbsp;&nbsp;&nbsp;' +
+                    '<a href="#" onclick="classifyDelete('+dataItem.classifyRelationId+')">删除</a></label>';
+            }
+        }
+    ];
+    //控制要素数据源
+    var ceParameterDataSource = new kendo.data.DataSource({
+        transport: {
+            read: {
+                url: BaseUrl + "/pspc/ce/parameter/query/ce/parameter",
+                type: "POST",
+                dataType: "json"
+            },
+            update: {
+                url: BaseUrl + "/pspc/ce/parameter/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            destroy: {
+                url: BaseUrl + "/pspc/ce/parameter/remove",
+                type: "POST",
+                contentType: "application/json"
+            },
+            create: {
+                url: BaseUrl + "/pspc/ce/parameter/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            parameterMap: function (options, type) {
+                if (type !== "read" && options.models) {
+                    var datas = Hap.prepareSubmitParameter(options, type)
+                    return kendo.stringify(datas);
+                } else if (type === "read") {
+                    return Hap.prepareQueryParameter(ceParameterViewModel.model.toJSON(), options)
+                }
+            }
+        },
+        batch: true,
+        serverPaging: true,
+        pageSize: 5,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+                id: "ceParameterId",
+                fields: {}
+            }
+        }
+    });
+    //控制要素列
+    var ceParameterColumns = [
+        {
+            field: "ceParameter",
+            title: '<@spring.message "pspcclassify.cecode"/>',
+            width: 120
+        },
+        {
+            field: "ceParameterName",
+            title: '<@spring.message "pspcclassify.cedes"/>',
+            width: 120
+        },
+        {
+            field: "uom",
+            title: '<@spring.message "pspcclassify.uom"/>',
+            width: 120
+        },
+        {
+            field: "remark",
+            title: '<@spring.message "pspcclassify.remark"/>',
+            width: 120,
+            template:function (dataItem) {
+                return dataItem.remark.replace(/<br\/>/g,"\n").replace(/\&nbsp\;/g," ");
+            }
+        },
+        {
+            field: "",
+            title: '<@spring.message "pspcclassify.operation"/>',
+            width: 120,
+            template:function (dataItem) {
+                viewModel.ceParameterRemark = dataItem.remark;
+                return '<label><a onclick="ceParameterEdit(\''+dataItem.ceParameterId+'\',\''+dataItem.ceParameter+'\',\''+dataItem.ceParameterName+'\',\''+(dataItem.uom||'')+'\')">编辑</a>&nbsp;&nbsp;&nbsp;' +
+                    '<a onclick="ceParameterDelete('+dataItem.relationId+')">删除</a></label>';
+            }
+        }
+    ];
+
+    initGrid('classifyGrid',classifyDataSource,classifyColumns);
+    initGrid('ceParameterGrid',ceParameterDataSource,ceParameterColumns);
+
+    /**
+     * 查询
+     */
+    function queryClassify(){
+        if(!$('#pscpcGroup').data('kendoLov').value()){
+            Hap.showToast({
+                type:'error',  //1.success 2.error
+                message: '请选择分类组',
+                // showDuration:3000,//3秒后显示成功框
+                hideDuration:2000, //展示3秒成功框
+                "positionClass": "toast-bottom-right",
+            });
+            return;
+        }
+
+        viewModel.classifyGroupId = $('#pscpcGroup').data('kendoLov').value();
+        viewModel.classifyGroup = $('#pscpcGroup').data('kendoLov').text();
+
+        $('#classifyGrid').data('kendoGrid').dataSource.read();
+        $('#ceParameterGrid').data('kendoGrid').dataSource.read();
+    }
+
+    /**
+     * tab页切换事件
+     * id:tab页下标
+     */
+    $('#mytab>li').click(function () {
+        //如果当前tab页激活的，则不进行操作
+        if($(this).hasClass("active")){
+            return;
+        }
+
+        //切换tab页
+        $(this).addClass("active");
+        $(this).siblings('li').removeClass("active");
+        //获得当前点击li的下标
+        var gridId = $(this).data('gridid');
+        //切换表格的数据源和列
+        $('#'+gridId).siblings('div').css('display','none');
+        $('#'+gridId).css('display','block');
+
+        if(!$('#pscpcGroup').val()){
+            return;
+        }
+
+    });
+
+    /**
+     * 初始化表格，重新赋值数据源和列
+     */
+    var grid;
+    function initGrid(id,dataSource,columns){
+        grid = $("#"+id).kendoGrid({
+            dataSource: dataSource,
+            resizable: true,
+            scrollable: true,
+            navigatable: false,
+            rownumber: true,
+            autoBind:false,
+            // selectable: 'multiple, rowbox',
+            dataBound: function () {
+                if (parent.autoResizeIframe) {
+                    parent.autoResizeIframe('${RequestParameters.functionCode!}')
+                }
+            },
+            pageable: {
+                pageSizes: [5, 10, 20, 50],
+                refresh: true,
+                buttonCount: 5
+            },
+            columns: columns,
+            editable: false
+        }).data('kendoGrid');
+    }
+
+    /**
+     * 分类项编辑
+     */
+    function classifyEdit(id,code,desc) {
+        //设置弹窗标题
+        $("#classifyDialog").data('kendoWindow').title('编辑分类项');
+        viewModel.operateStatus = 'EDIT';
+        $('#classifyItem-div').css('display','none');
+        $('#classifyItem-lov-div').css('display','block');
+        $('#classifyItem-lov').data('kendoLov').value(id);
+        $('#classifyItem-lov').data('kendoLov').text(code);
+        $('#classifyItem-lov').attr('disabled',true).data('kendoLov').enable(false);
+        $('#classifyDesc').val(desc);
+        classifyDialog.center().open();
+    }
+
+    /**
+     * 分类项删除
+     */
+    function classifyDelete(relationId) {
+
+        kendo.ui.showInfoDialog({
+            title:"提示",
+            message: "确定删除？",
+            buttons:[{text: "取消",
+                type: 'default',
+                click: function (e) {
+                    e.dialog.destroy();
+                }
+            },{text: "确定",
+                type: 'primary',
+                click: function (e) {
+                    var obj = {};
+                    obj.classifyRelationId = relationId;
+                    $.ajax({
+                        type: "POST",
+                        url: BaseUrl + "/pspc/classify/relation/delete/classify",
+                        data:obj,
+                        dataType:"json",
+                        // 此处不能设置，否则后台无法接值
+                        // contentType: "application/json; charset=utf-8",
+                        success:function(data){
+                            if(data.success){
+                                Hap.showToast({
+                                    type:'success',  //1.success 2.error
+                                    message: '删除成功',
+                                    hideDuration:2000,
+                                    "positionClass": "toast-bottom-right",
+                                });
+                                //关闭弹窗
+                                classifyDialog.close();
+                                //重新查询，显示更新后的分类项
+                                $('#classifyGrid').data('kendoGrid').dataSource.read();
+                            }else{
+                                Hap.showToast({
+                                    type:'error',  //1.success 2.error
+                                    message: data.message,
+                                    hideDuration:2000,
+                                    "positionClass": "toast-bottom-right",
+                                });
+                            }
+                        },
+                        error:function(data){
+                            console.log(data);
+                        }
+                    });
+                    e.dialog.destroy();
+                }
+            }]
+        })
+    }
+
+    /**
+     * 打开 新建分类项弹窗
+     */
+    function addNew() {
+        if(!viewModel.classifyGroupId){
+            Hap.showToast({
+                type:'error',  //1.success 2.error
+                message: '请选择分类组并查询',
+                // showDuration:3000,//3秒后显示成功框
+                hideDuration:2000, //展示3秒成功框
+                "positionClass": "toast-bottom-right",
+            });
+            return;
+        }
+        //点了查询之后重新选择没有点查询
+        if(viewModel.classifyGroupId && !(viewModel.classifyGroupId == viewModel.lovValue)){
+            Hap.showToast({
+                type:'error',  //1.success 2.error
+                message: '请选择分类组并查询',
+                // showDuration:3000,//3秒后显示成功框
+                hideDuration:2000, //展示3秒成功框
+                "positionClass": "toast-bottom-right",
+            });
+            return;
+        }
+        //设置弹窗标题
+        $("#classifyDialog").data('kendoWindow').title('新建分类项');
+        viewModel.operateStatus = viewModel.commonStr[1];
+        $('#classifyItem-div').css('display','block');
+        $('#classifyItem-lov-div').css('display','none');
+        classifyDialog.center().open();
+    }
+
+    /**
+     * 打开新建分类项关系或控制要素关系窗口
+     */
+    function addClassifyRelation() {
+        //没有点查询
+        if(!viewModel.classifyGroupId){
+            Hap.showToast({
+                type:'error',  //1.success 2.error
+                message: '请选择分类组并查询',
+                // showDuration:3000,//3秒后显示成功框
+                hideDuration:2000, //展示3秒成功框
+                "positionClass": "toast-bottom-right",
+            });
+            return;
+        }
+        //点了查询之后重新选择没有点查询
+        if(viewModel.classifyGroupId && !(viewModel.classifyGroupId == viewModel.lovValue)){
+            Hap.showToast({
+                type:'error',  //1.success 2.error
+                message: '请选择分类组并查询',
+                // showDuration:3000,//3秒后显示成功框
+                hideDuration:2000, //展示3秒成功框
+                "positionClass": "toast-bottom-right",
+            });
+            return;
+        }
+        //设置弹窗标题
+        $("#classifyDialog").data('kendoWindow').title('新建分类项关系');
+
+        var gridId = $('li.active').data('gridid');
+        viewModel.operateStatus = 'ADD_EDIT';
+        //打开分类项的新建弹框
+        if(gridId == tabIdList[0]){
+            $('#classifyItem-div').css('display','none');
+            $('#classifyItem-lov-div').css('display','block');
+            classifyDialog.center().open();
+        }
+        //打开控制要素的新建弹框
+        if(gridId == tabIdList[1]){
+            ceParameterDialog.center().open();
+        }
+
+    }
+
+    /**
+     * 控制要素编辑
+     */
+    function ceParameterEdit(id,ceParameter,name,uom,remark) {
+        viewModel.operateStatus = 'EDIT';
+        viewModel.ceParameter = ceParameter;
+
+        $('#ceParameter').data('kendoLov').value(id);
+        $('#ceParameter').data('kendoLov').text(ceParameter);
+        $('#ceParameterName').val(name);
+        $('#ceParameterUom').val(uom);
+        // $('#ceParameterRemark').val(remark.replace(/<br\/>/g,"\n").replace(/\&nbsp\;/g," "));
+        $('#ceParameterRemark').val(viewModel.ceParameterRemark);
+        ceParameterDialog.center().open();
+    }
+
+    /**
+     * 控制要素删除
+     */
+    function ceParameterDelete(relationId) {
+        kendo.ui.showInfoDialog({
+            title:"提示",
+            message: "确定删除？",
+            buttons:[{text: "取消",
+                type: 'default',
+                click: function (e) {
+                    e.dialog.destroy();
+                }
+            },{text: "确定",
+                type: 'primary',
+                click: function (e) {
+                    var obj = {};
+                    obj.relationId = relationId;
+                    $.ajax({
+                        type: "POST",
+                        url: BaseUrl + "/pspc/classify/relation/delete/ce/paramter",
+                        data:obj,
+                        dataType:"json",
+                        // 此处不能设置，否则后台无法接值
+                        // contentType: "application/json; charset=utf-8",
+                        success:function(data){
+                            if(data.success){
+                                Hap.showToast({
+                                    type:'success',  //1.success 2.error
+                                    message: '删除成功',
+                                    hideDuration:2000,
+                                    "positionClass": "toast-bottom-right",
+                                });
+                                //关闭弹窗
+                                ceParameterDialog.close();
+                                //重新查询，显示更新后的分类项
+                                $('#ceParameterGrid').data('kendoGrid').dataSource.read();
+                            }else{
+                                Hap.showToast({
+                                    type:'error',  //1.success 2.error
+                                    message: data.message,
+                                    hideDuration:2000,
+                                    "positionClass": "toast-bottom-right",
+                                });
+                            }
+                        },
+                        error:function(data){
+                            console.log(data);
+                        }
+                    });
+                    e.dialog.destroy();
+                }
+            }]
+        })
+    }
+
+    /**
+     * 重置
+     */
+    function reset() {
+        window.location.reload();
+    }
+
+    /**
+     * 分类组保存
+     */
+    function classifyGroupSave() {
+        if(!viewModel.classifyGroupId){
+            Hap.showToast({
+                type:'error',  //1.success 2.error
+                message: "请先输入并查询",
+                hideDuration:2000,
+                "positionClass": "toast-bottom-right",
+            });
+            return;
+        }
+//点了查询之后重新选择没有点查询
+        if(viewModel.classifyGroupId && !(viewModel.classifyGroupId == viewModel.lovValue)){
+            Hap.showToast({
+                type:'error',  //1.success 2.error
+                message: '请选择分类组并查询',
+                // showDuration:3000,//3秒后显示成功框
+                hideDuration:2000, //展示3秒成功框
+                "positionClass": "toast-bottom-right",
+            });
+            return;
+        }
+        //构造保存的数据
+        var obj = {};
+        if(viewModel.lovValue == viewModel.classifyGroupId){
+            obj.saveType = "EDIT";
+        }else{
+            obj.saveType = "COPY_SAVE";
+        }
+        //此处如果是副本保存传的是之前的id
+        obj.classifyGroupId = viewModel.lovValue;
+        obj.copyGroupId = viewModel.classifyGroupId;
+        obj.classifyGroup = $('#pscpcGroup').data('kendoLov').text();
+        obj.description = $('#classifyDescHead').val();
+        obj.classifyType = $('#classifyTypeHead').data('kendoComboBox').value();
+        obj.classifyStatus = document.getElementById("classifyEnable").checked?'Y':'N';
+        obj.tenantId = -1;
+        obj.siteId = -1;
+        //传入后台
+        $.ajax({
+            type: "POST",
+            url: BaseUrl + "/pspc/classify/group/save/classify/group",
+            data:obj,//json序列化
+            datatype:"json", //此处不能省略
+            success:function(data){
+                if(data.success){
+                    Hap.showToast({
+                        type:'success',  //1.success 2.error
+                        message: '保存成功',
+                        hideDuration:2000,
+                        "positionClass": "toast-bottom-right",
+                    });
+                }else{
+                    Hap.showToast({
+                        type:'error',  //1.success 2.error
+                        message: data.message,
+                        hideDuration:2000,
+                        "positionClass": "toast-bottom-right",
+                    });
+                }
+            },
+            error:function(data){
+                alert(JSON.stringify(data));
+            }
+        });
+    }
+
+    /**
+     * 分类项保存
+     */
+    function classifySave() {
+        //根据是新增还是编辑判断是否启动lov
+        if(viewModel.operateStatus == "ADD_EDIT"){
+            if(!$('#classifyItem-lov').val()){
+                Hap.showToast({
+                    type:'error',  //1.success 2.error
+                    message: '请填写分类项',
+                    hideDuration:2000,
+                    "positionClass": "toast-bottom-right",
+                });
+                return;
+            }
+        }
+        if(viewModel.operateStatus == "EDIT"){
+            if(!$('#classifyItem-lov').val()){
+                Hap.showToast({
+                    type:'error',  //1.success 2.error
+                    message: '请选择分类项',
+                    hideDuration:2000,
+                    "positionClass": "toast-bottom-right",
+                });
+                return;
+            }
+        }
+
+        //构造传入后台的数据
+        var obj = {};
+        //只有编辑才往后台传id
+        if(viewModel.operateStatus == viewModel.commonStr[1]){
+            //新建分类项 获得输入的文本框的值
+            obj.classifyCode =  $('#classifyItem').val();
+        }else{
+            //修改分类项或者新增关系获取lov的值
+            obj.classifyCode =  $('#classifyItem-lov').data('kendoLov').text();
+            obj.classifyId = $('#classifyItem-lov').data('kendoLov').value();
+        }
+
+        obj.description = $('#classifyDesc').val();
+        obj.classifyGroupId = viewModel.lovValue;
+        obj.operateStatus = viewModel.operateStatus;
+        obj.tenantId = -1;
+        obj.siteId = -1;
+        $.ajax({
+            type: "POST",
+            url: BaseUrl + "/pspc/classify/add/update/classify",
+            data:obj,
+            dataType:"json",
+            // 此处不能设置，否则后台无法接值
+            // contentType: "application/json; charset=utf-8",
+            success:function(data){
+                if(data.success){
+                    Hap.showToast({
+                        type:'success',  //1.success 2.error
+                        message: '保存成功',
+                        hideDuration:2000,
+                        "positionClass": "toast-bottom-right",
+                    });
+                    //关闭弹窗
+                    classifyDialog.close();
+                    //重新查询，显示更新后的分类项
+                    $('#classifyGrid').data('kendoGrid').dataSource.read();
+                }else{
+                    Hap.showToast({
+                        type:'error',  //1.success 2.error
+                        message: data.message,
+                        hideDuration:2000,
+                        "positionClass": "toast-bottom-right",
+                    });
+                }
+            },
+            error:function(data){
+                console.log(data);
+            }
+        });
+    }
+
+    /**
+     * 关闭弹窗
+     */
+    function closeDialog(dialogId) {
+        $('#'+dialogId).data('kendoWindow').close();
+    }
+
+    /**
+     * 控制要素保存
+     */
+    function ceParameterSave() {
+        if(!$('#ceParameter').data('kendoLov').text()){
+            Hap.showToast({
+                type:'error',  //1.success 2.error
+                message: '请选择或输入控制要素',
+                hideDuration:2000,
+                "positionClass": "toast-bottom-right",
+            });
+            return;
+        }
+        //构造传入后台的数据
+        var obj = {};
+        obj.ceParameterId = $('#ceParameter').data('kendoLov').value();
+        obj.ceParameter =  $('#ceParameter').data('kendoLov').text();
+        obj.ceParameterName = $('#ceParameterName').val();
+        obj.classifyGroupId = viewModel.lovValue;
+        obj.operateStatus = viewModel.operateStatus;
+        obj.uom = $('#ceParameterUom').val();
+        // obj.remark = $('#ceParameterRemark').val().replace(/\r\n/g, '<br/>').replace(/\n/g, '<br/>').replace(/\s/g, ' ');
+        obj.remark = $('#ceParameterRemark').val();
+        obj.tenantId = -1;
+        obj.siteId = -1;
+        $.ajax({
+            type: "POST",
+            url: BaseUrl + "/pspc/classify/add/update/ce/parameter",
+            data:obj,
+            dataType:"json",
+            // 此处不能设置，否则后台无法接值
+            // contentType: "application/json; charset=utf-8",
+            success:function(data){
+                if(data.success){
+                    Hap.showToast({
+                        type:'success',  //1.success 2.error
+                        message: '保存成功',
+                        hideDuration:2000,
+                        "positionClass": "toast-bottom-right",
+                    });
+                    //关闭弹窗
+                    ceParameterDialog.close();
+                    //重新查询，显示更新后的分类项
+                    $('#ceParameterGrid').data('kendoGrid').dataSource.read();
+                }else{
+                    Hap.showToast({
+                        type:'error',  //1.success 2.error
+                        message: data.message,
+                        hideDuration:2000,
+                        "positionClass": "toast-bottom-right",
+                    });
+                }
+            },
+            error:function(data){
+                console.log(data);
+            }
+        });
+    }
+
+    /**
+     * 删除分类组
+     */
+    function deleteGroup() {
+        if(!viewModel.classifyGroupId){
+            Hap.showToast({
+                type:'error',  //1.success 2.error
+                message: '请选择分类组并点击查询',
+                hideDuration:2000,
+                "positionClass": "toast-bottom-right",
+            });
+            return;
+        }
+        var obj = {};
+        obj.classifyGroupId = viewModel.classifyGroupId;
+        $.ajax({
+            type: "POST",
+            url: BaseUrl + "/pspc/classify/group/delete/group/relation",
+            data:obj,
+            dataType:"json",
+            success:function(data){
+                if(data.success){
+                    Hap.showToast({
+                        type:'success',  //1.success 2.error
+                        message: '删除成功',
+                        hideDuration:2000,
+                        "positionClass": "toast-bottom-right",
+                    });
+                    window.location.reload();
+                }else{
+                    Hap.showToast({
+                        type:'error',  //1.success 2.error
+                        message: data.message,
+                        hideDuration:2000,
+                        "positionClass": "toast-bottom-right",
+                    });
+                }
+            },
+            error:function(data){
+                console.log(data);
+            }
+        });
+    }
+
+    /**
+     * 打开新增分类组的弹框
+     */
+    function addNewHead() {
+        classifyGroupDialog.center().open();
+    }
+
+    /**
+     * 新增分类组
+     */
+    function classifyGroupAddSave() {
+        if(!$('#pscpcGroup-add').val()){
+            Hap.showToast({
+                type:'error',  //1.success 2.error
+                message: "请填写分类组",
+                hideDuration:2000,
+                "positionClass": "toast-bottom-right",
+            });
+            return;
+        }
+        //构造保存的数据
+        var obj = {};
+        obj.saveType = viewModel.commonStr[1];
+        obj.classifyGroup = $('#pscpcGroup-add').val();
+        obj.description = $('#classifyDescHead-add').val();
+        obj.classifyType = $('#classifyTypeHead-add').data('kendoComboBox').value();
+        obj.classifyStatus = document.getElementById("classifyEnable-add").checked?'Y':'N';
+        obj.tenantId = -1;
+        obj.siteId = -1;
+        //传入后台
+        $.ajax({
+            type: "POST",
+            url: BaseUrl + "/pspc/classify/group/save/classify/group",
+            data:obj,//json序列化
+            datatype:"json", //此处不能省略
+            success:function(data){
+                if(data.success){
+                    Hap.showToast({
+                        type:'success',  //1.success 2.error
+                        message: '保存成功',
+                        hideDuration:2000,
+                        "positionClass": "toast-bottom-right",
+                    });
+                    //保存成功后关闭新建的弹窗
+                    classifyGroupDialog.close();
+                }else{
+                    Hap.showToast({
+                        type:'error',  //1.success 2.error
+                        message: data.message,
+                        hideDuration:2000,
+                        "positionClass": "toast-bottom-right",
+                    });
+                }
+            },
+            error:function(data){
+                alert(JSON.stringify(data));
+            }
+        });
+    }
+</script>
+</body>
+</html>

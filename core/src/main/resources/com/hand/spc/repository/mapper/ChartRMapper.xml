@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.spc.repository.mapper.ChartRMapper">
+
+     <!-- 获取控制图以及关联的控制图明细 -->
+    <resultMap id="chartResultMap" type="com.hand.spc.repository.dto.ChartR">
+
+        <result column="chart_id" property="chartId" jdbcType="DECIMAL"/>
+        <result column="tenant_id" property="tenantId" jdbcType="DECIMAL"/>
+        <result column="site_id" property="siteId" jdbcType="DECIMAL"/>
+        <result column="chart_code" property="chartCode" jdbcType="VARCHAR"/>
+        <result column="description" property="description" jdbcType="VARCHAR"/>
+        <result column="chart_type" property="chartType" jdbcType="VARCHAR"/>
+        <result column="multi_map_single" property="multiMapSingle" jdbcType="VARCHAR"/>
+        <result column="multi_map_normality" property="multiMapNormality" jdbcType="VARCHAR"/>
+        <result column="multi_map_cp" property="multiMapCp" jdbcType="VARCHAR"/>
+        <result column="multi_map_plato" property="multiMapPlato" jdbcType="VARCHAR"/>
+        <result column="chart_title" property="chartTitle" jdbcType="VARCHAR"/>
+        <result column="trigger_message" property="triggerMessage" jdbcType="VARCHAR"/>
+        <result column="subgroup_size" property="subgroupSize" jdbcType="DECIMAL"/>
+        <result column="max_plot_points" property="maxPlotPoints" jdbcType="DECIMAL"/>
+        <result column="tick_label_x" property="xTickLabel" jdbcType="VARCHAR"/>
+        <result column="object_version_number" property="objectVersionNumber" jdbcType="DECIMAL"/>
+
+        <collection property="chartDetailList" ofType="com.hand.spc.repository.dto.ChartDetailR">
+            <result column="chart_detail_id" property="chartDetailId" jdbcType="DECIMAL"/>
+            <result column="detail_tenant_id" property="tenantId" jdbcType="DECIMAL"/>
+            <result column="detail_site_id" property="siteId" jdbcType="DECIMAL"/>
+            <result column="detail_chart_id" property="chartId" jdbcType="DECIMAL"/>
+            <result column="chart_detail_type" property="chartDetailType" jdbcType="VARCHAR"/>
+            <result column="axis_label_x" property="xAxisLabel" jdbcType="VARCHAR"/>
+            <result column="axis_label_y" property="yAxisLabel" jdbcType="VARCHAR"/>
+            <result column="axis_max_y" property="yAxisMax" jdbcType="DECIMAL"/>
+            <result column="axis_min_y" property="yAxisMin" jdbcType="DECIMAL"/>
+            <result column="control_limit_usage" property="controlLimitUsage" jdbcType="VARCHAR"/>
+            <result column="upper_control_limit" property="upperControlLimit" jdbcType="DECIMAL"/>
+            <result column="center_line" property="centerLine" jdbcType="DECIMAL"/>
+            <result column="lower_control_limit" property="lowerControlLimit" jdbcType="DECIMAL"/>
+            <result column="display_spec_limit" property="displaySpecLimit" jdbcType="DECIMAL"/>
+            <result column="upper_spec_limit" property="upperSpecLimit" jdbcType="DECIMAL"/>
+            <result column="spec_target" property="specTarget" jdbcType="DECIMAL"/>
+            <result column="lower_spec_limit" property="lowerSpecLimit" jdbcType="DECIMAL"/>
+            <result column="enable_judge_group" property="enableJudgeGroup" jdbcType="VARCHAR"/>
+            <result column="judgement_group_id" property="judgementGroupId" jdbcType="DECIMAL"/>
+            <result column="judgement_group_code" property="judgementGroupCode" jdbcType="VARCHAR"/>
+            <result column="detail_object_version_number" property="objectVersionNumber" jdbcType="DECIMAL"/>
+        </collection>
+    </resultMap>
+
+    <select id="selectByChartCode" parameterType="com.hand.spc.repository.dto.ChartR" resultMap="chartResultMap">
+        SELECT
+                pc.chart_id,
+                pc.tenant_id,
+                pc.site_id,
+                pc.chart_code,
+                pc.description,
+                pc.chart_type,
+                pc.multi_map_single,
+                pc.multi_map_normality,
+                pc.multi_map_cp,
+                pc.multi_map_plato,
+                pc.chart_title,
+                pc.trigger_message,
+                pc.subgroup_size,
+                pc.max_plot_points,
+                pc.tick_label_x,
+                pc.object_version_number,
+                pcd.chart_detail_id,
+                pcd.tenant_id AS detail_tenant_id,
+                pcd.site_id AS detail_site_id,
+                pcd.chart_id AS detail_chart_id,
+                pcd.chart_detail_type,
+                pcd.axis_label_x,
+                pcd.axis_label_y,
+                pcd.axis_max_y,
+                pcd.axis_min_y,
+                pcd.control_limit_usage,
+                pcd.upper_control_limit,
+                pcd.center_line,
+                pcd.lower_control_limit,
+                pcd.display_spec_limit,
+                pcd.upper_spec_limit,
+                pcd.spec_target,
+                pcd.lower_spec_limit,
+                pcd.enable_judge_group,
+                pcd.judgement_group_id,
+                pjg.judgement_group_code,
+                pcd.object_version_number AS detail_object_version_number
+            FROM
+                pspc_chart pc,
+                pspc_chart_detail pcd
+            LEFT JOIN pspc_judgement_group pjg ON pjg.tenant_id = pcd.tenant_id
+            AND pjg.site_id = pcd.site_id
+            AND pjg.judgement_group_id = pcd.judgement_group_id
+            WHERE
+                pc.chart_id = pcd.chart_id
+            AND pc.tenant_id = #{tenantId,jdbcType=DECIMAL}
+            AND pc.site_id = #{siteId,jdbcType=DECIMAL}
+            AND pc.chart_code = #{chartCode,jdbcType=VARCHAR}
+    </select>
+
+    <select id="queryChartEntity" parameterType="com.hand.spc.repository.dto.EntityR" resultType="com.hand.spc.repository.dto.ChartR">
+            SELECT
+                pc.chart_id,
+                pc.tenant_id,
+                pc.site_id,
+                pc.chart_code,
+                pc.description,
+                pc.chart_type,
+                pc.multi_map_single,
+                pc.multi_map_normality,
+                pc.multi_map_cp,
+                pc.multi_map_plato,
+                pc.chart_title,
+                pc.trigger_message,
+                pc.subgroup_size,
+                pc.max_plot_points,
+                pc.tick_label_x,
+                pc.object_version_number,
+                pc.creation_date,
+                pc.created_by,
+                pc.last_updated_by,
+                pc.last_update_date
+            FROM
+                pspc_entity pe,
+                pspc_chart pc
+            WHERE
+                pc.tenant_id = pe.tenant_id
+            AND pc.site_id = pe.site_id
+            AND pc.chart_id = pe.chart_id
+            AND pe.tenant_id = #{tenantId,jdbcType=DECIMAL}
+            AND pe.site_id = #{siteId,jdbcType=DECIMAL}
+            AND pe.entity_code = #{entityCode,jdbcType=VARCHAR}
+            AND pe.entity_version = #{entityVersion,jdbcType=VARCHAR}
+    </select>
+
+
+    <select id="queryChartByEntity" parameterType="com.hand.spc.repository.dto.EntityR" resultMap="chartResultMap">
+            SELECT
+                pc.chart_id,
+                pc.tenant_id,
+                pc.site_id,
+                pc.chart_code,
+                pc.description,
+                pc.chart_type,
+                pc.multi_map_single,
+                pc.multi_map_normality,
+                pc.multi_map_cp,
+                pc.multi_map_plato,
+                pc.chart_title,
+                pc.trigger_message,
+                pc.subgroup_size,
+                pc.max_plot_points,
+                pc.tick_label_x,
+                pcd.chart_detail_id,
+                pcd.chart_detail_type,
+                pcd.axis_label_x,
+                pcd.axis_label_y,
+                pcd.axis_max_y,
+                pcd.axis_min_y,
+                pcd.control_limit_usage,
+                pcd.upper_control_limit,
+                pcd.center_line,
+                pcd.lower_control_limit,
+                pcd.display_spec_limit,
+                pcd.upper_spec_limit,
+                pcd.spec_target,
+                pcd.lower_spec_limit,
+                pcd.enable_judge_group,
+                pcd.judgement_group_id
+            FROM
+                pspc_entity pe,
+                pspc_chart pc,
+                pspc_chart_detail pcd
+            WHERE
+                pc.tenant_id = pe.tenant_id
+            AND pc.site_id = pe.site_id
+            AND pc.chart_id = pe.chart_id
+            AND pcd.tenant_id = pc.tenant_id
+            AND pcd.site_id = pc.site_id
+            AND pcd.chart_id = pc.chart_id
+            AND pe.tenant_id = #{tenantId,jdbcType=DECIMAL}
+            AND pe.site_id = #{siteId,jdbcType=DECIMAL}
+            AND pe.entity_code = #{entityCode,jdbcType=VARCHAR}
+            AND pe.entity_version = #{entityVersion,jdbcType=VARCHAR}
+    </select>
+
+
+
+
+    <select id="selectByIndex" parameterType="com.hand.spc.repository.dto.ChartR" resultType="com.hand.spc.repository.dto.ChartR">
+        select
+            chart_id,
+            tenant_id,
+            site_id,
+            chart_code,
+            description,
+            chart_type,
+            multi_map_single,
+            multi_map_normality,
+            multi_map_cp,
+            multi_map_plato,
+            chart_title,
+            trigger_message,
+            subgroup_size,
+            max_plot_points,
+            tick_label_x,
+            object_version_number,
+            creation_date,
+            created_by,
+            last_updated_by,
+            last_update_date
+
+        from
+          pspc_chart
+        where
+        1=1
+            AND site_id = #{siteId}
+            AND tenant_id = #{tenantId}
+            AND chart_code = #{chartCode}
+    </select>
+
+</mapper>

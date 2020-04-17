@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hcs.hcs_po_headers.mapper.PoHeadersMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hcs.hcs_po_headers.dto.PoHeaders">
+        <result column="PO_HEADER_ID" property="poHeaderId" jdbcType="DECIMAL" />
+        <result column="PO_NUMBER" property="poNumber" jdbcType="VARCHAR" />
+        <result column="ORG_ID" property="orgId" jdbcType="DECIMAL" />
+        <result column="PLANT_ID" property="plantId" jdbcType="DECIMAL" />
+        <result column="SUPPLIER_ID" property="supplierId" jdbcType="DECIMAL" />
+        <result column="SUPPLIER_SITE_ID" property="supplierSiteId" jdbcType="DECIMAL" />
+        <result column="PO_AGENT_ID" property="poAgentId" jdbcType="DECIMAL" />
+        <result column="AGENT_FULL_NAME" property="agentFullName" jdbcType="VARCHAR" />
+        <result column="AGENT_EMAIL" property="agentEmail" jdbcType="VARCHAR" />
+        <result column="PO_ORDER_TYPE" property="poOrderType" jdbcType="VARCHAR" />
+        <result column="PO_STATUS" property="poStatus" jdbcType="VARCHAR" />
+        <result column="APPROVED_STATUS" property="approvedStatus" jdbcType="VARCHAR" />
+        <result column="CANCELED_DATE" property="canceledDate" jdbcType="DATE" />
+        <result column="CLOSED_FLAG" property="closedFlag" jdbcType="VARCHAR" />
+        <result column="CLOSED_DATE" property="closedDate" jdbcType="DATE" />
+        <result column="CONFIRM_FLAG" property="confirmFlag" jdbcType="VARCHAR" />
+        <result column="CONFIRM_TIME" property="confirmTime" jdbcType="DATE" />
+        <result column="SOURCE_ID" property="sourceId" jdbcType="DECIMAL" />
+        <result column="SOURCE_REFERENCE" property="sourceReference" jdbcType="VARCHAR" />
+        <result column="SOURCE_CODE" property="sourceCode" jdbcType="VARCHAR" />
+        <result column="AGENT_DESC" property="agentDesc" jdbcType="VARCHAR" />
+        <result column="SUPPLIER_DESC" property="supplierDesc" jdbcType="VARCHAR" />
+        <result column="EDITION" property="edition" jdbcType="DECIMAL" />
+        <result column="CURRENCY" property="currency" jdbcType="VARCHAR" />
+        <result column="TAX_RATE" property="taxRate" jdbcType="VARCHAR" />
+        <result column="REMARKS" property="remarks" jdbcType="VARCHAR" />
+        <result column="ABSTRACTS" property="abstracts" jdbcType="VARCHAR" />
+        <result column="CONTACTS" property="contacts" jdbcType="VARCHAR" />
+        <result column="CID" property="cid" jdbcType="DECIMAL" />
+        <result column="CANCELED_FLAG" property="canceledFlag" jdbcType="VARCHAR" />
+        <result column="RELEASE_DATE" property="releaseDate" jdbcType="DATE" />
+        <result column="URGENT_STATUS" property="urgentStatus" jdbcType="VARCHAR" />
+        <result column="URGENT_TIME" property="urgentTime" jdbcType="TIMESTAMP" />
+        <result column="TOTAL_PRICE" property="totalPrice" jdbcType="DECIMAL" />
+<!--         <result column="TOTAL_PRICE" property="totalPrice" jdbcType="DECIMAL" /> -->
+<!--         <result column="TOTAL_PRICE" property="totalPrice" jdbcType="DECIMAL" /> -->
+        
+        <!-- 业务字段 -->
+        <result column="SUPPLIER_SITE_CODE" property="supplierSiteCode" jdbcType="VARCHAR" />
+        <result column="SUPPLIER_SITE_NAME" property="supplierSiteName" jdbcType="VARCHAR" />
+        <result column="BUSINESS_UNIT_ID" property="businessUnitId" jdbcType="DECIMAL" />
+        <result column="BUSINESS_UNIT_CODE" property="businessUnitCode" jdbcType="VARCHAR" />
+        <result column="BUSINESS_UNIT_NAME" property="businessUnitName" jdbcType="VARCHAR" />
+        <result column="PLANT_CODE" property="plantCode" jdbcType="VARCHAR" />
+        <result column="PLANT_NAME" property="plantName" jdbcType="VARCHAR" />
+        <result column="USER_TYPE" property="userType" jdbcType="VARCHAR" />
+        <result column="START_TIME" property="startTime" jdbcType="VARCHAR" />
+        <result column="END_TIME" property="endTime" jdbcType="VARCHAR" />
+        <result column="unPriceSum" property="unPriceSum" jdbcType="DECIMAL" /> 
+        <result column="priceSum" property="priceSum" jdbcType="DECIMAL" />   
+        <result column="purchase_group" property="purchaseGroup" jdbcType="VARCHAR" /> 
+        <result column="SUPPLIER_NAME" property="supplierName" jdbcType="VARCHAR" /> 
+        <result column="SUPPLIER_CODE" property="supplierCode" jdbcType="VARCHAR" />     
+    </resultMap>
+	<!-- userType为 S -->
+	<select id="queryUtilS" resultMap="BaseResultMap" parameterType="com.hand.hcs.hcs_po_headers.dto.PoHeaders"> 
+		select hss.supplier_id,
+		       hss.supplers_site_id,
+		       hss.supplier_site_code,
+		       hss.description SUPPLIER_SITE_NAME,
+		       hbus.business_unit_id,
+		       hbu.business_unit_code,
+		       hbu.business_unit_name,
+		       hbup.plant_id,
+		       hp.plant_code,
+		       hp.descriptions PLANT_NAME
+		from hcs_supplier_site hss
+		join HCS_BUSINESS_UNIT_SUPPLIER hbus on hss.supplier_id = hbus.supplier_id
+		join HCS_BUSINESS_UNIT hbu on hbus.business_unit_id = hbu.business_unit_id
+		join HCS_BUSINESS_UNIT_PLANT hbup on hbus.business_unit_id = hbup.business_unit_id
+		join hcm_plant hp on hbup.plant_id = hp.plant_id
+		where 1=1
+		and hss.supplier_id = #{supplierId}
+		and hss.start_date &lt;= sysdate
+		and nvl(hss.end_date,sysdate) &gt;= sysdate
+		and hbus.enable_flag = 'Y'
+	</select>
+	<!-- userType不为 S -->
+	<select id="queryUtilNoS" resultMap="BaseResultMap" parameterType="com.hand.hcs.hcs_po_headers.dto.PoHeaders">
+		select '' SUPPLIER_ID,
+		       hbu.business_unit_id,
+		       hbu.business_unit_code,
+		       hbu.business_unit_name,
+		       hbup.plant_id,
+		       hp.plant_code,
+		       hp.descriptions PLANT_NAME
+		from HCS_BUSINESS_UNIT hbu 
+		join HCS_BUSINESS_UNIT_PLANT hbup on hbu.business_unit_id = hbup.business_unit_id
+		join hcm_plant hp on hbup.plant_id = hp.plant_id
+		where hbu.enabled_flag = 'Y'
+		and hbup.start_date &lt;= sysdate
+		and nvl(hbup.end_date,sysdate) &gt;= sysdate
+	</select>
+	<!-- 采购订单头查询 -->
+	<select id="query" resultMap="BaseResultMap" parameterType="com.hand.hcs.hcs_po_headers.dto.PoHeaders">
+			select distinct hph.PO_HEADER_ID,
+		           hph.po_number,
+		           hph.po_status,
+		           hph.po_order_type,
+		           hp.descriptions PLANT_NAME,
+		           hss.description SUPPLIER_SITE_NAME,
+		           hph.agent_full_name,
+		           hph.urgent_status,
+		           hph.urgent_time,
+		           hph.agent_desc,
+		           hph.edition,
+		           hph.PLANT_ID,
+		           hss.supplers_site_id,
+		           hph.supplier_id,
+		           hs.supplier_name,
+		           hs.supplier_code,
+		           hph.release_date,
+		           su.user_id,
+		           (select sum(ROUND(hpl.unit_price * hpl.quantity /
+	                 hpl.price_unit))
+					  from hcs_po_lines hpl
+					 where hpl.enable_flag = 'Y'
+					   and hpl.po_header_id = hph.PO_HEADER_ID
+					 group by hpl.po_header_id) unPriceSum,
+					 (SELECT sum(ROUND(hpl.unit_price * hpl.quantity * substr(hpl.TAX_RATE,0,length(hpl.TAX_RATE)-1)*0.01 /
+	                         hpl.price_unit,2))
+	          FROM hcs_po_lines hpl
+	         WHERE hpl.enable_flag = 'Y'
+	           AND hpl.po_header_id = hph.PO_HEADER_ID
+	         GROUP BY hpl.po_header_id) priceSum
+		    from sys_user su
+		    join hcs_po_headers hph on decode(su.user_type,'S',su.supplier_id,hph.supplier_id) = hph.supplier_id
+		    left join hcs_supplier_site hss on hph.supplier_site_id = hss.supplers_site_id
+		    join hcs_suppliers hs on hph.supplier_id = hs.supplier_id 
+		    join hcm_plant hp on hph.plant_id =hp.plant_id 
+			<if test="purchaseGroup != null">
+	          	left join hcs_asl_control hac on hac.purchase_group = #{purchaseGroup}
+	          	left join hcs_asl ha on hac.asl_id = ha.asl_id and ha.enable_flag = 'Y'
+	         </if>
+		where 1=1
+		<if test="purchaseGroup!=null">
+			and hph.plant_id = ha.plant_id
+			and hph.supplier_id = ha.supplier_id
+		</if>
+		and su.user_id = #{request.userId}
+		<if test = "poNumber != null">
+			and hph.po_number LIKE concat('%',concat(#{poNumber,jdbcType=VARCHAR},'%'))
+		</if>
+		<if test = "poHeaderId != null">
+			and hph.PO_HEADER_ID = #{poHeaderId}
+		</if>
+		<if test = "poOrderType != null">
+			and hph.po_order_type = #{poOrderType}
+		</if>
+		<if test = "urgentStatus != null">
+			and hph.urgent_status = #{urgentStatus}
+		</if>
+		<if test = "poStatus != null">
+			and hph.po_status = #{poStatus}
+		</if>
+		<if test = "startTime != null">
+			and to_date(to_char(hph.release_date ,'yyyy-mm-dd'),'yyyy-mm-dd') &gt;= to_date(#{startTime}, 'yyyy-mm-dd hh24:mi:ss')
+		</if>
+		<if test = "endTime != null">
+			and to_date(to_char(hph.release_date ,'yyyy-mm-dd'),'yyyy-mm-dd') &lt;= to_date(#{endTime}, 'yyyy-mm-dd hh24:mi:ss')
+		</if>
+		<if test = "plantId != null">
+			and hp.PLANT_ID = #{plantId}
+		</if>
+		<if test = "supplierSiteId != null">
+			and hss.SUPPLIER_SITE_ID = #{supplierSiteId}
+		</if>
+		<if test = "supplierId != null">
+			and hph.supplier_id = #{supplierId}
+		</if>
+		<if test="itemId != null">
+		   AND EXISTS (SELECT 1
+          FROM hcs_po_lines pol
+         WHERE pol.po_header_id = hph.po_header_id
+           AND pol.item_id = #{itemId})
+		</if>
+		order by hph.release_date desc
+	</select>
+	
+	<!-- 工厂查询 -->
+	<select id="selectPlant" resultType="java.lang.Float">
+	SELECT hpl.plant_id
+  FROM hcs_po_headers hph, hcs_po_lines hpl
+ WHERE hph.po_header_id = hpl.po_header_id
+ AND hph.po_number = #{0}
+ AND hpl.line_num = #{1}
+	</select>
+	<!-- 状态不为N的数量 -->
+	<select id="getNoStatusCount" resultType="java.lang.Float">
+	SELECT COUNT(1)
+  FROM hcs_po_headers hph, hcs_po_lines hpl
+ WHERE hph.po_header_id = hpl.po_header_id
+   AND hph.po_header_id = #{0}
+   AND hpl.enable_flag != 'N'
+	</select>
+	
+</mapper>

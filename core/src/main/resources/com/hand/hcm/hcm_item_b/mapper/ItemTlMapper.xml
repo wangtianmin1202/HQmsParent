@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hcm.hcm_item_b.mapper.ItemTlMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hcm.hcm_item_b.dto.ItemTl">
+        <result column="LANGUAGE" property="language" jdbcType="VARCHAR" />
+        <result column="SOURCE_LANGUAGE" property="sourceLanguage" jdbcType="VARCHAR" />
+        <result column="PLANT_ID" property="plantId" jdbcType="DECIMAL" />
+        <result column="ITEM_ID" property="itemId" jdbcType="DECIMAL" />
+        <result column="DESCRIPTIONS" property="descriptions" jdbcType="VARCHAR" />
+        <result column="EVENT_ID" property="eventId" jdbcType="DECIMAL" />
+        <result column="KID" property="kid" jdbcType="DECIMAL" />
+    </resultMap>
+<update id="updateByItemPlantId" parameterType="com.hand.hcm.hcm_item_b.dto.ItemB">
+UPDATE hcm_item_tl t
+   SET t.descriptions = #{descriptions}
+ WHERE t.item_id = #{itemId}
+   AND t.plant_id = #{plantId}
+</update>
+
+</mapper>

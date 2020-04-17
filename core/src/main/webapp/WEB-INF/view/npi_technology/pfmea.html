@@ -1,0 +1,713 @@
+<#include "../include/header.html">
+<script src="${base.contextPath}/common/code?NPI_TECHNOLOGY_SPEC_STATUS=NPI_TECHNOLOGY_SPEC_STATUS"></script>
+
+<script type="text/javascript">
+    var viewModel = Hap.createGridViewModel("#grid");
+</script>
+
+<body>
+<div id="newWindow"></div>
+<div id="newCauseWindow"></div>
+<div id="newPreventionMeasureWindow"></div>
+<div id="editPreventionMeasureWindow"></div>
+<div id="viewWindow"></div>
+<div id="page-content">
+    
+    <script>
+     kendo.bind($('#query-form'), viewModel);
+    $('#queryPanel').kendoQueryPanel({
+        queryFunction: function () {
+            viewModel.query();
+        },
+        resetFunction: function () {
+            viewModel.reset();
+        }
+    }); 
+    </script>
+    
+    <script>
+    
+    function openViewWindow(specId){
+		var url='technology_spec_view.html?specId='+specId;
+		
+		var viewWindow = $("#viewWindow").kendoWindow({
+			actions:["close"],
+			width:800,
+			height:700,
+			title:'标准动作要求规范P-SPEC详情',
+			content:url,
+			iframe:true,
+			visible:false,
+			resizable:true,
+			modal:true,
+			close:function(){
+				debugger;
+				viewModel.model.specNumber='';
+				$("#leftGrid").data('kendoGrid').dataSource.read();
+			}
+			
+		}).data("kendoWindow");
+		viewWindow.center().open();
+	}
+    
+    
+    function creates(){
+    	var grid = $("#leftGrid").data("kendoGrid");
+	    var selections = grid.selectedDataItems();
+	    
+		if(selections.length == 0){
+			kendo.ui.showWarningDialog({
+				message: "请先选择P-SPEC编码！"
+			});
+		}else{
+			viewModel.model.rightSpecNumber = selections[0].specNumber;
+			var url='pfmea_new.html?specNumber='+viewModel.model.rightSpecNumber;
+			var newWindow = $("#newWindow").kendoWindow({
+				actions:["close"],
+				width:1000,
+				height:800,
+				title:'新增失效模式',
+				content:url,
+				iframe:true,
+				visible:false,
+				resizable:true,
+				modal:true,
+				close:function(){
+					debugger;
+					viewModel.model.specNumber = viewModel.model.rightSpecNumber;
+					viewModel.model.invalidPatternId = '';
+					$("#grid").data('kendoGrid').dataSource.read();
+				}
+				
+			}).data("kendoWindow");
+			newWindow.center().open();
+		}
+    }
+    
+    //提交审核
+    function audit(){
+    	var grid = $("#grid").data("kendoGrid");
+	    var selections = grid.selectedDataItems();
+	    
+		if(selections.length == 0){
+			kendo.ui.showWarningDialog({
+				message: "请选择一条数据！"
+			});
+			return;
+		}
+		
+		if(selections[0].approveStatus != '1'){
+			kendo.ui.showWarningDialog({
+				message: "PFMEA审批状态不为待提交，不允许审批！"
+			});
+			return;
+		}
+		
+		$.ajax({
+            url: '${base.contextPath}/npi/invalid/pattern/audit',
+            type: 'POST',
+            data: JSON.stringify(selections),
+            async: false,
+            contentType: "application/json",
+            dataType: "json",
+            success: function(response) {
+                if (response.success) {
+               	 kendo.ui.showWarningDialog({
+                        message: "审批流程已启动"
+                    });
+                    grid.dataSource.fetch();
+                } else {
+                    kendo.ui.showWarningDialog({
+                        message: response.message
+                    });
+                }
+            }
+        });
+    }
+    
+    function editDatas(){
+    	var grid = $("#grid").data("kendoGrid");
+	    var selections = grid.selectedDataItems();
+	    
+		if(selections.length == 0){
+			kendo.ui.showWarningDialog({
+				message: "请选择一条数据！"
+			});
+			return;
+		}
+		
+		if(selections[0].versionCode != 'V1'){
+			kendo.ui.showWarningDialog({
+				message: "只有V1版本才能修改！"
+			});
+			return;
+		}
+		
+			var url='pfmea_edit.html?invalidPatternId='+selections[0].id+'&specNumber='+viewModel.model.rightSpecNumber;
+			var newWindow = $("#newWindow").kendoWindow({
+				actions:["close"],
+				width:1000,
+				height:800,
+				title:'编辑失效模式',
+				content:url,
+				iframe:true,
+				visible:false,
+				resizable:true,
+				modal:true,
+				close:function(){
+					debugger;
+					viewModel.model.specNumber = viewModel.model.rightSpecNumber;
+					viewModel.model.invalidPatternId = '';
+					$("#grid").data('kendoGrid').dataSource.read();
+				}
+				
+			}).data("kendoWindow");
+			newWindow.center().open();
+    }
+    function delDatas(){
+    	var grid = $("#grid").data("kendoGrid");
+	    var selections = grid.selectedDataItems();
+	    
+		if(selections.length == 0){
+			kendo.ui.showWarningDialog({
+				message: "请选择一条数据！"
+			});
+			return;
+		}
+		
+		//临时版本数据才可以删除
+		/* for(var i =0 ;i < selections.length; i++){
+			if(selections[i].status != 'UNSUBMIT'){
+				kendo.ui.showInfoDialog({message: "只有新建状态的单据才可以删除"});
+	            return;
+			}
+        } */
+		
+		kendo.ui.showConfirmDialog({
+            title: $l('hap.confirm'),
+            message: '确定删除？'
+        }).done(function (e) {
+        	if (e.button == 'OK') {
+        		$.ajax({
+            		url:"${base.contextPath}/npi/invalid/pattern/delDatas",
+            		type: "POST",
+            		contentType: 'application/json',
+            		dataType: "json",
+            		data: kendo.stringify(selections),
+            		success: function(resultData){
+                        if(resultData.success){
+                        	kendo.ui.showInfoDialog({message: "删除成功"});
+                        	viewModel.model.specNumber = viewModel.model.rightSpecNumber;
+        					viewModel.model.invalidPatternId = '';
+        					$("#grid").data('kendoGrid').dataSource.read();
+                        }else{
+                        	kendo.ui.showErrorDialog({message: resultData.message});
+                        }
+            		}
+            	})
+            }
+        })
+    }
+    
+    function showHistoryData(id){
+    	debugger;
+    	var url='pfmea_his_data.html?id='+id;
+		var newCauseWindow = $("#newCauseWindow").kendoWindow({
+			actions:["close"],
+			width:1000,
+			height:800,
+			title:'查看历史数据',
+			content:url,
+			iframe:true,
+			visible:false,
+			resizable:true,
+			modal:true,
+			close:function(){
+				viewModel.model.specNumber = viewModel.model.rightSpecNumber;
+				viewModel.model.invalidCauseId = '';
+				viewModel.model.invalidPatternId = '';
+				$("#grid").data('kendoGrid').dataSource.read();
+			}
+			
+		}).data("kendoWindow");
+		newCauseWindow.center().open();
+    }
+    
+    </script>
+    
+   <!-- 侧面加分层 -->
+   <div class="row" style="width: 100%;height: 100%;margin-top: 10px;">
+   <div class="col-sm-12" style="height: 100%">
+   <div class="col-sm-5" style="height: 100%;border: 2px solid #EEEEEE;border-radius:10px;">
+   <div style="clear:both;">
+   		<div style="margin-top: 18px"><span style="font-size:14px;color:black;">组装动作要求规范P-SPEC</span></div>
+        <div id="leftGrid" ></div>
+    </div>
+   </div>
+   <div class="col-sm-7" >
+    <div style="clear:both">
+    <span type="button" class="btn btn-primary"  style="margin-bottom: 15px;" onclick="creates()">
+    	新建
+    </span>
+    <span type="button" class="btn btn-primary"  style="margin-bottom: 15px;" onclick="editDatas()">
+    	修改
+    </span>
+    <!-- <span type="button" class="btn btn-primary"  style="margin-bottom: 15px;" onclick="delDatas()">
+    	删除
+    </span> -->
+    <span type="button" class="btn btn-primary"  style="margin-bottom: 15px;" onclick="audit()">
+    	提交审批
+    </span>
+        <div id="grid"  ></div>
+        <div id="grida">
+        <script type="text/x-kendo-template" id="template">
+                <div class="tabstrip">
+                    <div>
+                        <div class="orders"></div>
+                    </div>
+                </div>
+        </script>
+        </div>
+        <div id="gridb">
+        <script type="text/x-kendo-template" id="template2">
+                <div class="tabstrip">
+                    <div>
+                        <div class="orders"></div>
+                    </div>
+                </div>
+            </script>
+            </div>
+    </div>
+    </div>
+     </div>
+</div>
+
+<script>
+var BaseUrl = _basePath;
+var wzf;
+var wzff;
+dataSource = new kendo.data.DataSource({
+    transport: {
+        read: {
+            url: BaseUrl + "/hqm/invalid/pattern/queryData",
+            type: "POST",
+            dataType: "json"
+        },
+        parameterMap: function (options, type) {
+            if (type !== "read" && options.models) {
+                var datas = Hap.prepareSubmitParameter(options, type);
+                return kendo.stringify(datas);
+            } else if (type === "read") {
+                return Hap.prepareQueryParameter(viewModel.model.toJSON(), options)
+            }
+        }
+    },
+    batch: true,
+    serverPaging: true,
+    pageSize: 20,
+    schema: {
+        data: 'rows',
+        total: 'total',
+        model: {
+            id: "id",
+            fields: {}
+        }
+    }
+});
+var grid = $("#grid").kendoGrid({
+    dataSource: dataSource,
+    resizable: true,
+    scrollable: false,
+    navigatable: false,
+    sortable:true,
+    autoBind:false,
+    selectable: 'single, rowbox',
+    detailTemplate: kendo.template($("#template").html()),
+    detailInit: detailInit,
+    dataBound: function() {
+        this.expandRow(this.tbody.find("tr.k-master-row").first());
+    },
+     dataBound: function () {
+        if (parent.autoResizeIframe) {
+            parent.autoResizeIframe('${RequestParameters.functionCode!}')
+        }
+    },  
+    pageable: {
+        pageSizes: [5, 10, 20, 50],
+        refresh: true,
+        buttonCount: 5
+    },
+    columns: [
+        {
+            field: "invalidPatternName",
+            title: '失效模式',
+            width: 120
+        },
+                {
+            field: "invalidPatternConsequence",
+            title: '失效模式后果',
+            width: 120
+        },
+        {
+            field: "sev",
+            title: 'SEV',
+            width: 120
+        },
+        {
+            field: "versionCode",
+            title: '版本号',
+            width: 50
+        },
+        {
+            field: "approveStatus",
+            title: '审批状态',
+            width: 50,
+            template: function(dataItem) {
+            	debugger;
+                var v = dataItem.approveStatus ? dataItem.approveStatus : "";
+                $.each(NPI_TECHNOLOGY_SPEC_STATUS, function(i, n) {
+                    if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                        v = n.meaning;
+                        return v;
+                    }
+                })
+                return v;
+            },
+            editor: function(container, options) {
+                $('<input required name="' + options.field + '"/>')
+                    .appendTo(container)
+                    .kendoDropDownList({
+                        dataTextField: "meaning",
+                        dataValueField: "value",
+                        valuePrimitive: true,
+                        dataSource: NPI_TECHNOLOGY_SPEC_STATUS
+                    });
+            }
+        },
+        {
+            title: '操作',
+            width: 150,
+            headerAttributes: {
+                style: "text-align: center"
+            },
+            attributes: {
+                style: "text-align: center;"
+            },
+            template:function (dataItem) {  
+            	return '<a href="#" onclick="showHistoryData(\''+dataItem.id+'\')" >查看历史版本</a>';
+            }
+        }
+    ],
+    editable: false
+}).data("kendoGrid");
+Hap.autoResizeGrid("#grid");
+
+function detailInit(e) {
+	debugger;
+	wzff = e;
+    var detailRow = e.detailRow;
+    var BaseUrl = _basePath;
+    dataSource = new kendo.data.DataSource({
+        transport: {
+            read: {
+                url: BaseUrl + "/hqm/invalid/cause/query",
+                type: "POST",
+                dataType: "json"
+            },
+            parameterMap: function (options, type) {
+                if (type !== "read" && options.models) {
+                    var datas = Hap.prepareSubmitParameter(options, type)
+                    return kendo.stringify(datas);
+                } else if (type === "read") {
+                    return Hap.prepareQueryParameter(viewModel.model.toJSON(), options)
+                }
+            }
+        },
+        batch: true,
+        serverPaging: true,
+        pageSize: 20,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+                id: "id",
+                fields: {}
+            }
+        }
+    });
+    
+    var grida = detailRow.find(".orders").kendoGrid({
+        dataSource: dataSource,
+        resizable: true,
+        scrollable: false,
+        navigatable: false,
+        autoBind: false,
+        sortable:true,
+        detailTemplate: kendo.template($("#template2").html()),
+        detailInit: detailInit2,
+        dataBound: function () {
+            if (parent.autoResizeIframe) {
+                parent.autoResizeIframe('${RequestParameters.functionCode!}')
+            }
+        },
+        columns: [
+            {
+                field: "invalidCause",
+                title: '失效起因',
+                width: 120
+            },{
+                field: "occ",
+                title: 'OCC',
+                width: 130
+            }
+        ],
+        editable: false
+    }).data("kendoGrid");
+    Hap.autoResizeGrid("#grida");
+    var viewModel2 = Hap.createGridViewModel(detailRow.find(".orders"));
+        viewModel.model.invalidCauseId='';
+    	viewModel.model.invalidPatternId=e.data.id;
+    	viewModel2.query();
+}
+
+function detailInit2(e) {
+	wzf = e;
+    var detailRow = e.detailRow;
+    var BaseUrl = _basePath;
+    dataSource = new kendo.data.DataSource({
+        transport: {
+            read: {
+                url: BaseUrl + "/hqm/prevention/measure/query",
+                type: "POST",
+                dataType: "json"
+            },
+            parameterMap: function (options, type) {
+                if (type !== "read" && options.models) {
+                    var datas = Hap.prepareSubmitParameter(options, type)
+                    return kendo.stringify(datas);
+                } else if (type === "read") {
+                    return Hap.prepareQueryParameter(viewModel.model.toJSON(), options)
+                }
+            }
+        },
+        batch: true,
+        serverPaging: true,
+        pageSize: 20,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+            	id: "id",
+                fields: {}
+            }
+        }
+    });
+    
+    var gridb = detailRow.find(".orders").kendoGrid({
+        dataSource: dataSource,
+        resizable: true,
+        scrollable: false,
+        autoBind: false,
+        navigatable: false,
+        sortable:true,
+        dataBound: function () {
+            if (parent.autoResizeIframe) {
+                parent.autoResizeIframe('${RequestParameters.functionCode!}')
+            }
+        },
+        columns: [
+            {
+                field: "preventive",
+                title: '预防性',
+                width: 120
+            },{
+                field: "detectability",
+                title: '可探测性',
+                width: 240
+            },{
+                field: "det",
+                title: 'DET',
+                width: 120
+            },{
+                field: "rpn",
+                title: 'RPN',
+                width: 120
+            },
+            {
+                field: "controlCapacity",
+                title: '控制容量',
+                width: 120,
+                headerAttributes: {
+                    style: "text-align: center"
+                },
+                attributes: {
+                    style: "text-align: center"
+                }
+            },
+            {
+                field: "controlFrequency",
+                title: '控制频率',
+                width: 120,
+                headerAttributes: {
+                    style: "text-align: center"
+                },
+                attributes: {
+                    style: "text-align: center"
+                }
+            },
+            {
+                field: "controlMethod",
+                title: '控制方法',
+                width: 120,
+                headerAttributes: {
+                    style: "text-align: center"
+                },
+                attributes: {
+                    style: "text-align: center"
+                }
+            },
+            {
+                field: "reactionPlan",
+                title: '反应计划',
+                width: 120,
+                headerAttributes: {
+                    style: "text-align: center"
+                },
+                attributes: {
+                    style: "text-align: center;height:25px;display:block;overflow-y:auto;"
+                },
+                template:function(dataItem){
+                	if(dataItem.reactionPlan!=null&& dataItem.reactionPlan!=''){
+                		var returnDateItem = dataItem.reactionPlan.replace(/\r\n/g, '##').replace(/\n/g, '##').replace(/\s/g, '##');
+                		returnDateItem = returnDateItem.replace(/##/g,'<br>');
+                		return returnDateItem;
+                	}else{
+                		return '';
+                	}
+                }
+            }
+        ],
+        editable: false
+    }).data("kendoGrid");
+    Hap.autoResizeGrid("#gridb");
+    var viewModel3 = Hap.createGridViewModel(detailRow.find(".orders"));
+    	viewModel.model.invalidPatternId='';
+    	viewModel.model.invalidCauseId=e.data.id;
+    	viewModel3.query();
+}
+
+</script>
+
+ <script>
+ debugger;
+ var BaseUrl = _basePath;
+ 
+ leftDataSource = new kendo.data.DataSource({
+     transport: {
+         read: {
+             url: BaseUrl + "/npi/technology/spec/detail/query",
+             type: "POST",
+             dataType: "json"
+         },
+         parameterMap: function (options, type) {
+             if (type !== "read" && options.models) {
+                 var datas = Hap.prepareSubmitParameter(options, type)
+                 return kendo.stringify(datas);
+             } else if (type === "read") {
+                 return Hap.prepareQueryParameter(viewModel.model.toJSON(), options)
+             }
+         }
+     },
+     batch: true,
+     serverPaging: true,
+     pageSize: 20,
+     schema: {
+         data: 'rows',
+         total: 'total',
+         model: {
+             id: "specId",
+             fields: {}
+         }
+     }
+ });
+ 
+ var grid = $("#leftGrid").kendoGrid({
+     dataSource: leftDataSource,
+     resizable: true,
+     scrollable: true,
+     navigatable: false,
+     //sortable:true,
+     selectable: 'single, rowbox',
+     dataBound: function () {
+         if (parent.autoResizeIframe) {
+             parent.autoResizeIframe('${RequestParameters.functionCode!}')
+         }
+     },
+     pageable: {
+         pageSizes: [5, 10, 20, 50],
+         refresh: true,
+         buttonCount: 5
+     },
+     columns: [
+         {
+             field: "specNumber",
+             title: 'P-SPEC编码',
+             width: 220,
+             headerAttributes: {
+                 style: "text-align: center;"
+             },
+             attributes: {
+                 style: "text-align: center"
+             }/* ,
+             template:function(rowdata) {
+             	return '<a href="#" style="color:blue" onclick="openViewWindow('+rowdata.specId+')">'+rowdata.specNumber+'</a>'
+             } */
+         },
+                 {
+             field: "characteristicName",
+             title: '标准工艺动作',
+             width: 120,
+             headerAttributes: {
+                 style: "text-align: center"
+             },
+             attributes: {
+                 style: "text-align: center"
+             }
+         },{
+             field: "specRequirement",
+             title: 'SPEC要求',
+             width: 360,
+             headerAttributes: {
+                 style: "text-align: center"
+             },
+             attributes: {
+                 style: "text-align: center;height:25px;display:block;overflow-y:auto;"
+             },
+             template:function(dataItem){
+             	if(dataItem.specRequirement!=null&& dataItem.specRequirement!=''){
+             		return dataItem.specRequirement.replace(/##/g,'<br>');
+             	}else{
+             		return '';
+             	}
+             }
+         },
+     ],
+     editable: false
+ }).data("kendoGrid");
+	Hap.autoResizeGrid("#leftGrid");
+ </script>
+    <script>
+ $('#leftGrid').on('dblclick', 'tr', function () {
+	 var rowIndex = $(this).index();
+     var data = grid.dataSource.data()[rowIndex];
+     var specNumber = data.specNumber;
+     viewModel.model.specNumber = specNumber;
+     viewModel.model.invalidPatternId='';
+     viewModel.model.invalidCauseId='';
+     viewModel.query(); 
+     viewModel.model.rightSpecNumber = specNumber;
+     viewModel.model.specNumber='';
+ });
+</script>
+</body>
+</html>

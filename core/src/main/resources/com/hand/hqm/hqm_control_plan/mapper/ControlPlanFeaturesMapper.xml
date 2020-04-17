@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_control_plan.mapper.ControlPlanFeaturesMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_control_plan.dto.ControlPlanFeatures">
+        <result column="FEATURES_ID" property="featuresId" jdbcType="DECIMAL" />
+        <result column="PARENT_FEATURES_ID" property="parentFeaturesId" jdbcType="DECIMAL" />
+        <result column="CONTROL_PLAN_ID" property="controlPlanId" jdbcType="DECIMAL" />
+        <result column="RANKS" property="ranks" jdbcType="DECIMAL" />
+        <result column="FEATURES_NAME" property="featuresName" jdbcType="VARCHAR" />
+        <result column="FEATURES_NAME1" property="featuresName1" jdbcType="VARCHAR" />
+        <result column="FEATURES_TYPE" property="featuresType" jdbcType="VARCHAR" />
+        <result column="FEATURES_CONTENT" property="featuresContent" jdbcType="VARCHAR" />
+        <result column="EQUIPMENT" property="equipment" jdbcType="VARCHAR" />
+        <result column="SPECIAL_CHARACTER_TYPE" property="specialCharacterType" jdbcType="VARCHAR" />
+        <result column="STANDRAD" property="standrad" jdbcType="VARCHAR" />
+        <result column="DETECTION_EQUIPMENT" property="detectionEquipment" jdbcType="VARCHAR" />
+        <result column="SAMPLE_SIZE" property="sampleSize" jdbcType="DECIMAL" />
+        <result column="DETECTION_FREQUENCY" property="detectionFrequency" jdbcType="VARCHAR" />
+        <result column="CONTROL_METHOD" property="controlMethod" jdbcType="VARCHAR" />
+        <result column="GR_R" property="grR" jdbcType="DECIMAL" />
+        <result column="PROCESS_CAPABILITY" property="processCapability" jdbcType="VARCHAR" />
+        <result column="REACTION_PLAN" property="reactionPlan" jdbcType="VARCHAR" />
+        <result column="FEATURE" property="feature" jdbcType="VARCHAR" />
+        <result column="ENABLE_FLAG" property="enableFlag" jdbcType="VARCHAR" />
+        
+        <result column="CONTROL_OBJECT" property="controlObject" jdbcType="VARCHAR" />
+        <result column="CONTROL_PLAN_CODE" property="controlPlanCode" jdbcType="VARCHAR" />
+        <result column="WRITER_ID" property="writerId" jdbcType="DECIMAL" />
+        <result column="WRITER" property="writer" jdbcType="VARCHAR" />
+        <result column="MAIN_STAFF_ID" property="mainStaffId" jdbcType="DECIMAL" />
+        <result column="MAIN_STAFF" property="mainStaff" jdbcType="VARCHAR" />
+        <result column="CPCREATION_DATE" property="cpcreationDate" jdbcType="DATE" />
+        <result column="CPLAST_UPDATE_DATE" property="cplastUpdateDate" jdbcType="DATE" />
+        
+        <result column="BRANCH_ID" property="branchId" jdbcType="DECIMAL" />
+    </resultMap>
+    
+    
+   <select id="queryPrintData" parameterType="com.hand.hqm.hqm_control_plan.dto.ControlPlanFeatures" resultMap="BaseResultMap">
+           select
+		         hcpf.features_id,
+		         hcpf.features_name,
+		         hcpf.equipment,
+		         hcpf2.features_id,
+		         hcpf2.features_name as featuresName1,
+		         hcpf2.parent_features_id,
+		         hcpf2.control_plan_id,
+		         hcpf2.ranks,
+		         hcpf2.features_type,
+		         hcpf2.features_content,
+		         hcpf2.special_character_type,
+		         hcpf2.standrad,
+		         hcpf2.detection_equipment,
+		         hcpf2.sample_size,
+		         hcpf2.detection_frequency,
+		         hcpf2.control_method,
+		         hcpf2.gr_r,
+		         hcpf2.process_capability,
+		         hcpf2.reaction_plan
+		     from 
+		     HQM_CONTROL_PLAN_FEATURES hcpf,
+		     HQM_CONTROL_PLAN_FEATURES hcpf2
+		    where 1=1
+		    hcpf.enable_flag = 'Y'
+        	and 
+		    and hcpf.features_id = hcpf2.parent_features_id
+            <if test="controlPlanId != null and controlPlanId != ''">
+                and hcpf.control_plan_id=#{controlPlanId}
+            </if>
+         order by hcpf.features_id
+    </select>
+    
+    <select id="queryHeaderData" parameterType="Long" resultMap="BaseResultMap">
+         select
+           hcp.writer_id,
+           hcp.writer,
+           hcp.main_staff_id,
+           hcp.main_staff,
+	       hcp.control_object,
+	       hcp.control_plan_code,
+	       hcp.creation_date     as cpcreation_date,
+	       hcp.last_update_date  as cplast_update_date
+		 from 
+		 HQM_CONTROL_PLAN hcp
+		 where 1=1
+         and hcp.control_plan_id=#{controlPlanId}
+    </select>
+    
+    <select id="queryByControlPlanId" parameterType="Long" resultMap="BaseResultMap">
+         select
+           *
+		 from 
+		 HQM_CONTROL_PLAN_FEATURES
+		 where
+		 enable_flag = 'Y'
+         and 
+		 control_plan_id = #{controlPlanId}
+    </select>
+
+</mapper>

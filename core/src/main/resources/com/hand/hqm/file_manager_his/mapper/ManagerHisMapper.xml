@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.file_manager_his.mapper.ManagerHisMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.file_manager_his.dto.ManagerHis">
+        <result column="FILE_ID" property="fileId" jdbcType="DECIMAL" />
+        <result column="FILE_NUM" property="fileNum" jdbcType="VARCHAR" />
+        <result column="FILE_TITLE" property="fileTitle" jdbcType="VARCHAR" />
+        <result column="EDITION" property="edition" jdbcType="VARCHAR" />
+        <result column="UPLOAD_DATE" property="uploadDate" jdbcType="DATE" />
+        <result column="ENABLE_FLAG" property="enableFlag" jdbcType="VARCHAR" />
+        <result column="FILE_URL" property="fileUrl" jdbcType="VARCHAR" />
+        <result column="MENU_PATH" property="menuPath" jdbcType="VARCHAR" />
+        <result column="FILE_HIS_ID" property="fileHisId" jdbcType="DECIMAL" />
+        
+        <result column="CLASSIFY_IDS" property="classifyIds" jdbcType="VARCHAR" />
+          
+    </resultMap>
+
+ <select id="myselect" resultMap="BaseResultMap"  parameterType="com.hand.hqm.file_manager_his.dto.ManagerHis">
+SELECT fh.file_id
+			 ,fh.file_num
+			 ,fh.file_title 
+			 ,fh.edition
+			 ,strcat(fc.classify_code) as classify_ids 
+			 ,fh.file_url
+			 ,fm.remark
+			 ,fh.ENABLE_FLAG
+			 ,fh.upload_date
+	 FROM file_manager_his fh, file_manager fm, file_manager_classify fmc ,file_classify fc
+   where fh.file_id =fm.file_id
+   and fmc.file_id =fm.file_id
+   and fmc.classify_id =fc.classify_id  
+  and fh.file_id =#{fileId}
+   group by fh.file_id
+			 ,fh.file_num
+			 ,fh.file_title
+			 ,fh.edition 
+			 ,fh.file_url 
+             ,fm.remark
+			 ,fh.upload_date,fh.ENABLE_FLAG    
+	 order by fh.upload_date desc		  
+			 
+ </select> 
+</mapper>

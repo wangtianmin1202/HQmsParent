@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.file_email.mapper.FileEmailMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.file_email.dto.FileEmail">
+        <result column="FILE_EMAIL_ID" property="fileEmailId" jdbcType="DECIMAL" />
+        <result column="UNIT_ID" property="unitId" jdbcType="DECIMAL" />
+        <result column="EMPLOYEE_ID" property="employeeId" jdbcType="DECIMAL" />
+        <result column="employee_name" property="employeeName" jdbcType="VARCHAR"/>
+        <result column="employee_email" property="employeeEmail" jdbcType="VARCHAR"/>
+        <result column="unit_name" property="unitName" jdbcType="VARCHAR"/>
+    </resultMap>
+
+	<select id="queryByCondition" resultMap="BaseResultMap" parameterType="com.hand.hqm.file_email.dto.FileEmail">
+		select
+			fe.FILE_EMAIL_ID,
+			fe.UNIT_ID,
+			fe.EMPLOYEE_ID,
+			he.name as EMPLOYEE_NAME,
+			he.email as EMPLOYEE_EMAIL,
+			houb.name as UNIT_NAME
+		from file_email fe
+		left join hr_employee he on he.employee_id = fe.employee_id
+		left join hr_org_unit_b houb on houb.unit_id = fe.unit_id
+		where 1=1
+		<if test="employeeName != null and employeeName != ''">
+			and he.name like concat('%', concat(#{employeeName},'%'))
+		</if>
+		<if test="employeeEmail != null and employeeEmail != ''">
+			and he.email like concat('%', concat(#{employeeEmail},'%'))
+		</if>
+		<if test="unitName != null and unitName != ''">
+			and houb.name like concat('%', concat(#{unitName},'%'))
+		</if>
+	</select>
+</mapper>

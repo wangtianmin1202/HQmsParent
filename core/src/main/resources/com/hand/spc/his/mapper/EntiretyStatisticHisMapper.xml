@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.spc.his.mapper.EntiretyStatisticHisMapper">
+    <resultMap id="BaseResultMap" type="com.hand.spc.his.dto.EntiretyStatisticHis">
+        <result column="ENTIRETY_STATISTIC_HIS_ID" property="entiretyStatisticHisId" jdbcType="DECIMAL" />
+        <result column="ENTIRETY_STATISTIC_ID" property="entiretyStatisticId" jdbcType="DECIMAL" />
+        <result column="TENANT_ID" property="tenantId" jdbcType="DECIMAL" />
+        <result column="SITE_ID" property="siteId" jdbcType="DECIMAL" />
+        <result column="SAMPLE_SUBGROUP_ID" property="sampleSubgroupId" jdbcType="DECIMAL" />
+        <result column="ENTITY_CODE" property="entityCode" jdbcType="VARCHAR" />
+        <result column="ENTITY_VERSION" property="entityVersion" jdbcType="VARCHAR" />
+        <result column="CHART_DETAIL_TYPE" property="chartDetailType" jdbcType="VARCHAR" />
+        <result column="CONTROL_LIMIT_USAGE" property="controlLimitUsage" jdbcType="VARCHAR" />
+        <result column="ENTIRETY_BAR" property="entiretyBar" jdbcType="DECIMAL" />
+        <result column="ENTIRETY_SIGMA" property="entiretySigma" jdbcType="DECIMAL" />
+        <result column="ENTIRETY_USL" property="entiretyUsl" jdbcType="DECIMAL" />
+        <result column="ENTIRETY_LSL" property="entiretyLsl" jdbcType="DECIMAL" />
+        <result column="ENTIRETY_UCL" property="entiretyUcl" jdbcType="DECIMAL" />
+        <result column="ENTIRETY_CL" property="entiretyCl" jdbcType="DECIMAL" />
+        <result column="ENTIRETY_LCL" property="entiretyLcl" jdbcType="DECIMAL" />
+        <result column="ENTIRETY_AD" property="entiretyAd" jdbcType="DECIMAL" />
+        <result column="ENTIRETY_P" property="entiretyP" jdbcType="DECIMAL" />
+        <result column="ENTIRETY_CP" property="entiretyCp" jdbcType="DECIMAL" />
+        <result column="ENTIRETY_CPK" property="entiretyCpk" jdbcType="DECIMAL" />
+        <result column="ENTIRETY_PP" property="entiretyPp" jdbcType="DECIMAL" />
+        <result column="ENTIRETY_PPK" property="entiretyPpk" jdbcType="DECIMAL" />
+    </resultMap>
+
+
+</mapper>

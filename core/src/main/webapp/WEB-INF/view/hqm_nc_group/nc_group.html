@@ -1,0 +1,322 @@
+<#include "../include/header.html">
+<script src="${base.contextPath}/common/code?yesNo=SYS.YES_NO"></script>
+<script type="text/javascript">
+    var viewModel = Hap.createGridViewModel("#grid");
+    var viewModelLine = Hap.createGridViewModel("#gridLine");
+</script>
+<script type="text/javascript">
+
+  viewModelLine.create = function () {
+    	//var row = grid.select();
+        //var data = grid.dataItem(row);
+        var data = grid.selectedDataItems();
+        console.log(data);
+        if (data == undefined||data == null ||data.length==0) {
+        	kendo.ui.showWarningDialog({
+                message: '<@spring.message "error.hqm_ng_group.01"/> '        //未选择主(头)数据!
+            }); 
+           return;
+        }
+        if(viewModelLine.model.ngGroupId==null||viewModelLine.model.ngGroupId==undefined||viewModelLine.model.ngGroupId==''){
+        	kendo.ui.showWarningDialog({
+                message: '主(头)数据未保存'
+            });
+           return;
+        }
+        
+        $("#gridLine").data("kendoGrid").addRow();
+    }
+</script>
+<body>
+<div id="page-content">
+    <div class="pull-left" id="toolbar-btn" style="padding-bottom:10px;">
+        <span type="button" class="btn btn-primary"  style="float:left;margin-right:5px;padding-left:5px" data-bind="click:create"><i class="fa fa-plus-square" style="margin-right:3px;"></i><@spring.message "hap.new"/></span> 
+        <span class="btn btn-success k-grid-save-changes" style="float:left;margin-right:5px;"  data-bind="click:save"><i class="fa fa-save" style="margin-right:3px;"></i><@spring.message "hap.save"/></span>      
+        <span class="btn btn-danger" style="float:left;" data-bind="click:remove"><i class="fa fa-trash-o" style="margin-right:3px;"></i><@spring.message "hap.delete"/></span>
+    </div>
+    <script>kendo.bind($('#toolbar-btn'), viewModel);</script>
+    <div class="pull-right" id="query-form" style="padding-bottom:10px;">
+            <input type="text" data-role="maskedtextbox" style="float:left;width:150px;margin-right:5px;" placeholder='<@spring.message "NcGroup.ngGroupCode"/>'
+                   data-bind="value:model.ngGroupCode" class="k-textbox">
+            <input type="text" data-role="maskedtextbox" style="float:left;width:150px;margin-right:5px;" placeholder='<@spring.message "NcGroup.ngGroupName"/>'
+                   data-bind="value:model.ngGroupName" class="k-textbox">
+        <span class="btn btn-primary" style="float:left;width:70px" data-bind="click:query" type="submit"><@spring.message "hap.query"/></span>
+        <div style="clear:both"></div>
+    </div>
+    <script>kendo.bind($('#query-form'), viewModel);</script>
+    <script>kendo.bind($('#query-form2'), viewModel);</script>
+    <div style="clear:both;height:40%;width:100%;">
+        <div id="grid"></div>
+    </div>
+    
+    <div style="clear:both;height:50%;width:100%;">
+        <div id="gridLine"></div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    Hap.initEnterQuery('#query-form', viewModel.query);
+    var BaseUrl = _basePath;
+    dataSource = new kendo.data.DataSource({
+        transport: {
+            read: {
+                url: BaseUrl + "/hqm/nc/group/query",
+                type: "POST",
+                dataType: "json"
+            },
+            update: {
+                url: BaseUrl + "/hqm/nc/group/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            destroy: {
+                url: BaseUrl + "/hqm/nc/group/remove",
+                type: "POST",
+                contentType: "application/json"
+            },
+            create: {
+                url: BaseUrl + "/hqm/nc/group/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            parameterMap: function (options, type) {
+                if (type !== "read" && options.models) {
+                    var datas = Hap.prepareSubmitParameter(options, type)
+                    return kendo.stringify(datas);
+                } else if (type === "read") {
+                    return Hap.prepareQueryParameter(viewModel.model.toJSON(), options)
+                }
+            }
+        },
+        batch: true,
+        serverPaging: true,
+        pageSize: 10,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+                id: "ngGroupId",
+                fields: {
+                	enableFlag:{
+                		
+                		defaultValue:"Y",
+                	}
+                }
+            }
+        }
+    });
+
+    var  grid=$("#grid").kendoGrid({
+        dataSource: dataSource,
+        resizable: true,
+        scrollable: true,
+        navigatable: false,
+        selectable: 'multiple, rowbox',
+        dataBound: function () {
+            if (parent.autoResizeIframe) {
+                parent.autoResizeIframe('${RequestParameters.functionCode!}')
+            }
+        },
+        pageable: {
+            pageSizes: [5, 10, 20, 50],
+            refresh: true,
+            buttonCount: 5
+        },
+        columns: [
+          
+                    {
+                field: "ngGroupCode",
+                title: '<@spring.message "ncgroup.nggroupcode"/>',
+                width: 120
+            },
+                    {
+                field: "ngGroupName",
+                title: '<@spring.message "ncgroup.nggroupname"/>',
+                width: 120
+            },
+                    {
+                field: "ngGroupAppearance",
+                title: '<@spring.message "ncgroup.nggroupappearance"/>',
+                width: 120
+            },
+                    {
+                field: "enableFlag",
+                title: '<@spring.message "ncgroup.enableflag"/>',
+                width: 120,
+                template: function (dataItem) {
+                    var v = dataItem.enableFlag ? dataItem.enableFlag : "";
+                    $.each(yesNo, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return v;
+                        }
+                    })
+                    return v;
+                },
+                editor: function (container, options) {
+                    $('<input name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            dataTextField: "meaning",
+                            dataValueField: "value",
+                            valuePrimitive: true,
+                            dataSource: yesNo
+                        });
+                }
+            },           
+        ],
+        editable: true
+    }).data('kendoGrid');
+    </script>
+    <script type="text/javascript">
+    // ��ά��
+    dataSourceLine = new kendo.data.DataSource({
+    transport: {
+        read: {
+        	 url: BaseUrl + "/hqm/ng/group/member/query",
+             type: "POST",
+             dataType: "json"
+         },
+         update: {
+             url: BaseUrl + "/hqm/ng/group/member/submit",
+             type: "POST",
+             contentType: "application/json"
+         },
+         destroy: {
+             url: BaseUrl + "/hqm/ng/group/member/remove",
+             type: "POST",
+             contentType: "application/json"
+         },
+         create: {
+             url: BaseUrl + "/hqm/ng/group/member/submit",
+             type: "POST",
+             contentType: "application/json"
+        },
+        parameterMap: function (options, type) {
+            if (type !== "read" && options.models) {
+                var datas = Hap.prepareSubmitParameter(options, type)
+                for (var i = 0; i < datas.length; i++) {
+                	datas[i].ngGroupId = viewModelLine.model.ngGroupId;
+                }
+                return kendo.stringify(datas);
+            } else if (type === "read") {
+                return Hap.prepareQueryParameter(viewModelLine.model.toJSON(), options)
+            }
+        }
+    },
+    batch: true,
+    serverPaging: true,
+    pageSize: 10,
+    schema: {
+        data: 'rows',
+        total: 'total',
+        model: {
+            id: "ngMenberId",
+            fields: {}
+            },
+        }
+    });
+    var gridLine =$("#gridLine").kendoGrid({
+        dataSource: dataSourceLine,
+        resizable: true,
+        scrollable: true,
+        navigatable: false,
+        autoBind: false,
+        selectable: 'multiple, rowbox',
+        dataBound: function () {
+        	
+            if (parent.autoResizeIframe) {
+                parent.autoResizeIframe('${RequestParameters.functionCode!}')
+            }
+        },
+        pageable: {
+            pageSizes: [5, 10, 20, 50],
+            refresh: true,
+            buttonCount: 5
+        },
+        toolbar: [
+            {
+                template: '<span type="button" class="btn btn-primary"  style="float:left;margin-left:10px" data-bind="click:create"><i class="fa fa-plus-square" style="margin-right:3px;"></i><@spring.message "hap.new"/></span>'
+            }, {
+                template: '<span class="btn btn-success k-grid-save-changes" style="float:left;margin-right:5px;"  data-bind="click:save"><i class="fa fa-save" style="margin-right:3px;"></i><@spring.message "hap.save"/></span>'
+            },{
+            template: '<span class="btn btn-danger" style="float:left;" data-bind="click:remove"><i class="fa fa-trash-o" style="margin-right:3px;"></i><@spring.message "hap.delete"/></span>'
+       },
+        ],
+        columns: [
+                   
+                    {
+                field: "ngCode",
+                title: '<@spring.message "nggroupmember.ngcode"/>',
+                width: 120,
+               
+            },
+                    {
+                field: "ngReason",
+                title: '<@spring.message "nggroupmember.ngreason"/>',
+                width: 120
+            },
+                    {
+                field: "ngAppearance",
+                title: '<@spring.message "nggroupmember.ngappearance"/>',
+                width: 120
+            },
+                    {
+                field: "enableFlag",
+                title: '<@spring.message "nggroupmember.enableflag"/>',
+                width: 120,
+                template: function (dataItem) {
+                    var v = dataItem.enableFlag ? dataItem.enableFlag : "";
+                    $.each(yesNo, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return v;
+                        }
+                    })
+                    return v;
+                },
+                editor: function (container, options) {
+                    $('<input name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            dataTextField: "meaning",
+                            dataValueField: "value",
+                            valuePrimitive: true,
+                            dataSource: yesNo
+                        });
+                    
+                }
+            },
+                                 
+        ],
+        editable: true
+    }).data('kendoGrid');
+    kendo.bind($('#gridLine'), viewModelLine);
+ 
+</script>
+<script>
+//var selection = $('#chooseGrid').data('kendoGrid').selectedDataItems();
+$('#grid').on('click', '.k-checkbox', function () {
+        //���grid��ѡ�е�head_id
+        //var row = grid.select();
+        //var data = grid.dataItem(row);
+        var data = grid.selectedDataItems();
+        
+        if (data == undefined||data == null || data.length==0) {
+            gridLine.dataSource.data(new Array());
+            viewModelLine.model.set('ngGroupId', null);
+            return;
+        }
+        var kid = data[data.length-1].ngGroupId;
+        console.log(kid);
+        //��յڶ���grid
+        gridLine.dataSource.data(new Array());
+
+        //���ݵ�һ��gridѡ�е�mo_id����ѯ��ʾ�ڶ���grid
+        viewModelLine.model.ngGroupId = kid;
+        console.log(kid);
+        gridLine.dataSource.page(1);
+    });
+</script>
+</body>
+</html>

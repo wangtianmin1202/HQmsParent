@@ -1,0 +1,559 @@
+<!--送货单打印模板-->
+<html style="color: black">
+<style>
+
+</style>
+<#include "../include/header.html">
+    <script src="${base.contextPath}/lib/prints/JsBarcode.all.min.js" type="text/javascript"></script>
+    <script src="${base.contextPath}/lib/prints/jquery-barcode.js" type="text/javascript"></script>
+    <script src="${base.contextPath}/lib/prints/jquery-qrcode.min.js" type="text/javascript"></script>
+    <script src="${base.contextPath}/lib/prints/qrcode.js" type="text/javascript"></script>
+    <script src="${base.contextPath}/lib/prints/doc_print.js" type="text/javascript" charset="UTF-8"></script>
+    <script src="${base.contextPath}/common/code?SRM_PLANT_ADRESS=SRM_PLANT_ADRESS"></script>
+    <script src="${base.contextPath}/common/code?SRM_DELIVERY_RECEIEVER=SRM_DELIVERY_RECEIEVER"></script>
+    <script src="${base.contextPath}/common/code?SRM_PACKING_TYPE=SRM_PACKING_TYPE"></script>
+    <script>
+        function initAsnPrintSetting() {
+            var jsonSetting = {
+                PaperWidth: 297, //A4纵向宽度
+                PaperHeight: 210, //A4纵向高度
+                MainFontSize: 'middle',
+                TableFontSize: 'middle',
+                TitleFontSize: 'xx-large',
+                TableRowHeight: '15',
+                TableBarCodeFontSize: '5',
+                BarCodeFontSize: '20',
+                FirstPageRowNum: "30", //第一页的表格显示多少行
+                MaxRowNum: "35" //第2页~第n页的表格显示多少行
+            };
+
+            return jsonSetting;
+        }
+        var asnPrintSetting = initAsnPrintSetting();
+    </script>
+
+    <script>
+        var viewModel = kendo.observable({
+            model: {
+                limit: '700' //上下差距
+            }
+        });
+    </script>
+
+    <body style="width: 98%; margin-left: 15px;">
+
+        <!--页面布局-->
+        <div id="pageDiv" style="width: 100%;font-family: '宋体';">
+
+        </div>
+
+        <script>
+            kendo.bind($('html'), viewModel);
+        </script>
+
+        <script>
+            $(document).ready(function() {
+
+
+                /*
+                 根据asnPrintSetting初始化样式
+                 */
+                //纸张大小
+                $('html').css('width', tranMmToPxWidth(asnPrintSetting.PaperWidth) + "px");
+
+                /*
+                 初始化内容
+                 */
+                var headerId = window.parent.headerId;
+                //遍历传入的所有单据头id，依次生成单据
+
+                //根据单据头id，获得相应的头信息
+                var headData = getHeadData(headerId);
+                initTitleDiv(1, headData);
+
+
+                //根据单据头id，查询出对应的行数据
+                var lineData = getLineData(headerId);
+                initLineDiv(1, lineData, "");
+
+                //初始化样式
+                initCss();
+
+                /*
+                 是否需要打印
+                 */
+                /* var isPrint = GetQueryString("isPrint");
+                if (!isNull(isPrint) && isPrint == 'true') { */
+                            window.print();
+                            window.close();
+                            setTimeout(function(){
+                            window.parent.$('#printWindow').data('kendoWindow').close();
+                        	},0.1*1000);
+
+                /* } */
+
+            });
+
+
+            /*
+             初始化当前的css样式
+             */
+            function initCss() {
+                $('.titleDiv').css('font-size', asnPrintSetting.TitleFontSize); //标题div的字体
+                $('.mainDiv').css('font-size', asnPrintSetting.MainFontSize); //标题div的字体
+                $('.myTable').css('font-size', asnPrintSetting.TableFontSize); //表格内的字体
+            }
+            /*
+             获得单据头信息
+             @param：headerId 单据头id
+             @return：该单据头的数据
+             */
+            function getHeadData(headerId) {
+                var BaseUrl = "${base.contextPath}";
+                var headData;
+                $.ajax({
+                    url: BaseUrl + "/hcs/delivery/ticket/h/printQuery",
+                    type: "POST",
+                    dataType: "json",
+                    async: false,
+                    data: {
+                        ticketId: headerId
+                    },
+                    success: function(data) {
+                        if (data.success) {
+                            if (data.rows.length > 0) {
+                                headData = data.rows[0];
+                            }
+                        }
+                    }
+                });
+
+                return headData;
+            }
+            /*
+             根据前台传入的送货单头id和行号范围，查询出指定范围的数据
+             */
+            function getLineData(headId) {
+                var lineData;
+                $.ajax({
+                    url: "${base.contextPath}/hcs/delivery/ticket/l/printQueryLine",
+                    type: "POST",
+                    dataType: "json",
+                    async: false,
+                    data: {
+                        ticketId: headId,
+                    },
+                    success: function(data) {
+                        if (data.success) {
+                            lineData = data.rows;
+                        }
+                    }
+                });
+
+                return lineData;
+            }
+
+
+            /*
+             根据getLineData(headId,fromNum,ToNum)获得的行信息，绘制表格信息
+             @param:lineData 行信息
+             */
+            function initLineDiv(index, lineData, remark) {
+
+                var pageNum; //页码数目
+
+                /*
+                 计算一共需要多少页码
+                 */
+                if (lineData.length <= asnPrintSetting.FirstPageRowNum) {
+                    pageNum = 1;
+                } else {
+                    pageNum = parseInt((lineData.length - asnPrintSetting.FirstPageRowNum) / asnPrintSetting.MaxRowNum) +
+                        ((lineData.length - asnPrintSetting.FirstPageRowNum) % asnPrintSetting.MaxRowNum > 0 ? 1 : 0) +
+                        1;
+                }
+
+                /*
+                 依次绘制每页的表格
+                 */
+                drawTableTittle($('#pageDiv'), "tab1", index); //第一页的标题
+                for (var i = 1; i <= pageNum; i++) {
+                    //绘制标题
+                    if (i != 1) {
+                        drawTableTittle($('#pageDiv'), "tab" + i, index); //第一页的标题
+                    }
+
+                    //绘制内容
+                    if (i == 1) {
+                        drawRows($('#' + "tab" + i + index),
+                            "tab" + i,
+                            lineData,
+                            0,
+                            pageNum == 1 ? lineData.length - 1 : asnPrintSetting.FirstPageRowNum - 1,
+                            index,
+                            remark
+                        );
+                    } else {
+
+
+                        drawRows($('#' + "tab" + i + index),
+                            "tab" + i,
+                            lineData,
+                            parseInt(parseInt(asnPrintSetting.FirstPageRowNum) + parseInt((i - 2) * asnPrintSetting.MaxRowNum)),
+                            pageNum > i ? parseInt(parseInt(asnPrintSetting.FirstPageRowNum) + (parseInt((i - 1) * asnPrintSetting.MaxRowNum))) - 1 :
+                            lineData.length - 1,
+                            index,
+                            remark
+                        );
+                    }
+
+                    //正文
+                    array = [];
+                    array.push(" <table class='mainDiv' style='width: 100%;height: 10%;color: black;'>");
+                    
+                    array.push(" <tr  style='width: 100%;'>");
+                    array.push("<td style='width: 50%;text-align:center'>");
+                    array.push("<span>&nbsp;</span>");
+                    array.push("</td>");
+                    array.push("<td style='width: 50%;'>");
+                    array.push("</td>");
+                    array.push("</tr>");
+                    
+                    array.push(" <tr  style='width: 100%;height:40px;'>");
+                    array.push("<td style='width: 50%;text-align:center'>");
+                    array.push("<div style='width: 20%;float:left'><b><@spring.message 'deliveryticketprint.lxr'/>:</b></div>");
+                    array.push("<div style='border-bottom:1px solid black;width: 50%;float:left;text-align:left'>" 
+                    	+ SRM_DELIVERY_RECEIEVER[0].value + "/" + SRM_DELIVERY_RECEIEVER[0].meaning + "</div>");
+                    array.push("</td>");
+                    array.push("<td style='width: 50%;'>");
+                    array.push("<div  style='width: 15%;float:left'><b><@spring.message 'deliveryticketprint.songhr'/>:</b></div>");
+                    array.push("<div style='border-bottom:1px solid black;width: 50%;float:left'>" + '&nbsp;' + "</div>");
+                    array.push("</td>");
+                    array.push("</tr>");
+                    
+                    array.push("<tr style='width: 100%;height:40px;'>");
+                    array.push("<td style='width: 50%;text-align:center'>");
+                    array.push("<div style='width: 14%;float:left'><b><@spring.message 'deliveryticketprint.shouhr'/>:</b></div>");
+                    array.push("<div style='border-bottom:1px solid black;width: 55%;float:left'>" + '&nbsp;' + "</div>");
+                    array.push("</td>");
+                    array.push("<td style='width: 50%;'>");
+                    array.push("<div style='width: 15%;float:left'><b><@spring.message 'deliveryticketprint.shrq'/>:</b></div>");
+                    array.push("<div style='border-bottom:1px solid black;width: 50%;float:left'>" + '&nbsp;' + "</div>");
+                    array.push("</td>");
+                    array.push("</tr>");
+                    
+                    array.push("</table>");
+                    array.push("<br>");
+                    $('#pageDiv').append(array.join(''));
+
+                    //绘制页码
+                    $('#pageDiv').append("<div style='width: 100%;text-align: center;font-size: medium'>" + i + "/" + pageNum + "</div>");
+
+
+                    //绘制分隔符
+                    $('#pageDiv').append("<div style='page-break-after: always'></div>");
+
+                    //css样式
+                }
+            }
+
+            function drawRows(container, tableId, lineData, fromIndex, toIndex, index, remark) {
+                var array = [];
+                for (var i = fromIndex; i <= toIndex; i++) {
+                    /* if( lineData[i].scrapReason == 'A')
+                    {
+                        lineData[i].scrapReason = '尺寸不合格';
+                    }
+                    else
+                    {
+                        lineData[i].scrapReason = '材质不良';
+                    } */
+                    /* if( lineData[i].excecuteQty == ''||lineData[i].excecuteQty==null)
+                    {
+                        lineData[i].excecuteQty = '';
+                    } */
+                    array.push("<tr style='white-space: nowrap'>");
+                    //第一列
+                    array.push("<td  valign='middle' style='height:25px;width: 5%;word-break:break-all;'>" + (i + 1));
+                    array.push("</td>");
+
+                    //第二列
+                    array.push("<td  valign='middle' style='height:25px;width: 10%;word-break:break-all;'>" + nvl(lineData[i].itemCode, ""));
+                    array.push("</td>");
+
+                    //第三列
+                    var itemName;
+                    if (lineData[i].itemName.length > 12) {
+                        itemName = lineData[i].itemName.substr(0, 12);
+                    } else {
+                        itemName = lineData[i].itemName
+                    }
+                    array.push("<td valign='middle' style='height:25px;width: 25%;word-break:break-all;'>" + nvl(itemName, ""));
+                    array.push("</td>");
+
+                    //第四列
+                    array.push("<td  valign='middle' style='height:25px;width: 5%;word-break:break-all;'>" + nvl(lineData[i].shipQuantity, ""));
+                    array.push("</td>");
+
+                    //第五列
+                    array.push("<td  valign='middle' style='height:25px;width: 5%;word-break:break-all;'>" + nvl(lineData[i].uomCode, ""));
+                    array.push("</td>");
+
+                    //第六列
+                    array.push("<td valign='middle' style='height:25px;width: 5%;word-break:break-all;'>" + nvl(lineData[i].itemVersion, ""));
+                    array.push("</td>");
+
+                    //第七列
+                    array.push("<td  valign='middle' style='height:25px;width: 5%;word-break:break-all;'>" + nvl(lineData[i].lotsNum, ""));
+                    array.push("</td>");
+
+                    //第八列
+                    array.push("<td  valign='middle' style='height:25px;width: 5%;word-break:break-all;'>" + nvl(lineData[i].spreading, ""));
+                    array.push("</td>");
+
+                    //第九列
+                    array.push("<td  valign='middle' style='height:25px;width: 10%;word-break:break-all;'>" + nvl(lineData[i].packingSize, ""));
+                    array.push("</td>");
+
+                    //第十列
+
+                    var packetInfo = lineData[i].packetInfo ? lineData[i].packetInfo : "";
+                    $.each(SRM_PACKING_TYPE, function(i, n) {
+                        if ((n.value || '').toLowerCase() == (packetInfo || '').toLowerCase()) {
+                            packetInfo = n.value + '' + n.meaning;
+                        }
+                    });
+                    array.push("<td  valign='middle' style='height:25px;width: 5%;word-break:break-all;'>" + nvl(packetInfo, ""));
+                    array.push("</td>");
+
+                    //第十一列
+                    array.push("<td  valign='middle' style='height:25px;width: 10%;word-break:break-all;'>" + nvl(lineData[i].poNumber, ""));
+                    array.push("</td>");
+
+                    //第十二列
+                    array.push("<td  valign='middle' style='height:25px;width: 10%;word-break:break-all;'>" + nvl(lineData[i].remarks, ""));
+                    array.push("</td>");
+
+                    array.push("<div style='page-break-after:always'></div>");
+
+                    //将该行添加到表格中
+                    container.append(array.join(''));
+                    //
+                    array = [];
+                    /* if(i==lineData.length-1){
+                        //绘制底部
+                        array.push("<tr  style= 'width: 100%;font-weight:bold'>");
+                        array.push("<td style='width: 60%' rowspan='3'>");
+                        array.push("<span>备注</span>");
+                        array.push("</td>");
+                        array.push("<td style='width: 60%' rowspan='3' colspan='4'>");
+                        array.push("<span></span>");
+                        array.push("</td>");
+                        array.push("<td style='width: 10%'>");
+                        array.push("<span>执行日期</span>");
+                        array.push("</td>");
+                        array.push("<td style='width: 20%' >");
+                        array.push("<span>执行人</span>");
+                        array.push("</td>");
+                        array.push("<td style='width: 20%' >");
+                        array.push("<span>主管</span>");
+                        array.push("</td>");
+                        array.push("</tr>");
+                        array.push("<tr style='width: 100%;height:30px;font-weight:bold'>");
+                        array.push("<td style='width: 10%' rowspan='2'>");
+                        array.push("<span>&nbsp;</span>");
+                        array.push("</td>");
+                        array.push("<td style='width: 10%' rowspan='2'>");
+                        array.push("<span>&nbsp;</span>");
+                        array.push("</td>");
+                        array.push("<td style='width: 10%' rowspan='2'>");
+                        array.push("<span>&nbsp;</span>");
+                        array.push("</td>");
+                        array.push("</tr>");
+                        container.append(array.join(''));
+                    } */
+                }
+            }
+
+
+            /*
+             绘制表格的标题
+             @param：container 容器
+             @param:tableId 表格的id
+             */
+            function drawTableTittle(container, tableId, index) {
+                var array = [];
+                array.push("<table class='myTable' id=" + tableId + index + " style='color: black;width: 100%;table-layout: fixed;font-size: small;text-align: center;' border='2px'>");
+                array.push("<tr style='white-space: nowrap'>");
+                array.push("<th style='text-align: center;width: 5%;'><@spring.message 'deliveryticketprint.serialnumber'/></th>");
+                array.push("<th style='text-align: center;width: 10%;'><@spring.message 'deliveryticketprint.itemcode'/></th>");
+                array.push("<th style='text-align: center;width: 15%;'><@spring.message 'deliveryticketprint.itemname'/></th>");
+                array.push("<th style='text-align: center;width: 5%;'><@spring.message 'deliveryticketprint.quantity'/></th>");
+                array.push("<th style='text-align: center;width: 5%;'><@spring.message 'deliveryticketprint.uom'/></th>");
+                array.push("<th style='text-align: center;width: 5%;'><@spring.message 'deliveryticketprint.itemversion'/></th>");
+                array.push("<th style='text-align: center;width: 10%;'><@spring.message 'deliveryticketprint.lotcode'/></th>");
+
+
+                array.push("<th style='text-align: center;width: 5%;'><@spring.message 'deliveryticketprint.spreading'/></th>");
+                array.push("<th style='text-align: center;width: 8%;'><@spring.message 'deliveryticketprint.packingSize'/></th>");
+
+
+                array.push("<th style='text-align: center;width: 7%;'><@spring.message 'deliveryticketprint.packedinfo'/></th>");
+                array.push("<th style='text-align: center;width: 10%;'><@spring.message 'deliveryticketprint.ponumber'/></th>");
+                array.push("<th style='text-align: center;width: 15%;'><@spring.message 'deliveryticketprint.remarks'/></th>");
+                array.push("</tr>");
+                array.push("</table>");
+                container.append(array.join(""));
+            }
+
+            /*
+ 获得单据头信息
+ @param：headerId 单据头id
+ @return：该单据头的数据
+ */
+            function getScrapHeadData(headerId) {
+                var BaseUrl = "${base.contextPath}";
+                var headData;
+                $.ajax({
+                    url: BaseUrl + "/hwm/scrap/head/query",
+                    type: "POST",
+                    dataType: "json",
+                    async: false,
+                    data: {
+                        requisitionHeadId: headerId,
+                    },
+                    success: function(data) {
+                        if (data.success) {
+                            if (data.rows.length > 0) {
+                                headData = data.rows[0];
+                            }
+                        }
+                    }
+                });
+
+                return headData;
+            }
+
+            /*
+             *	根据通过函数getHeadData(headerId)获得的数据，初始化标题div的内容
+             * @param：通过函数getHeadData(headerId)获得的数据
+             */
+            function initTitleDiv(index, headData) {
+                var address;
+                var address = headData.plantCode ? headData.plantCode : "";
+                $.each(SRM_PLANT_ADRESS, function(i, n) {
+                    if ((n.value || '').toLowerCase() == (address || '').toLowerCase()) {
+                        address = n.meaning;
+                    }
+                });
+                //标题
+                var array = [];
+                array.push("<table class='titleDiv' style='width: 100%;height: 5%;color: black;'>");
+                array.push("<tr style='width: 100%;height: 5%;'>");
+                array.push("<td style='width: 100%;text-align: center'>");
+                array.push("<span><b><@spring.message '送货单'/></b></span>");
+                array.push("</td>");
+                array.push("</tr>");
+                array.push(" </table>");
+                $('#pageDiv').append(array.join(''));
+
+                //正文
+                array = [];
+                array.push(" <table class='mainDiv' style='width: 100%;height: 10%;color: black;'>");
+
+                array.push(" <tr  style='width: 100%;font-weight:bold'>");
+                array.push("<td style='width: 45%'>");
+                array.push("<span>&nbsp;</span>");
+                array.push("</td>");
+                array.push("<td style='width: 45%'>");
+                
+                array.push("</td>");
+                array.push("<td rowspan='3' style='width: 10%;'>");
+                array.push("<div id='qrcode'>");
+                array.push("</td>");
+                array.push("</tr>");
+                
+                array.push(" <tr  style='width: 100%;font-weight:bold'>");
+                array.push("<td style='width: 45%'>");
+                array.push("<span><b><@spring.message 'deliveryticketprint.ticketnumber'/></b></span>");
+                array.push("<span>" + headData.ticketNumber + "</span>");
+                array.push("</td>");
+                array.push("<td style='width: 45%'>");
+                array.push("<span><b><@spring.message 'deliveryticketprint.shipdate'/></b></span>");
+                array.push("<span>" + nvl(headData.shipDate.substr(0,10), "") + "</span>");
+                array.push("</td>");
+                array.push("</tr>");
+
+                array.push("<tr style='width: 100%;font-weight:bold'>");
+                array.push("<td style='width: 45%;'>");
+                array.push("<span><b><@spring.message 'deliveryticketprint.suppliercode'/></b></span>"); //供应商编码
+                array.push("<span>" + headData.supplierCode + "</span>");
+                array.push("</td>");
+                array.push("<td style='width: 45%'>");
+                array.push("<span><b><@spring.message 'deliveryticketprint.suppliername'/></b></span>");
+                var supplierName;
+                if (headData.supplierName.length > 15) {
+                    supplierName = headData.supplierName.substr(0, 15);
+                } else {
+                    supplierName = headData.supplierName
+                }
+                array.push("<span>" + nvl(supplierName, "") + "</span>");
+                array.push("</td>");
+                array.push("</tr>");
+
+                array.push("<tr style='width: 100%;font-weight:bold;margin-top: 10px;height: 40px;'>");
+                array.push("<td style='width: 45%;'>");
+                array.push("<span><b><@spring.message 'deliveryticketprint.shippingaddress'/></b></span>"); //收货地址
+                array.push("<span>" + nvl(address, "") + "</span>");
+                array.push("</td>");
+                array.push("<td style='width: 45%'>");
+                array.push("<span><b><@spring.message 'deliveryticketprint.remarks'/></b></span>");
+                array.push("<span>" + nvl(headData.remarks, "") + "</span>");
+                array.push("</td>");
+                array.push("<td style='width: 10%'>");
+                array.push("<span style='width: 120;float:left;font-size:10px;text-align:center;margin-top:10px'>");
+                array.push(headData.ticketNumber);
+                array.push("</span>");
+                array.push("</td>");
+                array.push("</tr>");
+                
+//                 array.push("<tr style='width: 100%;font-weight:bold'>");
+//                 array.push("<td style='width: 45%'>");
+//                 array.push("</td>");
+//                 array.push("<td style='width: 45%'>");
+//                 array.push("</td>");
+                
+//                 array.push("</tr>");
+//                 array.push("<tr style='width: 100%;font-weight:bold'>");
+//                 array.push("<span><b></b></span>");
+//                 array.push("</tr>");
+
+                array.push("</table>");
+                array.push("<br>");
+                $('#pageDiv').append(array.join(''));
+
+                var qrcode = new QRCode('qrcode', {
+                    text: headData.ticketNumber,
+                    width: 120,
+                    height: 120,
+                    colorDark: '#000000',
+                    colorLight: '#ffffff',
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+
+                /*   $('#' + codeImgId).barcode(
+                      headData.scrapNumber,
+                      "code128",
+                      {
+                          barWidth: 2,
+                          barHeight: 80,
+                          showHRI: false,
+                          fontSize: asnPrintSetting.BarCodeFontSize
+                      }
+                  ); */
+            }
+        </script>
+
+    </body>
+
+</html>

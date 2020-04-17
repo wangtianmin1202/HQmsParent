@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.spc.ecr_main.mapper.EcrItemReportDetailMapper">
+    <resultMap id="BaseResultMap" type="com.hand.spc.ecr_main.dto.EcrItemReportDetail"> 
+        <result column="REPORT_ID" property="reportId" jdbcType="DECIMAL" />
+        <result column="REPORT_DETAIL_ID" property="reportDetailId" jdbcType="DECIMAL" />
+        <result column="MONTH" property="month" jdbcType="VARCHAR" />
+        <result column="COMPLETE_QTY" property="completeQty" jdbcType="DECIMAL" />
+        <result column="DEMAND_QTY" property="demandQty" jdbcType="DECIMAL" />
+        <result column="BOM_USE" property="bomUse" jdbcType="DECIMAL" />
+        <result column="SKU_CODE" property="skuCode" jdbcType="VARCHAR" />
+        <result column="SKU_ID" property="skuId" jdbcType="DECIMAL" />
+        <result column="LEFT_QTY" property="leftQty" jdbcType="DECIMAL" />
+    </resultMap>
+    
+     
+    
+
+</mapper>

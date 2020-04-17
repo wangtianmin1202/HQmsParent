@@ -1,0 +1,616 @@
+<#include "../include/header.html">
+
+<script src="${base.contextPath}/common/code?YES_NO=SYS.YES_NO" type="text/javascript"></script>
+<script type="text/javascript">
+	var BaseUrl = _basePath;
+	var fileUploadId = '${RequestParameters.fileUploadId!0}';
+	var processInstanceId = '${RequestParameters.processInstanceId!0}';
+	var status = '${RequestParameters.status!0}';
+    var viewModel = Hap.createGridViewModel(null,{
+    	model:{
+    		fileIdList : '${RequestParameters.fileIdList}'
+    	},
+    	closeWin:function(e) {
+    		window.parent.$("#viewWindow").data("kendoWindow").close();
+    	},
+    	queryInfo:function(){
+    		if(fileUploadId != 0){
+    			$.ajax({
+    				url:BaseUrl+"/file/upload/queryByCondition?fileUploadId="+fileUploadId,
+    				success:function(data){
+    					var a0 = data.rows[0] || {};
+    					for(var k in a0){
+    						viewModel.model.set(k,a0[k]);
+    					}
+    					getUploadedFiles();
+    					/* if(viewModel.model.fileDownloadUrl == null){
+    				    	viewModel.model.set("fileUploadMessage","请上传文件！");
+    				    } else {
+    				    	viewModel.model.set("fileUploadMessage","文件已上传，可点击下载！");
+    				    } */
+    				}
+    			})
+    		}
+    	},
+    	save:function(){
+    		var data = viewModel.model.toJSON();
+    		data.__status = "update";
+    		
+    		var validator = $("#mainForm").data("kendoValidator");
+    		if(validator.validate()) {
+    			Hap.blockUI();
+    			Hap.request({
+    				url: BaseUrl + "/file/upload/add",
+    				data: kendo.stringify(data),
+    				success:function(data){
+    					if(data.success){
+    						Hap.unblockUI();
+    						viewModel.closeWin();
+    					}
+    				}
+    			})
+    		}
+    	},
+    	createProcessInstance:function(){
+    		var data = viewModel.model.toJSON();
+    		//debugger;
+    		if(data.fileIdList != null){
+    			data.__status = "update";
+        		
+        		var validator = $("#mainForm").data("kendoValidator");
+        		if(validator.validate()) {
+        			Hap.blockUI();
+        			Hap.request({
+        				url: BaseUrl + "/file/upload/createProcessInstance",
+        				data: kendo.stringify(data),
+        				success:function(data){
+        					if(data.success){
+        						Hap.unblockUI();
+        						viewModel.closeWin();
+        					}
+        				}
+        			})
+        		}
+    		} else {
+    			kendo.ui.showErrorDialog({message:"请上传文件！"});
+    			return;
+    		}
+    	},
+    });
+    // viewModel.queryInfo();
+</script>
+
+<body>
+<div id="fileDownLoadWindow"></div>
+<div id="page-content">
+	<form id = "mainForm" style="paddiing-bottom:50px;padding-top:15px" class="form-horizontal" method="post" enctype="application/json;charset=UTF-8">
+		<div class="row">
+			<div class="col-sm-6">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-4 control-label">申请人</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="applicantName"  data-role="maskedtextbox" class="k-textbox"
+								data-bind="value:model.applicantName" data-label="申请人"  disabled>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="col-sm-6">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-4 control-label">申请时间</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="applicationTime"  data-role="datepicker" class="k-datepicker"
+								data-bind="value:model.applicationTime" disabled>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-sm-6">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-4 control-label">DIN</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="processNumber"  data-role="maskedtextbox" class="k-textbox"
+								data-bind="value:model.processNumber" disabled>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="col-sm-6">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-4 control-label">文件编号，图号</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="documentNumber"  data-role="maskedtextbox" class="k-textbox"
+								data-bind="enabled:model.isCanEditor,value:model.documentNumber" required>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-sm-6">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-4 control-label">PCI编号</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="pciNumber"  data-role="maskedtextbox" class="k-textbox"
+								data-bind="enabled:model.isCanEditor,value:model.pciNumber" >
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="col-sm-6">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-4 control-label">相关对应料号</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="materialNumber"  data-role="maskedtextbox" class="k-textbox"
+								data-bind="enabled:model.isCanEditor,value:model.materialNumber" >
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-sm-6">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-4 control-label">提交单编号</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="applicationNumber"  data-role="maskedtextbox" class="k-textbox"
+								data-bind="enabled:model.isCanEditor,value:model.applicationNumber" required>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="col-sm-6">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-4 control-label">软件Release note编号</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="softNumber"  data-role="maskedtextbox" class="k-textbox"
+								data-bind="enabled:model.isCanEditor,value:model.softNumber" >
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-sm-6">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-4 control-label">文件名称</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="fileName"  data-role="maskedtextbox" class="k-textbox"
+								data-bind="enabled:model.isCanEditor,value:model.fileName" required>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="col-sm-6">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-4 control-label">文件类型</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="fileTypeId" 
+								data-bind="enabled:model.isCanEditor,value:model.fileTypeId,text:model.fileTypeName" required>
+						</div>
+						<script>
+							$('#fileTypeId').kendoComboBox({
+								filter:"contains",
+								valuePrimitive:true,
+								dataTextField:"text",
+								dataValueField:"value",
+								dataSource:{
+									transport:{
+										read:_basePath + "/file/type/queryFileTypeName",
+									}
+								}
+							})
+						</script>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-sm-6">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-4 control-label">供应商名称</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="borrowedSupplier"  
+								data-bind="enabled:model.isCanEditor,value:model.borrowedSupplier,text:model.borrowedSupplierName" required>
+						</div>
+						<script>
+	    	    	 		kendo.bind($("#borrowedSupplier"),viewModel);
+		                	$("#borrowedSupplier").kendoLov($.extend
+		                	    (<@lov"LOV_SUPPLIER_SRM"/>, {
+		                	        
+		                	}));
+				        </script> 
+					</div>
+				</div>
+			</div>
+			<div class="col-sm-6">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-4 control-label">是否采购下挂件零件</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="isPurchase"  
+								data-bind="enabled:model.isCanEditor,value:model.isPurchase" required>
+						</div>
+						<script>
+	    					$("#isPurchase").kendoComboBox({
+	    				        dataTextField: "meaning",
+	    				        dataValueField: "value",
+	    				        valuePrimitive: true,
+	    				        dataSource: YES_NO,
+	    					});
+						</script>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-sm-6">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-4 control-label">相关项目</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="relatedItems"  data-role="maskedtextbox" class="k-textbox"
+								data-bind="enabled:model.isCanEditor,value:model.relatedItems" >
+						</div>
+					</div>
+				</div>
+			</div>
+			<!-- <div class="col-sm-6">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-4 control-label">文档上传</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="fileId" data-role="maskedtextbox" class="k-textbox"
+								data-bind="value:model.fileUploadMessage"  type="button">
+						</div>
+						<script>
+							$("#fileId").click(function(){
+								debugger;
+								if(viewModel.model.fileUploadMessage == "文件已上传，可点击下载！"){
+									$("#fileDownLoadWindow").html('');
+									window.open(viewModel.model.fileDownloadUrl);
+								} else {
+									kendo.ui.showErrorDialog({message:"请上传文件！"});
+								}
+							})
+						</script>
+					</div>
+				</div>
+			</div> -->
+		</div>
+		<div class="row">
+			<div class="col-sm-6">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-4 control-label">版本号</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="versionNumber"  data-role="maskedtextbox" class="k-textbox"
+								data-bind="enabled:model.isCanEditor,value:model.versionNumber" required>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="col-sm-6">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-4 control-label">文档链接</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="documentUrl"  data-role="maskedtextbox" class="k-textbox"
+								data-bind="enabled:model.isCanEditor,value:model.documentUrl" disabled>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-sm-6">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-4 control-label">标准查新记录</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="queryRecord"  data-role="maskedtextbox" class="k-textbox"
+								data-bind="enabled:model.isCanEditor,value:model.queryRecord" >
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="col-sm-6">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-4 control-label">产品类别</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="productCategory"  data-role="maskedtextbox" class="k-textbox"
+								data-bind="enabled:model.isCanEditor,value:model.productCategory" required>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-sm-6">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-4 control-label">变更履历</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="revisionHistory"  data-role="maskedtextbox" class="k-textbox"
+								data-bind="enabled:model.isCanEditor,value:model.revisionHistory" >
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="col-sm-6">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-4 control-label">状态</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="status"  data-role="maskedtextbox" class="k-textbox"
+								data-bind="value:model.status" disabled>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</form>
+	<!-- <div class="row" id="import">																				
+		<form id="mainform" class="form-horizontal" style="width:50%">
+			<div class="row" style="width:80%;margin-left:15%">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<div class="demo-section k-content">
+							<input name="files" id="files1" type="file" accept=".xlsx,.pdf,.docx,.pptx,.gif,.jpg,.png,.jpeg,.xls,.docm,.xlsm,.ppt,.pptm,.doc" />
+						</div>
+					</div>
+				</div>	
+			</div>
+		</form>
+		<script>
+		debugger;
+		if((processInstanceId == "null") || (processInstanceId != "null" && status == "单据修改")){
+			$("#files1").kendoUpload({
+				async: {
+	                  	saveUrl: "${base.contextPath}/file/manager/activity/upload?${_csrf.parameterName}=${_csrf.token}",//
+					autoUpload: false
+				},
+				multiple: false,//只能单选
+				showFileList:true, 
+				select:function(e){//选择文件触发
+					//debugger;
+					var file =e.files[0].name;
+                },
+				upload: function(e){//点击上传按钮触发
+					//debugger;
+					/* e.data = {//封装参数
+							fileNum : $('#code').val(),
+				  			fileTitle : $('#title').val(),
+				  			classifyIds : classifyidList,
+				  			remark : $('#remark').val(),
+				  			expirationDate : $('#expirationDate').val(),
+				        } */
+				},
+                success: function(data){//请求成功后触发
+                	debugger;
+                    if(data.response.success){
+                    	viewModel.model.set("fileDownloadUrl",data.response.rows[0].documentUrl);
+                    	viewModel.model.set("fileId",data.response.rows[0].fileId);
+                    	viewModel.model.set("fileUploadMessage","文件已上传，可点击下载！");
+                    	kendo.ui.showInfoDialog({message: "导入成功"});
+                    }else{
+                    	viewModel.model.set("fileUploadMessage","文件上传失败，请重新上传！");
+                    	kendo.ui.showErrorDialog({message:"失败原因:"+data.response.message+"请重新上传文件"});
+                    }
+                 },
+			});
+		} else {
+			$("#files1").hide();
+		}
+		</script>			
+	</div> -->
+	<div class="col-xs-9" style="margin-left:75px">
+		<div class="row">
+			<span><@spring.message "dimensionproblemdescription.fileupload"/></span>
+		</div>
+		<div class="row">
+			<div id="fileDownLoadD2" style="display:none">
+			</div>
+			<div id="excelimport">
+				<form id="mainform" class="form-horizontal">
+					<div class="row" style="width:100%">
+						<div class="form-group">
+							<div class="col-sm-12">
+								<div class="demo-section k-content" >
+									<input name="files" id="files1"  type="file" accept=".xlsx,.pdf,.doc,.png,.pptx" />
+								</div>
+							
+								<script>
+									function fileRemoveHaved(fileId){
+										$.ajax({
+			            			        url: '${base.contextPath}/file/manager/remove',
+			            			        type: 'POST',
+			            			        data: JSON.stringify([{fileId:fileId}]),
+			            			        async: false,
+			            			        contentType: "application/json",
+			            			        //dataType: "json",
+			            			        success: function (data) {
+			            			        	if (data.success) {
+			            			        		var removeFileId = data.rows[0].fileId;
+			            			        		var fileIdListStr = [];
+			            			        		fileIdListStr = (viewModel.model.fileIdList + '').split(",");
+			            			        		if(fileIdListStr.length > 1){
+			            			        			for(var m = 0; m < fileIdListStr.length; m++){
+			            			        				if(removeFileId == fileIdListStr[m]){
+			            			        					fileIdListStr.splice(m,1);
+			            			        					break;
+			            			        				}
+			            			        			}
+			            			        			var resultFileIdList = null;
+			            			        			for(var n = 0; n < fileIdListStr.length; n++){
+			            			        				if(n == 0){
+			            			        					resultFileIdList = fileIdListStr[n];
+			            			        				} else {
+			            			        					resultFileIdList = resultFileIdList + ',' + fileIdListStr[n];
+			            			        				}
+			            			        			}
+			            			        			viewModel.model.set("fileIdList", resultFileIdList);
+			            			        		} else {
+			            			        			viewModel.model.set("fileIdList", null);
+			            			        		}
+			            			        		getUploadedFiles();
+			            			        		kendo.ui.showInfoDialog({title:"提示",message:"删除成功"});
+			    					            } else {
+			    					            	kendo.ui.showErrorDialog({title:"错误",message:data.message});
+			    					            }
+			            			        }
+			            			    });
+									}
+									function fileDownLoadHaved(fileUrl){
+										$("#fileDownLoadD2").html('');
+										window.open(fileUrl);
+										//单文件操作可以使用window.open
+										//多文件下载使用iframe嵌入的方式
+										//$('<iframe class="multi-download" src="'+ fileUrl +'" style="display:none"></iframe>').appendTo($("#fileDownLoadD2"));
+									}
+									function appendFileArray(fileArray){
+										$("#filesContentDiv").html('');
+										$.each(fileArray,function(e,v){
+											var appStr = ''+
+											'<span style="font-size:12px;">'+v.fileUrl.split("/")[v.fileUrl.split("/").length-1]+'</span>'+
+											'<span class="fa fa-trash" style="font-size:16px;cursor:pointer;margin-left:5px;" onclick="fileRemoveHaved(\''+v.fileId+'\')"></span>'+
+											'<span class="fa fa-download" style="font-size:16px;cursor:pointer;margin-left:5px;" onclick="fileDownLoadHaved(\''+v.fileUrl+'\')"></span><br>';
+											$("#filesContentDiv").append(appStr);
+										});
+									}
+									function getUploadedFiles(){
+										//ajax查询上传的文件
+										//$("#fileDownLoadD2").html("");
+										$("#filesContentDiv").html("");
+										var fileArray = new Array();
+										$.ajax({
+			            			        url: '${base.contextPath}/file/manager/queryFileUpload',
+			            			        type: 'POST',
+			            			        data: {                                                                               
+			            			        	fileIdList:viewModel.model.fileIdList
+			            			        },
+			            			        async: false,
+			            			        dataType: "json",
+			            			        success: function (response) {
+			            			        	if (response.success) {
+			            			        		debugger;
+			            			        		fileArray = response.rows;
+			            			        		appendFileArray(fileArray);
+			    					            } else {
+			    					            	kendo.ui.showErrorDialog({title:"错误",message:response.message});
+			    					            }
+			            			        }
+			            			    });
+		//									$("#fileDownLoadD2").html("");
+		//									$.each(fileArray,function(i,o){
+		//										$('<iframe class="multi-download" src="'+ o.fileUrl +'" style="display:none"></iframe>').appendTo($("#fileDownLoadD2"));
+		//									});
+									}
+									$("#files1").kendoUpload({
+										async: {
+					                    	saveUrl: "${base.contextPath}/file/manager/activity/upload?${_csrf.parameterName}=${_csrf.token}",//
+											autoUpload: true,
+										},
+										showFileList:false,
+										upload: function(e){
+											/* e.data = {
+													orderId:10000,
+										        } */
+										        //debugger;
+										},
+					                    success: function(data){
+					                        if(data.response.success){
+					                        	if(viewModel.model.fileIdList != null){
+					                        		viewModel.model.set("fileIdList", viewModel.model.fileIdList + ',' + data.response.rows[0].fileId);
+					                        	} else {
+					                        		viewModel.model.set("fileIdList", data.response.rows[0].fileId);
+					                        	}
+					                        	getUploadedFiles();
+					                        	kendo.ui.showInfoDialog({message: "导入成功"});
+					                        }else{
+					                        	kendo.ui.showErrorDialog({message: data.response.message});
+					                        }
+					                     },
+									});
+									$("div .k-dropzone").append('<div id="filesContentDiv" class="row"></div>');
+									$("div .k-dropzone").css("margin-bottom","10px");
+								</script>
+								</div>
+							</div>
+						</div>
+					</form>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div id="mainBottom" class="text-right" style="bottom:15px;position:fixed;float:left;padding-top:15px;border-top:1px solid #e8e1eb;
+		width:100%;background:#fff;margin-right:30px">
+		<span id="btn-save" class="btn btn-primary" data-bind="click:save" type="submit" style="margin-right:5px">保存</span>
+		<span id="btn-submit" class="btn btn-primary" data-bind="click:createProcessInstance" type="submit" style="margin-right:5px">提交审批</span>
+		<span class="btn btn-default" data-bind="click:closeWin" type="button" style="margin-right:25px">取消</span>
+	</div>
+	<script>
+		kendo.bind($('#mainForm'), viewModel);
+		kendo.bind($('#mainBottom'), viewModel);
+		//debugger;
+		if(status == "审批通过"){
+			$('#btn-submit').hide();
+			$('#btn-save').hide();
+			viewModel.model.set("isCanEditor",false);
+		} else {
+			if(processInstanceId != "null"){
+				$('#btn-submit').hide();
+				if(status != "单据修改"){
+					$('#btn-save').hide();
+					viewModel.model.set("isCanEditor",false);
+				} else {
+					viewModel.model.set("isCanEditor",true);
+				}
+			} else {
+				viewModel.model.set("isCanEditor",true);
+			}
+		}
+		
+		var i=document.getElementById('files1');
+		if (processInstanceId != "null") { 
+			if(status != '单据修改') {
+				i.style.display = "none";
+			} else {
+				i.style.display = "";
+			}
+		}else{
+			if(status == '审批通过'){
+				i.style.display = "none";
+			} else {
+				i.style.display = "";
+			}
+		}
+	</script>
+	<script>
+		$('#mainForm').kendoValidator({
+			messages:{
+				required:'<@spring.message "hap.validation.notempty"/>'
+			},
+			invalidMessageType:"tooltip"
+		});
+	</script>
+	<script>
+		viewModel.queryInfo();
+	</script>
+</div>
+</body>
+</html>

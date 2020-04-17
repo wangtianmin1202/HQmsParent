@@ -1,0 +1,315 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_fmea.mapper.FmeaMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_fmea.dto.Fmea">
+        <result column="KID" property="kid" jdbcType="DECIMAL" />
+        <result column="FMEA_CODE" property="fmeaCode" jdbcType="VARCHAR" />
+        <result column="FMEA_NAME" property="fmeaName" jdbcType="VARCHAR" />
+        <result column="ANALYSIS_OBJECT" property="analysisObject" jdbcType="VARCHAR" />
+        <result column="FMEA_TYPE" property="fmeaType" jdbcType="VARCHAR" />
+        <result column="CHARGE_ID" property="chargeId" jdbcType="DECIMAL" />
+        <result column="CURRENT_VERSION" property="currentVersion" jdbcType="DECIMAL" />
+        
+        <result column="USE_NAMES" property="useNames" jdbcType="VARCHAR" />
+        <result column="USE_NAME" property="useName" jdbcType="VARCHAR" />
+        <result column="UPDATE_DATE" property="updateDate" jdbcType="DATE" />
+        <result column="UPDATE_BY" property="updateBy" jdbcType="VARCHAR" />
+        <result column="UPDATE_DATE_BEGIN" property="updateDateBegin" jdbcType="DATE" />
+        <result column="UPDATE_DATE_END" property="updateDateEnd" jdbcType="DATE" />
+        <result column="STAFF_ID" property="staffId" jdbcType="VARCHAR" />
+        
+         <result column="LEVEL_ID" property="levelId" jdbcType="DECIMAL" />
+         <result column="LEVEL_IDS" property="levelIds" jdbcType="VARCHAR" /> 
+         <result column="LEVEL_PFMEA_TYPE" property="levelPfmeaType" jdbcType="VARCHAR" /> 
+        
+    </resultMap>  
+
+<select id="dfemaselect" resultMap="BaseResultMap" parameterType="com.hand.hqm.hqm_fmea.dto.Fmea">
+        SELECT  t.fmea_code, t.fmea_name
+	    FROM hqm_fmea t  
+        WHERE  1=1
+        <if test="fmeaCode!=null"> 
+            AND t.fmea_code LIKE concat('%',concat(#{fmeaCode,jdbcType=VARCHAR},'%'))
+        </if>
+        <if test="fmeaName!=null">
+            AND t.fmea_name LIKE concat('%',concat(#{fmeaName,jdbcType=VARCHAR},'%')) 
+        </if> 
+    </select>
+    
+     <select id="dmyselect" resultMap="BaseResultMap"  parameterType="com.hand.hqm.hqm_fmea.dto.Fmea">
+  SELECT hf.kid
+			,hf.fmea_code
+			,hf.fmea_name
+			,hf.fmea_type
+			,hf.analysis_object
+			,hf.charge_id
+			,hr.name AS use_name
+			,hf.current_version
+			,strcat(hfs.staff_id) AS staff_id
+			,strcat(hr2.name) AS use_names
+			,hf.creation_date AS update_date
+			,su3.user_name AS update_by
+			,hf.last_update_date
+	FROM hqm_fmea hf, hr_employee hr , hqm_fmea_staff hfs, hr_employee hr2, sys_user su3
+ WHERE hf.charge_id = hr.employee_id
+	 AND hf.created_by = su3.user_id
+	 AND hfs.fmea_id(+) = hf.kid
+	 AND hf.fmea_type = 'D'
+	 AND hfs.staff_id = hr2.employee_id(+)
+   <if test="fmeaCode != null">
+     AND hf.fmea_code = #{fmeaCode}
+   </if>
+   <if test="fmeaName != null">
+     AND hf.fmea_name = #{fmeaName}
+   </if>
+    <if test="levelId != null">    
+     AND hf.level_id =  #{levelId}  
+   </if>
+   <if test="chargeId != null">
+     AND hf.charge_id = #{chargeId}
+   </if>
+    <if test="updateDateBegin != null">
+     and hf.creation_date &gt;= to_date(#{updateDateBegin}, 'yyyy-mm-dd hh24:mi:ss')
+   </if>
+    <if test="updateDateEnd != null">
+    and hf.creation_date &lt;= to_date(#{updateDateEnd}, 'yyyy-mm-dd hh24:mi:ss')
+   </if>
+     <if test="kid != null"> 
+    and hf.kid= #{kid}   
+   </if>
+    <if test="analysisObject != null"> 
+    and hf.analysis_object LIKE concat(#{analysisObject}, '%')  
+   </if>
+    <if test="staffId != null">     
+      AND hf.kid IN (SELECT hfs2.fmea_id
+										FROM hqm_fmea_staff hfs2
+									 WHERE hfs2.staff_id = #{staffId})  
+   </if>
+  GROUP BY hf.kid
+				 ,hf.fmea_code
+				 ,hf.fmea_name
+				 ,hf.fmea_type
+				 ,hf.analysis_object
+				 ,hf.charge_id
+				 ,hr.name
+				 ,hf.current_version
+				 ,hf.creation_date
+				 ,su3.user_name
+				 ,hf.last_update_date
+	order by 	hf.LAST_UPDATE_DATE desc    , hf.creation_date DESC	    
+</select> 
+
+     <select id="PselectV" resultMap="BaseResultMap"  parameterType="com.hand.hqm.hqm_fmea.dto.Fmea">
+ SELECT hf.kid
+      ,hf.fmea_code
+      ,hf.fmea_name
+      ,hf.fmea_type
+      ,hf.analysis_object
+      ,hf.charge_id
+      ,hr.name AS use_name
+      ,HFV.FMEA_VERSION AS current_Version
+      ,strcat(hfs.staff_id) AS staff_id
+      ,strcat(hr2.name) AS use_names
+      ,su3.user_name AS update_by
+      ,HFV.last_update_date AS update_date
+  FROM hqm_fmea hf, hr_employee hr , hqm_fmea_staff hfs, hr_employee hr2 , sys_user su3,HQM_FMEA_VERSION HFV
+ WHERE hf.charge_id = hr.employee_id
+   AND hf.created_by = su3.user_id
+   AND hfs.fmea_id(+) = hf.kid
+   AND hf.fmea_type = 'P'
+   AND HFV.FMEA_ID =hf.KID
+   AND hfs.staff_id = hr2.employee_id(+)
+   <if test="fmeaCode != null">
+     AND hf.fmea_code = #{fmeaCode}
+   </if>
+   <if test="fmeaName != null">
+     AND hf.fmea_name = #{fmeaName}
+   </if>
+   <if test="chargeId != null">
+     AND hf.charge_id = #{chargeId}
+   </if>
+    <if test="updateDateBegin != null">
+     and hf.creation_date &gt;= to_date(#{updateDateBegin}, 'yyyy-mm-dd hh24:mi:ss')
+   </if>
+    <if test="updateDateEnd != null">
+    and hf.creation_date &lt;= to_date(#{updateDateEnd}, 'yyyy-mm-dd hh24:mi:ss')
+   </if>
+     <if test="kid != null"> 
+    and hf.kid= #{kid}   
+   </if>
+    <if test="analysisObject != null"> 
+    and hf.analysis_object LIKE concat(#{analysisObject}, '%')  
+   </if>
+    <if test="staffId != null"> 
+      AND hf.kid IN (SELECT hfs2.fmea_id
+										FROM hqm_fmea_staff hfs2
+									 WHERE hfs2.staff_id = #{staffId})  
+   </if>
+  GROUP BY hf.kid
+         ,hf.fmea_code
+         ,hf.fmea_name
+         ,hf.fmea_type
+         ,hf.analysis_object
+         ,hf.charge_id
+         ,hr.name
+         ,HFV.FMEA_VERSION 
+         ,su3.user_name
+         ,HFV.last_update_date
+ ORDER BY HFV.last_update_date DESC        
+</select> 
+
+     <select id="DselectV" resultMap="BaseResultMap"  parameterType="com.hand.hqm.hqm_fmea.dto.Fmea">
+   SELECT hf.kid
+      ,hf.fmea_code
+      ,hf.fmea_name
+      ,hf.fmea_type
+      ,hf.analysis_object
+      ,hf.charge_id
+      ,hr.name AS use_name
+      ,HFV.FMEA_VERSION AS current_Version
+      ,strcat(hfs.staff_id) AS staff_id
+      ,strcat(hr2.name) AS use_names
+      ,su3.user_name AS update_by
+      ,HFV.last_update_date AS update_date
+  FROM hqm_fmea hf, hr_employee hr , hqm_fmea_staff hfs, hr_employee hr2 , sys_user su3,HQM_FMEA_VERSION HFV
+ WHERE hf.charge_id = hr.employee_id
+   AND hf.created_by = su3.user_id
+   AND hfs.fmea_id(+) = hf.kid
+   AND hf.fmea_type = 'D'
+   AND HFV.FMEA_ID =hf.KID
+   AND hfs.staff_id = hr2.employee_id(+)
+   <if test="fmeaCode != null">
+     AND hf.fmea_code = #{fmeaCode}
+   </if>
+   <if test="fmeaName != null"> 
+     AND hf.fmea_name = #{fmeaName}
+   </if>
+   <if test="chargeId != null">
+     AND hf.charge_id = #{chargeId}
+   </if>
+    <if test="updateDateBegin != null">
+     and hf.creation_date &gt;= to_date(#{updateDateBegin}, 'yyyy-mm-dd hh24:mi:ss')
+   </if>
+    <if test="updateDateEnd != null">
+    and hf.creation_date &lt;= to_date(#{updateDateEnd}, 'yyyy-mm-dd hh24:mi:ss')
+   </if>
+     <if test="kid != null"> 
+    and hf.kid= #{kid}   
+   </if>
+    <if test="analysisObject != null"> 
+    and hf.analysis_object LIKE concat(#{analysisObject}, '%')  
+   </if>
+    <if test="staffId != null"> 
+      AND hf.kid IN (SELECT hfs2.fmea_id
+										FROM hqm_fmea_staff hfs2
+									 WHERE hfs2.staff_id = #{staffId})  
+   </if>
+  GROUP BY hf.kid
+         ,hf.fmea_code
+         ,hf.fmea_name
+         ,hf.fmea_type
+         ,hf.analysis_object
+         ,hf.charge_id
+         ,hr.name
+         ,HFV.FMEA_VERSION 
+         ,su3.user_name
+         ,HFV.last_update_date
+ ORDER BY HFV.last_update_date DESC        
+</select>
+	
+	<select id="selectFmeaByLevelId" resultMap="BaseResultMap"  parameterType="java.lang.Long">
+		SELECT * FROM HQM_FMEA WHERE LEVEL_ID = #{levelId}
+	</select>
+
+     <select id="pmyselect" resultMap="BaseResultMap"  parameterType="com.hand.hqm.hqm_fmea.dto.Fmea">
+SELECT hf.kid
+			,hf.fmea_code
+			,hf.fmea_name
+			,hf.fmea_type
+			,hf.analysis_object
+			,hf.charge_id
+			,hr.name AS use_name
+			,hf.current_version
+			,strcat(hfs.staff_id) AS staff_id
+			,strcat(hr2.name) AS use_names
+			,hf.creation_date AS update_date
+			,su3.user_name AS update_by
+			,hf.last_update_date
+			,hl.level_pfmea_type
+	FROM hqm_fmea hf, hr_employee hr , HQM_PFMEA_LEVEL hl , hqm_fmea_staff hfs, hr_employee hr2, sys_user su3
+ WHERE hf.charge_id = hr.employee_id
+	 AND hf.created_by = su3.user_id
+	 AND hfs.fmea_id(+) = hf.kid
+	 AND hf.fmea_type = 'P'
+	 AND hfs.staff_id = hr2.employee_id(+)
+	 AND hf.level_id=hl.level_id
+   <if test="fmeaCode != null">
+     AND hf.fmea_code = #{fmeaCode}
+   </if>
+   <if test="fmeaName != null">
+     AND hf.fmea_name = #{fmeaName} 
+   </if>
+   <if test="chargeId != null">
+     AND hf.charge_id = #{chargeId}
+   </if>
+   <if test="levelId != null">  
+     AND hf.level_id =  #{levelId}  
+   </if>
+    <if test="updateDateBegin != null">
+     and hf.creation_date &gt;= to_date(#{updateDateBegin}, 'yyyy-mm-dd hh24:mi:ss')
+   </if>
+    <if test="updateDateEnd != null">
+    and hf.creation_date &lt;= to_date(#{updateDateEnd}, 'yyyy-mm-dd hh24:mi:ss')
+   </if>
+     <if test="kid != null"> 
+    and hf.kid= #{kid}   
+   </if>
+    <if test="analysisObject != null"> 
+    and hf.analysis_object LIKE concat(#{analysisObject}, '%')  
+   </if>
+    <if test="staffId != null"> 
+      AND hf.kid IN (SELECT hfs2.fmea_id
+										FROM hqm_fmea_staff hfs2
+									 WHERE hfs2.staff_id = #{staffId})  
+   </if>
+  GROUP BY hf.kid     
+				 ,hf.fmea_code
+				 ,hf.fmea_name
+				 ,hf.fmea_type
+				 ,hf.analysis_object
+				 ,hf.charge_id 
+				 ,hr.name
+				 ,hf.current_version
+				 ,hf.creation_date
+				 ,su3.user_name
+				 ,hf.last_update_date
+				 ,hl.level_pfmea_type
+	order by 	hf.LAST_UPDATE_DATE desc   , hf.creation_date DESC 	        
+</select> 
+
+
+<select id="selectMaxNumberD" resultMap="BaseResultMap" parameterType="com.hand.hqm.hqm_fmea.dto.Fmea">
+SELECT t.fmea_code
+  FROM hqm_fmea t
+ WHERE 1 = 1
+ AND T.fmea_type ='D'
+   AND t.fmea_code LIKE concat(#{fmeaCode}, '%') 
+ ORDER BY t.fmea_code
+  DESC
+</select>
+
+<select id="selectMaxNumberP" resultMap="BaseResultMap" parameterType="com.hand.hqm.hqm_fmea.dto.Fmea">
+SELECT t.fmea_code
+  FROM hqm_fmea t
+ WHERE 1 = 1
+ AND T.fmea_type ='P'
+   AND t.fmea_code LIKE concat(#{fmeaCode}, '%') 
+ ORDER BY t.fmea_code
+  DESC
+</select>
+
+
+
+
+</mapper>

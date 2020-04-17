@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.spc.pspc_chart.mapper.ChartMapper">
+    <resultMap id="BaseResultMap" type="com.hand.spc.pspc_chart.dto.Chart">
+        <result column="CHART_ID" property="chartId" jdbcType="DECIMAL" />
+        <result column="TENANT_ID" property="tenantId" jdbcType="DECIMAL" />
+        <result column="SITE_ID" property="siteId" jdbcType="DECIMAL" />
+        <result column="CHART_CODE" property="chartCode" jdbcType="VARCHAR" />
+        <result column="DESCRIPTION" property="description" jdbcType="VARCHAR" />
+        <result column="CHART_TYPE" property="chartType" jdbcType="VARCHAR" />
+        <result column="MULTI_MAP_SINGLE" property="multiMapSingle" jdbcType="VARCHAR" />
+        <result column="MULTI_MAP_NORMALITY" property="multiMapNormality" jdbcType="VARCHAR" />
+        <result column="MULTI_MAP_CP" property="multiMapCp" jdbcType="VARCHAR" />
+        <result column="MULTI_MAP_PLATO" property="multiMapPlato" jdbcType="VARCHAR" />
+        <result column="CHART_TITLE" property="chartTitle" jdbcType="VARCHAR" />
+        <result column="TRIGGER_MESSAGE" property="triggerMessage" jdbcType="VARCHAR" />
+        <result column="SUBGROUP_SIZE" property="subgroupSize" jdbcType="DECIMAL" />
+        <result column="MAX_PLOT_POINTS" property="maxPlotPoints" jdbcType="DECIMAL" />
+        <result column="TICK_LABEL_X" property="tickLabelX" jdbcType="VARCHAR" />
+    </resultMap>
+
+    <!--基本數據查詢,可用于基本的lov查询-->
+    <select id="queryBaseData" resultMap="BaseResultMap" parameterType="com.hand.spc.pspc_chart.dto.Chart">
+        SELECT
+            *
+        FROM
+            PSPC_CHART pc
+        WHERE
+            1 =1
+            <if test="chartId!=null">
+                and CHART_ID  = #{chartId}
+            </if>
+            <if test="description!=null">
+                and DESCRIPTION like   concat('%',concat(#{description},'%'))
+            </if>
+            <if test="chartCode!=null">
+                and CHART_CODE like   concat('%',concat(#{chartCode},'%'))
+            </if>
+            <if test="chartType!=null">
+                and CHART_TYPE  = #{chartType}
+            </if>
+    </select>
+
+
+</mapper>

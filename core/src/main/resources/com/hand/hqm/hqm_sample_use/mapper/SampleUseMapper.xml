@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_sample_use.mapper.SampleUseMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_sample_use.dto.SampleUse">
+        <result column="USE_ID" property="useId" jdbcType="DECIMAL" />
+        <result column="USE_DOCUMENT_CODE" property="useDocumentCode" jdbcType="VARCHAR" />
+        <result column="DOCUMENT_STATUS" property="documentStatus" jdbcType="VARCHAR" />
+        <result column="APPROVER" property="approver" jdbcType="DECIMAL" />
+        <result column="APPROVAL_DATE" property="approvalDate" jdbcType="DATE" />
+        <result column="REMARK" property="remark" jdbcType="VARCHAR" />
+        
+        <result column="APPLICANT_NAME" property="applicantName" jdbcType="VARCHAR" />
+        <result column="APPROVER_NAME" property="approverName" jdbcType="VARCHAR" />
+        <result column="DOCUMENT_TYPE" property="documentType" jdbcType="VARCHAR" />
+        <result column="APPLICANT_DATE" property="applicantDate" jdbcType="DATE" />
+        
+        <result column="GIVA_BACK_DATE" property="givaBackDate" jdbcType="DATE" />
+        <result column="SAMPLE_ID" property="sampleId" jdbcType="DATE" />
+        
+        <result column="ITEM_ID" property="itemId" jdbcType="DECIMAL" />
+        <result column="SAMPLE_GIVE_DATE_START" property="sampleGiveDateStart" jdbcType="DATE" />
+        <result column="SAMPLE_MODEL" property="sampleModel" jdbcType="VARCHAR" /> 
+        <result column="SAMPLE_CODE" property="sampleCode" jdbcType="VARCHAR" />       
+              
+        <result column="SAMPLE_GIVE_DATE_END" property="sampleGiveDateEnd" jdbcType="DATE" /> 
+    </resultMap>
+
+    <select id="myselect" resultMap="BaseResultMap"  parameterType="com.hand.hqm.hqm_sample_use.dto.SampleUse">   
+       SELECT DISTINCT t.use_id
+							 ,t.use_document_code
+							 ,t.document_status 
+							 ,t.approver
+							 ,t.creation_date AS applicant_date
+							 ,he.name AS applicant_name
+							 ,t.approval_date
+							 ,t.created_by
+							 ,he2.name AS approver_name
+	FROM hqm_sample_use t
+			,hr_employee he
+			,hr_employee he2
+			,hqm_use_detail hu
+			,hqm_sample_account hsa
+ WHERE t.created_by = he.employee_id(+)
+	 AND t.approver = he2.employee_id(+)
+	 AND t.use_id = hu.use_id(+)
+	 AND hu.sample_id = hsa.sample_id(+)
+	 AND t.document_type = '3'
+      <if test="useDocumentCode != null">
+     AND t.use_document_code   LIKE concat('%',concat(#{useDocumentCode},'%'))
+   </if>
+   
+   <if test="applicant != null">
+     AND t.created_by =#{applicant} 
+   </if>
+   
+   <if test="approver != null">
+     AND t.approver = #{approver} 
+   </if>
+   
+    <if test="documentStatus != null">
+     AND t.document_status = #{documentStatus}
+   </if> 
+    <if test="useId != null">
+     AND t.use_id = #{useId}   
+   </if>     
+   <if test="sampleGiveDateStart != null">
+     AND hsa.sample_give_date &gt;= #{sampleGiveDateStart} 
+   </if>
+   
+   <if test="sampleGiveDateEnd != null">
+     AND hsa.sample_give_date &lt;= #{sampleGiveDateEnd}
+   </if>   
+    <if test="sampleCode != null">
+     AND hsa.sample_code   LIKE concat('%',concat(#{sampleCode},'%'))
+   </if>
+   
+   <if test="sampleModel != null">
+     AND hsa.sample_model LIKE concat('%',concat(#{sampleModel},'%'))  
+   </if>    
+     </select> 
+     
+ 
+ <select id="select_his" resultMap="BaseResultMap"  parameterType="com.hand.hqm.hqm_sample_use.dto.SampleUse">   
+        SELECT t.use_id
+			,t.use_document_code
+			,t.document_status
+			,t.approver
+			,t.creation_date AS applicant_date
+			,he.name AS applicant_name
+			,t.approval_date
+			,t.created_by
+			,he2.name AS approver_name
+			,CASE t.document_status
+				 WHEN '6' THEN
+					t.last_update_date
+				 ELSE
+					to_date('')
+			 END AS giva_back_date
+	FROM hqm_sample_use t, hr_employee he, hr_employee he2,hqm_sample_account ha ,hqm_use_detail hd
+ WHERE t.created_by = he.employee_id(+)
+	 AND t.approver = he2.employee_id(+)
+	 AND t.document_type = '3'
+   and ha.sample_id =hd.sample_id
+   and hd.use_id =t.use_id
+     
+    <if test="sampleId != null">
+     AND ha.sample_Id = #{sampleId}   
+   </if>      
+   
+     </select> 
+     
+ 
+     <select id="selectMaxNumber" resultMap="BaseResultMap" parameterType="com.hand.hqm.hqm_sample_use.dto.SampleUse">
+
+ SELECT t.use_document_code
+	FROM hqm_sample_use t
+ WHERE t.use_document_code LIKE concat(#{useDocumentCode}, '%')
+ ORDER BY t.use_document_code DESC
+</select>
+
+
+</mapper>

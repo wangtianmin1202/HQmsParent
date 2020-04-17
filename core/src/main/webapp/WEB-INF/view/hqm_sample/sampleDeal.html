@@ -1,0 +1,85 @@
+<#include "../include/header.html">
+<script src="${base.contextPath}/common/code?hqmsampledisposalmethod=HQM_SAMPLE_DISPOSAL_METHOD"></script><!--样本状态-->
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+<script type="text/javascript">
+    var id = "${RequestParameters.id}";
+	var viewModel = kendo.observable({
+		model: {},
+	})
+</script>	
+<script>
+        viewModel.save= function(){
+        	        console.log(this.model.sampleDisposalMethod);
+        	        if(this.model.sampleDisposalMethod ==''||this.model.sampleDisposalMethod==null||this.model.sampleDisposalMethod==undefined)
+                     {
+        	        	kendo.ui.showErrorDialog({
+							title: "错误提示",
+			    			message: "请选择一种处置方法"
+			    			
+			    		}) 
+			    		return;
+                     }
+        			var idArr = [];
+        			idArr[0] = id;
+        			idArr[1] = this.model.sampleDisposalMethod;
+        			console.log(idArr);
+            		$.ajax({
+        				url:"${base.contextPath}/hqm/sample/deal",
+        				data: "list="+idArr,
+        				type:"POST",
+        				success: function (data){
+        					if(data.success){
+        						Hap.showToast({
+        							type :'success',
+        			    			message: '操作成功',
+        			    			gideDuration:2000,
+        			    		})	    		
+        			    		window.parent.$("#grid").data('kendoGrid').dataSource.page(1);
+        						window.parent.$("#childWindow").data("kendoWindow").close();
+        					}else{
+        						kendo.ui.showErrorDialog({
+        							title: "错误提示",
+        			    			message: data.message
+        			    		})
+        					}
+        				}
+        				
+        			})
+      
+        		}
+  
+</script>
+<div id="page-content">
+   <form id="mainform"  class="form-horizontal" method="post" enctype="application/json;charset=UTF-8"> 
+    <div class="row" style="margin-left: 5px;">
+	 	<div class="col-sm-12">
+					<label class="col-sm-3 control-label"><@spring.message "sample.sampledisposalmethod"/>:</label>
+					<div class="col-sm-9">
+						<input required name="sampledisposalmethod" style="width:100%" id="sampledisposalmethodCombox" name="sampledisposalmethod" data-bind="value:model.sampleDisposalMethod">
+						<span data-for="sampleDisposalMethod" class=".k-invalid-msg"></span>
+					</div>
+					<script type="text/javascript">
+					$("#sampledisposalmethodCombox").kendoComboBox({
+				        dataTextField: "meaning",
+				        dataValueField: "value",
+				        valuePrimitive: true,
+				        dataSource: hqmsampledisposalmethod
+					});
+					</script>
+		 </div>
+	  </div>
+   </form>  
+</div>
+<div id="mainBottom" class="text-right" style="bottom: 15px;position: fixed;  float: left;padding-top:15px;border-top:1px solid #ebebeb;width:100%; background: #fff;">
+        <span class="btn btn-primary" data-bind="click:save" type="submit" style="margin-right:5px"><@spring.message "hap.ok"/></span>
+</div>
+<script type="text/javascript">
+    kendo.bind($('#mainBottom'),viewModel);
+	kendo.bind($('#mainform'), viewModel);
+</script>
+</body>
+</html>

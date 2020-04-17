@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.npi.npi_route.mapper.TechnologyWpSpecDetailMapper">
+    <resultMap id="BaseResultMap" type="com.hand.npi.npi_route.dto.TechnologyWpSpecDetail">
+        <result column="DETAIL_ID" property="detailId" jdbcType="DECIMAL" />
+        <result column="SPEC_REQUIREMENT" property="specRequirement" jdbcType="VARCHAR" />
+        <result column="METERING_COUNT" property="meteringCount" jdbcType="VARCHAR" />
+        <result column="LOWER_LIMIT" property="lowerLimit" jdbcType="DECIMAL" />
+        <result column="UPPER_LIMIT" property="upperLimit" jdbcType="DECIMAL" />
+        <result column="UNIT" property="unit" jdbcType="VARCHAR" />
+        <result column="MSA" property="msa" jdbcType="VARCHAR" />
+        <result column="SPC" property="spc" jdbcType="VARCHAR" />
+        <result column="ROUTE_WP_REF_ID" property="routeWpRefId" jdbcType="DECIMAL" />
+    </resultMap>
+
+
+</mapper>

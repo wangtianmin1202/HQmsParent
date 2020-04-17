@@ -1,0 +1,846 @@
+<#include "../include/header.html">
+<script src="${base.contextPath}/common/code?EXTRA_ATTRITUBE=PSPC.DATA.EXTRA.ATTRITUBE" type="text/javascript"></script>
+<style>
+    .head-div{
+        margin-top: 10px;
+    }
+    .head-div label{
+        color: black;
+        font-size: 14px;
+        line-height: 30px;
+        text-align: right;
+    }
+    .head-div input{
+        width:180px;
+        /*margin-right:5px;*/
+    }
+</style>
+<script type="text/javascript">
+    var viewModel = Hap.createGridViewModel("#grid");
+    //操作类型
+    var operateType = ["ADD","QUERY"];
+    //特殊字符对应的 替换代码
+    var specChac = {'-':'RTYU'};
+    //列数
+    var extendColumnCount = ["classifyExtendCount","attributeExtendCount"];
+    viewModel[extendColumnCount[0]] = 0;
+    viewModel[extendColumnCount[1]] = 0;
+    /**
+     * 重写查询
+     */
+    viewModel.query = function () {
+        //校验必输项
+        if(!checkIsInput(operateType[1])){
+            return;
+        }
+        //增加列
+        extendColumns(operateType[1],document.getElementById("showClassify").checked);
+
+        queryData();
+    }
+    /**
+     * 保存
+     */
+    viewModel.save = function () {
+        var fields = [];
+        //获得所有的列，
+        $('thead').find('th').each(function (i,n) {
+            //第一列为序号列不添加
+            if(i != 0){
+                fields.push($(this).data('field'));
+            }
+        });
+        //构造传参
+        var obj = [];
+        for (var i = 0; i < grid._data.length; i++) {
+            var temp = grid._data[i];
+            //添加新增的数据
+            if(!temp.countSampleDataId){
+                var tempObj = {};
+                for(var j = 0; j < fields.length; j++){
+                    var tempField = fields[j];
+                    tempObj[tempField] = temp[tempField];
+                }
+                //添加列数量
+                tempObj[extendColumnCount[0]] = viewModel[extendColumnCount[0]];
+                tempObj[extendColumnCount[1]] = viewModel[extendColumnCount[1]];
+                obj.push(tempObj)
+            }
+        }
+        //保存
+        $.ajax({
+            type: "POST",
+            url: BaseUrl + "/pspc/count/sample/data/submit/count/sampl/data",
+            data:JSON.stringify(obj),//json序列化
+            datatype:"json", //此处不能省略
+
+            contentType: "application/json; charset=utf-8",
+            success:function(data){
+                if(data.success){
+                    //重新查询一遍数据
+                    // queryData();
+                    grid.dataSource.data(new Array());
+                    Hap.showToast({
+                        type:'success',  //1.success 2.error
+                        message: "保存成功",
+                        hideDuration:2000,
+                        "positionClass": "toast-bottom-right",
+                    });
+                }else{
+                    Hap.showToast({
+                        type:'error',  //1.success 2.error
+                        message: data.message,
+                        hideDuration:2000,
+                        "positionClass": "toast-bottom-right",
+                    });
+                }
+            },
+            error:function(data){
+                alert(data)
+            }
+        });
+    }
+    /**
+     * 新增
+     */
+    viewModel.create = function () {
+        //校验必输项
+        if(!checkIsInput(operateType[0])){
+            return;
+        }
+
+        var addColumns = [];
+        addColumns = addColumns.concat(initialColumns);
+        //查询分类项扩展列
+        if(document.getElementById("showClassify").checked){
+            var classifyColumns = quetyClassifyExtendColumns();
+            addColumns = addColumns.concat(classifyColumns);
+
+        }
+        //拓展属性列
+        var attrs = $('#attachProperty').data("kendoMultiSelect").value();
+
+        for (var i = 1; i < attrs.length; i++) {
+            var des = attrs[i];
+            $.each(EXTRA_ATTRITUBE, function (j, n) {
+                if (n.value == attrs[i]) {
+                    des = n.meaning;
+                }
+            });
+            addColumns.push({
+                field: attrs[i],//样本值
+                title: des,
+                width: 120,
+                editor:function (container, options) {
+                    $('<input required data-bind="value:'+options.field+'"' +
+                        ' class="k-input k-textbox" name="' + options.title + '"/>')
+                        .appendTo(container);
+                }
+            })
+        }
+
+        viewModel[extendColumnCount[1]] = attrs.length - 1;
+        //初始化grid
+        initTable(addColumns);
+        grid.addRow();
+        var firstTr = $('tbody').find('tr')[0];
+        var tr = grid.dataItem(firstTr);
+            tr.attachmentGroupId = attachmentGroup.value();
+            tr.attachmentGroupDescription = attachmentGroup.text();
+            $(firstTr).find('td').eq(1).text(tr.attachmentGroupDescription);
+            tr.ceParameterId = ceParameter.value();
+            tr.ceParameterName = ceParameter.text();
+            $(firstTr).find('td').eq(2).text(tr.ceParameterName);
+            tr.ceGroupId = ceGroup.value();
+            tr.ceGroup = ceGroup.text();
+            $(firstTr).find('td').eq(3).text(tr.ceGroup);
+    }
+
+    //初始列
+    var initialColumns = [
+        {
+            field: "attachmentGroupId",//附着对象组
+            title: '<@spring.message "pspccountsampledata.attachmentgroup"/>',
+            width: 120,
+            template:function (dataItem) {
+                return dataItem.attachmentGroupDescription || '';
+            },
+            edit:function (container, options) {
+                $('<span data-bind="text:attachmentGroupDescription"></span>').appendTo(container);
+            }
+        },
+        {
+            field: "ceParameterId",//控制要素
+            title: '<@spring.message "pspccountsampledata.ceparameter"/>',
+            width: 120,
+            template:function (dataItem) {
+                return dataItem.ceParameterName || '';
+            }
+        },
+        {
+            field: "ceGroupId",//控制要素组
+            title: '<@spring.message "pspccountsampledata.cegroup"/>',
+            width: 120,
+            template:function (dataItem) {
+                return dataItem.ceGroup || '';
+            }
+        },
+        {
+            field: "creationDate",//创建时间
+            title: '<@spring.message "pspccountsampledata.creationdate"/>',
+            width: 120,
+            template:function (dataItem) {
+                return new Date(dataItem.creationDate).format("yyyy-MM-dd hh:mm:ss")
+            },
+            editor: function (container, options) {
+                $('<input required name="' + options.field + '"/>')
+                    .appendTo(container)
+                    .kendoDateTimePicker({
+                        format: "yyyy-MM-dd hh:mm:ss",   //value返回的日期格式
+                        dataInput:true
+                    });
+            }
+        },
+        {
+            field: "sampleTime",//样本时间
+            title: '<@spring.message "pspccountsampledata.sampletime"/>',
+            width: 120,
+            template:function (dataItem) {
+                var v = dataItem.sampleTime?new Date(dataItem.sampleTime).format("yyyy-MM-dd hh:mm:ss"):'';
+                return v;
+            },
+            editor: function (container, options) {
+                $('<input required name="' + options.field + '"/>')
+                    .appendTo(container)
+                    .kendoDateTimePicker({
+                        format: "yyyy-MM-dd hh:mm:ss",   //value返回的日期格式
+                        dataInput:true
+                    });
+            }
+        },
+        {
+            field: "sampleValueCount",//样本值
+            title: '<@spring.message "pspccountsampledata.samplevaluecount"/>',
+            width: 120
+        },
+        {
+            field: "unqualifiedQuantity",//不合格数
+            title: '<@spring.message "pspccountsampledata.unqualifiedquantity"/>',
+            width: 120
+        },
+    ];
+</script>
+
+<body>
+<div id="page-content">
+    <div class="pull-left" id="toolbar-btn" style="padding-bottom:10px;height: 40px">
+        <span class="btn btn-primary k-grid-add" style="float:left;margin-right:5px;" data-bind="click:create"><@spring.message "hap.new"/></span>
+        <span class="btn btn-success k-grid-save-changes" data-bind="click:save" style="float:left;margin-right:5px;"><@spring.message "hap.save"/></span>
+        <span  data-bind="click:remove" class="btn btn-danger" style="float:left;margin-right:5px;"><@spring.message "hap.delete"/></span>
+
+        <span class="btn btn-primary k-grid-add" style="float:left;margin-right:5px;" onclick="modelDownload()">
+            <i class="fa fa-download" style="margin-right: 3px" ></i>
+            <@spring.message "hap.modelexport"/>
+        </span>
+        <span class="btn btn-primary k-grid-add" style="float:left;margin-right:5px;" onclick="excelUpload()">
+            <i class="fa fa-file-excel-o" style="margin-right: 3px"></i>
+            <@spring.message "hap.excelimport"/>
+        </span>
+        <div style="float: left;height: 100%;margin-right: 3px">
+            <input type="checkbox" id="showClassify" style="width: 20px;height: 20px;top: 50%;transform: translateY(-50%);position: relative;">
+        </div>
+        <div style="float: left;height: 100%">
+            <label style="top: 50%;transform: translateY(-50%);position: relative;"><@spring.message "pspccountsampledata.displayclassify"/></label>
+        </div>
+    </div>
+    <script>kendo.bind($('#toolbar-btn'), viewModel);</script>
+    <div class="pull-right" id="query-form" style="padding-bottom:10px;">
+        <span class="btn btn-default" style="width:70px;margin-right: 5px" data-bind="click:reset" type="submit"><@spring.message "hap.reset"/></span>
+        <span class="btn btn-primary" style="width:70px" data-bind="click:query" type="submit"><@spring.message "hap.query"/></span>
+        <div style="clear:both"></div>
+    </div>
+    <script>kendo.bind($('#query-form'), viewModel);</script>
+    <div style="clear:both">
+        <!-- 顶部查询框 -->
+        <div class="container" id="query-form-head" style="width: 100%">
+            <!-- 第一行查询 -->
+            <div class="head-div row">
+                <label class="col-md-2"><span style='color:red'>*&nbsp;&nbsp;</span><@spring.message "pspccountsampledata.cegroup"/>：</label>
+                <div class="col-md-2">
+                    <input id="ceGroup" required style="width: 180px" data-bind="value:model.ceGroupId">
+                </div>
+                <label class="col-md-2" ><span style='color:red'>*&nbsp;&nbsp;</span><@spring.message "pspccountsampledata.ceparameter"/>：</label>
+                <div class="col-md-2">
+                    <input id="ceParameter" required style="width: 180px" data-bind="value:model.ceParameterId">
+                </div>
+                <label class="col-md-2"><span style='color:red'>*&nbsp;&nbsp;</span><@spring.message "pspccountsampledata.attachmentgroup"/>：</label>
+                <div class="col-md-2">
+                    <input id="attachmentGroup" required style="width: 180px" data-bind="value:model.attachmentGroupId">
+                </div>
+            </div>
+            <script>
+                var ceGroup = $("#ceGroup").kendoLov($.extend(<@lov "PSPC_PSPC_CE_GROUP"/>,{
+                    textField: 'classifyGroup',
+                    valueField:'classifyGroupId',
+                    select:function (e) {
+
+                    }
+                })).data("kendoLov");
+                var ceParameter = $("#ceParameter").kendoLov($.extend(<@lov "PSPC_PSPC_CE_PARAMETER"/>,{
+                    textField: 'ceParameter',
+                    valueField:'ceParameterId',
+                    query:function (e) {
+                        e.param.ceGroupId = viewModel.model.ceGroupId;
+                    }
+                })).data("kendoLov");
+                var attachmentGroup = $("#attachmentGroup").kendoLov($.extend(<@lov "PSPC_PSPC_ATTACHMENT_GROUP_PRO"/>,{
+                    textField: 'attachmentGroupDescription',
+                    valueField:'attachmentGroupId',
+                    select:function (e) {
+
+                    },
+                    query:function (e) {
+                        e.param.ceGroupId = viewModel.model.ceGroupId;
+                    }
+                })).data("kendoLov");
+            </script>
+            <!-- 第二行查询 -->
+            <div class="head-div row">
+                <label class="col-md-2"><@spring.message "pspccountsampledata.samplestarttime"/>：</label>
+                <div class="col-md-2">
+                    <input type="text" id="startTime" data-role="datetimepicker" style="margin-right:5px;"
+                           data-bind="value:model.sampleTimeStart" class="datetimepicker">
+                </div>
+                <label class="col-md-2"><@spring.message "pspccountsampledata.sampleendtime"/>：</label>
+                <div class="col-md-2">
+                    <input type="text" id="endTime" data-role="datetimepicker" style="margin-right:5px;"
+                           data-bind="value:model.sampleTimeEnd" class="datetimepicker">
+                </div>
+                <label class="col-md-2"><@spring.message "pspccountsampledata.extendedfield"/>：</label>
+                <div class="col-md-2">
+                    <input id="attachProperty" style="width: 180px">
+                </div>
+                <script>
+                    var attachProperty = $("#attachProperty").kendoMultiSelect({
+                        dataTextField: "meaning",
+                        dataValueField: "value",
+                        autoBind: false,
+                        dataSource: EXTRA_ATTRITUBE
+                    }).data('kendoMultiSelect');
+                </script>
+            </div>
+        </div>
+        <script>kendo.bind($('#query-form-head'), viewModel);</script>
+        <!-- grid表格 -->
+        <div id="grid"></div>
+    </div>
+
+    <div id="dialog" style="display: none; font-size: small">
+        <div class="panel" style="padding: 0px;text-align: center">
+            <form class="form-horizontal" id="uploadForm" action="" enctype="multipart/form-data">
+                选择上传文件 <input name="file" id="file" type="file" data-role="maskedtextbox"
+                              onchange="getFilePath()"
+                              accept="application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" style="filter:alpha(opacity=0);opacity:0;width: 0;height: 0;">
+                <br/>
+                <span onclick="importModelFunction()" class="btn  btn-info">选择EXCEL文件</span>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    Hap.initEnterQuery('#query-form', viewModel.query);
+    var BaseUrl = _basePath;
+    dataSource = new kendo.data.DataSource({
+        transport: {
+            read: {
+                url: BaseUrl + "/pspc/count/sample/data/query/count/data",
+                type: "POST",
+                dataType: "json"
+            },
+            update: {
+                url: BaseUrl + "/pspc/count/sample/data/submit/count/sampl/data",
+                type: "POST",
+                contentType: "application/json"
+            },
+            // destroy: {
+            //     url: BaseUrl + "/pspc/count/sample/data/remove",
+            //     type: "POST",
+            //     contentType: "application/json"
+            // },
+            create: {
+                url: BaseUrl + "/pspc/count/sample/data/submit/count/sampl/data",
+                type: "POST",
+                contentType: "application/json"
+            },
+            parameterMap: function (options, type) {
+                if (type !== "read" && options.models) {
+                    for (var i = 0; i < options.models.length; i++) {
+                        options.models[i].set(extendColumnCount[0],viewModel[extendColumnCount[0]]);
+                        options.models[i].set(extendColumnCount[1],viewModel[extendColumnCount[1]]);
+                    }
+                    var datas = Hap.prepareSubmitParameter(options, type);
+                    return kendo.stringify(datas);
+                } else if (type === "read") {
+                    viewModel.model.checkedFlag = document.getElementById('showClassify').checked;
+                    return Hap.prepareQueryParameter(viewModel.model.toJSON(), options)
+                }
+            }
+        },
+        batch: true,
+        serverPaging: true,
+        pageSize: 10,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+                id: "countSampleDataId",
+                fields: {
+                },
+                editable: function (col) {
+                    if (this.isNew()) {
+                        if(col != "attachmentGroupId" && col != "ceParameterId" && col != "ceGroupId"){
+                            return false;
+                        }
+                       return true;
+                    }
+                    return false;
+                }
+            }
+        }
+    });
+
+    var grid = $("#grid").kendoGrid({
+        dataSource: dataSource,
+        resizable: true,
+        scrollable: true,
+        navigatable: false,
+        selectable: 'multiple, rowbox',
+        autoBind:false,
+        dataBound: function () {
+            if (parent.autoResizeIframe) {
+                parent.autoResizeIframe('${RequestParameters.functionCode!}')
+            }
+        },
+        pageable: {
+            pageSizes: [5, 10, 20, 50],
+            refresh: true,
+            buttonCount: 5
+        },
+        columns: initialColumns,
+        editable: true
+    }).data('kendoGrid');
+
+    /**
+     * 增加扩展列
+     * type:查询or新增，checkedFlag：是否勾选了 显示分类项
+     */
+    function extendColumns(extendColmns,checkedFlag) {
+        var tempColumns = [];
+        tempColumns = tempColumns.concat(initialColumns);
+        //分类项扩展列
+        if(checkedFlag){
+            var classifyColumns = quetyClassifyExtendColumns();
+            tempColumns = tempColumns.concat(classifyColumns);
+            //记录扩展列数，后台保存数据时用到
+            viewModel.set(extendColumnCount[0],classifyColumns.length);
+        }
+        //拓展属性扩展列
+        var obj = {};
+        obj.ceGroupId = viewModel.model.ceGroupId;
+        obj.ceParameterId = viewModel.model.ceParameterId;
+        obj.attachmentGroupId = viewModel.model.attachmentGroupId;
+        obj.sampleTimeStart = viewModel.model.sampleTimeStart?
+            new Date(viewModel.model.sampleTimeStart).format("yyyy-MM-dd hh:mm:ss"):null;
+        obj.sampleTimeEnd = viewModel.model.sampleTimeEnd?
+            new Date(viewModel.model.sampleTimeEnd).format("yyyy-MM-dd hh:mm:ss"):null;
+        $.ajax({
+            type: "POST",
+            async:false,
+            url: BaseUrl + "/pspc/count/sample/data/extend/query/extend/columns",
+            data:obj,
+            dataType:"json",
+            success:function(data){
+                if(data.success){
+                    if(data.rows){
+                        for (var i = 0; i < data.rows.length; i++) {
+                            var tempRow = data.rows[i];
+                            //将拓展属性的CODE转为描述
+                            var des = '';
+                            $.each(EXTRA_ATTRITUBE, function (i, n) {
+                                if ((n.value || '').toLowerCase() == (tempRow.extendAttribute || '').toLowerCase()) {
+                                    des = n.meaning;
+                                }
+                            });
+                            tempColumns.push({
+                                field: tempRow.extendAttribute.replace(/-/g, 'RTYU'),
+                                title: des,
+                                width: 120,
+                                editor:function (container, options) {
+                                    $('<input required  class="k-input k-textbox" name="' + options.title + '"/>')
+                                        .appendTo(container)
+                                }
+                            });
+                        }
+                        //记录扩展列数，后台保存数据时用到
+                        viewModel.set(extendColumnCount[1],data.rows.length);
+                    }
+                }else{
+                    Hap.showToast({
+                        type:'error',  //1.success 2.error
+                        message: data.message,
+                        hideDuration:2000,
+                        "positionClass": "toast-bottom-right",
+                    });
+                }
+            },
+            error:function(data){
+                console.log(data);
+            }
+        });
+        console.log(tempColumns);
+        initTable(tempColumns);
+    }
+
+    /**
+     * 校验顶部查询框必输项
+     * type:操作类型，新增不需要校验时间，查询需要
+     */
+    function checkIsInput(type) {
+        var flag = true;
+        var errorMsg;
+        if(!viewModel.model.ceGroupId){
+            errorMsg = '控制要素组不能为空';
+            flag = false;
+        }
+        if(flag && !viewModel.model.ceParameterId){
+            errorMsg = '控制要素不能为空';
+            flag = false;
+        }
+        if(flag && !viewModel.model.attachmentGroupId){
+            errorMsg = '附着对象组不能为空';
+            flag = false;
+        }
+        if(flag && operateType[1] == type){
+            if(!viewModel.model.sampleTimeStart){
+                errorMsg = '样本开始时间不能为空';
+                flag = false;
+            }
+            if(!viewModel.model.sampleTimeEnd){
+                errorMsg = '样本结束时间不能为空';
+                flag = false;
+            }
+            //校验时间范围一个月
+
+            if(flag){
+                var days = (viewModel.model.sampleTimeEnd.getTime()-viewModel.model.sampleTimeStart.getTime())/1000/60/60/24;
+                if(days > 30){
+                    errorMsg = '时间跨度不能大于1个月';
+                    flag = false;
+
+                }
+            }
+        }
+        if(!flag){
+            Hap.showToast({
+                type:'error',  //1.success 2.error
+                message: errorMsg,
+                hideDuration:2000,
+                "positionClass": "toast-bottom-right"
+            });
+        }
+        return flag;
+    }
+
+    /**
+     * 查询数据
+     */
+    function queryData() {
+        //查询数据
+        var obj = {};
+        obj.ceGroupId = viewModel.model.ceGroupId;
+        obj.ceParameterId = viewModel.model.ceParameterId;
+        obj.attachmentGroupId = viewModel.model.attachmentGroupId;
+        obj.sampleTimeStart = viewModel.model.sampleTimeStart?
+            new Date(viewModel.model.sampleTimeStart).format("yyyy-MM-dd hh:mm:ss"):null;
+        obj.sampleTimeEnd = viewModel.model.sampleTimeEnd?
+            new Date(viewModel.model.sampleTimeEnd).format("yyyy-MM-dd hh:mm:ss"):null;
+        $.ajax({
+            type: "POST",
+            async:false,
+            url: BaseUrl + "/pspc/count/sample/data/query/count/data",
+            data:obj,
+            dataType:"json",
+            success:function(data){
+                console.log(data);
+                if(data.success){
+                    grid.dataSource.data(new Array());
+                    grid.dataSource.data(data.rows);
+                }else{
+
+                }
+            },
+            error:function(data){
+                console.log(data);
+            }
+        });
+    }
+
+    /**
+     * 格式化日期
+     */
+    Date.prototype.format = function(fmt) {
+        var o = {
+            "M+" : this.getMonth()+1,                 //月份
+            "d+" : this.getDate(),                    //日
+            "h+" : this.getHours(),                   //小时
+            "m+" : this.getMinutes(),                 //分
+            "s+" : this.getSeconds(),                 //秒
+            "q+" : Math.floor((this.getMonth()+3)/3), //季度
+            "S"  : this.getMilliseconds()             //毫秒
+        };
+        if(/(y+)/.test(fmt)) {
+            fmt=fmt.replace(RegExp.$1, (this.getFullYear()+"").substr(4 - RegExp.$1.length));
+        }
+        for(var k in o) {
+            if(new RegExp("("+ k +")").test(fmt)){
+                fmt = fmt.replace(RegExp.$1, (RegExp.$1.length==1) ? (o[k]) : (("00"+ o[k]).substr((""+ o[k]).length)));
+            }
+        }
+        return fmt;
+    }
+
+    /**
+     * 查询分类项扩展列
+     */
+    function quetyClassifyExtendColumns() {
+        var tempColumns = [];
+        var obj = {"ceParameterId":ceParameter.value()};
+        $.ajax({
+            type: "POST",
+            async:false,
+            url: BaseUrl + "/pspc/classify/add/query/classify/by/parameter/id",
+            data:obj,
+            dataType:"json",
+            success:function(data){
+                if(data.success){
+                    for (var i = 0; i < data.rows.length; i++) {
+                        var tempRow = data.rows[i];
+                        var fieldCode = tempRow.classifyCode.replace(/-/g, 'RTYU');
+                        tempColumns.push({
+                            field: fieldCode,
+                            title: tempRow.description,
+                            width: 120,
+                            editor:function (container, options) {
+                                $('<input required data-bind="value:'+options.field+'"' +
+                                    ' class="k-input k-textbox" name="' + options.title + '"/>')
+                                    .appendTo(container);
+                            }
+                        });
+                    }
+                    //记录扩展列数，后台保存数据时用到
+                    viewModel.set(extendColumnCount[0],data.rows.length);
+                }else{
+                    Hap.showToast({
+                        type:'error',  //1.success 2.error
+                        message: data.message,
+                        hideDuration:2000,
+                        "positionClass": "toast-bottom-right"
+                    });
+                }
+            },
+            error:function(data){
+                console.log(data);
+            }
+        });
+        return tempColumns;
+    }
+
+    /**
+     * 初始化表格
+     */
+    function initTable(columns) {
+        $("#grid").html("");
+        dataSource = new kendo.data.DataSource({
+            transport: {
+                read: {
+                    url: BaseUrl + "/pspc/count/sample/data/query/count/data",
+                    type: "POST",
+                    dataType: "json"
+                },
+                update: {
+                    url: BaseUrl + "/pspc/count/sample/data/submit/count/sampl/data",
+                    type: "POST",
+                    contentType: "application/json"
+                },
+                destroy: {
+                    url: BaseUrl + "/pspc/count/sample/data/remove",
+                    type: "POST",
+                    contentType: "application/json"
+                },
+                create: {
+                    url: BaseUrl + "/pspc/count/sample/data/submit/count/sampl/data",
+                    type: "POST",
+                    contentType: "application/json"
+                },
+                parameterMap: function (options, type) {
+                    if (type !== "read" && options.models) {
+                        for (var i = 0; i < options.models.length; i++) {
+                            options.models[i][extendColumnCount[0]] = viewModel[extendColumnCount[0]];
+                            options.models[i][extendColumnCount[1]] = viewModel[extendColumnCount[1]];
+                        }
+                        var datas = Hap.prepareSubmitParameter(options, type);
+                        return kendo.stringify(datas);
+                    } else if (type === "read") {
+                        viewModel.model.checkedFlag = document.getElementById('showClassify').checked;
+                        return Hap.prepareQueryParameter(viewModel.model.toJSON(), options);
+                    }
+                }
+            },
+            batch: true,
+            serverPaging: true,
+            pageSize: 10,
+            schema: {
+                data: 'rows',
+                total: 'total',
+                model: {
+                    id: "countSampleDataId",
+                    fields: {
+                        creationDate: {
+                            type: "date",
+                            defaultValue:new Date(),
+                            validation: {
+                                required: true
+                            }
+                        },
+                        sampleTime: {
+                            validation: {
+                                required: true
+                            }
+                        },
+                        sampleValueCount: {
+                            validation: {
+                                required: true
+                            }
+                        },
+                        unqualifiedQuantity: {
+                            validation: {
+                                required: true
+                            }
+                        }
+                    },
+                    editable: function (col) {
+                        if (this.isNew()) {
+                            return true;
+                        }
+                        return false;
+                    }
+                }
+            }
+        });
+        grid = $("#grid").kendoGrid({
+            dataSource: dataSource,
+            resizable: true,
+            scrollable: true,
+            navigatable: false,
+            selectable: 'multiple, rowbox',
+            autoBind:false,
+            dataBound: function () {
+                if (parent.autoResizeIframe) {
+                    parent.autoResizeIframe('${RequestParameters.functionCode!}')
+                }
+            },
+            pageable: {
+                pageSizes: [5, 10, 20, 50],
+                refresh: true,
+                buttonCount: 5
+            },
+            columns: columns,
+            editable: true
+        }).data('kendoGrid');
+    }
+
+    /**
+     * EXCEL模板导出
+     */
+    function modelDownload() {
+        window.location.href="${base.contextPath}/resources/excelModel/计数型数据导入模板.xlsx";
+    }
+
+    /**
+     * 导入
+     */
+    function excelUpload() {
+        //校验必输项
+        if(!checkIsInput(operateType[0])){
+            return;
+        }
+        /*
+         打开上传窗口
+         */
+        var newModelWin = $('#dialog').kendoWindow({
+            actions: ["Minimize", "Maximize", "Close"],
+            title: '计数数据导入',
+            width: 300,
+            height: 120,
+            modal: true
+        }).data('kendoWindow');
+        newModelWin.center().open();
+    }
+
+    /**
+     * //获取EXCEL路径
+     */
+    function getFilePath() {
+        var path = $("#file").val();
+        //上传
+        uploadFile(path);
+        //清空
+        $("#file").val("");
+    }
+
+    function importModelFunction() {
+        $("#file").trigger("click");
+    }
+
+    /**
+     * //上传文件解析
+     * @param path
+     */
+    function uploadFile(path) {
+        var formData = new FormData($("#uploadForm")[0]);
+        var url = _basePath+'/pspc/count/sample/data/wait/importExcel?ceParameterId='
+            +viewModel.model.ceParameterId+"&ceGroupId=" +
+            viewModel.model.ceGroupId +"&attachmentGroupId="+ viewModel.model.attachmentGroupId
+            +"&"+extendColumnCount[0]+"="+viewModel[extendColumnCount[0]]
+            +"&"+extendColumnCount[1]+"="+viewModel[extendColumnCount[1]];
+        $.ajax({
+            url: url,
+            type: 'POST',
+            data: formData,
+            async: true,
+            cache: false,
+            contentType: false,
+            processData: false,
+            dataType: "json",
+            success: function (data) {
+                if (data.success) {
+                    //grid.dataSource.fetch();
+                    // $('#grid').data('kendoGrid').dataSource.read();
+                    Hap.showToast({
+                        type: 'success',
+                        "positionClass": "toast-bottom-right",
+                        message: "上传成功"
+                    });
+                } else {
+                    kendo.ui.showErrorDialog({
+                        message: "导入失败："+((data && data.message)?data.message:'')
+                    });
+                }
+            }
+        });
+        $('#dialog').data('kendoWindow').close();
+    }
+</script>
+</body>
+</html>

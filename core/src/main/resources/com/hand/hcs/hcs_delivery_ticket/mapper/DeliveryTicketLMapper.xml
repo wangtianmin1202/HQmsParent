@@ -1,0 +1,609 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hcs.hcs_delivery_ticket.mapper.DeliveryTicketLMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hcs.hcs_delivery_ticket.dto.DeliveryTicketL">
+        <result column="TICKET_LINE_ID" property="ticketLineId" jdbcType="DECIMAL" />
+        <result column="TICKET_LINE_NUM" property="ticketLineNum" jdbcType="DECIMAL" />
+        <result column="TICKET_ID" property="ticketId" jdbcType="DECIMAL" />
+        <result column="PO_HEADER_ID" property="poHeaderId" jdbcType="DECIMAL" />
+        <result column="PO_LINE_ID" property="poLineId" jdbcType="DECIMAL" />
+        <result column="LINE_LOCATION_ID" property="lineLocationId" jdbcType="DECIMAL" />
+        <result column="LINE_STATUS" property="lineStatus" jdbcType="VARCHAR" />
+        <result column="NEED_BY_DATE" property="needByDate" jdbcType="TIMESTAMP" />
+        <result column="ITEM_ID" property="itemId" jdbcType="DECIMAL" />
+        <result column="ITEM_VERSION" property="itemVersion" jdbcType="VARCHAR" />
+        <result column="UOM_CODE" property="uomCode" jdbcType="VARCHAR" />
+        <result column="SHIP_QUANTITY" property="shipQuantity" jdbcType="DECIMAL" />
+        <result column="RECEIVE_NUMBER" property="receiveNumber" jdbcType="VARCHAR" />
+        <result column="RECEIVE_QUANTITY" property="receiveQuantity" jdbcType="DECIMAL" />
+        <result column="RECEIVE_DATE" property="receiveDate" jdbcType="TIMESTAMP" />
+        <result column="DELIVERD_QUANTITY" property="deliverdQuantity" jdbcType="DECIMAL" />
+        <result column="DELIVERD_TIME" property="deliverdTime" jdbcType="DATE" />
+        <result column="CANCEL_FLAG" property="cancelFlag" jdbcType="VARCHAR" />
+        <result column="CANCEL_DATE" property="cancelDate" jdbcType="DATE" />
+        <result column="CANCEL_BY" property="cancelBy" jdbcType="DECIMAL" />
+        <result column="CANCEL_REASON" property="cancelReason" jdbcType="VARCHAR" />
+        <result column="PROMISED_DATE" property="promisedDate" jdbcType="DATE" />
+        <result column="PRINT_TIME" property="printTime" jdbcType="DECIMAL" />
+        <result column="LOTS_NUM" property="lotsNum" jdbcType="VARCHAR" />
+        <result column="WAREHOUSE_CODE" property="warehouseCode" jdbcType="VARCHAR" />
+        <result column="LOCATION_CODE" property="locationCode" jdbcType="VARCHAR" />
+        <result column="D_WAREHOUSE_CODE" property="dWarehouseCode" jdbcType="VARCHAR" />
+        <result column="D_LOCATION_CODE" property="dLocationCode" jdbcType="VARCHAR" />
+        <result column="CONTACTS_INFO" property="contactsInfo" jdbcType="VARCHAR" />
+        <result column="OUTSIDE_BOX_QUANTITY" property="outsideBoxQuantity" jdbcType="DECIMAL" />
+        <result column="PACKET_QUANTITY" property="packetQuantity" jdbcType="DECIMAL" />
+        <result column="PRODUCTION_BATCH" property="productionBatch" jdbcType="VARCHAR" />
+        <result column="PACKET_WEIGHT" property="packetWeight" jdbcType="DECIMAL" />
+        <result column="BOX_WEIGHT" property="boxWeight" jdbcType="DECIMAL" />
+        <result column="PACKET_INFO" property="packetInfo" jdbcType="VARCHAR" />
+        <result column="CID" property="cid" jdbcType="DECIMAL" />
+        <result column="REMARKS" property="remarks" jdbcType="VARCHAR" />
+        <result column="CREATION_DATE" property="creationDate" jdbcType="TIMESTAMP" />
+        <result column="SPREADING" property="spreading" jdbcType="VARCHAR" />
+        <result column="PACKING_SIZE" property="packingSize" jdbcType="VARCHAR" />
+        <result column="BARCODE_QTY" property="barcodeQty" jdbcType="DECIMAL" />
+        <result column="QUARANTINE_QTY" property="quarantineQty" jdbcType="DECIMAL" />
+        <result column="settlement_flag" property="settlementFlag" jdbcType="VARCHAR" />
+        
+        <!-- 业务字段 -->
+        <result column="ITEM_CODE" property="itemCode" jdbcType="VARCHAR" />
+        <result column="ITEM_NAME" property="itemName" jdbcType="VARCHAR" />
+        <result column="QUANTITY" property="quantity" jdbcType="DECIMAL" />
+        <result column="SHIPPED" property="shipped" jdbcType="DECIMAL" />
+        <result column="PO_NUMBER" property="poNumber" jdbcType="VARCHAR" />
+        <result column="LINE_NUM" property="lineNum" jdbcType="VARCHAR" />
+        <result column="SHIPMENT_NUM" property="shipmentNum" jdbcType="DECIMAL" />
+    	<result column="LINE_LOCATION_DESC" property="lineLocationDesc" jdbcType="VARCHAR" />	
+    	<result column="USER_TYPE" property="userType" jdbcType="VARCHAR" />
+        <result column="TICKET_NUMBER" property="ticketNumber" jdbcType="VARCHAR" />
+    	<result column="TICKET_TYPE" property="ticketType" jdbcType="VARCHAR" />
+        <result column="STATUS" property="status" jdbcType="VARCHAR" />
+        <result column="AGENT_FULL_NAME" property="agentFullName" jdbcType="VARCHAR" />
+        <result column="BUSINESS_UNIT_NAME" property="businessUnitName" jdbcType="VARCHAR" />
+        <result column="BUSINESS_UNIT_ID" property="businessUnitId" jdbcType="DECIMAL" />
+        <result column="PLANT_NAME" property="plantName" jdbcType="VARCHAR" />
+        <result column="SUPPLIER_CODE" property="supplierCode" jdbcType="VARCHAR" />
+        <result column="SUPPLIER_NAME" property="supplierName" jdbcType="VARCHAR" />
+        <result column="SUPPLIER_SITE_NAME" property="supplierSiteName" jdbcType="VARCHAR" />
+        <result column="SUPPLIER_ID" property="supplierId" jdbcType="DECIMAL" />
+        <result column="SUPPLIER_SITE_ID" property="supplierSiteId" jdbcType="DECIMAL" />
+        <result column="PLANT_ID" property="plantId" jdbcType="DECIMAL" />
+        <result column="SHIP_DATE" property="shipDate" jdbcType="DATE" />
+        <result column="EXPECTED_DATE" property="expectedDate" jdbcType="TIMESTAMP" />
+        <result column="CREATE_START_DATE" property="createStartDate" jdbcType="VARCHAR" />
+        <result column="CREATE_END_DATE" property="createEndDate" jdbcType="VARCHAR" />
+        <result column="START_TIME" property="startTime" jdbcType="VARCHAR" />
+        <result column="END_TIME" property="endTime" jdbcType="VARCHAR" />
+        <result column="START_DATE" property="startDate" jdbcType="VARCHAR" />
+        <result column="END_DATE" property="endDate" jdbcType="VARCHAR" />
+        <result column="NEED_START_TIME" property="needStartTime" jdbcType="VARCHAR" />
+        <result column="NEED_END_TIME" property="needEndTime" jdbcType="VARCHAR" />
+        <result column="EXPECTED_START_TIME" property="expectedStartTime" jdbcType="VARCHAR" />
+        <result column="EXPECTED_END_TIME" property="expectedEndTime" jdbcType="VARCHAR" />
+        <result column="packing_qty" property="packingQty" jdbcType="VARCHAR" />
+        <result column="purchase_group" property="purchaseGroup" jdbcType="VARCHAR" />
+        <result column="PRICE_UNIT" property="priceUnit" jdbcType="VARCHAR" />
+        <result column="UNIT_PRICE" property="unitPrice" jdbcType="DECIMAL" /> 
+        <result column="actual_amount" property="actualAmount" jdbcType="DECIMAL" />
+        <result column="CURRENCY" property="currency" jdbcType="VARCHAR" />
+        <result column="TAX_RATE" property="taxRate" jdbcType="VARCHAR" />
+        <result column="date_flag" property="dateFlag" jdbcType="VARCHAR" />
+        <result column="STATISTICS_TYPE" property="statisticsType" jdbcType="VARCHAR" />
+        <result column="sp_date" property="spDate" jdbcType="DATE" />
+        <result column="po_date" property="poDate" jdbcType="DATE" />
+        <result column="need_by_date_po" property="needByDatePo" jdbcType="DATE" />
+        <result column="concat_str" property="concatStr" jdbcType="VARCHAR" />
+        
+    </resultMap>
+<!-- 传wms接口查询 -->
+<select id="interfaceSelect" resultMap="BaseResultMap" parameterType="com.hand.hcs.hcs_delivery_ticket.dto.DeliveryTicketL">
+SELECT l.ticket_line_num,
+       l.ticket_line_id,
+       hib.item_code,
+       l.item_version,
+       l.packing_size,
+       l.packet_info || sc.meaning AS packet_info,
+       l.lots_num,
+       l.spreading,
+       l.ship_quantity,
+       l.uom_code,
+       l.remarks,
+       hph.po_number,
+       hpl.line_num
+  FROM hcs_delivery_ticket_l l
+  JOIN hcs_delivery_ticket_h h
+    ON l.ticket_id = h.ticket_id
+  JOIN hcm_item_b hib
+    ON h.plant_id = hib.plant_id
+   AND l.item_id = hib.item_id
+  LEFT JOIN hcs_po_headers hph
+    ON l.po_header_id = hph.po_header_id
+  LEFT JOIN hcs_po_lines hpl
+    ON l.po_line_id = hpl.po_line_id
+  LEFT JOIN (SELECT scvb.value, scvb.meaning
+               FROM sys_code_b scb
+               JOIN sys_code_value_b scvb
+                 ON scb.code_id = scvb.code_id
+                AND scb.code = 'SRM_PACKING_TYPE') sc
+    ON l.packet_info = sc.value
+ WHERE l.line_status &lt;&gt; 'C'
+   AND l.ticket_id = #{ticketId}
+</select>
+	<!-- 送货单查询 -->
+	<select id="query" resultMap="BaseResultMap" parameterType="com.hand.hcs.hcs_delivery_ticket.dto.DeliveryTicketL">
+		select t.* from (
+		<if test="ticketId != null">
+		
+			select hdtl.line_location_id,
+	               hdtl.item_id,
+	               hi.ITEM_CODE,
+	               hi.descriptions ITEM_NAME,
+	               hdtl.ITEM_VERSION,
+	               hdtl.UOM_CODE,
+	               hpll.quantity,
+	               (nvl((select sum(hdtl.ship_quantity)
+	                   from hcs_delivery_ticket_l hdtl
+	                  where hdtl.po_header_id = hpll.po_header_id
+	                    and hdtl.po_line_id = hpll.po_line_id
+	                    and hdtl.line_location_id = hpll.line_location_id
+	                    and hdtl.line_status in ('N', 'P', 'S')),0) +
+	               nvl((select sum(hdtl.receive_quantity)
+	                   from hcs_delivery_ticket_l hdtl
+	                  where hdtl.po_header_id = hpll.po_header_id
+	                    and hdtl.po_line_id = hpll.po_line_id
+	                    and hdtl.line_location_id = hpll.line_location_id
+	                    and hdtl.line_status IN( 'R','Q')),0)) SHIPPED,    
+	               hdtl.need_by_date,
+	               to_date(to_char(hdtl.promised_date ,'yyyy-mm-dd'),'yyyy-mm-dd') promised_date,
+	               hph.po_number,
+	               hph.po_header_id,
+	               hpl.line_num,
+	               hpl.po_line_id,
+	               hpll.shipment_num,
+	               hpll.line_location_desc,
+	               hi.PACK_QTY packing_qty,
+	               hdtl.cancel_flag,
+	               hdtl.ticket_line_num,
+	               hdtl.line_status,
+	               hdtl.ship_quantity,
+	               hdtl.lots_num,
+	               hdtl.packet_quantity,
+	               hdtl.outside_box_quantity,
+	               hdtl.packet_info,
+	               hdtl.remarks,
+	               hdtl.ticket_line_id,
+	               hdtl.receive_quantity,
+	               hdtl.RECEIVE_DATE,
+	               hdtl.spreading,
+	               hdtl.PACKING_SIZE,
+	               hdtl.BARCODE_QTY,
+	               hdtl.quarantine_qty,
+	               hdtl.settlement_flag
+	from hcs_delivery_ticket_l hdtl
+	join hcm_item hi on hdtl.item_id = hi.ITEM_ID
+	join hcs_po_line_locations hpll on hdtl.line_location_id = hpll.line_location_id
+	join hcs_po_headers hph on hdtl.po_header_id = hph.po_header_id
+	join hcs_po_lines hpl on hdtl.po_line_id = hpl.po_line_id
+	where hi.PLANT_ID = hpl.plant_id
+	and hdtl.ticket_id = #{ticketId}
+	<!-- <foreach collection="ticketLineIdList" item="item" index="index" open="(" separator="," close=")">
+			       	#{item}
+	</foreach> -->
+	<if test="ticketLineId!=null">
+	and hdtl.ticket_line_id = #{ticketLineId}
+	</if>
+	<!-- order by cast(hpl.line_num as integer)	 -->	
+			</if>
+	<if test="ticketId and lineLocationIdList != null and lineLocationIdList.size()>0">
+		UNION ALL
+	</if>
+	<if test="lineLocationIdList != null and lineLocationIdList.size()>0">
+	select     hpll.line_location_id,
+	               hpl.item_id,
+	               hi.ITEM_CODE,
+	               hi.descriptions ITEM_NAME,
+	               hpl.edition ITEM_VERSION,
+	               hpl.unit_code UOM_CODE,
+	               hpll.quantity,
+	               (nvl((select sum(hdtl.ship_quantity)
+	                   from hcs_delivery_ticket_l hdtl
+	                  where hdtl.po_header_id = hpll.po_header_id
+	                    and hdtl.po_line_id = hpll.po_line_id
+	                    and hdtl.line_location_id = hpll.line_location_id
+	                    and hdtl.line_status in ('N', 'P', 'S')),0) +
+	               nvl((select sum(hdtl.receive_quantity)
+	                   from hcs_delivery_ticket_l hdtl
+	                  where hdtl.po_header_id = hpll.po_header_id
+	                    and hdtl.po_line_id = hpll.po_line_id
+	                    and hdtl.line_location_id = hpll.line_location_id
+	                    and hdtl.line_status in('R','Q')),0)) SHIPPED, 
+	               hpll.need_by_date,
+	               to_date(to_char(hpll.promised_date ,'yyyy-mm-dd'),'yyyy-mm-dd') promised_date,
+	               hph.po_number,
+	               hph.po_header_id,
+	               hpl.line_num,
+	               hpl.po_line_id,
+	               hpll.shipment_num,
+	               hpll.line_location_desc,
+	               hi.PACK_QTY packing_qty,
+	               '' cancel_flag,
+	               null ticket_line_num,
+	               '' line_status,
+	               hpll.quantity - (nvl((SELECT SUM((CASE
+                         WHEN tl.line_status IN ('N', 'S', 'P') THEN
+                          tl.ship_quantity
+                         WHEN tl.line_status IN ('R', 'Q') THEN
+                          tl.receive_quantity
+                       END))
+		              FROM hcs_delivery_ticket_l tl
+		             WHERE tl.line_status IN ('N', 'S', 'P', 'R', 'Q')
+		               AND tl.line_location_id = hpll.line_location_id),
+		            0)) AS ship_quantity,
+	               '' lots_num,
+	               null packet_quantity,
+	               null outside_box_quantity,
+	               '' packet_info,
+	               '' remarks,
+	               null ticket_line_id,
+	               null receive_quantity,
+	               null RECEIVE_DATE,
+	               '' spreading,
+	               '' PACKING_SIZE,
+	               null BARCODE_QTY,
+	               null quarantine_qty,
+	               '' settlement_flag
+	          from hcs_po_headers hph
+	          join hcs_po_lines hpl on hph.po_header_id = hpl.po_header_id
+	          join hcs_po_line_locations hpll on hpl.po_line_id = hpll.po_line_id
+	          join hcm_item hi on hpl.item_id = hi.ITEM_ID
+	          join hcm_plant hp on hpl.plant_id = hp.plant_id
+	            join hcs_suppliers hs on hph.supplier_id = hs.supplier_id
+	          left join hcs_supplier_site hss on hph.supplier_site_id = hss.supplers_site_id
+	         where hpll.confirm_flag = 'Y'
+	           and hi.PLANT_ID = hpl.plant_id
+	           and hpll.line_location_id in
+			       <foreach collection="lineLocationIdList" item="item" index="index" open="(" separator="," close=")">
+			       	#{item}
+			       </foreach>
+		<!--  order by cast(hpl.line_num as integer)   -->  
+</if>) t order by t.ticket_line_num nulls first,t.item_code,t.line_num	
+
+	</select>
+	<!-- 送货单打印行查询 -->
+	<select id="printQueryLine" resultMap="BaseResultMap" parameterType="com.hand.hcs.hcs_delivery_ticket.dto.DeliveryTicketL">
+		select hdtl.item_id,
+		       hdtl.item_version,
+		       hi.ITEM_CODE,
+		       hi.descriptions ITEM_NAME,
+		       hdtl.uom_code,
+		       hdtl.ship_quantity,
+		       hdtl.lots_num,
+		       hdtl.packet_quantity,
+		       hdtl.outside_box_quantity,
+		       hdtl.packet_info,
+		       hdtl.line_location_id,
+		       hph.po_number,
+		       hdtl.remarks,
+		       hdtl.SPREADING,
+		       hdtl.PACKING_SIZE
+		from hcs_delivery_ticket_l hdtl
+		join hcm_item hi on hdtl.item_id = hi.ITEM_ID
+		join hcs_po_lines hpl on hdtl.po_line_id = hpl.po_line_id
+		join hcs_po_headers hph on hdtl.po_header_id = hph.po_header_id
+		where hi.PLANT_ID = hpl.plant_id
+		and hdtl.ticket_id = #{ticketId}
+		and hdtl.line_status != 'C'
+	</select>
+	<!-- 采购订单-按明细查询-查询已接收数量 -->
+	<select id="queryReceiveQty" resultType="java.lang.Long" parameterType="com.hand.hcs.hcs_delivery_ticket.dto.DeliveryTicketL">
+		select nvl(sum(hdtl.receive_quantity),0)
+		from hcs_delivery_ticket_l hdtl
+		where hdtl.line_status = 'R'
+		and hdtl.po_header_id = #{poHeaderId}
+		and hdtl.po_line_id = #{poLineId}
+		and hdtl.line_location_id = #{lineLocationId}
+	</select>
+	<!-- 送货单查询 按明细行查询 --> 
+	<select id="queryHeadLine" resultMap="BaseResultMap" parameterType="com.hand.hcs.hcs_delivery_ticket.dto.DeliveryTicketL">
+			select     hdth.ticket_id,
+	                   hdth.ticket_number,
+	                   hdth.status,
+	                   hdth.ticket_type,
+	                   hp.plant_id,
+	                   hp.descriptions PLANT_NAME,
+	                   hdth.supplier_id,
+	                   hs.supplier_code,
+	                   hs.supplier_name,
+	                   hdth.supplier_site_id,
+	                   hdth.ship_date,
+              		   hdth.expected_date,
+	                   hss.description "SUPPLIER_SITE_NAME",
+	                   hdtl.line_location_id,
+	                   hdtl.item_id,
+	                   hi.ITEM_CODE,
+	                   hi.descriptions ITEM_NAME,
+	                   hdtl.item_version,
+	                   hdtl.UOM_CODE,
+	                   hpll.quantity,
+	                   (nvl((select sum(hdtl.ship_quantity)
+                   from hcs_delivery_ticket_l hdtl
+                  where hdtl.po_header_id = hpll.po_header_id
+                    and hdtl.po_line_id = hpll.po_line_id
+                    and hdtl.line_location_id = hpll.line_location_id
+                    and hdtl.line_status in ('N', 'P', 'S')),0) +
+               nvl((select sum(hdtl.receive_quantity)
+                   from hcs_delivery_ticket_l hdtl
+                  where hdtl.po_header_id = hpll.po_header_id
+                    and hdtl.po_line_id = hpll.po_line_id
+                    and hdtl.line_location_id = hpll.line_location_id
+                    and hdtl.line_status = 'R'),0)) SHIPPED,   
+	                   hdtl.need_by_date,
+	                   hdtl.promised_date,
+	                   hph.po_number,
+	                   hph.po_header_id,
+	                   hpl.line_num,
+	                   hpl.po_line_id,
+	                   hpll.shipment_num,
+	                   hpll.line_location_desc,
+	                   hdtl.cancel_flag,
+	                   hdtl.ticket_line_num,
+	                   hdtl.line_status,
+	                   hdtl.ship_quantity,
+	                   hdtl.lots_num,
+	                   hdtl.packet_quantity,
+	                   hdtl.outside_box_quantity,
+	                   hdtl.packet_info,
+	                   hdtl.remarks,
+	                   hdtl.ticket_line_id,
+	                   hdtl.receive_date,
+	                   hdtl.receive_quantity,
+	                   hdtl.production_batch,
+	                   hdtl.creation_date,
+	                   hdth.print_time,
+                       hph.agent_full_name,
+                       hdtl.settlement_flag,
+       				   hdtl.quarantine_qty,
+       				   hpll.need_by_date need_by_date_po
+	    from sys_user su  
+	    join hcs_delivery_ticket_h hdth on decode(su.user_type,'S',su.supplier_id,hdth.supplier_id) = hdth.supplier_id
+	    join hcs_delivery_ticket_l hdtl on hdth.ticket_id = hdtl.ticket_id
+	    join hcm_item hi on hdtl.item_id = hi.ITEM_ID
+	    join hcs_po_line_locations hpll on hdtl.line_location_id = hpll.line_location_id
+	    join hcs_po_headers hph on hdtl.po_header_id = hph.po_header_id
+	    join hcs_po_lines hpl on hdtl.po_line_id = hpl.po_line_id
+	    join hcm_plant hp on hdth.plant_id = hp.plant_id
+	    join hcs_suppliers hs on hdth.supplier_id = hs.supplier_id
+	    left join hcs_supplier_site hss on hdth.supplier_site_id = hss.supplers_site_id
+	    <if test="purchaseGroup != null">
+         	left join hcs_asl_control hac on hac.purchase_group = #{purchaseGroup}
+         	left join hcs_asl ha on hac.asl_id = ha.asl_id and ha.enable_flag = 'Y'
+        </if>
+		where hi.PLANT_ID = hpl.plant_id
+			and hpll.confirm_flag = 'Y'
+			and su.user_id = #{request.userId}
+			<if test="purchaseGroup!=null">
+				and hp.plant_id = ha.plant_id
+				and hdth.supplier_id = ha.supplier_id
+				and hdtl.item_id = ha.item_id
+			</if>
+			<if test = "ticketNumber != null">
+				and hdth.ticket_number LIKE concat('%',concat(#{ticketNumber,jdbcType=VARCHAR},'%'))
+		   </if>
+		    <if test = "settlementFlag != null">
+				and hdtl.settlement_flag = #{settlementFlag}
+		   </if>
+		   <if test = "status != null">
+				and hdth.status = #{status}
+		   </if>
+		   <if test = "itemId != null">
+				and hdtl.item_id = #{itemId}
+		   </if>
+		   <if test = "poNumber != null">
+				and hph.po_number LIKE concat('%',concat(#{poNumber,jdbcType=VARCHAR},'%'))
+		   </if>
+		   <if test = "plantId != null">
+				and hp.plant_id = #{plantId}
+		   </if>
+		   <if test = "supplierId != null">
+				and hdth.supplier_id = #{supplierId}
+		   </if>
+		   <if test = "supplierSiteId != null">
+				and hdth.supplier_site_id = #{supplierSiteId}
+		   </if>
+		   <if test = "lineStatus != null">
+				and hdtl.line_status = #{lineStatus}
+		   </if>
+		   <if test = "ticketType != null">
+				and hdth.ticket_type = #{ticketType}
+		   </if>
+		    <if test = "createStartDate != null">
+				and hdtl.creation_date &gt;= to_date(#{createStartDate}, 'yyyy-mm-dd hh24:mi:ss')
+		   </if>
+		   <if test = "createEndDate != null">
+			 	and hdtl.creation_date &lt;= to_date(#{createEndDate}, 'yyyy-mm-dd hh24:mi:ss')
+		   </if>
+		   <if test = "startTime != null">
+				and to_date(to_char(hdth.ship_date ,'yyyy-mm-dd'),'yyyy-mm-dd') &gt;= to_date(#{startTime}, 'yyyy-mm-dd hh24:mi:ss')
+		   </if>
+		   <if test = "endTime != null">
+			 	and to_date(to_char(hdth.ship_date ,'yyyy-mm-dd'),'yyyy-mm-dd') &lt;= to_date(#{endTime}, 'yyyy-mm-dd hh24:mi:ss')
+		   </if>
+		   <if test = "startDate != null">
+				and hdtl.receive_date &gt;= to_date(#{startDate}, 'yyyy-mm-dd hh24:mi:ss')
+		   </if>
+		   <if test = "endDate != null">
+			 	and hdtl.receive_date &lt;= to_date(#{endDate}, 'yyyy-mm-dd hh24:mi:ss')
+		   </if>
+		   <if test = "needStartTime != null">
+				and hdtl.need_by_date &gt;= to_date(#{needStartTime}, 'yyyy-mm-dd hh24:mi:ss')
+		   </if>
+		   <if test = "needEndTime != null">
+			 	and hdtl.need_by_date &lt;= to_date(#{needEndTime}, 'yyyy-mm-dd hh24:mi:ss')
+		   </if>
+		   <if test = "expectedStartTime != null">
+				and hdth.expected_date &gt;= to_date(#{expectedStartTime}, 'yyyy-mm-dd hh24:mi:ss')
+		   </if>
+		   <if test = "expectedEndTime != null">
+				and hdth.expected_date &lt;= to_date(#{expectedEndTime}, 'yyyy-mm-dd hh24:mi:ss')
+		   </if>
+		   order by hdth.ticket_id desc, hdtl.ticket_line_num asc
+	</select>
+	
+	<select id = "querySum" resultType="Double" parameterType="com.hand.hcs.hcs_delivery_ticket.dto.DeliveryTicketL">
+		select nvl(sum(hdtl.SHIP_QUANTITY),0) 
+		from hcs_delivery_ticket_l hdtl 
+		where 1=1
+		<choose>
+			<when test="ticketId != null">
+				and hdtl.ticket_id =   #{ticketId}
+			</when>
+			<otherwise>
+				and hdtl.ticket_id = -1
+			</otherwise>
+		</choose>
+		and   hdtl.PO_HEADER_ID = #{poHeaderId}
+		and hdtl.po_line_id = #{poLineId}
+		and hdtl.line_location_id = #{lineLocationId}
+	</select>
+	
+	<select id = "supplyPlanSumSelect" resultMap="BaseResultMap" parameterType="com.hand.hcs.hcs_delivery_ticket.dto.DeliveryTicketL">
+   SELECT NVl((SELECT SUM(nvl(l.ship_quantity, 0))
+          FROM hcs_delivery_ticket_h h
+          LEFT JOIN hcs_delivery_ticket_l l
+            ON h.ticket_id = l.ticket_id
+         WHERE 1 = 1
+         	AND l.item_id = #{itemId}
+   AND h.plant_id = #{plantId}
+   AND h.supplier_id = #{supplierId}
+           AND l.line_status IN ('N', 'A')),0) AS ship_quantity,
+       NVl((SELECT SUM(nvl(l.quarantine_qty, 0))
+          FROM hcs_delivery_ticket_h h
+          LEFT JOIN hcs_delivery_ticket_l l
+            ON h.ticket_id = l.ticket_id
+         WHERE 1 = 1
+         AND l.item_id = #{itemId}
+   AND h.plant_id = #{plantId}
+   AND h.supplier_id = #{supplierId}
+           AND l.line_status = 'R'),0) AS quarantine_qty
+  FROM dual
+   
+	</select>
+	<!-- 采购订单发运明细  关闭按钮校验查询 -->
+	<select  id = "queryLocationCount" resultMap="BaseResultMap" parameterType="com.hand.hcs.hcs_delivery_ticket.dto.DeliveryTicketL">
+	SELECT hph.po_number || '-' || hpl.line_num || '-' || hpll.shipment_num || '-' || hib.item_code AS concat_str
+  FROM hcs_delivery_ticket_l tl
+  JOIN hcs_po_lines hpl
+    ON tl.po_line_id = hpl.po_line_id
+  JOIN hcs_po_line_locations hpll
+    ON tl.line_location_id = hpll.line_location_id
+  JOIN hcs_po_headers hph
+    ON tl.po_header_id = hph.po_header_id
+  JOIN hcm_item_b hib
+    ON hph.plant_id = hib.plant_id
+   AND hpl.item_id = hib.item_id
+ WHERE tl.line_location_id = #{lineLocationId}
+   AND tl.line_status IN ('N', 'S', 'P')
+		<!-- select * from HCS_DELIVERY_TICKET_L tl where tl.line_location_id = #{lineLocationId} and tl.line_status in('N','S','P') -->
+	</select>
+	<!-- 送货单结算Job(获取数据源) -->
+	<select id = "deliveryTicketJobQuery" resultMap="BaseResultMap" parameterType="com.hand.hcs.hcs_delivery_ticket.dto.DeliveryTicketL">
+		select hdtl.ticket_line_id,
+		       hdtl.receive_date,
+		       hdtl.item_id,
+		       hdtl.item_version,
+		       hdtl.receive_quantity,
+		       hdtl.uom_code,
+		       hdth.ticket_number,
+		       hdtl.ticket_id,
+		       hdtl.ticket_line_num,
+		       hdtl.po_header_id,
+		       hph.po_number,
+		       hdtl.po_line_id,
+		       hpl.line_num,
+		       hdth.supplier_id,
+		       hpl.unit_price,
+		       hpl.price_unit,
+		       nvl(round(hpl.unit_price * hdtl.receive_quantity /hpl.price_unit,
+		             2),0) actual_amount,
+		       hac.purchase_group,
+		       hpl.tax_rate,
+		       hpl.currency,
+		       hs.supplier_code,
+		       hdth.plant_id
+		  from hcs_delivery_ticket_l hdtl
+		  left join hcs_delivery_ticket_h hdth on hdtl.ticket_id = hdth.ticket_id
+		  left join hcs_po_headers hph on hdtl.po_header_id = hph.po_header_id
+		  left join hcs_po_lines hpl on hdtl.po_line_id = hpl.po_line_id
+		  left join hcs_asl ha on hdtl.item_id = ha.item_id and hdth.plant_id = ha.plant_id and hdth.supplier_id = ha.supplier_id
+		  left join hcs_asl_control hac on ha.asl_id = hac.asl_id
+		  left join hcs_suppliers hs on hdth.supplier_id = hs.supplier_id 
+		 where hdtl.settlement_flag = 'N'
+		   and hdtl.line_status in ('R', 'Q')
+	</select>
+	<!-- 供货执行情况查询 -->
+	<select id="queryReport" resultMap="BaseResultMap" parameterType="com.hand.hcs.hcs_delivery_ticket.dto.DeliveryTicketL">
+		select  hdth.supplier_id,
+		        hs.supplier_code,
+		        hs.supplier_name,
+		        hdtl.receive_date,
+		        hpll.need_by_date sp_date,
+		        hpl.need_by_date po_date
+		from hcs_delivery_ticket_h hdth 
+		left join hcs_delivery_ticket_l hdtl on hdth.ticket_id = hdtl.ticket_id
+		left join hcs_suppliers hs on hdth.supplier_id = hs.supplier_id
+		left join hcs_po_line_locations hpll on hdtl.line_location_id = hpll.line_location_id
+		left join hcs_po_lines hpl on hdtl.po_line_id = hpl.po_line_id
+		where  1=1
+		and hdtl.line_status in('R','Q')
+		and to_char(hdtl.receive_date,'yyyy-MM') = #{dateFlag}
+<!-- 		and hdth.supplier_id = (select decode(su.user_type,'S',su.supplier_id,hdth.supplier_id) from sys_user su where su.user_id = #{request.userId}) -->
+		<if test="supplierId != null">
+			and hdth.supplier_id = #{supplierId}
+		</if>
+	</select>
+	
+	<select id="getSumReceiveQuantityByPoLineId" resultType="java.lang.Float">
+	SELECT nvl(SUM(t.receive_quantity), 0)
+  FROM hcs_delivery_ticket_l t
+ WHERE t.po_line_id = #{0}
+   AND t.line_status IN ('R', 'Q')
+	</select>
+	
+	<select id="getUnderdeliveryToleranceLimit" resultType="java.lang.Float">
+	SELECT nvl(SUM(hac.underdelivery_tolerance_limit), 0)
+  FROM hcs_delivery_ticket_l t
+  JOIN hcs_delivery_ticket_h h
+    ON t.ticket_id = h.ticket_id
+  JOIN hcs_asl ha
+    ON t.item_id = ha.item_id
+   AND h.plant_id = ha.plant_id
+  JOIN hcs_asl_control hac
+    ON ha.asl_id = hac.asl_id
+ WHERE 1 = 1
+   AND t.ticket_line_id = #{0}
+	</select>
+	
+	<select id="getSumReceiveQuantityByLineLocationId" resultType="java.lang.Float">
+	SELECT nvl(SUM(t.receive_quantity), 0)
+  FROM hcs_delivery_ticket_l t
+ WHERE t.line_location_id = #{0}
+   AND t.line_status IN ('R', 'Q')
+	</select>
+	
+	<select id="getShipedQuantity" resultType="java.lang.Float" parameterType="com.hand.hcs.hcs_delivery_ticket.dto.DeliveryTicketL">
+	SELECT nvl(SUM(CASE
+             WHEN t.line_status IN ('N', 'P', 'S') THEN
+              t.ship_quantity
+             WHEN t.line_status IN ('Q', 'R') THEN
+              t.receive_quantity
+             ELSE
+              0
+           END),0)
+  FROM hcs_delivery_ticket_l t
+ WHERE t.po_line_id = #{poLineId}
+   AND t.ticket_line_id != #{ticketLineId}
+	</select>
+	
+</mapper>

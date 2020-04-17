@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.npi.npi_route.mapper.TechnologyWorkProcedureStoreMapper">
+    <resultMap id="BaseResultMap" type="com.hand.npi.npi_route.dto.TechnologyWorkProcedureStore">
+        <result column="WP_ID" property="wpId" jdbcType="DECIMAL" />
+        <result column="WP_CODE" property="wpCode" jdbcType="VARCHAR" />
+        <result column="WP_NAME" property="wpName" jdbcType="VARCHAR" />
+        <result column="WP_VERSION" property="wpVersion" jdbcType="VARCHAR" />
+        <result column="STANDARD_ACTION_ID" property="standardActionId" jdbcType="DECIMAL" />
+    </resultMap>
+
+
+</mapper>

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.itf.itf_global_history.mapper.GlobalHistoryMapper">
+    <resultMap id="BaseResultMap" type="com.hand.itf.itf_global_history.dto.GlobalHistory">
+        <result column="KID" property="kid" jdbcType="DECIMAL" />
+        <result column="BATCH_ID" property="batchId" jdbcType="VARCHAR" />
+        <result column="FUNC_NAME" property="funcName" jdbcType="VARCHAR" />
+        <result column="OPERATION_TIME" property="operationTime" jdbcType="VARCHAR" />
+        <result column="CODE_REMARK" property="codeRemark" jdbcType="VARCHAR" />
+        <result column="JSON_STRING" property="jsonString" jdbcType="VARCHAR" />
+        <result column="ERROR_STORE" property="errorStore" jdbcType="VARCHAR" />
+    </resultMap>
+
+
+</mapper>

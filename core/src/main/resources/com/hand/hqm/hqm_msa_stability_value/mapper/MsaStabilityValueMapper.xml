@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_msa_stability_value.mapper.MsaStabilityValueMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_msa_stability_value.dto.MsaStabilityValue">
+        <result column="KID" property="kid" jdbcType="DECIMAL" />
+        <result column="MSA_PLAN_ID" property="msaPlanId" jdbcType="DECIMAL" />
+        <result column="MEASURE_DATE" property="measureDate" jdbcType="DATE" />
+        <result column="MEASURE_NUM" property="measureNum" jdbcType="DECIMAL" />
+        <result column="MEASURE_VALUE" property="measureValue" jdbcType="DECIMAL" />
+    </resultMap>
+	<!-- 稳定性删除 -->
+	<delete id="deleteByMsaPlanId" parameterType="com.hand.hqm.hqm_msa_stability_value.dto.MsaStabilityValue">
+		delete from HQM_MSA_STABILITY_VALUE where MSA_PLAN_ID = #{msaPlanId}
+	</delete>
+</mapper>

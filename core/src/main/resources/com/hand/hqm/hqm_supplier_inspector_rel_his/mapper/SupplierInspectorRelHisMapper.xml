@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_supplier_inspector_rel_his.mapper.SupplierInspectorRelHisMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_supplier_inspector_rel_his.dto.SupplierInspectorRelHis">
+        <result column="EVENT_ID" property="eventId" jdbcType="DECIMAL" />
+        <result column="EVENT_BY" property="eventBy" jdbcType="DECIMAL" />
+        <result column="EVENT_TIME" property="eventTime" jdbcType="DATE" />
+        <result column="REL_ID" property="relId" jdbcType="DECIMAL" />
+        <result column="PLANT_ID" property="plantId" jdbcType="DECIMAL" />
+        <result column="SUPPLIER_ID" property="supplierId" jdbcType="DECIMAL" />
+        <result column="INSPECTOR_ID" property="inspectorId" jdbcType="DECIMAL" />
+        <result column="PRE_INSPECTOR_ID" property="preInspectorId" jdbcType="DECIMAL" />
+        <result column="SQE_INSPECTOR_ID" property="sqeInspectorId" jdbcType="DECIMAL" />
+        <result column="PRE_SQE_ID" property="preSqeId" jdbcType="DECIMAL" />
+        <result column="ENABLE_FLAG" property="enableFlag" jdbcType="VARCHAR" />
+        
+        <result column="plant_code" property="plantCode" jdbcType="VARCHAR" />
+        <result column="supplier_name" property="supplierName" jdbcType="VARCHAR" />
+        <result column="inspector_employee_name" property="inspectorEmployeeName" jdbcType="VARCHAR" />
+        <result column="pre_inspector_employee_name" property="preInspectorEmployeeName" jdbcType="VARCHAR" />
+        <result column="sqe_inspector_employee_name" property="sqeInspectorEmployeeName" jdbcType="VARCHAR" />
+        <result column="pre_sqe_employee_name" property="preSqeEmployeeName" jdbcType="VARCHAR" />
+        <result column="event_employee_name" property="eventEmployeeName" jdbcType="VARCHAR" />
+    </resultMap>
+<select id="query" resultMap="BaseResultMap" parameterType="com.hand.hqm.hqm_supplier_inspector_rel_his.dto.SupplierInspectorRelHis">
+SELECT hp.plant_code,
+       hs.supplier_name,
+       hei.name         AS inspector_employee_name,
+       hep.name         AS pre_inspector_employee_name,
+       hes.name         AS sqe_inspector_employee_name,
+       heps.name        AS pre_sqe_employee_name,
+       hee.name         AS event_employee_name,
+       t.event_time,
+       t.event_id,
+       t.enable_flag
+  FROM hqm_supplier_inspector_rel_his t
+  JOIN hcm_plant hp
+    ON t.plant_id = hp.plant_id
+  LEFT JOIN sys_user sue
+    ON t.event_by = sue.user_id
+  LEFT JOIN hr_employee hee
+    ON sue.employee_id = hee.employee_id
+  LEFT JOIN hcs_suppliers hs
+    ON t.supplier_id = hs.supplier_id
+  LEFT JOIN sys_user sui
+    ON t.inspector_id = sui.user_id
+  LEFT JOIN hr_employee hei
+    ON sui.employee_id = hei.employee_id
+  LEFT JOIN sys_user sup
+    ON t.pre_inspector_id = sup.user_id
+  LEFT JOIN hr_employee hep
+    ON sup.employee_id = hep.employee_id
+  LEFT JOIN sys_user sus
+    ON t.sqe_inspector_id = sus.user_id
+  LEFT JOIN hr_employee hes
+    ON sus.employee_id = hes.employee_id
+  LEFT JOIN sys_user sups
+    ON t.pre_sqe_id = sups.user_id
+  LEFT JOIN hr_employee heps
+    ON sups.employee_id = heps.employee_id
+ WHERE 1 = 1
+   AND t.rel_id = #{relId}
+   ORDER BY t.event_time DESC
+</select>
+
+</mapper>

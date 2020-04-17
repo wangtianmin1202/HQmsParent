@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_asl_iqc_control.mapper.AslIqcControlMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_asl_iqc_control.dto.AslIqcControl">
+        <result column="ITEM_ID" property="itemId" jdbcType="DECIMAL" />
+        <result column="PLANT_ID" property="plantId" jdbcType="DECIMAL" />
+        <result column="SUPPLIER_ID" property="supplierId" jdbcType="DECIMAL" />
+        <result column="SUPPLIER_SIT_ID" property="supplierSitId" jdbcType="DECIMAL" />
+        <result column="IS_INSPECTION" property="isInspection" jdbcType="VARCHAR" />
+        <result column="IS_SUPP_INSPECTION" property="isSuppInspection" jdbcType="VARCHAR" />
+        <result column="ENABLE_FLAG" property="enableFlag" jdbcType="VARCHAR" />
+        <result column="ISUPLOAD" property="isupload" jdbcType="VARCHAR" />
+        <result column="ISSHIPMENT" property="isshipment" jdbcType="VARCHAR" />
+        <result column="IS_IQC_MIGRATE" property="isIqcMigrate" jdbcType="VARCHAR" />
+        <result column="BATCH_UP_LIMIT" property="batchUpLimit" jdbcType="DECIMAL" />
+        <result column="SUPPLIER_EXCESS_RATIO" property="supplierExcessRatio" jdbcType="DECIMAL" />
+        <result column="DELIVERY_REGION_ID" property="deliveryRegionId" jdbcType="DECIMAL" />
+        <result column="GLOBAL_ATTRIBUTE1" property="globalAttribute1" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE2" property="globalAttribute2" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE3" property="globalAttribute3" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE4" property="globalAttribute4" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE5" property="globalAttribute5" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE6" property="globalAttribute6" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE7" property="globalAttribute7" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE8" property="globalAttribute8" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE9" property="globalAttribute9" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE10" property="globalAttribute10" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE11" property="globalAttribute11" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE12" property="globalAttribute12" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE13" property="globalAttribute13" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE14" property="globalAttribute14" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE15" property="globalAttribute15" jdbcType="VARCHAR" />
+        <result column="CONTROL_ID" property="controlId" jdbcType="DECIMAL" />
+
+        <result column="ITEM_CODE" property="itemCode" jdbcType="VARCHAR" />
+        <result column="SUPPLIER_CODE" property="supplierCode" jdbcType="VARCHAR" />
+        <result column="SUPPLIER_NAME" property="supplierName" jdbcType="VARCHAR" />
+        <result column="SUPPLIER_SITE_CODE" property="supplierSiteCode" jdbcType="VARCHAR" />
+        <result column="ITEM_DESCRIPTIONS" property="itemDescriptions" jdbcType="VARCHAR" />
+        <result column="PLANT_CODE" property="plantCode" jdbcType="VARCHAR" />
+        <result column="SAMPLE_PLAN_TYPE_NOW" property="samplePlanTypeNow" jdbcType="VARCHAR" />
+        <result column="SAMPLE_PLAN_TYPE_NEXT" property="samplePlanTypeNext" jdbcType="VARCHAR" />
+        <result column="NONNCONFORMING_LOT" property="nonnconformingLot" jdbcType="DECIMAL" />
+        <result column="CONSECUTIVE_CONFORMING_LOT" property="consecutiveConformingLot" jdbcType="DECIMAL" />
+        <result column="SWITCH_SCORE" property="switchScore" jdbcType="DECIMAL" />
+        <result column="SCORE_ID" property="scoreId" jdbcType="DECIMAL" />
+        <result column="CHANGE_FLAG" property="changeFlag" jdbcType="VARCHAR" />
+        
+        <result column="SUPPLIER_SITE_DESCRIPTION" property="supplierSiteDescription" jdbcType="VARCHAR" />
+    </resultMap>
+    <select id="myselect" resultMap="BaseResultMap" parameterType="com.hand.hqm.hqm_asl_iqc_control.dto.AslIqcControl">
+        SELECT aic.item_id,
+       aic.control_id,
+       aic.plant_id,
+       aic.supplier_id,
+       aic.supplier_sit_id,
+       hsu.supplier_code,
+       hsu.supplier_name,
+       aic.is_inspection,
+       aic.is_supp_inspection,
+       aic.enable_flag,
+       hss.nonnconforming_lot,
+       hss.consecutive_conforming_lot,
+       hss.switch_score,
+       hss.sample_plan_type_now,
+       hss.sample_plan_type_next,
+       hss.score_id,
+       hss.change_flag,
+       hi.item_code,
+       hi.descriptions AS item_descriptions,
+       hp.plant_code
+  FROM hqm_asl_iqc_control aic, hqm_switch_score hss, hcm_item hi, hcs_suppliers hsu, hcm_plant hp
+ WHERE 1 = 1
+   AND aic.plant_id = hss.plant_id
+   AND aic.item_id = hss.item_id
+   AND aic.supplier_id = hss.supplier_id
+   AND aic.supplier_sit_id = hss.supplier_sit_id
+   AND aic.item_id = hi.item_id
+   AND aic.plant_id = hi.plant_id
+   AND aic.supplier_id = hsu.supplier_id
+   AND aic.plant_id = hp.plant_id
+        <if test="itemId!=null">
+            AND aic.item_id = #{itemId}
+        </if>
+        <if test="plantId!=null">
+            AND aic.plant_id = #{plantId}
+        </if>
+        <if test="supplierId!=null">
+            AND aic.supplier_id = #{supplierId}
+        </if>
+        <if test="isInspection!=null">
+            AND aic.is_inspection = #{isInspection}
+        </if>
+        <if test="isSuppInspection!=null">
+            AND aic.is_supp_inspection = #{isSuppInspection}
+        </if>
+        <if test="enableFlag!=null">
+            AND aic.enable_flag = #{enableFlag}
+        </if>
+         ORDER BY aic.control_id DESC
+    </select>
+
+</mapper>

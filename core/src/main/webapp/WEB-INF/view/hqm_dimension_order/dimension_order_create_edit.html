@@ -1,0 +1,162 @@
+
+<#include "../include/header.html">
+<!--
+ * @description: 8D新建编辑界面
+ * @author: tianmin.wang
+ * @date: 20190826
+ -->
+<script src="${base.contextPath}/common/code?yesNo=SYS.YES_NO"></script><!-- 是否 -->
+<script src="${base.contextPath}/common/code?hqmIqcInspectionType=HQM_INSPECTION_TYPE"></script><!-- 检验类型 -->
+<script src="${base.contextPath}/common/code?hqmIqcSourceType=HQM_IQC_SOURCE_TYPE"></script>
+<script src="${base.contextPath}/common/code?hqm8dSourceType=HQM_8D_SOURCE_TYPE"></script>
+<script src="${base.contextPath}/common/code?HQM_8D_TYPE=HQM_8D_TYPE"></script>
+<script src="${base.contextPath}/common/code?hqmDefaultPlant=HQM_DEFAULT_PLANT"></script>
+<body>
+
+<script type="text/javascript">
+	var defaultPlant = {};
+	var viewModel = kendo.observable({
+		model: {
+			
+		},
+		save: function(e){
+		 	var data= viewModel.model.toJSON();
+			var validator = $("#mainform").data("kendoValidator");
+// 			console.log(data);
+// 			return;
+			if (validator.validate()) {
+				$.ajax({
+			        url: '${base.contextPath}/hqm/8d/order/addnewsave',
+			        type: 'POST',
+			        data: data,
+			        async: false,
+			        dataType: "json",
+			        success: function (response) {
+			            if (response.success) {
+			            	window.parent.$("#grid").data("kendoGrid").dataSource.fetch();
+			            	window.parent.openDimensionDetail(response.rows[0].orderId);
+			            } else {
+			            	kendo.ui.showWarningDialog({
+			                    message: response.message
+			                });
+			            }
+			        }
+			    });
+			}
+		},
+		closeWin: function(e){
+			window.parent.$("#childrenWindow").data("kendoWindow").close();
+        }
+	});
+    function getDefaultPlant(){//hqmDefaultPlant
+    	$.ajax({
+	        url: '${base.contextPath}/hcm/plant/query',
+	        type: 'POST',
+	        data: {
+	        	plantCode :hqmDefaultPlant[0].meaning
+	        },
+	        async: false,
+	        dataType: "json",
+	        success: function (response) {
+	            if (response.success) {
+	            	defaultPlant = response.rows[0];
+	            	viewModel.model.plantCode = defaultPlant.plantCode;
+	            	viewModel.model.plantId = defaultPlant.plantId;
+	            } else {
+	            	kendo.ui.showWarningDialog({
+	                    message: response.message
+	                });
+	            }
+	        }
+	    });
+    }
+</script>
+
+<div id="page-content">
+	<form id="mainform"  class="form-horizontal" method="post" enctype="application/json;charset=UTF-8">
+	 	<div class="container">
+	 		<!-- 8d类型-->
+			<div class="row" style="margin-top:30px">
+					<label class="col-xs-2 control-label" style="text-align:right;font-size:14px;"><@spring.message "dimensionorder.ordertype"/>:</label>
+					<div class="col-xs-10">
+                        <input style="width:100%" required name="sourceType"
+                        		 id="orderTypecombox"
+                        		 data-label="<@spring.message '来源类型'/>"
+                               data-bind="value:model.orderType">
+						<span data-for="orderType" class=".k-invalid-msg"></span>
+					</div>
+					 <script type="text/javascript">
+							$("#orderTypecombox").kendoComboBox({
+						        dataTextField: "meaning",
+						        dataValueField: "value",
+						        valuePrimitive: true,
+						        dataSource: HQM_8D_TYPE
+							});
+						</script>
+			</div>
+            <!-- 8D来源 HQM_8D_SOURCE_TYPE -->
+			<div class="row" style="margin-top:30px">
+					<label class="col-xs-2 control-label" style="text-align:right;font-size:14px;"><@spring.message "dimensionorder.source.type"/>:</label>
+					<div class="col-xs-4">
+                        <input style="width: 100%;" required name="sourceType"
+                        		 id="sourceTypeComboBox"
+                        		 data-label="<@spring.message '来源类型'/>"
+                               data-bind="value:model.sourceType">
+						<span data-for="sourceType" class=".k-invalid-msg"></span>
+					</div>
+					<script type="text/javascript">
+						$("#sourceTypeComboBox").kendoComboBox({
+						       dataTextField: "meaning",
+						       dataValueField: "value",
+						       valuePrimitive: true,
+						       dataSource: hqm8dSourceType
+						});
+					</script>
+					<label class="col-xs-2 control-label" style="text-align:right;font-size:14px;"><@spring.message "dimensionorder.sourceorder"/>:</label>
+					<div class="col-xs-4">
+						<input style="width: 100%;" name="sourceOrder" data-bind="value:model.sourceOrder" data-role="maskedtextbox">
+						<span data-for="sourceOrder" class=".k-invalid-msg"></span>
+					</div>
+			</div>
+			<!-- 来源单据 -->
+			<div class="row" style="margin-top:30px">
+					
+			
+			</div>
+	</div>
+	</form>
+</div>
+<div id="mainBottom" class="text-right" style="bottom: 15px;position: fixed;  float: left;padding-top:15px;border-top:1px solid #ebebeb;width:100%; background: #fff;">
+        <span class="btn btn-primary" data-bind="click:save" type="submit" style="margin-right:5px"><@spring.message "hap.save"/></span>
+        <span class="btn btn-default" data-bind="click:closeWin" type="button" style="margin-right:25px;"><@spring.message "hap.cancel"/></span>
+</div>
+
+<script type="text/javascript">
+    kendo.bind($('#mainBottom'),viewModel);
+	kendo.bind($('#mainform'), viewModel);
+
+    function isNotEmpty(obj) {
+        if(obj != undefined && obj != null && obj != ""){
+            return true;
+        }else{
+            return false;
+        }
+    }
+    var initMinDate = new Date(1900, 0, 1);
+    var initMaxDate = new Date(2099, 11, 31);
+	//验证
+	$("#mainform").kendoValidator({
+    	messages: {
+            required: '<@spring.message "hap.validation.notempty"/>'
+    	},
+		invalidMessageType : "tooltip"
+    });
+</script>
+<script>
+$(function(){
+	getDefaultPlant();
+});
+
+</script>
+</body>
+</html>

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_scrapped_file.mapper.ScrappedFileMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_scrapped_file.dto.ScrappedFile">
+        <result column="SCRAPPED_FILE_ID" property="scrappedFileId" jdbcType="DECIMAL" />
+        <result column="SCRAPPED_LINE_ID" property="scrappedLineId" jdbcType="DECIMAL" />
+        <result column="FILE_ADDRESS" property="fileAddress" jdbcType="VARCHAR" />
+        
+        <result column="UPDATE_DATE" property="updateDate" jdbcType="DATE" />
+        <result column="UPDATE_BY_NAME" property="updateByName" jdbcType="VARCHAR" />
+        <result column="FILE_NAME" property="fileName" jdbcType="VARCHAR" />
+    </resultMap>
+
+
+ <select id="myselect" resultMap="BaseResultMap"  parameterType="com.hand.hqm.hqm_scrapped_file.dto.ScrappedFile">   
+
+   select 
+   H.scrapped_File_Id,
+   H.CREATION_DATE AS UPDATE_DATE,su.user_name AS UPDATE_BY_NAME,
+   substr(H.FILE_ADDRESS ,instr(H.FILE_ADDRESS,'/',-1)+1) FILE_NAME,
+   FILE_ADDRESS 
+   from  HQM_SCRAPPED_FILE H 
+   left join sys_user su on H.CREATED_BY = su.user_id
+   where  H.SCRAPPED_LINE_ID =  #{scrappedLineId} 
+   
+
+ </select> 
+</mapper>

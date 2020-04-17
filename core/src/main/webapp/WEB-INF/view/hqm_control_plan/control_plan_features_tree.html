@@ -1,0 +1,1637 @@
+<#include "../include/header.html">
+<script src="${base.contextPath}/common/code?featuresTypeData=HQM_FEATURE_TYPE"></script>
+<script src="${base.contextPath}/common/code?specialCharacterTypeData=HQM_FMEA_SPECIAL_TYPE"></script>
+<script src="${base.contextPath}/common/code?occurrenceData=HQM_FMEA_OCCURRENCE_RANGE"></script>
+<script src="${base.contextPath}/common/code?detectionData=HQM_FMEA_DETECTION_RANGE"></script>
+<script src="${base.contextPath}/common/code?HQM_MSA_ANALYSIS_CONTENT=HQM_MSA_ANALYSIS_CONTENT"></script>
+<script src="${base.contextPath}/common/code?HQM_CONTROL_PLAN_ENABEL_FALG=HQM_CONTROL_PLAN_ENABEL_FALG"></script>
+<style type="text/css">
+	span{font-size:15px;font-weight:bold;}
+</style>
+<script type="text/javascript">
+var status = 'N';
+var flag = 'Y';
+    var viewModel = kendo.observable({
+        model: { },
+        query: function (e) {
+            $('#grid').data('kendoTreeList').dataSource.read();
+        },
+        create:function (e) {
+        	editDialog1.title('<@spring.message "fmea.control.plan.newprocess"/>');
+            $('#featuresId').val('');
+            $('#parentFeatures').val('');
+            $('#parentFeatures').parents('div .row').css('display','none');
+            $('#row1').css('display','none')
+            $('#row2').css('display','none')
+            $('#row3').css('display','none')
+            $('#row4').css('display','none')
+            $('#row5').css('display','none')
+            $('#row6').css('display','none')
+            //$("#sbl").css('display','block')
+    		//$("#sbd").css('display','block')
+            $('#cjname').text('<@spring.message "fmea.control.plan.process"/>')
+            $("#featuresName").attr("disabled",false);
+		    $('#featuresName').css('background-color','#fff8c5');
+		    $("#equipment").attr("disabled",false);
+		    $('#stuFlag').val('');
+		    $('#stuFlag').val(true);
+		    editDialog1.center().open();
+        },
+    });
+    
+    var controlPlanId = "${RequestParameters.controlPlanId!}";
+    var controlVersion = "${RequestParameters.controlVersion!}";
+    var lastUpdateDate = "${RequestParameters.lastUpdateDate!}";
+    
+    
+    var controlPlanCode = "${RequestParameters.controlPlanCode}";
+    var controlObject = "${RequestParameters.controlObject}";
+    
+    $(function() {
+    	$('#controlPlanCode').html("&nbsp;&nbsp;控制计划编号  "  + " : " + controlPlanCode)
+        $('#controlObject').html("&nbsp;&nbsp;控制对象 "  + " : " + controlObject)
+    })
+    
+    viewModel.model.set('controlPlanId',controlPlanId);
+    //var controlPlanId =123;
+</script>
+<style>
+    #editDialog .row{
+        margin-top: 10px;
+    }
+    #editDialog .row label{
+        text-align: right;
+        line-height: 30px;
+        font-size: 14px;
+    }
+    .btn-foot{
+        width: 95%;
+        position: absolute;
+        bottom: 20px;
+    }
+</style>
+<body>
+<input data-role="maskedtextbox" id="ranks" style="display: none">
+<input data-role="maskedtextbox" id="stuFlag" style="display: none"><!--新增过程层级标识  -->
+<input data-role="maskedtextbox" id="editStuFlag" style="display: none"><!--编辑过程层级标识  -->
+<input data-role="maskedtextbox" id="featuresFlag" style="display: none"><!--新增特征层级标识  -->
+<input data-role="maskedtextbox" id="editFeaturesFlag" style="display: none"><!--编辑特征层级标识  -->
+<input data-role="maskedtextbox" id="featuresId" style="display: none">
+<input data-role="maskedtextbox" id="objVNumber" style="display: none">
+<input data-role="maskedtextbox" id="processId" style="display: none">
+
+<div>
+	<div class = "row">
+<!-- 		<div  class="pull-left"> -->
+<!-- 		   	&nbsp;&nbsp;&nbsp;控制计划编号  :  <input id = "controlPlanCode" type="text" readonly> -->
+<!-- 		   	控制对象 :  <input id = "controlObject" type="text" readonly> -->
+<!-- 		</div> -->
+		
+		<span id="controlPlanCode"></span>
+		<span id="controlObject"></span>
+		
+	</div>
+	<div class = "row">
+		<div id="page-content">
+		    <div class="pull-left" id="toolbar-btn" style="padding-bottom:10px;">
+		        <span class="btn btn-primary" onclick="expand()" style="float:left;margin-right:5px;"><i class="fa fa-plus-square-o" style="margin-right:3px;"></i><@spring.message "hap.expand"/></span>
+		        <span class="btn btn-warning" onclick="collapse()"  style="float:left;margin-right:5px;"><i class="fa fa-minus-square-o" style="margin-right:3px;"></i><@spring.message "hap.collapse"/></span>
+		<!--         <span class="btn btn-primary k-grid-add" style="float:left;margin-right:5px;" onclick="addhead()"><@spring.message "fmea.control.plan.newprocess"/></span> -->
+		<!--         <span class="btn btn-primary k-grid-add" style="float:left;margin-right:5px;" data-bind="click:create"><@spring.message "fmea.control.plan.newprocess"/></span> -->
+		        <span id="print" class="btn btn-success k-grid-save-changes" onclick="commitFeatures()"  style="float:left;margin-right:5px;"><i class="fa fa-print" style="margin-right:3px;"></i><@spring.message "fmea.submit"/></span>
+		        <span id="print" class="btn btn-success k-grid-save-changes" onclick="controlplanprint()"  style="float:left;margin-right:5px;"><i class="fa fa-print" style="margin-right:3px;"></i><@spring.message "fmea.control.plan.print"/></span>
+		    </div>
+		    <script>kendo.bind($('#toolbar-btn'), viewModel);</script>
+		    <div class="pull-right" id="query-form" style="padding-bottom:10px;">
+		        <input type="text" data-role="maskedtextbox" style="width:150px;margin-right:5px;" placeholder='<@spring.message "fmea.control.plan.process"/>' data-bind="value:model.featuresName" class="k-textbox">
+		        <!-- 有效性 -->
+		        <input id="enableFlag" style="width:150px;margin-right:5px;" placeholder='<@spring.message "samplemanage.enableflag"/>'
+			       data-bind="value:model.enableFlag">  
+            	<script>
+	                $("#enableFlag").kendoComboBox({
+	               	    dataTextField: "meaning",
+	               	    dataValueField: "value",
+	               	    valuePrimitive: true,
+	               	    dataSource: HQM_CONTROL_PLAN_ENABEL_FALG
+	               	});	                   
+				</script> 
+		        <span class="btn btn-primary" style="width:70px" data-bind="click:query" type="submit"><@spring.message "hap.query"/></span>
+		        <div style="clear:both"></div>
+		    </div>
+		    <script>kendo.bind($('#query-form'), viewModel);</script>
+		    <div style="clear:both">
+		        <div id="grid"></div>
+		    </div>
+		</div>		
+	</div>
+</div>
+<div id="editDialog" style="display: none">
+    <div id="myform" class="container" style="width: 95%">
+        <div class="row">
+            <label  id='cjname' class="col-sm-2 col-md-2"><@spring.message "fmea.control.plan.feature"/></label>
+            <div class="col-sm-2 sol-md-2" id="classifyItem-div">
+                <input  id="featuresName"  class="k-textbox" onkeypress="javascript:if(event.keyCode == 32)event.returnValue = false;" required>
+            </div>
+            
+            <!-- <label id="sbl" class="col-sm-3 col-md-3">设备</label>
+            <div  id="sbd" class="col-sm-2 sol-md-2" id="classifyItem-div">
+                <input  id="equipment" data-bind="value:model.equipment" class="k-textbox" onkeypress="javascript:if(event.keyCode == 32)event.returnValue = false;">
+            </div> -->
+        </div>
+    
+        <div class="row" id="row1">
+            <label class="col-sm-2 col-md-2"><@spring.message "fmea.control.plan.feature.type"/></label>
+            <div class="col-sm-2 sol-md-2" id="classifyItem-div">
+                <input  id="featuresType"  data-bind="value:model.featuresType" required >
+            </div>
+            <label class="col-sm-2 col-md-2"><@spring.message "特征"/></label>
+            <div class="col-sm-2 sol-md-2" id="classifyItem-div">
+                <input  id="feature"  data-bind="value:model.feature" required >
+            </div>
+            <label class="col-sm-3 col-md-3"><@spring.message "fmea.class"/></label>
+            <div class="col-sm-2 sol-md-2" id="classifyItem-div">
+                <input  id="specialCharacterType" data-bind="value:model.specialCharacterType">
+            </div>
+        </div>
+                
+        <div class="row" id="row3">
+            <label class="col-sm-2 col-md-2"><@spring.message "fmea.control.plan.standard"/></label>
+            <div class="col-sm-2 sol-md-2" id="classifyItem-div">
+                <input  id="standrad" class="k-textbox" required onkeypress="javascript:if(event.keyCode == 32)event.returnValue = false;">
+            </div>
+             <label class="col-sm-3 col-md-3"><@spring.message "fmea.control.plan.testing.eqiupment"/></label>
+            <div class="col-sm-2 sol-md-2" id="classifyItem-div">
+                <input  id="detectionEquipment" class="k-textbox" required onkeypress="javascript:if(event.keyCode == 32)event.returnValue = false;">
+            </div>
+        </div>
+        
+        <div class="row" id="row4">
+            <label class="col-sm-2 col-md-2"><@spring.message "fmea.control.plan.sample.size"/></label>
+            <div class="col-sm-2 sol-md-2" id="classifyItem-div">
+                <input  id="sampleSize" class="k-textbox" required onkeypress="javascript:if(event.keyCode == 32)event.returnValue = false;">
+            </div>
+             <label class="col-sm-3 col-md-3"><@spring.message "fmea.control.plan.detection.frequency"/></label>
+            <div class="col-sm-2 sol-md-2" id="classifyItem-div">
+                <input  id="detectionFrequency" class="k-textbox" required onkeypress="javascript:if(event.keyCode == 32)event.returnValue = false;">
+            </div>
+        </div>
+
+        <div class="row" id="row5">
+            <label class="col-sm-2 col-md-2"><@spring.message "fmea.control.plan.control.method"/></label>
+            <div class="col-sm-2 sol-md-2" id="classifyItem-div">
+                <input  id="controlMethod" class="k-textbox" required onkeypress="javascript:if(event.keyCode == 32)event.returnValue = false;">
+            </div>
+            <label class="col-sm-3 col-md-3">GR&R</label>
+            <div class="col-sm-2 sol-md-2" id="classifyItem-div">
+<!--                 <input  id="grR" class="k-textbox" onkeypress="javascript:if(event.keyCode == 32)event.returnValue = false;"> -->
+   					<input  id="grR" data-bind="value:model.grR">
+   				</script>
+            </div>
+        </div>
+        <div class="row" id="row6">
+            <label class="col-sm-2 col-md-2">Process Capability</label>
+            <div class="col-sm-2 sol-md-2" id="classifyItem-div">
+                <input  id="processCapability" class="k-textbox" onkeypress="javascript:if(event.keyCode == 32)event.returnValue = false;">
+            </div>
+            <label class="col-sm-3 col-md-3"><@spring.message "fmea.control.plan.response.plan"/></label>
+            <div class="col-sm-2 sol-md-2" id="classifyItem-div">
+                <input  id="reactionPlan" class="k-textbox" required onkeypress="javascript:if(event.keyCode == 32)event.returnValue = false;">
+            </div>
+        </div>
+      </div>
+        <div class="row" style="display:none">
+            <label class="col-sm-2 col-md-2">父层级:</label>
+            <div class="col-sm-2 sol-md-2">
+                <input id="parentFeatures" onkeypress="javascript:if(event.keyCode == 32)event.returnValue = false;">
+            </div>
+            <script>
+                /* var parentFeatures = $("#parentFeatures").kendoLov($.extend(<@lov "PSPC_ATTACHMENT"/>,{
+                    textField: 'featuresName',
+                    valueField:'featuresId',
+                    select:function (e) {
+                    }
+                })).data('kendoLov'); */
+            </script>
+        </div>
+        <script>kendo.bind($('#myform'), viewModel);</script>
+    <div class="btn-foot">
+        <div class="pull-right">
+            <span class="btn btn-primary k-grid-add" onclick="saveAttachment()" style="float:left;margin-right:5px;" ><@spring.message "hap.ok"/></span>
+            <span class="btn btn-default" onclick="closeDialog('editDialog')" style="float:left;margin-right:10px;" ><@spring.message "hap.cancel"/></span>
+        </div>
+    </div>
+</div>
+
+<div id="editDialog1" style="display: none">
+		<div id="myform1" class="container"
+			style="width: 95%; margin-top: 15px;">
+			<div class="row">
+				<div class="form-group col-sm-6" style="padding: 0px">
+					<label class="col-sm-2 control-label"><@spring.message "fmea.control.plan.process"/></label>
+					<div class="col-sm-5" id="classifyItem-div">
+						<input id="processName" class="k-textbox" onkeypress="javascript:if(event.keyCode == 32)event.returnValue = false;" required>
+					</div>
+				</div>
+				<div class="form-group col-sm-6" style="padding: 0px">
+					<label id="sbl" class="col-sm-2 control-label"><@spring.message "fmea.control.plan.eqiupment"/></label>
+					<div id="sbd" class="col-sm-5" id="classifyItem-div">
+						<input id="equipment" data-bind="value:model.equipment" class="k-textbox" onkeypress="javascript:if(event.keyCode == 32)event.returnValue = false;">
+					</div>
+				</div>
+			</div>
+		</div>
+		<script>
+			kendo.bind($('#myform1'), viewModel);
+		</script>
+    <div class="btn-foot">
+        <div class="pull-right">
+            <span class="btn btn-primary k-grid-add" onclick="saveAttachment()" style="float:left;margin-right:5px;" ><@spring.message "hap.ok"/></span>
+            <span class="btn btn-default" onclick="closeDialog1('editDialog1')" style="float:left;margin-right:10px;" ><@spring.message "hap.cancel"/></span>
+        </div>
+    </div>
+</div>
+<div id="printWindow"></div>
+<script>
+
+$("#featuresType").kendoComboBox({
+    dataTextField: "meaning",
+    dataValueField: "value",
+    valuePrimitive: true,
+    dataSource: featuresTypeData,
+});
+
+$("#specialCharacterType").kendoComboBox({
+    dataTextField: "meaning",
+    dataValueField: "value",
+    valuePrimitive: true,
+    dataSource: specialCharacterTypeData
+});
+$("#grR").kendoComboBox({
+    dataTextField: "meaning",
+    dataValueField: "value",
+    valuePrimitive: true,
+    dataSource: HQM_MSA_ANALYSIS_CONTENT
+});
+
+	var editDialog = $("#editDialog").kendoWindow({
+	    width: 1000,
+	    height: 400,
+	    title: '',
+	    visible: false,
+	    modal: true,
+	    actions: [
+	        "Close"
+	    ],
+	    close:function() {
+	        //关闭时清空
+	        $('#featuresId').val('');
+	        $("#parentFeatures").val('');
+	        $('#processName').val('');
+	        $('#featuresName').val('');
+	        $('#featuresType').val('');
+	        $('#featuresContent').val('');
+	        $('#equipment').val('');
+	        $('#specialCharacterType').val('');
+	        $('#standrad').val('');
+	        $('#detectionEquipment').val('');
+	        $("#sampleSize").val('');
+	        $('#detectionFrequency').val('');
+	        $('#feature').val('');
+	        $('#controlMethod').val('');
+	        $('#grR').val('');
+	        $('#processCapability').val('');
+	        $('#reactionPlan').val('');
+	        $('#ranks').val('');
+	        $('#stuFlag').val('');
+	        $("#featuresFlag").val('');
+	        $('#editFeaturesFlag').val('');
+	        $('#processId').val('');
+	        viewModel.model.set('featuresType',''); 
+	        viewModel.model.set('features',''); 
+	        viewModel.model.set('specialCharacterType','');
+	        //$('#attachment').attr('disabled',false);
+	        //$('#attachment').css('background-color','#FFFFFF');
+	    }
+	}).data("kendoWindow");
+    
+    
+    
+    var editDialog1 = $("#editDialog1").kendoWindow({
+        width: 800,
+        height: 200,
+        title: '<@spring.message "fmea.control.plan.newprocess"/>',
+        visible: false,
+        modal: true,
+        actions: [
+            "Close"
+        ],
+        close:function() {
+            //关闭时清空
+            $('#featuresId').val('');
+            $("#parentFeatures").val('');
+            $('#processName').val('');
+            $('#featuresName').val('');
+            $('#featuresType').val('');
+            $('#featuresContent').val('');
+            $('#equipment').val('');
+            $('#specialCharacterType').val('');
+            $('#standrad').val('');
+            $('#detectionEquipment').val('');
+            $("#sampleSize").val('');
+            $('#detectionFrequency').val('');
+            $('#feature').val('');
+            $('#controlMethod').val('');
+            $('#grR').val('');
+            $('#processCapability').val('');
+            $('#reactionPlan').val('');
+            $('#ranks').val('');
+            $('#stuFlag').val('');
+            $("#featuresFlag").val('');
+            $('#editFeaturesFlag').val('');
+            $('#processId').val('');
+            viewModel.model.set('featuresType',''); 
+            viewModel.model.set('feature',''); 
+            viewModel.model.set('specialCharacterType','');
+            //$('#attachment').attr('disabled',false);
+            //$('#attachment').css('background-color','#FFFFFF');
+        }
+    }).data("kendoWindow");
+    
+    
+    //打印
+   function controlplanprint(){
+    	var dialog = $("#printWindow").kendoWindow({
+            width: "95%",
+            height: "90%",
+            title: '<@spring.message "fmea.control.plan.print"/>',
+            visible: false,
+            iframe: true,
+            modal: true,
+            content: 'control_plan_print.html?controlPlanId='+controlPlanId
+        }).data("kendoWindow");
+        dialog.center().open();
+    }
+</script>
+<script type="text/javascript">
+    function treelist(arr, childrens, parentId,parentCode) {
+        for (var i = 0; i < childrens.length; i++) {
+            childrens[i].parentId = parentId;
+            childrens[i].parentCode = parentCode;
+            childrens[i].hasChildren = true;
+            arr.push(childrens[i])
+            if (childrens[i].children && childrens[i].children.length > 0) {
+                treelist(arr, childrens[i].children, childrens[i].id,childrens[i].functionCode);
+            } else {
+                childrens[i].hasChildren = false;
+            }
+        }
+    }
+
+    Hap.initEnterQuery('#query-form', viewModel.query);
+    var BaseUrl = _basePath;
+    dataSource = new kendo.data.TreeListDataSource({
+        transport: {
+            read: {
+                url: BaseUrl + "/hdm/features/query/tree/data",
+                type: "POST",
+                dataType: "json"
+            },
+            update: {
+                url: BaseUrl + "/hdm/features/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            destroy: {
+                url: BaseUrl + "/hdm/features/remove",
+                type: "POST",
+                contentType: "application/json"
+            },
+            create: {
+                url: BaseUrl + "/hdm/features/submit",
+                type: "POST",
+                async:false,
+                contentType: "application/json"
+            },
+            parameterMap: function (options, type) {
+                if (type !== "read" && options.models) {
+                	if(type == 'create'){
+                		$.each(options.models,function(i,n){
+                			n.controlPlanId = controlPlanId
+	                	})
+                	}
+                    var datas = Hap.prepareSubmitParameter(options, type)
+                    return kendo.stringify(datas);
+                } else if (type === "read") {
+                    return Hap.prepareQueryParameter(viewModel.model.toJSON(), options)
+                }
+            }
+        },
+        requestEnd: function (e) {
+            var response = e.response;
+            if (!response)
+                return;
+            var datas = [];
+            treelist(datas, response.rows || [], null,null);
+            response.rows = datas;
+        },
+        batch: true,
+        serverPaging: true,
+        pageSize: 10,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+                id: "id",
+                parentId: 'parentId',
+                fields: {
+                	featuresName:{
+                		validation:{
+                    		required: true,
+                    		required:{message: "请输入"},
+                    	}
+                	},
+                	feature:{
+                		validation:{
+                    		required: true,
+                    		required:{message: "特征为必填"},
+                    	}
+                	},
+                	featuresType:{
+                		validation:{
+                    		required: true,
+                    		required:{message: "特征类型为必填"},
+                    	}
+                	},
+                	standrad:{
+                		validation:{
+                    		required: true,
+                    		required:{message: "标准为必填"},
+                    	}
+                	},
+                	detectionEquipment:{
+                		validation:{
+                    		required: true,
+                    		required:{message: "检测设备为必填"},
+                    	}
+                	},
+                	feature:{
+                		validation:{
+                    		required: true,
+                    		required:{message: "特征为必填"},
+                    	}
+                	},
+                	sampleSize:{
+                		validation:{
+                    		required: true,
+                    		required:{message: "样本大小为必填"},
+                    	}
+                	},
+                	detectionFrequency:{
+                		validation:{
+                    		required: true,
+                    		required:{message: "检测频率为必填"},
+                    	}
+                	},
+                	controlMethod:{
+                		validation:{
+                    		required: true,
+                    		required:{message: "控制方法为必填"},
+                    	}
+                	},
+                	reactionPlan:{
+                		validation:{
+                    		required: true,
+                    		required:{message: "反应计划为必填"},
+                    	}
+                	}
+                },
+                editable: function(col){
+//                 	if(!isNotEmpty(this.parentFeaturesId) || isNotEmpty(this.parentId)){
+                	if(!isNotEmpty(this.parentId)){
+                		if( col == 'equipment' || col == 'featuresName'){
+                			return true;
+                		}else{
+                			return false;
+                		}
+                	}else{
+                		if( col == 'equipment'){
+                			return false;
+                		}else{
+                			return true;
+                		}
+                	}
+                },
+                expanded: true
+            }
+        }
+    });
+
+    var grid = $("#grid").kendoTreeList({
+        dataSource: dataSource,
+        resizable: true,
+        scrollable: true,
+        navigatable: false,
+        selectable: 'row',
+        dataBound: function (e) {
+            if (parent.autoResizeIframe) {
+                parent.autoResizeIframe('${RequestParameters.functionCode!}')
+            }
+            if(status == 'S'){            	
+            	viewModel.query();
+            	status = 'N'     	
+            } 
+            
+// 	     	$('tr').each(function(){ 
+//     			$(this).find('button:eq(0)').show();
+// 		    })
+// 	            var rows = e.sender.tbody.children();
+// 	            for (var j = 0; j < rows.length; j++) {
+// 	            	var row = $(rows[j]);
+// 	                var dataItem = e.sender.dataItem(row);
+// 	                if(isNotEmpty(dataItem.get("parentId"))){
+// 	                	var cells = row.children();
+// 	                	var mytd = cells[12];
+// 	                	if(isNotEmpty($(cells[0]).html().split('</span>')[2])){
+// 	                		$(mytd).find('button:eq(0)').hide()
+// 	                	}
+// 	                }
+// 	            }
+	            
+        },
+        pageable: {
+            pageSizes: [5, 10, 20, 50],
+            refresh: true,
+            buttonCount: 5
+        },
+        columns: [
+        {
+            field: "featuresName",
+            title: ' ',
+            width: 180,
+            headerAttributes: {
+                style: "text-align: center"
+            }
+        },
+        {
+            field: "equipment",
+            title: '<@spring.message "fmea.control.plan.eqiupment"/>',
+            width: 100,
+            template: function (dataItem) {
+            	var v= (dataItem.equipment == "null" ? "" : dataItem.equipment);
+            	/* $.each(specialCharacterTypeData, function (i, n) {
+                    if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                        v = n.meaning;
+                        return v;
+                    }
+                }); */
+                return v;
+               
+            },
+        },
+        {
+            field: "feature",
+            title: ' 特征 ',
+            width: 80,
+            headerAttributes: {
+                style: "text-align: center"
+            }
+        },
+        {
+            field: "featuresType",
+            title: '<@spring.message "fmea.control.plan.feature.type"/>',
+            width: 100,
+            template: function (dataItem) {
+            	var v= (dataItem.featuresType == "null" ? "" : dataItem.featuresType);
+            	 $.each(featuresTypeData, function (i, n) {
+                    if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                        v = n.meaning;
+                        return v;
+                    }
+                }); 
+                return v;
+            },
+            editor: function (container, options) {
+//                 $('<input required  name="' + options.field + '"/>')
+ 					$('<input required name="' + options.field + '"/>')
+                    .appendTo(container)
+                    .kendoDropDownList({
+                        dataTextField: "meaning",
+                        dataValueField: "value",
+                        valuePrimitive: true,
+                        dataSource:featuresTypeData,
+                    });
+            },
+            
+        },
+        
+        
+        {
+            field: "specialCharacterType",
+            title: '<@spring.message "fmea.class"/>',
+            width: 80,
+            template: function (dataItem) {
+            	var v= (dataItem.specialCharacterType == "null" ? "" : dataItem.specialCharacterType);
+	           	 $.each(specialCharacterTypeData, function (i, n) {
+	                   if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+	                       v = n.meaning;
+	                       return v;
+	                   }
+	               }); 
+               return v;
+            },
+            editor: function (container, options) {
+                $('<input name="' + options.field + '"/>')
+                    .appendTo(container)
+                    .kendoDropDownList({
+                        dataTextField: "meaning",
+                        dataValueField: "value",
+                        valuePrimitive: true,
+                        dataSource:specialCharacterTypeData,
+                    });
+            },
+        },
+        
+        {
+            field: "standrad",
+            title: '<@spring.message "fmea.control.plan.standard"/>',
+            width: 120,
+            template: function (dataItem) {
+                return dataItem.standrad == "null" ? "" : dataItem.standrad;
+            },
+        },
+                {
+            field: "detectionEquipment",
+            title: '<@spring.message "fmea.control.plan.testing.eqiupment"/>',
+            width: 120,
+            template: function (dataItem) {
+                return dataItem.detectionEquipment == "null" ? "" : dataItem.detectionEquipment;
+            },
+        },
+        {
+            field: "sampleSize",
+            title: '<@spring.message "fmea.control.plan.sample.size"/>',
+            width: 80,
+            template: function (dataItem) {
+                return dataItem.sampleSize == "null" ? "" : dataItem.sampleSize;
+            },
+        },
+                {
+            field: "detectionFrequency",
+            title: '<@spring.message "fmea.control.plan.detection.frequency"/>',
+            width: 80,
+            template: function (dataItem) {
+                return dataItem.detectionFrequency == "null" ? "" : dataItem.detectionFrequency;
+            },
+        },
+                {
+            field: "controlMethod",
+            title: '<@spring.message "fmea.control.plan.control.method"/>',
+            width: 150,
+            template: function (dataItem) {
+                return dataItem.controlMethod == "null" ? "" : dataItem.controlMethod;
+            },
+        },
+        {
+            field: "grR",
+            title: 'GR&R',
+            width: 80,
+//             template: function (dataItem) {
+//                 return dataItem.grR == "null" ? "" : dataItem.grR;
+//             },
+            template: function (dataItem) {
+            	var grr;
+            	if(!isNotEmpty(dataItem.grR)){
+            		grr = '';
+            	}else{            		
+	            	grr = dataItem.grR+'';
+            	}
+                var v = grr ? grr : "";
+                $.each(HQM_MSA_ANALYSIS_CONTENT, function (i, n) {
+                    if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                        v = n.meaning;
+                        return v;
+                    }
+                });
+                return v;
+            },
+            editor: function (container, options) {
+                $('<input name="' + options.field + '"/>')
+                    .appendTo(container)
+                    .kendoDropDownList({
+                        dataTextField: "meaning",
+                        dataValueField: "value",
+                        valuePrimitive: true,
+                        dataSource:HQM_MSA_ANALYSIS_CONTENT
+                    });
+            },
+        },
+        {
+            field: "processCapability",
+            title: 'Process Capability',
+            width: 150,
+            template: function (dataItem) {
+                return dataItem.processCapability == "null" ? "" : dataItem.processCapability;
+            },
+        },
+        {
+            field: "reactionPlan",
+            title: '<@spring.message "fmea.control.plan.response.plan"/>',
+            width: 120,
+            template: function (dataItem) {
+                return dataItem.reactionPlan == "null" ? "" : dataItem.reactionPlan;
+            },
+        },
+//         {
+//             field: "enableFlag",
+//             title: '<@spring.message "samplemanage.enableflag"/>',
+//             width: 120,
+//             template: function (dataItem) {
+//             	var enableFlag = dataItem.enableFlag +'';
+//             	var v= (enableFlag == "null" ? "" : enableFlag);
+//             	$.each(SRM_YES_NO, function (i, n) {
+//                     if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+//                         v = n.meaning;
+//                         return v;
+//                     }
+//                 });
+//                 return v;
+//             },
+//         },
+        {
+            field: "",
+            title: '<@spring.message "dimensionimmediateaction.operating"/>',
+            width: 200,
+            template: function (dataItem) {
+            	if(isNotEmpty(dataItem.parentId)){
+            		if(isNotEmpty(dataItem.featuresId) && dataItem.enableFlag == 'Y'){
+            			return '<a href="#" onclick="editrow('+ dataItem.featuresId +')"><@spring.message "fmea.edit"/></a>&nbsp;&nbsp;' +
+            			'<a href="#" onclick="submit('+ dataItem.featuresId + ',' + dataItem.parentId +')"><@spring.message "保存"/></a>&nbsp;&nbsp;' + 
+            			'<a href="#" onclick="removerow('+ dataItem.featuresId +')"><@spring.message "fmea.delect"/></a>';
+            		}else if(dataItem.enableFlag == null){
+            			return '<a href="#" onclick="submitLine('+ dataItem.featuresId +',' + dataItem.parentId +')"><@spring.message "保存"/></a>&nbsp;&nbsp;' +
+            			'<a href="#" onclick="removerow_a(\''+ dataItem.uid + '\')"><@spring.message "fmea.delect"/></a>';
+            		}else if (dataItem.enableFlag == 'N') {
+                		return '<a href="#" onclick="restoreData('+ dataItem.featuresId +')"><@spring.message "还原"/></a>';
+                	}
+            	} else if (dataItem.enableFlag == 'Y'){
+            		return '<a href="#" onclick="addrow('+ dataItem.featuresId +')"><@spring.message "fmea.control.plan.newfeature"/></a>&nbsp;&nbsp;' +
+            		'<a href="#" onclick="editrow('+ dataItem.featuresId +')"><@spring.message "fmea.edit"/></a>&nbsp;&nbsp;' +
+            		'<a href="#" onclick="submit('+ dataItem.featuresId +',' + dataItem.parentId +')"><@spring.message "保存"/></a>&nbsp;&nbsp;'  +
+            		'<a href="#" onclick="removerow('+ dataItem.featuresId +')"><@spring.message "fmea.delect"/></a>';
+            	} else if (dataItem.enableFlag == 'N') {
+            		return '<a href="#" onclick="restoreData('+ dataItem.featuresId +')"><@spring.message "还原"/></a>';
+            	}
+            },
+        },
+//           {
+//               title: '<@spring.message "fmea.operating"/>',
+//               width: 120,
+//               headerAttributes: {
+//                   style: "text-align: center"
+//               },
+//               attributes: {
+//                   style: "text-align: center;"
+//               },
+//               template:function (dataItem) {
+//             	  var reactionPlan= (dataItem.reactionPlan == null ? "" : dataItem.reactionPlan);
+//             	  var processCapability= (dataItem.processCapability == null ? "" : dataItem.processCapability);
+//             	  var grR= (dataItem.grR == null ? "" : dataItem.grR);
+//             	  var controlMethod= (dataItem.controlMethod == null ? "" : dataItem.controlMethod);
+//             	  var detectionFrequency= (dataItem.detectionFrequency == null ? "" : dataItem.detectionFrequency);
+//             	  var sampleSize= (dataItem.sampleSize == null ? "" : dataItem.sampleSize);
+//             	  var detectionEquipment= (dataItem.detectionEquipment == null ? "" : dataItem.detectionEquipment);
+//             	  var standrad= (dataItem.standrad == null ? "" : dataItem.standrad);
+//             	  var specialCharacterType= (dataItem.specialCharacterType == null ? "" : dataItem.specialCharacterType);
+//             	  var equipment= (dataItem.equipment == null ? "" : dataItem.equipment);
+//             	  var featuresContent= (dataItem.featuresContent == null ? "" : dataItem.featuresContent);
+//             	  var featuresType= (dataItem.featuresType == null ? "" : dataItem.featuresType);
+//             	  var featuresName= (dataItem.featuresName == null ? "" : dataItem.featuresName);
+//             	  if(dataItem.ranks==2){
+//             		  return '<a href="#" onclick="edit(\'' + dataItem.featuresId + '\',\''+dataItem.featuresName + '\',\''+featuresType+'\',\''+ featuresContent +'\',\'' +
+//             		  equipment + '\',\''+specialCharacterType + '\',\''+standrad+'\',\''+ detectionEquipment +'\',\'' +sampleSize +'\',\''+ 
+//             		  detectionFrequency + '\',\''+controlMethod + '\',\''+grR+'\',\''+ processCapability +'\',\'' +reactionPlan +'\',\''+ 
+//             		  dataItem.parentFeaturesId + '\',\''+dataItem.ranks+'\',\''+dataItem.processId+'\')"><@spring.message "fmea.edit"/></a>&nbsp;&nbsp;&nbsp;&nbsp;'+
+//                       '<a href="#" onclick="deleteRow('+dataItem.id+',\''+ dataItem.featuresName +'\',\''+dataItem.processId+'\')"><@spring.message "fmea.delect"/></a>'; 
+//             	  } else{
+//             		  return '<a href="#" onclick="edit(\'' + dataItem.featuresId + '\',\''+dataItem.featuresName + '\',\''+featuresType+'\',\''+ featuresContent +'\',\'' +
+//             		  equipment + '\',\''+specialCharacterType + '\',\''+standrad+'\',\''+ detectionEquipment +'\',\'' +sampleSize +'\',\''+ 
+//             		  detectionFrequency + '\',\''+controlMethod + '\',\''+grR+'\',\''+ processCapability +'\',\'' +reactionPlan +'\',\''+ 
+//             		  dataItem.parentFeaturesId + '\',\''+dataItem.ranks+'\',\''+dataItem.processId+'\')"><@spring.message "fmea.edit"/></a>&nbsp;&nbsp;&nbsp;'+
+//                       '<a href="#" onclick="addSon(\'' + dataItem.featuresId + '\',\''+ dataItem.featuresName + '\',\''+dataItem.ranks+'\')"><@spring.message "fmea.control.plan.newfeature"/></a>&nbsp;&nbsp;&nbsp;'+
+//                       '<a href="#" onclick="deleteRow('+dataItem.id+',\''+ dataItem.featuresName +'\',\''+dataItem.processId+'\')"><@spring.message "fmea.delect"/></a>';
+//             	  }
+            	  
+                 
+//               }
+//           },
+//           { command: [
+//         	  { name: "createchild", text: '<@spring.message "fmea.control.plan.newfeature"/>' }, 
+//         	  { name: "edit", text: '<@spring.message "fmea.edit"/>' }, 
+//         	  {
+//                   name: 'remove',
+//                   text: '<@spring.message "hap.delete"/>' ,
+//                   //template: '<a class="k-button k-button-icontext k-grid-remove"><span class="fa fa-times"><@spring.message "hap.delete"/></span></a>',
+//                   click: function(e) {
+//                       var sf = this;
+//                       e.preventDefault();
+//                       var data = sf.dataItem($(e.target).closest("tr"));
+//                       deleteRow(data.featuresId,data.featuresName,data.processId);
+// //                       kendo.ui.showConfirmDialog({
+// //                           title: '提示',
+// //                           message: '确认删除么?'
+// //                       }).done(function(event) {
+// //                           if (event.button == 'OK') {
+// //                               var data = sf.dataItem($(e.target).closest("tr"));
+// //                               sf.dataSource.remove(data)
+// //                               sf.dataSource.sync()
+// //                           }
+
+// //                       })
+//                   }
+//               },{
+//                   name: 'addrow',
+//                   text: '<@spring.message "hap.delete"/>' ,
+//                   //template: '<a class="k-button k-button-icontext k-grid-remove"><span class="fa fa-times"><@spring.message "hap.delete"/></span></a>',
+//                   click: function(e) {
+//                 	  console.log()
+//                      var index = $(e.target).closest("tr").index();
+                	
+//                       //grid.addRow();
+// 					grid.addRow("#grid tbody>tr:eq("+ index +")");
+// 						//var data = sf.dataItem($(e.target).closest("tr"));
+// 						console.log(e)
+// //                       kendo.ui.showConfirmDialog({
+// //                           title: '提示',
+// //                           message: '确认删除么?'
+// //                       }).done(function(event) {
+// //                           if (event.button == 'OK') {
+// //                               var data = sf.dataItem($(e.target).closest("tr"));
+// //                               sf.dataSource.remove(data)
+// //                               sf.dataSource.sync()
+// //                           }
+
+// //                       })
+//                   }
+//               }],
+//               title: '<@spring.message "fmea.operating"/>',
+//               headerAttributes: {
+//                   style: "text-align: center"
+//               },
+//               attributes: {
+//                   style: "text-align: center;"
+//               },
+//         	  width: 300 
+//           }
+        ],
+        //remove: onRemove,
+           edit: onEdit,
+           save: onSave,
+        editable: false
+    }).data('kendoTreeList');
+
+    	
+    
+    function onAdd(){
+    }
+    function onEdit(arg){
+    	status = 'E'
+    }
+    function onSave(e){
+    	
+    	status = 'S'
+    	viewModel.query();
+    	grid.dataSource.read();
+//     	Hap.showToast({
+// 			type:'success',
+// 			"positionClass": "toast-bottom-right",
+// 			message:'<@spring.message "hap.tip.success"/>',
+// 			hideDuration:10*1000
+// 		})
+    }
+//     function onRemove(){
+
+//     }
+    /**
+     * 新增下级
+     */
+    function addSon(featuresId,featuresName,ranks) {
+    	 viewModel.model.set('featuresType',''); 
+         viewModel.model.set('specialCharacterType','');
+    	$("#featuresName").attr("disabled",false);
+		//$('#featuresName').css('background-color','#fff8c5');
+    	if(ranks==1){//新增特征
+    		$('#row1').css('display','block')
+            $('#row2').css('display','block')
+            $('#row3').css('display','block')
+            $('#row4').css('display','block')
+            $('#row5').css('display','block')
+            $('#row6').css('display','block')
+            $('#cjname').text('<@spring.message "fmea.control.plan.feature"/>')
+            $('#featuresFlag').val(true);
+    		//$("#sbl").css('display','none')
+    		//$("#sbd").css('display','none')
+    	}
+    	editDialog.title('<@spring.message "fmea.control.plan.newfeature"/>');
+        //父层级赋值
+        $("#parentFeatures").val(featuresId);
+        //获取ranks
+        $('#ranks').val('');
+        $('#ranks').val(ranks);
+        //父层级不可修改
+        $("#parentFeatures").attr("disabled",true);
+        editDialog.center().open();
+    }
+
+    /**
+     * 编辑
+     */
+    function edit(featuresId,featuresName,featuresType,featuresContent,equipment,specialCharacterType,standrad,feature,detectionEquipment,sampleSize,detectionFrequency,controlMethod,grR,processCapability,reactionPlan,parentFeaturesId,ranks,processId) {
+    	$('#ranks').val('');
+        $('#ranks').val(ranks);
+        viewModel.model.set('featuresType',''); 
+        viewModel.model.set('specialCharacterType','');
+        $('#featuresName').css('background-color','#fff8c5');
+        $('#featuresType').css('background-color','#fff8c5');
+    	if(ranks==2){//编辑特征
+    		$('#row1').css('display','block')
+            $('#row2').css('display','block')
+            $('#row3').css('display','block')
+            $('#row4').css('display','block')
+            $('#row5').css('display','block')
+            $('#row6').css('display','block')
+            //$("#sbl").css('display','none')
+    		//$("#sbd").css('display','none')
+            //$("#featuresName").attr("disabled",true);
+    		$("#equipment").attr("disabled",true);
+    		//$('#featuresName').css('background-color','#d4d3cf');
+    		$('#editFeaturesFlag').val(true);
+            $('#cjname').text('<@spring.message "fmea.control.plan.feature"/>')
+            editDialog.title('<@spring.message "fmea.edit"/>');
+            editDialog.center().open();
+    	}else{//编辑过程		
+    		$('#row1').css('display','none')
+            $('#row2').css('display','none')
+            $('#row3').css('display','none')
+            $('#row4').css('display','none')
+            $('#row5').css('display','none')
+            $('#row6').css('display','none')
+            //$("#sbl").css('display','block')
+    		//$("#sbd").css('display','block')
+            $("#featuresName").attr("disabled",false);
+    		$("#equipment").attr("disabled",false);
+    		//$('#featuresName').css('background-color','#fff8c5');
+            $('#cjname').text('<@spring.message "fmea.control.plan.process"/>')
+            $('#stuFlag').val(true);
+            editDialog1.title('<@spring.message "fmea.edit"/>');
+            editDialog1.center().open();
+    	}
+            //$('#invalidConsequence').attr('disabled',true);
+            $('#featuresId').val(featuresId);
+            //有父层级再赋值
+            if(parentFeaturesId != 'null'){
+            	$("#parentFeatures").val(parentFeaturesId);
+            }
+            $('#processName').val(featuresName);
+            $('#featuresName').val(featuresName);
+            $('#featuresType').val(featuresType);
+            $('#featuresContent').val(featuresContent);
+            $('#equipment').val(equipment);
+            $('#specialCharacterType').val(specialCharacterType);
+            $('#standrad').val(standrad);
+            $('#detectionEquipment').val(detectionEquipment);
+            $('#feature').val(feature);
+            $("#sampleSize").val(sampleSize);
+            $('#detectionFrequency').val(detectionFrequency);
+            $('#feature').val(feature);
+            $('#controlMethod').val(controlMethod);
+            $('#grR').val(grR);
+            $('#processCapability').val(processCapability);
+            $('#reactionPlan').val(reactionPlan);
+            $('#ranks').val(ranks);
+            $('#processId').val(processId);
+            viewModel.model.set('featuresType',featuresType); 
+            viewModel.model.set('specialCharacterType',specialCharacterType);
+            //$('#attachment').css('background-color','#F5F5F5');      
+    }
+    
+
+    /**
+     * 保存
+     */
+    function saveAttachment() {
+    	//第一层
+    	if($('#stuFlag').val()){//过程层级
+    		if($('#processName').val()==null||$('#processName').val()==""||$('#processName').val()==undefined){
+        		alert("请维护层级数据")
+        	}else{
+        		var obj = {
+          	            'featuresId':$('#featuresId').val(),
+          	            'controlPlanId':controlPlanId,
+          	            'parentFeaturesId':$("#parentFeatures").val(),
+          	            'featuresName':$('#processName').val(),
+          	            'equipment':$('#equipment').val(),
+          	            'ranks':$("#ranks").val(),
+          	            'processId':$('#processId').val(),
+          	            'tenantId':-1,
+          	            'siteId':-1
+          	        };
+        		$.ajax({
+      	            type: "POST",
+      	            url: BaseUrl + "/hdm/features/save/or/update",
+      	            data:obj,//json序列化
+      	            datatype:"json", //此处不能省略
+      	            success:function(data){
+      	                if(data.success){
+      	                    Hap.showToast({
+      	                        type:'success',  //1.success 2.error
+      	                        message: '保存成功',
+      	                        hideDuration:2000,
+      	                        "positionClass": "toast-bottom-right",
+      	                    });
+      	                    $("#editDialog1").data("kendoWindow").close();
+      	                    grid.dataSource.read();
+      	                }else{
+      	                    alert(data.message);
+      	                }
+      	            },
+      	            error:function(data){
+      	                alert(JSON.stringify(data));
+      	            }
+      	        });
+        	}
+      			
+    	}else if($('#editFeaturesFlag').val()){//编辑特征层级
+    		if($('#featuresName').val()==null||$('#featuresName').val()==""||$('#featuresName').val()==undefined){
+        		alert("请维护层级数据")
+        	}else if($('#featuresType').val()==null||$('#featuresType').val()==""||$('#featuresType').val()==undefined){
+        		alert("请维护特征类型")
+        	}else if($('#standrad').val()==null||$('#standrad').val()==""||$('#standrad').val()==undefined){
+        		alert("请维护标准")
+        	}else if($('#detectionEquipment').val()==null||$('#detectionEquipment').val()==""||$('#detectionEquipment').val()==undefined){
+        		alert("请维护检测装备")
+        	}else if($('#sampleSize').val()==null||$('#sampleSize').val()==""||$('#sampleSize').val()==undefined){
+        		alert("请维护样本大小")
+        	}else if($('#feature').val()==null||$('#feature').val()==""||$('#feature').val()==undefined){
+        		alert("请维护特征大小")
+        	}else if($('#detectionFrequency').val()==null||$('#detectionFrequency').val()==""||$('#detectionFrequency').val()==undefined){
+        		alert("请维护检测频率")
+        	}else if($('#controlMethod').val()==null||$('#controlMethod').val()==""||$('#controlMethod').val()==undefined){
+        		alert("请维护控制方法")
+        	}else if($('#reactionPlan').val()==null||$('#reactionPlan').val()==""||$('#reactionPlan').val()==undefined){
+        		alert("请维护反应计划")
+        	}else{
+        		var obj = {
+          	            'featuresId':$('#featuresId').val(),
+          	            'featuresName':$('#featuresName').val(),
+          	            'controlPlanId':controlPlanId,
+          	            'parentFeaturesId':$("#parentFeatures").val(),
+          	            'featuresType':$('#featuresType').val(),
+          	            'specialCharacterType':$('#specialCharacterType').val(),
+          	            'standrad':$('#standrad').val(),
+          	            'detectionEquipment':$('#detectionEquipment').val(),
+          	            'sampleSize':$("#sampleSize").val(),
+          	            'detectionFrequency':$('#detectionFrequency').val(),
+          	            'feature':$('#feature').val(),
+          	            'controlMethod':$('#controlMethod').val(),
+          	            'grR':$('#grR').val(),
+          	            'processCapability':$('#processCapability').val(),
+          	            'reactionPlan':$('#reactionPlan').val(),
+          	            'ranks':$('#ranks').val(),
+          	            'tenantId':-1,
+          	            'siteId':-1
+          	        };
+        		$.ajax({
+      	            type: "POST",
+      	            url: BaseUrl + "/hdm/features/save/or/update",
+      	            data:obj,//json序列化
+      	            datatype:"json", //此处不能省略
+      	            success:function(data){
+      	                if(data.success){
+      	                    Hap.showToast({
+      	                        type:'success',  //1.success 2.error
+      	                        message: '保存成功',
+      	                        hideDuration:2000,
+      	                        "positionClass": "toast-bottom-right",
+      	                    });
+      	                    $("#editDialog").data("kendoWindow").close();
+      	                    grid.dataSource.read();
+      	                }else{
+      	                    alert(data.message);
+      	                }
+      	            },
+      	            error:function(data){
+      	                alert(JSON.stringify(data));
+      	            }
+      	        });
+        	}
+    	}else{//新增特征层级
+    		if($('#featuresName').val()==null||$('#featuresName').val()==""||$('#featuresName').val()==undefined){
+        		alert("请维护层级数据")
+        	}else if($('#featuresType').val()==null||$('#featuresType').val()==""||$('#featuresType').val()==undefined){
+        		alert("请维护特征类型")
+        	}else if($('#standrad').val()==null||$('#standrad').val()==""||$('#standrad').val()==undefined){
+        		alert("请维护标准")
+        	}else if($('#detectionEquipment').val()==null||$('#detectionEquipment').val()==""||$('#detectionEquipment').val()==undefined){
+        		alert("请维护检测装备")
+        	}else if($('#sampleSize').val()==null||$('#sampleSize').val()==""||$('#sampleSize').val()==undefined){
+        		alert("请维护样本大小")
+        	}else if($('#detectionFrequency').val()==null||$('#detectionFrequency').val()==""||$('#detectionFrequency').val()==undefined){
+        		alert("请维护检测频率")
+        	}else if($('#controlMethod').val()==null||$('#controlMethod').val()==""||$('#controlMethod').val()==undefined){
+        		alert("请维护控制方法")
+        	}else if($('#reactionPlan').val()==null||$('#reactionPlan').val()==""||$('#reactionPlan').val()==undefined){
+        		alert("请维护反应计划")
+        	}else{
+        		var obj = {
+          	            'featuresId':$('#featuresId').val(),
+          	            'controlPlanId':controlPlanId,
+          	            'parentFeaturesId':$("#parentFeatures").val(),
+          	            'featuresName':$('#featuresName').val(),
+        	            'featuresType':$('#featuresType').val(),
+        	            'specialCharacterType':$('#specialCharacterType').val(),
+        	            'standrad':$('#standrad').val(),
+        	            'detectionEquipment':$('#detectionEquipment').val(),
+        	            'sampleSize':$("#sampleSize").val(),
+        	            'detectionFrequency':$('#detectionFrequency').val(),
+        	            'feature':$('#feature').val(),
+        	            'controlMethod':$('#controlMethod').val(),
+        	            'grR':$('#grR').val(),
+        	            'processCapability':$('#processCapability').val(),
+        	            'reactionPlan':$('#reactionPlan').val(),
+          	            'ranks':$("#ranks").val(),
+          	            'processId':$('#processId').val(),
+          	            'tenantId':-1,
+          	            'siteId':-1
+          	        };
+        		$.ajax({
+      	            type: "POST",
+      	            url: BaseUrl + "/hdm/features/save/or/update",
+      	            data:obj,//json序列化
+      	            datatype:"json", //此处不能省略
+      	            success:function(data){
+      	                if(data.success){
+      	                    Hap.showToast({
+      	                        type:'success',  //1.success 2.error
+      	                        message: '保存成功',
+      	                        hideDuration:2000,
+      	                        "positionClass": "toast-bottom-right",
+      	                    });
+      	                    $("#editDialog").data("kendoWindow").close();
+      	                    grid.dataSource.read();
+      	                }else{
+      	                    alert(data.message);
+      	                }
+      	            },
+      	            error:function(data){
+      	                alert(JSON.stringify(data));
+      	            }
+      	        });
+        	}
+  			
+  			
+  		}
+    	
+    }
+    
+    
+    function commitFeatures(){
+    	kendo.ui.showConfirmDialog({
+            title: '提示',
+            message: '确认提交?'
+        }).done(function (e) {
+            if(e.button.toUpperCase() == "OK"){
+            	var obj = {
+          	            'controlPlanId':controlPlanId,
+          	            'controlVersion':controlVersion,
+          	            'lastUpdateDate':lastUpdateDate,
+          	            'tenantId':-1,
+          	            'siteId':-1
+          	        };
+        		$.ajax({
+        	            type: "POST",
+        	            url: BaseUrl + "/hqm/control/plan/commit",
+        	            data:obj,//json序列化
+        	            datatype:"json", //此处不能省略
+        	            success:function(data){
+        	                if(data.success){
+        	                    Hap.showToast({
+        	                        type:'success',  //1.success 2.error
+        	                        message: '保存成功',
+        	                        hideDuration:2000,
+        	                        "positionClass": "toast-bottom-right",
+        	                    });
+        	                    //window.parent.$("#detailWindow").data("kendoWindow").close();
+        	                }else{
+        	                    alert(data.message);
+        	                }
+        	            },
+        	            error:function(data){
+        	                alert(JSON.stringify(data));
+        	            }
+        	        })
+            }else{}
+        });
+    }
+
+    /**
+     * 根据值获得快码的含义
+     */
+    function getMeanByValue(code,value) {
+        var m;
+        $.each(code, function (i, n) {
+            if (n.value == value) {
+                m = n.meaning;
+            }
+        });
+        return m || '';
+    }
+
+    /**
+     * 关闭弹窗
+     */
+    function closeDialog(dialogId) {
+        $('#'+dialogId).data('kendoWindow').close();
+    }
+    
+    function closeDialog1(dialogId) {
+        $('#'+dialogId).data('kendoWindow').close();
+    }
+    /**
+     * 删除
+     */
+    function deleteRow(id,code,processId) {
+        var obj = {
+            'featuresId':id,
+            'featuresName':code,
+            'processId':processId
+            
+        };
+        kendo.ui.showInfoDialog({
+            title:"提示",
+            message: "确定删除？",
+            buttons:[{text: "确定",
+                type: 'primary',
+                click: function (e) {
+                    e.dialog.destroy();
+                    $.ajax({
+                        type: "POST",
+                        url: BaseUrl + "/hdm/features/delete/row",
+                        data:obj,//json序列化
+                        datatype:"json", //此处不能省略
+                        success:function(data){
+                            if(data.success){
+                                Hap.showToast({
+                                    type:'success',  //1.success 2.error
+                                    message: '删除成功',
+                                    hideDuration:2000,
+                                    "positionClass": "toast-bottom-right",
+                                });
+                                $("#editDialog").data("kendoWindow").close();
+                                grid.dataSource.read();
+                            }else{
+                                Hap.showToast({
+                                    type:'error',  //1.success 2.error
+                                    message: data.message,
+                                    hideDuration:2000,
+                                    "positionClass": "toast-bottom-right",
+                                });
+                            }
+                        },
+                        error:function(data){
+                            alert(JSON.stringify(data));
+                        }
+                    });
+
+                }
+            },{text: "取消",
+                type: 'default',
+                click: function (e) {
+                    e.dialog.destroy();
+                }
+            }]
+        })
+    }
+    /**
+     * 还原
+     */
+    function restoreRow(id,code,processId) {
+        var obj = {
+            'featuresId':id,
+            'featuresName':code,
+            'processId':processId
+            
+        };
+        kendo.ui.showInfoDialog({
+            title:"提示",
+            message: "确定还原？",
+            buttons:[{text: "确定",
+                type: 'primary',
+                click: function (e) {
+                    e.dialog.destroy();
+                    $.ajax({
+                        type: "POST",
+                        url: BaseUrl + "/hdm/features/restore/row",
+                        data:obj,//json序列化
+                        datatype:"json", //此处不能省略
+                        success:function(data){
+                            if(data.success){
+                                Hap.showToast({
+                                    type:'success',  //1.success 2.error
+                                    message: '还原成功',
+                                    hideDuration:2000,
+                                    "positionClass": "toast-bottom-right",
+                                });
+                                $("#editDialog").data("kendoWindow").close();
+                                grid.dataSource.read();
+                            }else{
+                                Hap.showToast({
+                                    type:'error',  //1.success 2.error
+                                    message: data.message,
+                                    hideDuration:2000,
+                                    "positionClass": "toast-bottom-right",
+                                });
+                            }
+                        },
+                        error:function(data){
+                            alert(JSON.stringify(data));
+                        }
+                    });
+
+                }
+            },{text: "取消",
+                type: 'default',
+                click: function (e) {
+                    e.dialog.destroy();
+                }
+            }]
+        })
+    }
+    /**
+     * 展开
+     */
+    function expand() {
+        var tree = grid.dataSource.data();
+        for (var i = 0; i < tree.length; i++) {
+            if (tree[i].hasChildren) {
+                grid.expand(tree[i]);
+            }
+        }
+    }
+    /**
+     * 合并
+     */
+    function collapse() {
+        var tree = grid.dataSource.data();
+        for (var i = 0; i < tree.length; i++) {
+            if (tree[i].hasChildren) {
+                grid.collapse(tree[i]);
+            }
+        }
+    }
+    
+    function getMeaningByValue(meaning,datasource){
+    	var v = meaning ? meaning : "";
+        $.each(datasource, function (i, n) {
+            if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                v = n.meaning;
+                return v;
+            }
+        })
+        return v;
+    }
+    function addhead(){
+    	grid.addRow();
+    }
+    function addrow(featuresId){
+    	$.each(grid.dataSource.data(),function(i,n){
+			if(n.featuresId == featuresId){
+				n.flag = 'add'
+				grid.addRow("#grid tbody>tr:eq("+ i +")");
+			}
+    	})
+    }
+    function editrow(featuresId){
+    	$.each(grid.dataSource.data(),function(i,n){
+    		if(n.featuresId == featuresId && n.flag != 'edit'){
+    			n.flag = 'edit'
+    			$("#grid").data("kendoTreeList").editRow($("#grid tbody>tr:eq("+ i +")"));
+			}
+    	})
+    	//grid.editRow("#grid tbody>tr:eq(0)");
+    }
+    function submit(featuresId,parentId){
+    	var validator = $("#grid").kendoValidator().data("kendoValidator");
+		if (validator.validate()) {				
+	    	$.each(grid.dataSource.data(),function(i,n){
+				 if( n.featuresId == featuresId){
+	    			if(!isNotEmpty(n.parentId)){
+	    				var obj = {
+	              	            'featuresId':n.featuresId,
+	              	            'controlPlanId':controlPlanId,
+	              	            'parentFeaturesId':n.parentFeaturesId,
+	              	            'featuresName':n.featuresName,
+	              	            'equipment':n.equipment,
+	              	            'ranks': n.ranks,
+	              	            'processId':n.processId,
+	              	            'tenantId':-1,
+	              	            'siteId':-1
+	              	        };
+	            		$.ajax({
+	          	            type: "POST",
+	          	            url: BaseUrl + "/hdm/features/save/or/update",
+	          	            data:obj,//json序列化
+	          	            datatype:"json", //此处不能省略
+	          	            success:function(data){
+	          	                if(data.success){
+	          	                    Hap.showToast({
+	          	                        type:'success',  //1.success 2.error
+	          	                        message: '保存成功',
+	          	                        hideDuration:2000,
+	          	                        "positionClass": "toast-bottom-right",
+	          	                    });
+	          	                    $("#editDialog1").data("kendoWindow").close();
+	          	                    grid.dataSource.read();
+	          	                }else{
+	          	                    alert(data.message);
+	          	                }
+	          	            },
+	          	            error:function(data){
+	          	                alert(JSON.stringify(data));
+	          	            }
+	          	        });
+	    			}else if(n.flag == 'edit'){
+	    				var obj = {
+	              	            'featuresId':n.featuresId,
+	              	            'featuresName':n.featuresName,
+	              	            'controlPlanId':controlPlanId,
+	              	            'parentFeaturesId':n.parentFeaturesId,
+	              	            'featuresType':n.featuresType,
+	              	            'specialCharacterType':n.specialCharacterType,
+	              	            'standrad':n.standrad,
+	              	            'detectionEquipment':n.detectionEquipment,
+	              	            'sampleSize':n.sampleSize,
+	              	            'detectionFrequency':n.detectionFrequency,
+	              	            'feature':n.feature,
+	              	            'controlMethod':n.controlMethod,
+	              	            'grR':n.grR,
+	              	            'processCapability':n.processCapability,
+	              	            'reactionPlan':n.reactionPlan,
+	              	            'ranks':n.ranks,
+	              	            'tenantId':-1,
+	              	            'siteId':-1
+	              	        };
+	            		$.ajax({
+	          	            type: "POST",
+	          	            url: BaseUrl + "/hdm/features/save/or/update",
+	          	            data:obj,//json序列化
+	          	            datatype:"json", //此处不能省略
+	          	            success:function(data){
+	          	                if(data.success){
+	          	                    Hap.showToast({
+	          	                        type:'success',  //1.success 2.error
+	          	                        message: '保存成功',
+	          	                        hideDuration:2000,
+	          	                        "positionClass": "toast-bottom-right",
+	          	                    });
+	          	                    $("#editDialog").data("kendoWindow").close();
+	          	                    grid.dataSource.read();
+	          	                }else{
+	          	                    alert(data.message);
+	          	                }
+	          	            },
+	          	            error:function(data){
+	          	                alert(JSON.stringify(data));
+	          	            }
+	          	        });
+	    			}else{
+	    				var obj = {
+	              	            'featuresId':n.featuresId,
+	              	            'controlPlanId':controlPlanId,
+	              	            'parentFeaturesId':n.parentFeaturesId,
+	              	            'featuresName':n.featuresName,
+	            	            'featuresType':n.featuresType,
+	            	            'specialCharacterType':n.specialCharacterType,
+	            	            'standrad':n.standrad,
+	            	            'detectionEquipment':n.detectionEquipment,
+	            	            'sampleSize':n.sampleSize,
+	            	            'detectionFrequency':n.detectionFrequency,
+	            	            'feature':n.feature,
+	            	            'controlMethod':n.controlMethod,
+	            	            'grR':n.grR,
+	            	            'processCapability':n.processCapability,
+	            	            'reactionPlan':n.reactionPlan,
+	              	            'ranks':n.ranks,
+	              	            'processId':n.processId,
+	              	            'tenantId':-1,
+	              	            'siteId':-1
+	              	        };
+	            		$.ajax({
+	          	            type: "POST",
+	          	            url: BaseUrl + "/hdm/features/save/or/update",
+	          	            data:obj,//json序列化
+	          	            datatype:"json", //此处不能省略
+	          	            success:function(data){
+	          	                if(data.success){
+	          	                    Hap.showToast({
+	          	                        type:'success',  //1.success 2.error
+	          	                        message: '保存成功',
+	          	                        hideDuration:2000,
+	          	                        "positionClass": "toast-bottom-right",
+	          	                    });
+	          	                    $("#editDialog").data("kendoWindow").close();
+	          	                    grid.dataSource.read();
+	          	                }else{
+	          	                    alert(data.message);
+	          	                }
+	          	            },
+	          	            error:function(data){
+	          	                alert(JSON.stringify(data));
+	          	            }
+	          	        });
+	    			}
+	    			
+				}
+	    	})
+		}
+    }
+    
+    function submitLine(featuresId,parentId){
+    	var validator = $("#grid").kendoValidator().data("kendoValidator");
+		if (validator.validate()) {	
+	    	$.each(grid.dataSource.data(),function(i,n){
+	    		if(n.dirty && !isNotEmpty(featuresId) && parentId == n.parentId){
+	   	     	var obj = {
+		            'featuresId':n.featuresId,
+		            'featuresName':n.featuresName,
+		            'controlPlanId':controlPlanId,
+		            'parentFeaturesId':parentId,
+		            'featuresType':n.featuresType,
+		            'specialCharacterType':n.specialCharacterType,
+		            'standrad':n.standrad,
+		            'detectionEquipment':n.detectionEquipment,
+		            'sampleSize':n.sampleSize,
+		            'detectionFrequency':n.detectionFrequency,
+		            'feature':n.feature,
+		            'controlMethod':n.controlMethod,
+		            'grR':n.grR,
+		            'processCapability':n.processCapability,
+		            'reactionPlan':n.reactionPlan,
+		            'ranks':2,
+		            'tenantId':-1,
+		            'siteId':-1
+		        };
+			$.ajax({
+		            type: "POST",
+		            url: BaseUrl + "/hdm/features/save/or/update",
+		            data:obj,//json序列化
+		            datatype:"json", //此处不能省略
+		            success:function(data){
+		                if(data.success){
+		                    Hap.showToast({
+		                        type:'success',  //1.success 2.error
+		                        message: '保存成功',
+		                        hideDuration:2000,
+		                        "positionClass": "toast-bottom-right",
+		                    });
+		                    $("#editDialog").data("kendoWindow").close();
+		                    grid.dataSource.read();
+		                }else{
+		                    alert(data.message);
+		                }
+		            },
+		            error:function(data){
+		                alert(JSON.stringify(data));
+		            }
+		        });
+	    		}
+	    	})
+		}
+
+    }
+    function removerow(featuresId){
+    	$.each(grid.dataSource.data(),function(i,n){
+    		if(featuresId == n.featuresId){
+    			deleteRow(featuresId,n.featuresName,n.processId);
+    		}
+    	})
+    	
+    }
+    function removerow_a(uid){
+    	$.each(grid.dataSource.data(),function(i,n){
+    		if(uid == n.uid){
+    			grid.dataSource.data().remove(n);
+    			return false;
+    		}
+    	});
+    }
+    function restoreData(featuresId){
+    	$.each(grid.dataSource.data(),function(i,n){
+    		if(featuresId == n.featuresId){
+    			restoreRow(featuresId,n.featuresName,n.processId);
+    		}
+    	})
+    }
+
+</script>
+</body>
+</html>

@@ -1,0 +1,565 @@
+<#include "../include/header.html">
+<script src="${base.contextPath}/common/code?yesNo=SYS.YES_NO"></script><!-- 是否 -->
+<script src="${base.contextPath}/common/code?hqmNonconformingSource=HQM_NONCONFORMING_SOURCE"></script><!-- 来源类型 -->
+<script src="${base.contextPath}/common/code?hqmNoDealMethod=HQM_INSPECTION_SOLVE_WAY"></script><!-- 处理方法 -->
+<script src="${base.contextPath}/common/code?hqmInspectionType=HQM_INSPECTION_TYPE"></script><!-- 检验类型 -->
+<script src="${base.contextPath}/common/code?hqmNoStatus=HQM_NO_STATUS"></script><!-- 状态 -->
+<script src="${base.contextPath}/common/code?HQM_RECHECK_SAMPLE_WAY=HQM_RECHECK_SAMPLE_WAY"></script>
+<script type="text/javascript">
+/* var viewModel_I = Hap.createGridViewModel("#gridI");
+var viewModel_P = Hap.createGridViewModel("#gridP");
+var viewModel_F = Hap.createGridViewModel("#gridF"); */
+var viewModel = Hap.createGridViewModel("#grid");
+</script>
+<body>
+<script>
+        viewModel.confirm= function(){
+		var dialog = $("#childWindow").kendoWindow({
+            width: window.innerWidth * 0.95,
+            height: window.innerHeight * 0.9,
+            title: '<@spring.message "hqm.qc.selectchecklist"/>',
+            visible: false,
+            iframe: true,
+            modal: true,
+            content: '../hqm_iqc_inspection_h/iqc_inspection_h.html'
+        }).data("kendoWindow");  
+	    dialog.center().open(); 
+	}     
+	 // 从明细界面关联过来的数据   
+       function  loadData(data){
+    	 	    
+    		document.getElementById("inspectionCode").value = data.inspectionNum;
+    		viewModel.model.set('inspectionId',data.headerId);
+    		
+    		//工厂 
+    		viewModel.model.set('plantCode',data.plantCode);
+    		
+    		viewModel.model.set('plantId',data.plantId);
+    		
+    		viewModel.model.set('itemDescriptions',data.itemDescriptions);
+    		//物料  
+    		viewModel.model.set('itemCode',data.itemCode);
+    		viewModel.model.set('itemId',data.itemId);
+    		//检验类型   		
+    		viewModel.model.set('inspectionType',data.inspectionType);
+            //来源类型 
+            viewModel.model.set('noSourceType','1');
+    		//处理单状态   		
+    		viewModel.model.set('noStatus','0');
+    		//检验员
+    		viewModel.model.set('approvalId',data.inspectorId);
+    		viewModel.model.set('userName',data.userName);
+    		//检验时间 
+    		viewModel.model.set('inspectionDate',data.inspectionDate);
+
+    	}
+   	viewModel.save = function(e){
+   		 	var data2 = viewModel.model.toJSON();   		
+   			{
+   				$.ajax({
+   			        url: '${base.contextPath}/hqm/nonconforming/order/addnew',
+   			        type: 'POST',
+   			        data: data2,
+   			        async: false,
+//   			         contentType: "application/json",
+   			        dataType: "json",
+   			        success: function (response) {
+   			            if (response.success) {		
+   			            	kendo.ui.showInfoDialog({
+			                      message: "成功"
+			               });  	
+   			            	viewModel.model.set('noNum',response.rows[0].noNum) 
+   			            	viewModel.model.set('noId',response.rows[0].noId) 
+   			            	viewModel.model.set('nonconformingRate',response.rows[0].nonconformingRate)
+   			            	kendo.ui.showInfoDialog({
+ 			                      message: "成功"
+ 			               });  	
+   			                
+   			            } else {
+   			            	kendo.ui.showWarningDialog({
+   			                    message: response.message
+   			                });
+   			            }
+   			        }
+   			    });
+   			}
+   			
+  
+   		}
+   	/* 	viewModel.closeWin=function(e){
+         
+           } */
+   		
+
+</script>   
+
+<script>
+
+</script>     
+<div id="childWindow"></div>
+<div id="page-content">
+
+   <div class="row">
+    <div class="pull-left" id="toolbar-btn" style="padding-bottom:10px;">
+         <span class="btn btn-success k-grid-save-changes" style="float:left;margin-left:30px;"  data-bind="click:save"><i class="fa fa-save" style="margin-right:3px;"></i><@spring.message "hap.save"/></span>
+<!--           <span class="btn btn-success k-grid-save-changes" data-bind="click:confirm" style="float:left;margin-right:8px;"><@spring.message "关联检验单 "/></span>    -->
+         <span type="button" class="btn btn-primary"  style="float:left;margin-left:10px" data-bind="click:confirm"><i class="fa fa-plus-square" style="margin-right:3px;"></i><@spring.message "hqm.qc.associationchecklist"/></span>        
+             
+      <!-- <span class="btn btn-success k-grid-save-changes" data-bind="click:confirm" style="float:left;margin-right:8px;"><@spring.message "关联检验单 "/></span>-->
+    </div>
+    <script>kendo.bind($('#toolbar-btn'), viewModel);</script>
+    </div>
+    
+    <div class="row" style="margin-top: 30px;margin-right:6%;font-size:14px">
+		    <div class="col-sm-3"style="padding-left:0px;">
+		    	    <lable class="col-xs-5 control-lable" style="text-align:right;padding:0px;padding-top:3px;padding-right:10px"><@spring.message "hqm.qc.unqualifiedordernumber"/>: </lable>
+		    	    <div class="col-xs-7"style="padding-left:0px">
+		    	    <input type="text" data-role="maskedtextbox"  disabled style="float:left;width:220px;height:30px"data-bind="value:model.noNum" class="k-textbox">	
+		    	    </div>	    	 
+		    </div>
+		    <div class="col-sm-3"style="padding-left:0px;">
+		    	  <lable class="col-xs-5 control-lable" style="text-align:right;padding:0px;padding-top:3px;padding-right:10px"><@spring.message "hqm.qc.plant"/>:  </lable>
+		    	  <div class="col-xs-7"style="padding-left:0px">
+                   <input  id="plantLov" style="width:220px;" required data-bind="value:model.plantId,text:model.plantCode" > 
+                   </div>   		  		 
+		    </div>
+		    <div class="col-sm-3"style="padding-left:0px;">
+		    	 <lable class="col-xs-5 control-lable" style="text-align:right;padding:0px;padding-top:3px;padding-right:10px"><@spring.message "hqm.qc.item"/>: </lable>
+		    	 <div class="col-xs-7"style="padding-left:0px">
+		 		 <input  id="itemLov" style="width:220px;"  data-bind="value:model.itemId,text:model.itemCode" >
+		 		 </div>
+		    </div>
+		    <div class="col-sm-3"style="padding-left:0px;">
+		    	<lable class="col-xs-5 control-lable" style="text-align:right;padding:0px;padding-top:3px;padding-right:10px"><@spring.message "hqm.qc.itemdescription"/>:</lable>
+		    	<div class="col-xs-7"style="padding-left:0px">
+		    	<input  id="itemdesc" style="width:220px;height:30px" data-role="maskedtextbox" disabled data-bind="value:model.itemDescriptions">
+		    	
+		    	</div>
+		    </div>
+    </div>
+    <div class="row" style="margin-top: 10px;margin-right:6%;font-size:14px;font-style:initial">
+    		<div class="col-sm-3"style="padding-left:0px;">
+    			<lable class="col-xs-5 control-lable" style="text-align:right;padding:0px;padding-top:3px;padding-right:10px"><@spring.message "hqm.qc.supplier"/>:</lable>
+    			<div class="col-xs-7"style="padding-left:0px">
+		    	 <input  id="SupplierLov" style="width:220px;" data-bind="value:model.supplierId,text:model.supplierCode" >
+		    	 </div>
+		    </div>
+		    <div class="col-sm-3"style="padding-left:0px;">
+		    	<lable class="col-xs-5 control-lable" style="text-align:right;padding:0px;padding-top:3px;padding-right:10px"><@spring.message "hqm.qc.suppliername"/>:</lable>
+		    	<div class="col-xs-7"style="padding-left:0px">
+		  		<input  id="suppliername" data-role="maskedtextbox" style="width:220px;height:30px"disabled data-bind="value:model.SupplierName"  >
+		  		</div>
+		    </div>
+		    <div class="col-sm-3"style="padding-left:0px;">
+		    	<lable class="col-xs-5 control-lable" style="text-align:right;padding:0px;padding-top:3px;padding-right:10px"><@spring.message "hqm.qc.batch"/>:</lable>
+		    	<div class="col-xs-7"style="padding-left:0px">
+		 		 <input  id="productionbatch" data-role="maskedtextbox" style="width:220px;height:30px" data-bind="value:model.productionBatch" >
+		 		 </div>
+		    </div>
+		    <div class="col-sm-3"style="padding-left:0px;">
+		    	<lable class="col-xs-5 control-lable" style="text-align:right;padding:0px;padding-top:3px;padding-right:10px"><@spring.message "hqm.qc.receivingtime"/>:</lable>
+		    	<div class="col-xs-7"style="padding-left:0px">
+		    	<input  id="receiveDatePicker" data-role="datetimepicker" style="width:220px;"  data-bind="value:model.receiveDate">
+		    	</div>
+		    	<script type="text/javascript">
+						$("#receiveDatePicker").kendoDateTimePicker({
+							format: "yyyy-MM-dd HH:mm:ss",
+							change:function(){
+								viewModel.model.receiveDate = this.value().format("yyyy-MM-dd hh:mm:ss");
+							}
+						});
+					</script>
+		    </div>	
+		   
+    </div>
+    <div class="row" style="margin-top: 10px;margin-right:6%;font-size:14px;font-style:initial">
+    		<div class="col-sm-3"style="padding-left:0px;">
+    			<lable class="col-xs-5 control-lable"   style="text-align:right;padding:0px;padding-top:3px;padding-right:10px"><@spring.message "hqm.qc.sourcetype"/>:</lable>
+    			<div class="col-xs-7"style="padding-left:0px">
+		    	<input id="nosourcetypeComBox" style="width:220px;"required data-bind="value:model.noSourceType">	    	
+		    	<script>
+    				
+	    				$("#nosourcetypeComBox").kendoComboBox({
+					        dataTextField: "meaning",
+					        dataValueField: "value",
+					        valuePrimitive: true,
+					        dataSource: hqmNonconformingSource
+						});
+    				</script>
+    				</div>
+		    </div>
+		    <div class="col-sm-3"style="padding-left:0px;">
+		    	<lable class="col-xs-5 control-lable" style="text-align:right;padding:0px;padding-top:3px;padding-right:10px"><@spring.message "hqm.qc.numberofsamples"/>:</lable>
+		    	<div class="col-xs-7"style="padding-left:0px">
+		  		<input  id="sampleSize" style="width:220px;height:30px" data-role="maskedtextbox" data-bind="value:model.sampleSize" >
+		  		</div>
+		    </div>
+		    <div class="col-sm-3"style="padding-left:0px;">
+		    	<lable class="col-xs-5 control-lable" style="text-align:right;padding:0px;padding-top:3px;padding-right:10px"><@spring.message "hqm.qc.numberofreception"/>:</lable>
+		    	<div class="col-xs-7"style="padding-left:0px">
+		  		<input  id="totalityQty" style="width:220px;height:30px" data-role="maskedtextbox" data-bind="value:model.totalityQty" >
+		  		</div>
+		    </div>	
+		   <!--  <div class="col-sm-3">
+		    	<lable class="col-xs-5 control-lable" style="text-align:right;padding:0px;padding-top:3px;padding-right:10px">不合格数:</lable>
+		    	<div class="col-xs-7"style="padding-left:0px">
+		  		<input  id="nonconformingQty" style="width:220px;height:30px" data-bind="value:model.nonconformingQty" >
+		  		</div>
+		    </div>		 -->
+		    <div class="col-sm-3"style="padding-left:0px;">
+    			<lable class="col-xs-5 control-lable"  style="text-align:right;padding:0px;padding-top:3px;padding-right:10px"><@spring.message "hqm.qc.inspectiontype"/>:</lable>
+    			<div class="col-xs-7"style="padding-left:0px">
+		    	<input  id="inspectionTypeComBox" style="width:220px;"required data-bind="value:model.inspectionType" > 
+		    		<script>
+    				
+	    				$("#inspectionTypeComBox").kendoComboBox({
+					        dataTextField: "meaning",
+					        dataValueField: "value",
+					        valuePrimitive: true,
+					        dataSource: hqmInspectionType
+						});
+    				</script>
+    				</div>
+		    </div>
+		
+		    
+    </div>
+    
+    <div class="row" style="margin-top: 10px;margin-right:6%;font-size:14px;font-style:initial">
+    <div class="col-sm-3"style="padding-left:0px;">
+    			<lable class="col-xs-5 control-lable" style="text-align:right;padding:0px;padding-top:3px;padding-right:10px"><@spring.message "hqm.qc.sourceinspectionform"/>:</lable>
+    			<div class="col-xs-7"style="padding-left:0px">
+		    	<input  id="inspectionCode" data-role="maskedtextbox" style="width:220px;height:30px" disabled data-bind="value:model.inspectionCode" > 
+		    	</div>
+		    </div>
+		    <div class="col-sm-3"style="padding-left:0px;">
+		    	<lable class="col-xs-5 control-lable" style="text-align:right;padding:0px;padding-top:3px;padding-right:10px"><@spring.message "hqm.qc.inspectiondate"/>:</lable>
+		    	<div class="col-xs-7"style="padding-left:0px">
+		  		<input  id="inspectionDatePicker" data-role="datetimepicker" style="width:220px ;"  data-bind="value:model.inspectionDate">
+		  		</div>
+		  		<script type="text/javascript">
+						$("#inspectionDatePicker").kendoDateTimePicker({
+							format: "yyyy-MM-dd HH:mm:ss",
+							change:function(){
+								viewModel.model.inspectionDate = this.value().format("yyyy-MM-dd hh:mm:ss");
+							}
+						});
+					</script>
+		    </div>
+    		  <div class="col-sm-3"style="padding-left:0px;">
+		    	<lable class="col-xs-5 control-lable"  style="text-align:right;padding:0px;padding-top:3px;padding-right:10px"><@spring.message "hqm.qc.processingsinglestate"/>:</lable>
+		    	<div class="col-xs-7"style="padding-left:0px">
+		  		<input  id="noStatusComBox" style="width:220px;"disabled data-bind="value:model.noStatus" > 
+		  		<script>
+	    				$("#noStatusComBox").kendoComboBox({
+					        dataTextField: "meaning",
+					        dataValueField: "value",
+					        valuePrimitive: true,
+					        dataSource: hqmNoStatus
+						});
+	    				viewModel.model.noStatus="0";
+    				</script>
+    				</div>
+		    </div>	
+		   <!--  <div class="col-sm-3">
+		    	<lable class="col-xs-5 control-lable" style="text-align:right;padding:0px;padding-top:3px;padding-right:10px">不良率:</lable>
+		    	<div class="col-xs-7"style="padding-left:0px">
+		  		<input  id="nonconformingRate" style="width:220px;height:30px"disabled data-bind="value:model.nonconformingRate" >
+		  		</div>
+		    </div>	 -->
+		    <div class="col-sm-3"style="padding-left:0px;">
+		    	<lable class="col-xs-5 control-lable" style="text-align:right;padding:0px;padding-top:3px;padding-right:10px"><@spring.message "hqm.qc.approach"/>:</lable>
+		    	<div class="col-xs-7"style="padding-left:0px">
+		  		<input  id="nonconformingRateComBOX" style="width:220px;" data-bind="value:model.dealMethod" >
+		  		
+		  		<script>
+	    				$("#nonconformingRateComBOX").kendoComboBox({
+					        dataTextField: "meaning",
+					        dataValueField: "value",
+					        valuePrimitive: true,
+					        dataSource: hqmNoDealMethod,
+					        change: function(e){
+					        	if(e.sender._old == '3' || e.sender._old == '4'){
+					        		$('#recheckSampleWay').data('kendoComboBox').enable(true);
+					        		$('#recheckSampleWay').attr('required',true);
+					        		$("#recheckSampleWay").kendoComboBox({
+								        dataTextField: "meaning",
+								        dataValueField: "value",
+								        valuePrimitive: true,
+								        dataSource: HQM_RECHECK_SAMPLE_WAY
+									});
+					        	}else{
+					        		$('#recheckSampleWay').data('kendoComboBox').enable(false);
+					        		$('#recheckSampleWay').attr('required',false);
+					        	}
+					        }
+						});
+    				</script>
+    				</div>
+		    </div>		
+    </div>
+    <div class="row" style="margin-top: 10px;margin-right:6%;font-size:14px;font-style:initial">
+    		<div class="col-sm-3"style="padding-left:0px;">
+		    	<lable class="col-xs-5 control-lable"  style="text-align:right;padding:0px;padding-top:3px;padding-right:10px"><@spring.message "hqm.qc.codegroupcoding"/>:</lable>
+		    	<div class="col-xs-7"style="padding-left:0px">
+		  		<input  id="nggroupIdLov" style="width:220px;"required data-bind="value:model.ngGroupId" > 
+		  		</div>
+		    </div>	
+		    <div class="col-sm-3"style="padding-left:0px;">
+		    	<lable class="col-xs-5 control-lable" style="text-align:right;padding:0px;padding-top:3px;padding-right:10px"><@spring.message "hqm.qc.codegroupname"/>:</lable>
+		    	<div class="col-xs-7"style="padding-left:0px">
+		  		<input  id="nggroupname" data-role="maskedtextbox" style="width:220px;height:30px" disabled data-bind="value:model.ngGroupName" >
+		  		</div> 
+		    </div>	
+		    <div class="col-sm-3"style="padding-left:0px;">
+		    	<lable class="col-xs-5 control-lable" style="text-align:right;padding:0px;padding-top:3px;padding-right:10px"><@spring.message "hqm.qc.inspector"/>:</lable>
+		    	<div class="col-xs-7"style="padding-left:0px">
+		  		<input  id="approvalId" style="width:220px;" data-bind="value:model.approvalId,text:model.userName" > 
+		  		
+		  		</div>
+		    </div>	
+		    <div class="col-sm-3"style="padding-left:0px;">
+		    	<lable class="col-xs-5 control-lable" style="text-align:right;padding:0px;padding-top:3px;padding-right:10px"><@spring.message "hqm.qc.inspectorprocessingdate"/>:</lable>
+		    	<div class="col-xs-7"style="padding-left:0px">
+		  		<input  id="dealDatePicker" data-role="datetimepicker" style="width:220px;"  data-bind="value:model.dealDate">
+		  		</div>
+		  		<script type="text/javascript">
+						$("#dealDatePicker").kendoDateTimePicker({
+							format: "yyyy-MM-dd HH:mm:ss",
+							change:function(){
+								viewModel.model.dealDate = this.value().format("yyyy-MM-dd hh:mm:ss");
+							}
+						});
+					</script>
+		    </div>		
+    </div>
+      <div class="row" style="margin-top: 10px;margin-right:6%;font-size:14px;font-style:initial">
+              <div class="col-sm-3"style="padding-left:0px;">
+    			<lable class="col-xs-5 control-lable"  style="text-align:right;padding:0px;padding-top:3px;padding-right:10px"><@spring.message "hqm.qc.badcodecoding"/>:</lable>
+    			<div class="col-xs-7"style="padding-left:0px">
+		    	<input  id="ngmenberIdLov" style="width:220px;"required data-bind="value:model.ngMenberId" > 
+		    	</div>
+		    </div>
+		    <div class="col-sm-3"style="padding-left:0px;">
+		    
+		    	<lable class="col-xs-5 control-lable" style="text-align:right;padding:0px;padding-top:3px;padding-right:10px"><@spring.message "hqm.qc.badreasons"/>:</lable>
+		    	<div class="col-xs-7"style="padding-left:0px">
+		  		<input  id="ngreason" data-role="maskedtextbox" style="width:220px;height:30px" disabled data-bind="value:model.ngReason"> 
+		  		</div>
+		    </div>
+		    <div class="col-sm-3"style="padding-left:0px;">
+		    	<lable class="col-xs-5 control-lable" style="text-align:right;padding:0px;padding-top:3px;padding-right:10px"><@spring.message "hqm.qc.unpleasantsight"/>:</lable>
+		    	<div class="col-xs-7"style="padding-left:0px">
+		  		<input  id="ngapparence" data-role="maskedtextbox" style="width:220px;height:30px" disabled data-bind="value:model.ngAppearance"> 
+		  		</div>
+		    </div>
+		    
+		    <div class="col-sm-3"style="padding-left:0px;">
+		    	<lable class="col-xs-5 control-lable" style="text-align:right;padding:0px;padding-top:3px;padding-right:10px"><@spring.message "hqm.qc.rechecksampleway"/>:</lable>
+		    	<div class="col-xs-7"style="padding-left:0px">
+		  		<input  id="recheckSampleWay" style="width:220px;" data-bind="value:model.recheckSampleWay" >
+		  		<script>
+	    				$("#recheckSampleWay").kendoComboBox({
+					        dataTextField: "meaning",
+					        dataValueField: "value",
+					        valuePrimitive: true,
+					        dataSource: HQM_RECHECK_SAMPLE_WAY
+						});
+    				</script>
+    				</div>
+		    </div>		
+    </div>
+       <div class="row" style="margin-top: 10px;margin-right:6%;font-size:14px;font-style:initial">   
+    </div>
+    
+     
+       <div class="row" style="margin-top: 10px;margin-right:6%;font-size:14px;font-style:initial">
+       
+    		 <div class="col-sm-3"style="padding-left:0px;">
+		    	<lable class="col-xs-5 control-lable" style="text-align:right;padding:0px;padding-top:3px;padding-right:10px"><@spring.message "hqm.qc.remarks"/>:</lable>	
+		    	<div class="col-xs-7"style="padding-left:0px">
+		    	<input  id="remark" data-role="maskedtextbox"  style="width:732%;" data-bind="value:model.remark" > 	
+		    	</div>
+		    	<script>
+                	//$("#remark").kendoMaskedTextBox({});
+                </script>
+		    </div>
+		  
+    </div>
+       <div class="row" style="margin-top: 10px;margin-right:6%;font-size:14px;font-style:initial">
+       
+    		 <div class="col-sm-3"style="padding-left:0px;">
+		    	<lable class="col-xs-5 control-lable" style="text-align:right;padding:0px;padding-top:3px;padding-right:10px"><@spring.message "hqm.qc.unqualifieddescription"/>:</lable>	
+		    	<div class="col-xs-7"style="padding-left:0px">
+		    	<textarea id="approvalDesArea" name="textarea" style="width:732%;"data-bind="value:model.approvalOpinion"></textarea>
+    			</div>
+    			<script>
+                	$("#approvalDesArea").kendoTextArea({
+                    });
+                </script>
+		    		  		
+		    </div>
+		  
+    </div>
+    <div class="row" style="margin-top: 10px;margin-right:6%;font-size:14px;font-style:initial">
+       
+    		 <div class="col-sm-3"style="padding-left:0px;">
+		    	<lable class="col-xs-5 control-lable" style="text-align:right;padding:0px;padding-top:3px;padding-right:10px"><@spring.message "hqm.qc.otherdepartmentcomments"/>:</lable>	
+		    	<div class="col-xs-7"style="padding-left:0px">
+		    	<textarea id="approvalDesArea1" name="textarea" style="width:732%;"data-bind="value:model.approvalDepartment1"></textarea>
+    			</div>
+    			<script>
+                	$("#approvalDesArea1").kendoTextArea({
+                    });
+                </script>
+		    		  		
+		    </div>
+		  
+    </div>
+    <div class="row" style="margin-top: 10px;margin-right:6%;font-size:14px;font-style:initial">
+       
+    		 <div class="col-sm-3"style="padding-left:0px;">
+		    	<lable class="col-xs-5 control-lable" style="text-align:right;padding:0px;padding-top:3px;padding-right:10px"><@spring.message "hqm.qc.qualitydepartmentopinion"/>:</lable>	
+		    	<div class="col-xs-7"style="padding-left:0px">
+		    	<textarea id="approvalDesArea2" name="textarea" style="width:732%;"data-bind="value:model.approvalDepartment2"></textarea>
+    			</div>
+    			<script>
+                	$("#approvalDesArea2").kendoTextArea({
+                    });
+                </script>
+		    		  		
+		    </div>
+		  
+    </div>
+    	<div class="row" style="margin-top: 10px;margin-right:6%;font-size:14px;font-style:initial">
+    	   <div class="col-sm-3"style="padding-left:0px;">
+    				<lable class="col-xs-5 control-lable" style="text-align:right;padding:0px;padding-top:3px;padding-right:10px"><@spring.message "hqm.qc.auditopinion"/>:</lable>	
+    			<div class="col-xs-7"style="padding-left:0px">
+    				<div id="approvalResultRadio" style="margin-top:5px;" data-bind="enabled: isEnabled,value:model.approvalResult"></div>
+    			</div>	
+    				<script>
+                                $("#approvalResultRadio").kendoRadio({
+                                    layout: '',//vertical
+                                    readonly: false,
+                                    items: [{
+                                        label: '<span style="color:green;"><@spring.message "hqm.qc.agree"/></span>',
+                                        value: "OK"
+                                    }, {
+                                        label: '<span style="color:red;"><@spring.message "hqm.qc.disagree"/></span>',
+                                        value: "NG"
+                                    }],
+                                    change: function (e) {
+                                    }
+                                });
+                                //$("#grid").data('kendoGrid')
+//                                 kendo.bind($("#radio"), viewModel);
+//                                 var radio=$("#radio").data('kendoRadio');
+                            </script>
+    			</div>
+    		</div>
+    
+<!--     <div id='grid_i' style="clear:both;display:none;margin-top:30px">
+        <div id="gridI"></div>
+    </div>
+    <div id='grid_p' style="clear:both;display:none;margin-top:30px">
+        <div id="gridP"></div>
+    </div>
+    <div id='grid_f' style="clear:both;display:none;margin-top:30px">
+        <div id="gridF"></div>
+    </div> -->
+    
+</div>
+
+<script type="text/javascript">
+kendo.bind($("#page-content"),viewModel);
+$("#plantLov").kendoLov($.extend
+	    (<@lov"LOV_PLANT"/>, {
+	        textField: 'plantCode',
+	        valueField:'plantId',
+	        change:function() {
+	        	viewModel.model.plantCode =this._dataItem.plantCode;
+	        	
+	        }
+	    }));
+$("#itemLov").kendoLov($.extend
+	    (<@lov"LOV_ITEM"/>, {
+	    	query: function (e) {
+	        	if(viewModel.model.plantId==''||viewModel.model.plantId==undefined||viewModel.model.plantId==null){
+	        		e.param['plantId']= viewModel.model.plantId;
+            	}else{
+            		e.param['enableFlag'] = 'Y'
+                    e.param['plantId']= viewModel.model.plantId;
+            	}
+                
+            },
+	        textField: 'itemCode',
+	        valueField:'itemId',
+	        change:function() {
+                var v = this.value();
+                if (v == undefined  || v == ""){
+
+                }else{
+                	//document.getElementById("Descriptions").innerHTML = this._dataItem.itemDescriptions;
+                	viewModel.model.set("itemDescriptions",this._dataItem.itemDescriptions);
+            }
+                
+	    }}));
+   $("#SupplierLov").kendoLov($.extend
+                	    (<@lov"LOV_SUPPLIER"/>, {
+                	        textField: 'supplierCode',
+                	        valueField:'supplierId',
+                	        change:function() {
+                                var v = this.value();
+                                if (v == undefined  || v == ""){
+
+                                }else{
+                                //	document.getElementById("SupplierName").innerHTML = this._dataItem.supplierName;
+                                	viewModel.model.set("SupplierName",this._dataItem.supplierName);
+                            }
+                	    }}));
+
+   $("#nggroupIdLov").kendoLov($.extend
+   	    (<@lov"lOV_NG_GROUP"/>, {
+   	        textField: 'ngGroupId',
+   	        valueField:'ngGroupCode',
+   	         change:function() {
+                   var v = this.value();
+                   if (v == undefined  || v == ""){
+
+                   }else{     
+                   	  viewModel.model.set("ngGroupName",this._dataItem.ngGroupName);
+                   	  viewModel.model.ngGroupId = this._dataItem.ngGroupId
+               }
+   	    }}));	 
+   $("#ngmenberIdLov").kendoLov($.extend
+  		    (<@lov"LOV_NG_CODE"/>, {
+  		    	query: function (e) {
+  		        	if(viewModel.model.ngGroupId == ''|| viewModel.model.ngGroupId == undefined||viewModel.model.ngGroupId == null){
+  	                	e.param['ngGroupId'] = 0;
+  		        	}else{
+  		        		e.param['ngGroupId'] = viewModel.model.ngGroupId;
+  		        	}
+  	            },
+  		        textField: 'ngMenberId',
+  		        valueField:'ngCode',  
+  		        change:function() {
+                    var v = this.value();
+                    if (v == undefined  || v == ""){
+                    }else{     
+                    	viewModel.model.set("ngAppearance",this._dataItem.ngAppearance);
+                    	viewModel.model.set("ngReason",this._dataItem.ngReason);
+                }
+    	    }}));
+   $("#approvalId").kendoLov($.extend
+		    (<@lov"user_lov"/>, {
+		        textField: 'userName',
+		        valueField:'userId',
+		    }));	
+</script>
+<script>
+$(function(){
+	$('#recheckSampleWay').data('kendoComboBox').enable(false);
+});
+</script>
+</body>
+</html>

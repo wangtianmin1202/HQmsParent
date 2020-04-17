@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.spc.ecr_main.mapper.EcrInfluencedmaterialMapper">
+    <resultMap id="BaseResultMap" type="com.hand.spc.ecr_main.dto.EcrInfluencedmaterial">
+        <result column="KID" property="kid" jdbcType="DECIMAL" />
+        <result column="MATERIAL_ID" property="materialId" jdbcType="DECIMAL" />
+        <result column="ECRNO" property="ecrno" jdbcType="VARCHAR" />
+        <result column="category_first" property="categoryFirst" jdbcType="VARCHAR"/>
+        <result column="category_second" property="categorySecond" jdbcType="VARCHAR"/>
+        <result column="category_third" property="categoryThird" jdbcType="VARCHAR"/>
+        <result column="main_position" property="mainPosition" jdbcType="VARCHAR"/>
+        <result column="sub_position" property="subPosition" jdbcType="VARCHAR"/>
+        <result column="main_duty" property="mainDuty" jdbcType="VARCHAR"/>
+        <result column="sub_duty" property="subDuty" jdbcType="VARCHAR"/>         
+        <result column="item_version" property="itemVersion" jdbcType="VARCHAR"/>
+        <result column="wms_onhand" property="wmsOnhand" jdbcType="VARCHAR"/>
+        <result column="mes_onhand" property="mesOnhand" jdbcType="VARCHAR"/>
+        <result column="po_qty" property="poQty" jdbcType="VARCHAR"/>
+        <result column="supplier_onhand" property="supplierOnhand" jdbcType="VARCHAR"/>
+        <result column="special_onhand" property="specialOnhand" jdbcType="VARCHAR"/>
+        <result column="calculate_onhand" property="calculateOnhand" jdbcType="VARCHAR"/>
+        <result column="onhand_status" property="onhandStatus" jdbcType="VARCHAR"/>
+        <result column="buyer_cycle" property="buyerCycle" jdbcType="VARCHAR"/>
+        <result column="buyer" property="buyer" jdbcType="VARCHAR"/>        
+        <result column="SPECIAL_WIP_ONHAND" property="specialWipOnhand" jdbcType="DECIMAL"/>     
+    </resultMap> 
+    
+	<resultMap id="basequeryMap" type="com.hand.spc.ecr_main.view.EcrMaterialV0">
+        <result column="ITEM_CODE" property="itemCode" jdbcType="VARCHAR" />
+        <result column="descriptions" property="itemDescription" jdbcType="VARCHAR" />
+        <result column="item_id" property="itemId" jdbcType="VARCHAR" />
+        <result column="onhandQty" property="onhandQty" jdbcType="VARCHAR" />
+        <result column="onhand_status" property="onhandStatus" jdbcType="VARCHAR" />
+        <result column="buyer" property="buyer" jdbcType="VARCHAR" />
+        <result column="buyer_id" property="buyerId" jdbcType="VARCHAR" />
+        <result column="kid" property="kid" jdbcType="VARCHAR" />                  
+    </resultMap>
+
+
+
+
+
+    <select id="basequery" parameterType="com.hand.spc.ecr_main.dto.EcrInfluencedmaterial"
+            resultMap="basequeryMap">      
+		 select hei.kid,hi.item_id,
+		       hi.ITEM_CODE,
+		       hi.descriptions,
+		       nvl(hei.wms_onhand, 0) + nvl(hei.mes_onhand, 0) + nvl(hei.po_qty, 0) +
+		       nvl(hei.supplier_onhand, 0) + nvl(hei.special_onhand, 0) +
+		       nvl(hei.calculate_onhand, 0) onhandQty,nvl(hei.onhand_status,'B') onhand_status,
+		       hei.buyer,
+		       (select su.user_id 
+		  from hcs_asl ha
+		  join hcs_asl_control hac
+		    on hac.asl_id = ha.asl_id
+		  join srm_user_purchase_group supg
+		    on supg.purchase_group_code = hac.purchase_group
+		    join sys_user su on su.user_id=supg.user_id
+		    where ha.item_id=hei.material_id
+		    and rownum=1) buyer_id
+		  from hcm_item hi, HPM_ECR_INFLUENCEDMATERIAL hei
+		 where hei.material_id = hi.ITEM_ID
+		   and hei.ecrno = #{ecrno}
+    </select>
+
+<resultMap id="detailProductqueryMap" type="com.hand.spc.ecr_main.view.EcrMaterialV0"> 
+ 		<result column="category" property="productType" jdbcType="VARCHAR" />
+        <result column="succession" property="products" jdbcType="VARCHAR" />
+        <result column="ITEM_CODE" property="skucode" jdbcType="VARCHAR" />
+        <result column="descriptions" property="skuDescription" jdbcType="VARCHAR" />
+        <result column="ITEM_ID" property="skuId" jdbcType="VARCHAR" />
+        <result column="quantity" property="qty" jdbcType="VARCHAR" />            
+        <result column="unit_price" property="stdCost" jdbcType="VARCHAR" />
+        <result column="price_unit" property="stdPriceUnit" jdbcType="VARCHAR" />
+        <result column="uom" property="stdCostCurrency" jdbcType="VARCHAR" />
+        <result column="base_qty" property="baseQty" jdbcType="VARCHAR" />           
+    </resultMap>
+    
+	<select id="detailProductquery" parameterType="com.hand.spc.ecr_main.dto.EcrInfluencedmaterial"
+            resultMap="detailProductqueryMap">      		 
+		 select b.unit_price,
+		        b.price_unit,
+		        null uom,
+		        b.ITEM_ID,
+		        ppbd.product_description category,
+		        hp.succession,
+		        b.ITEM_CODE,
+		        b.descriptions,
+		        nmd.base_qty || '/' || e.quantity quantity,
+		        e.quantity base_qty
+		   from npi_mbom_main          nmd,
+		        hpm_project            hp,
+		        hpm_project_line       hpl,
+		        hcm_item               b,
+		        npi_mbom_detail        e,
+		        plm_product_basic_data ppbd
+		  where nmd.item_id = b.ITEM_ID
+		    and b.ITEM_CODE = hpl.sku_code
+		    and nmd.plant_id = b.PLANT_ID
+		    and hpl.project_id = hp.project_id
+		    and ppbd.product_id = hp.category
+		    and e.sku_id = nmd.sku_id
+		   and  e.item_id = #{materialId}
+    </select>
+    <resultMap id="dutySingleResult" type="com.hand.spc.ecr_main.view.EcrMaterialV1"> 
+ 		<result column="main_duty" property="mainDuty" jdbcType="VARCHAR" />
+        <result column="sub_duty" property="subDuty" jdbcType="VARCHAR" />
+        <result column="ecrno" property="ecrno" jdbcType="VARCHAR" /> 
+    </resultMap>
+    
+    <select id="dutySingleOrder" resultMap="dutySingleResult">      
+		  select hei.ecrno, hei.main_duty, hei.sub_duty
+		    from hpm_ecr_main hea, hpm_ecr_influencedmaterial hei
+		   where hei.ecrno = hea.ecrno
+		     and hei.ecrno = #{ecrno}  
+		   group by hei.ecrno, hei.main_duty, hei.sub_duty    
+    </select>
+    
+     <resultMap id="apsDataMap" type="com.hand.spc.ecr_main.view.EcrApsV0"> 
+ 		<result column="demand_date" property="demandDate" jdbcType="VARCHAR" />
+        <result column="item_id" property="itemId" jdbcType="DECIMAL" />
+        <result column="qty" property="qty" jdbcType="DECIMAL" /> 
+    </resultMap>
+    <select id="getApsData" resultMap="apsDataMap" >
+    	select to_char(t.demand_date, 'yyyy-mm') demand_date, t.item_id, sum(t.qty) qty from hpm_aps_qty_tmp t where t.item_id in
+    	 <foreach collection="itemIds" index="index" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach> 
+         group by to_char(t.demand_date, 'yyyy-mm'), t.item_id
+         order by  to_char(t.demand_date, 'yyyy-mm')
+    </select>
+    
+</mapper>

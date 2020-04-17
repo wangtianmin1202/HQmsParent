@@ -1,0 +1,293 @@
+<#include "../include/header.html">
+<style>
+	div[role=tooltip].k-tooltip{
+		padding: 2px;
+		background: #5c9acf;
+	}
+	.k-tooltip-content{
+		padding: 4px;
+		text-align: left;
+		background: #fff;
+		color: #666;
+	}
+	.k-callout {
+		border-bottom-color: #5c9acf;
+	}
+</style>
+<script src="${base.contextPath}/lib/js/echarts.common.min.js"></script>
+<script type="text/javascript">
+    var viewModel = Hap.createGridViewModel("#grid");
+    var toolTipOpt = {
+        		show: function(e){
+        			if($.trim(this.content.text()) !=""){
+        				$('[role="tooltip"]').css("visibility", "visible");
+        			}
+        		},
+        		hide: function(){
+        			$('[role="tooltip"]').css("visibility", "hidden");
+        		},
+        		filter: "td:nth-child(n+3)",
+        		content: function(e){
+        			var element = e.target[0];
+        			if(element.offsetWidth < element.scrollWidth){
+        				var text = $(e.target).text();
+        				return '<div style="min-width:100px;max-width: 1000px;">' + text + '</div>';
+        			}else{//解决鼠标�?�?始放在上面出现空模块
+        				$('[role="tooltip"]').css("visibility", "hidden");
+        				return "";
+        			}
+        		}
+        };
+
+
+    viewModel.model.skuId= "${RequestParameters.skuId!}";
+</script>
+
+<body>
+
+<div id="page-content">
+	<!-- 图表 -->
+	<div id="chart" class="col-xs-12" style="padding-bottom:10px">
+		<!-- 折线图 -->
+		<div id="trendChart" style="border:1px solid #fff0f0;width: 900px;height:400px;margin: 0 auto"></div>
+		<script type="application/javascript">
+			// 基于准备好的dom，初始化echarts实例
+			var trendChart = echarts.init(document.getElementById('trendChart'));	        
+		</script>
+	</div>
+    <!-- Grid -->
+    <div style="clear:both">
+        <div id="grid"></div>
+    </div>
+</div>
+
+<script>
+    Hap.initEnterQuery('#query-form', viewModel.query);
+    var BaseUrl = _basePath;
+    dataSource = new kendo.data.DataSource({
+        transport: {
+            read: {
+                url: BaseUrl + "/hpm/ecr/project/tracking/selectInfluence",
+                type: "POST",
+                dataType: "json"
+            },
+            parameterMap: function (options, type) {
+                if (type !== "read" && options.models) {
+                    var datas = Hap.prepareSubmitParameter(options, type)
+                    return kendo.stringify(datas);
+                } else if (type === "read") {
+                    return Hap.prepareQueryParameter(viewModel.model.toJSON(), options)
+                }
+            }
+        },
+        batch: true,
+        serverPaging: true,
+        pageSize: 20,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+                id: "projectTargetId",
+                fields: {
+			        
+                }
+            }
+        }
+    });
+
+</script>
+
+<script>
+	$("#grid").kendoTooltip(toolTipOpt).data("kendoTooltip");
+    var grid = $("#grid").kendoGrid({
+        dataSource: dataSource,
+        resizable: true,
+        scrollable: true,
+        navigatable: false,
+        sortable:true,
+        dataBound: function () {
+            if (parent.autoResizeIframe) {
+                parent.autoResizeIframe('${RequestParameters.functionCode!}')
+            }
+        },
+        pageable: {
+            pageSizes: [5, 10, 20, 50],
+            refresh: true,
+            buttonCount: 5
+        },
+        columns: [
+                    {
+                field: "ecrno",
+                title: '<@spring.message "ecrmain.ecrno"/>',
+                width: 60,
+                attributes:{style:"white-space:nowrap;text-overflow:ellipsis;"}
+            },
+                    {
+                field: "actFinishedDate",
+                title: '<@spring.message "ecrprojecttracking.actFinishedDate"/>',
+                width: 120,
+                attributes:{style:"white-space:nowrap;text-overflow:ellipsis;"},
+                template: function(e){
+                	var dateTime = e['actFinishedDate'];
+                	if(dateTime){
+                		return new Date(dateTime).Format("yyyy-MM-dd")
+                	} else {
+                		return dateTime;
+                	}
+                }
+            },
+            {
+                field: "stdPrimeCost",
+                title: '<@spring.message "ecrprojecttracking.stdPrimeCost"/>',
+                width: 120,
+                attributes:{style:"white-space:nowrap;text-overflow:ellipsis;"}
+            },
+                    {
+                field: "actPrimeCost",
+                title: '<@spring.message "ecrprojecttracking.actPrimeCost"/>',
+                width: 120,
+                attributes:{style:"white-space:nowrap;text-overflow:ellipsis;"},
+                format:"{0:yyyy-MM-dd}"
+            },
+                    {
+                field: "stdPriceUnit",
+                title: '<@spring.message "ecrprojecttracking.stdPriceUnit"/>',
+                width: 120,
+                attributes:{style:"white-space:nowrap;text-overflow:ellipsis;"}
+            },
+                    {
+                field: "issueMsg",
+                title: '<@spring.message "ecrprojecttracking.issueMsg"/>',
+                width: 120,
+                attributes:{style:"white-space:nowrap;text-overflow:ellipsis;"}
+            }
+        ],
+        editable: false
+    }).data("kendoGrid");
+	Hap.autoResizeGrid("#grid");
+	
+    // 查询基本信息
+    if(viewModel.model.skuId){
+		var url = "${base.contextPath}/hpm/ecr/project/tracking/selectInfluence?skuId="+ viewModel.model.skuId;
+    	$.ajax({
+    		url: url,
+    		success: function(e){
+				if(e.success || e.rows || e.rows.length>0){
+					arrayToChart(e.rows);
+    			} else {
+    				arrayToChart([]);
+    			}
+			}
+    	});
+    }
+	
+	function arrayToChart(data){
+		trendChart.clear();
+		var actData = [], stdData = [], dateData=[];
+		$.each(data, function(i,n){
+			var act = {}, std = {};
+			var dateTime = new Date(data[i].actFinishedDate).Format("yyyy-MM-dd");
+			// 实际：日期，实际成本
+			act.code = dateTime;
+			act.value = data[i].actPrimeCost;
+			// 标准：日期，标准成本
+			std.code = dateTime;
+			std.value = data[i].stdPrimeCost;
+			actData[i] = act;
+			stdData[i] = std;
+			dateData[i] = dateTime;
+		});
+		
+        var trendOption = {
+            title: {
+                text: 'SKU历史成本变化',
+            },
+            tooltip: {          //聚焦触发的效果，详情可参见。全局设置
+                trigger: 'axis',
+                axisPointer: {
+                    type: 'cross',
+                    crossStyle: {
+                        color: '#f8f1ff'
+                    }
+                }
+            },
+            legend: {
+                x: 'right',
+                selectedMode: false, //不可点击
+                data: ['Act Cost', 'Std Cost']
+            },
+            grid: {
+                top:70,
+                left: 100
+            },
+            xAxis: [
+                {
+                    type: 'category',
+                    data: dateData,
+                    splitLine: {//不显示分割线
+                        show: false
+                    }
+                }
+            ],
+            yAxis: [
+                {
+                    type: 'value',
+                    min: 0,
+                    // max: 100,
+                    splitLine: {//不显示分割线
+                        show: false
+                    },
+                    axisLabel: {
+                        formatter: '{value}'
+                    }
+                }
+            ],
+            series: [
+                {
+                    name: 'Act Cost',
+                    type: 'line',
+                    barMaxWidth: 50,
+                    itemStyle: {
+                        normal: {
+                            color: '#F39939'
+                        }
+                    },
+                    label: {
+                        normal: {
+                            show: true,
+                            position: 'top',
+                            formatter: "{c}",
+                            color: "black"
+                        }
+                    },
+                    data: actData
+                },
+                {
+                    name: 'Std Cost',
+                    type: 'line',
+                    barMaxWidth: 50,
+                    itemStyle: {
+                        normal: {
+                            color: '#52ACCB'
+                        }
+                    },
+                    label: {
+                        normal: {
+                            show: true,
+                            position: 'top',
+                            formatter: "{c}",
+                            color: "black"
+                        }
+                    },
+                    data: stdData
+                }
+            ]
+        };
+		// 使用刚指定的配置项和数据显示图表。
+	    trendChart.setOption(trendOption);
+	}	
+			 
+
+</script>
+</body>
+</html>

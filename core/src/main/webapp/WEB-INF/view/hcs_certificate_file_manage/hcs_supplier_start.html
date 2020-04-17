@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<!--
+  description  供应商发起界面
+  @author KOCDZX0 2020/03/23 1:47 PM 
+-->
+<#include "../include/header.html">
+<script type="text/javascript">
+    var BaseUrl = _basePath;
+    var viewModel = Hap.createGridViewModel(null,{
+        model:{},
+        closeWin:function(e) {
+            window.parent.$("#supplierDiv").data("kendoWindow").close();
+        },
+        save:function(){
+            var validator = $("#mainForm").data("kendoValidator");
+            var data = viewModel.model.toJSON();
+            if(validator.validate()) {
+                viewModel.model.__status = 'add';
+                Hap.request({
+                    url: '${base.contextPath}/hcs/certificate/supplierStart',
+                    data: kendo.stringify(data),
+                    success: function (data) {
+                        kendo.ui.showInfoDialog({
+                            title:$l('hap.tip.info'),
+                            message:'<@spring.message "hap.tip.success"/>'
+                        })
+                        viewModel.closeWin();
+                    },
+                    error: function (data) {
+                        kendo.ui.showInfoDialog({
+                            title: $l('hap.error'),
+                            message: kendo.stringify(data.message)
+                        });
+                    },
+                    complete:function () {
+                        Hap.unblockUI();
+                    }
+                });
+            }
+
+        }
+    });
+</script>
+
+<body>
+
+<div id="page-content">
+    <form id = "mainForm" style="paddiing-bottom:50px;padding-top:15px" class="form-horizontal" method="post" enctype="application/json;charset=UTF-8">
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="row" style="margin-top:15px">
+                    <!-- 供应商 -->
+                    <div class="col-sm-6">
+                        <label class="col-sm-3 control-label"><@spring.message "dimensionproblemdescription.supplier"/>:</label>
+                        <div class="col-sm-9">
+                            <input required id="supplierId" style="width:100%" name="supplierId"
+                                   data-bind="value:model.supplierId">
+                            <span data-for="supplierId" class=".k-invalid-msg"></span>
+                        </div>
+                        <script>
+                            $("#supplierId").kendoLov($.extend(<@lov"HCS_CERTIFICATE_SUPPLIER"/>, {
+
+                            }));
+                        </script>
+                    </div>
+                    <!-- 体系证书 -->
+                    <div class="col-sm-6">
+                        <label class="col-sm-3 control-label"><@spring.message "hcs.certificate.syscertificate"/>:</label>
+                        <div class="col-sm-9">
+                            <div style="width:100%;margin-top: 10px" id="sencondCategory"
+                                 data-bind="enabled: isEnabled,value:model.sencondCategory">
+                            </div>
+                        </div>
+                        <script>
+                            $("#sencondCategory").kendoRadio({
+                                layout: '',
+                                readonly: false,
+                                items: [{
+                                    label: '环境证书',
+                                    value: "EV"
+                                }, {
+                                    label: '质量证书',
+                                    value: "QA"
+                                },{
+                                    label: '其他证书',
+                                    value: "OTH"
+                                }],
+                            });
+                        </script>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+    <div id="mainBottom" class="text-right" style="bottom:15px;position:fixed;float:left;padding-top:15px;border-top:1px solid #e8e1eb;
+		width:100%;background:#fff;margin-right:30px">
+        <span class="btn btn-primary" data-bind="click:save" type="submit" style="margin-right:5px">保存</span>
+        <span class="btn btn-default" data-bind="click:closeWin" type="button" style="margin-right:25px">取消</span>
+    </div>
+    <script>
+        kendo.bind($('#mainForm'), viewModel);
+        kendo.bind($('#mainBottom'), viewModel);
+    </script>
+    <script>
+        $('#mainForm').kendoValidator({
+            messages:{
+                required:'<@spring.message "hap.validation.notempty"/>'
+            },
+            invalidMessageType:"tooltip"
+        });
+    </script>
+</div>
+</body>
+</html>

@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.spc.repository.mapper.SampleDataRMapper">
+
+
+
+    <resultMap id="LineMap" type="com.hand.spc.repository.dto.SampleDataExtendR">
+        <result column="extend_attribute" property="extendAttribute" jdbcType="VARCHAR"/>
+        <result column="extend_value" property="extendValue" jdbcType="VARCHAR"/>
+        <result column="sample_data_id" property="sampleDataId" jdbcType="DECIMAL"/>
+    </resultMap>
+
+    <resultMap id="sampleDataList" type="com.hand.spc.repository.dto.SampleDataDTO">
+
+            <result column="tenant_id" property="tenantId" jdbcType="DECIMAL"/>
+            <result column="site_id" property="siteId" jdbcType="DECIMAL"/>
+            <result column="attachment_group_description" property="attachmentGroupDescription" jdbcType="VARCHAR"/>
+            <result column="ce_group" property="ceGroup" jdbcType="VARCHAR"/>
+            <result column="ce_parameter" property="ceParameter" jdbcType="VARCHAR"/>
+            <result column="creation_date" property="creationDate" jdbcType="TIMESTAMP"/>
+            <result column="sample_time" property="sampleTime" jdbcType="TIMESTAMP"/>
+            <result column="sample_value" property="sampleValue" jdbcType="DECIMAL"/>
+            <result column="sample_data_id" property="sampleDataId" jdbcType="DECIMAL"/>
+
+        <result column="sample_data_id" property="sampleDataId" jdbcType="DECIMAL"/>
+            <collection property="sampleDataExtendList" ofType="com.hand.spc.repository.dto.SampleDataExtendR"
+                        javaType="java.util.List" select="selectLine" column="sample_data_id">
+            </collection>
+
+    </resultMap>
+
+
+    <select id="selectLine" parameterType="long" resultMap="LineMap">
+        select
+        sew.extend_attribute,
+        sew.extend_value
+        from
+        pspc_sample_data_extend sew
+        where  sew.sample_data_id=#{sampleDataId}
+    </select>
+
+
+    <select id="sampleDataList" resultMap="sampleDataList" parameterType="com.hand.spc.repository.dto.SampleDataDTO">
+        SELECT
+        sw.tenant_id,
+        sw.site_id,
+        ag.attachment_group_description,
+        cg.ce_group,
+        cp.ce_parameter,
+        sw.creation_date,
+        sw.sample_time,
+        sw.sample_value,
+        sw.sample_data_id
+        FROM
+        pspc_sample_data sw,
+        pspc_attachment_group ag,
+        pspc_ce_group cg,
+        pspc_ce_parameter cp
+        WHERE
+        sw.attachment_group_id = ag.attachment_group_id
+        AND sw.ce_group_id = cg.ce_group_id
+        AND sw.ce_parameter_id = cp.ce_parameter_id
+        AND sw.tenant_id =#{tenantId,jdbcType=DECIMAL}
+        AND sw.site_id =#{siteId,jdbcType=DECIMAL}
+
+        <if test="attachmentGroupId !=null and attachmentGroupId!=''">
+            AND sw.attachment_group_id =#{attachmentGroupId,jdbcType=DECIMAL}
+        </if>
+        <if test="ceGroupId !=null and ceGroupId!=''">
+            AND sw.ce_group_id =#{ceGroupId,jdbcType=DECIMAL}
+        </if>
+        <if test="ceParameterId !=null and ceParameterId!=''">
+            AND sw.ce_parameter_id =#{ceParameterId,jdbcType=DECIMAL}
+        </if>
+        <if test="sampleBeginTime !=null">
+            AND sw.sample_time &gt;=#{sampleBeginTime}
+        </if>
+        <if test="sampleEndTime !=null">
+            AND sw.sample_time &lt;=#{sampleEndTime}
+        </if>
+    </select>
+
+
+
+    <insert id="insertSampleData" parameterType="java.util.List">
+        INSERT INTO pspc_sample_data (
+        sample_data_id,
+        tenant_id,
+        site_id,
+        attachment_group_id,
+        sample_value,
+        sample_time,
+        ce_group_id,
+        ce_parameter_id,
+        edited,
+        object_version_number
+        ) SELECT
+        t.sample_data_wait_id,
+        t.tenant_id,
+        t.site_id,
+        t.attachment_group_id,
+        t.sample_value,
+        t.sample_time,
+        t.ce_group_id,
+        t.ce_parameter_id,
+        t.edited,
+        1
+        FROM
+        pspc_sample_data_wait t
+        WHERE
+        t.tenant_id=#{tenantId}
+        and t.site_id=#{siteId}
+        and t.sample_data_wait_id IN
+        <foreach collection="sampleDataWaitIdList" item="id" index="index" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+    </insert>
+    
+    <select id="selectByKeys" parameterType="java.util.List" resultType="com.hand.spc.repository.dto.SampleDataWaitR">
+      select
+        sample_data_wait_id,
+        tenant_id,
+        site_id,
+        attachment_group_id,
+        sample_value,
+        sample_time,
+        ce_group_id,
+        ce_parameter_id,
+        edited,
+        object_version_number
+      from
+        pspc_sample_data_wait
+      where
+        1=1
+        and sample_data_wait_id IN
+        <foreach collection="sampleDataWaitIdList" item="id" index="index" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+     </select>
+    
+<!--     <insert id="batchInsertSampleData" parameterType="java.util.List"> -->
+<!--         INSERT INTO pspc_sample_data -->
+<!--         (sample_data_id, -->
+<!--         tenant_id, -->
+<!--         site_id, -->
+<!--         attachment_group_id, -->
+<!--         sample_value, -->
+<!--         sample_time, -->
+<!--         ce_group_id, -->
+<!--         ce_parameter_id, -->
+<!--         edited) -->
+<!--         VALUES -->
+<!--         <foreach collection="sampleDataList" item="item" index="index" separator=","> -->
+<!--             (#{item.sampleDataId}, -->
+<!--             #{item.tenantId}, -->
+<!--             #{item.siteId}, -->
+<!--             #{item.attachmentGroupId}, -->
+<!--             #{item.sampleValue}, -->
+<!--             #{item.sampleTime}, -->
+<!--             #{item.ceGroupId}, -->
+<!--             #{item.ceParameterId}, -->
+<!--             #{item.edited}) -->
+<!--         </foreach> -->
+<!--     </insert> -->
+    
+    <insert id="batchInsertSampleData" parameterType="java.util.List">
+    <foreach collection="sampleDataList" item="item" index="index" open="begin" close=";end;" separator=";">
+        INSERT INTO pspc_sample_data
+        (sample_data_id,
+        tenant_id,
+        site_id,
+        attachment_group_id,
+        sample_value,
+        sample_time,
+        ce_group_id,
+        ce_parameter_id,
+        edited)
+        VALUES(
+            #{item.sampleDataId},
+            #{item.tenantId},
+            #{item.siteId},
+            #{item.attachmentGroupId},
+            #{item.sampleValue},
+            #{item.sampleTime},
+            #{item.ceGroupId},
+            #{item.ceParameterId},
+            #{item.edited})
+        </foreach>
+    </insert>
+
+</mapper>

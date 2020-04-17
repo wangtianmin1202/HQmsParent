@@ -1,0 +1,343 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_sample_account.mapper.SampleAccountMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_sample_account.dto.SampleAccount">
+        <result column="SAMPLE_ID" property="sampleId" jdbcType="DECIMAL" />
+        <result column="SAMPLE_TYPE" property="sampleType" jdbcType="VARCHAR" />
+        <result column="PLANT_ID" property="plantId" jdbcType="DECIMAL" />
+        <result column="SAMPLE_MODEL" property="sampleModel" jdbcType="VARCHAR" />
+        <result column="ITEM_ID" property="itemId" jdbcType="DECIMAL" />
+        <result column="SEALING_SAMPLE_VERSON" property="sealingSampleVerson" jdbcType="VARCHAR" />
+        <result column="DESCRIPTION" property="description" jdbcType="VARCHAR" />
+        <result column="SEALING_SAMPLE_POSITION_STATUS" property="sealingSamplePositionStatus" jdbcType="VARCHAR" />
+        <result column="SEALING_SAMPLE_STATUS" property="sealingSampleStatus" jdbcType="VARCHAR" />
+        <result column="SEALING_SAMPLE_PRINCIPAL" property="sealingSamplePrincipal" jdbcType="DECIMAL" />
+        <result column="REGISTRATION_BY" property="registrationBy" jdbcType="DECIMAL" />
+        <result column="STORAGE_LOCATION" property="storageLocation" jdbcType="VARCHAR" />
+        <result column="SUPPLIER_ID" property="supplierId" jdbcType="DECIMAL" />
+        <result column="SAMPLE_GIVER" property="sampleGiver" jdbcType="DECIMAL" />
+        <result column="SAMPLE_GIVE_DATE" property="sampleGiveDate" jdbcType="DATE" />
+        <result column="SAMPLE_USER" property="sampleUser" jdbcType="DECIMAL" />
+        <result column="SAMPLE_USE_DATE" property="sampleUseDate" jdbcType="DATE" />
+        <result column="SAMPLE_USE_DEPARTMENT" property="sampleUseDepartment" jdbcType="VARCHAR" />
+        <result column="ENABLE_FLAG" property="enableFlag" jdbcType="VARCHAR" />
+        <result column="INVALID_DATE" property="invalidDate" jdbcType="DATE" />
+        <result column="SCRAPPED_FLAG" property="scrappedFlag" jdbcType="VARCHAR" />
+        <result column="SCRAPPED_DATE" property="scrappedDate" jdbcType="DATE" />
+        <result column="SCRAPPED_DOCUMENT" property="scrappedDocument" jdbcType="VARCHAR" />
+        <result column="AFTERSALE_SAMPLE_TYPE" property="aftersaleSampleType" jdbcType="VARCHAR" />
+        <result column="DEALER" property="dealer" jdbcType="VARCHAR" />
+        <result column="PRODUCTION_DATE" property="productionDate" jdbcType="DATE" />
+        <result column="RETURN_STATUS" property="returnStatus" jdbcType="VARCHAR" />
+        <result column="TEST_CODE" property="testCode" jdbcType="DECIMAL" />
+        <result column="SAMPLE_ATTRIBUTE" property="sampleAttribute" jdbcType="VARCHAR" />
+        <result column="COMPETING_BRAND" property="competingBrand" jdbcType="VARCHAR" /> 
+        <result column="AVAILABLE_STATUS" property="availableStatus" jdbcType="VARCHAR" />
+        <result column="KEEP_BY" property="keepBy" jdbcType="VARCHAR" />
+        <result column="TEST_BY" property="testBy" jdbcType="VARCHAR" />
+        
+        <result column="PLANT_CODE" property="plantCode" jdbcType="DECIMAL" />
+        <result column="ITEM_CODE" property="itemCode" jdbcType="VARCHAR" />
+        <result column="ITEM_TYPE" property="itemType" jdbcType="VARCHAR" />
+        <result column="SEALING_SAMPLE_PRINCIPAL_NAME" property="sealingSamplePrincipalName" jdbcType="VARCHAR" />
+        <result column="SAMPLE_GIVE_DATE_START" property="sampleGiveDateStart" jdbcType="DATE" />
+        <result column="SAMPLE_GIVE_DATE_END" property="sampleGiveDateEnd" jdbcType="DATE" />
+        <result column="SCRAPPED_DOCUMENT_CODE" property="scrappedDocumentCode" jdbcType="VARCHAR" />
+        <result column="REGISTRATION_BY_NAME" property="registrationByName" jdbcType="DATE" />
+        <result column="SAMPLE_GIVER_NAME" property="sampleGiverName" jdbcType="VARCHAR" />
+        
+        <result column="USE_DOCUMENT_CODE" property="useDocumentCode" jdbcType="VARCHAR" /> 
+        <result column="CREAT_BY_NAME" property="creatByName" jdbcType="VARCHAR" />
+        <result column="KEEP_BY_NAME" property="keepByName" jdbcType="VARCHAR" />
+        <result column="TEST_BY_NAME" property="testByName" jdbcType="VARCHAR" />
+        <result column="SAMPLE_CODE" property="sampleCode" jdbcType="VARCHAR" />
+        <result column="PRODUCE_FLAG" property="produceFlag" jdbcType="VARCHAR" />
+        <result column="SCRAPPED_ID" property="scrappedId" jdbcType="DECIMAL" />
+        <result column="SUPPLIER_NAME" property="supplierName" jdbcType="DECIMAL" />
+        
+        <result column="SQE_TIME" property="sqeTime" jdbcType="DATE" />
+        <result column="IQC_TIME" property="iqcTime" jdbcType="DATE" />
+        <result column="MANAGEMENT_TIME" property="managementTime" jdbcType="DATE" />   
+        <result column="MACHINE_COMPONENT" property="machineComponent" jdbcType="DATE" />
+        <!-- 新增字段 -->
+        <result column="ANALYSIS_STATUS" property="analysisStatus" jdbcType="VARCHAR" />  
+        <result column="PROCESSING_METHOD" property="processingMethod" jdbcType="VARCHAR" />  
+        <result column="REWORK_STATUS" property="reworkStatus" jdbcType="VARCHAR" />  
+        <result column="RETURN_SUPPLIER_STATUS" property="returnSupplierStatus" jdbcType="VARCHAR" />  
+        <result column="SCRAP_STATUS" property="scrapStatus" jdbcType="VARCHAR" />  
+        <result column="USER_ID" property="userId" jdbcType="VARCHAR" />  
+        <result column="USE_DEPARTMENT" property="useDepartment" jdbcType="VARCHAR" /> 
+     </resultMap>
+  
+         <select id="myselect" resultMap="BaseResultMap"  parameterType="com.hand.hqm.hqm_sample_account.dto.SampleAccount">   
+			SELECT hsa.sample_id
+			,hsa.plant_id 
+			,hp.plant_code
+			,hsa.sample_model
+			,hsa.item_id
+			,hi.item_code
+			,hsa.item_type 
+			,hsa.sealing_sample_verson
+			,hsa.description
+			,hsa.sealing_sample_position_status
+			,hsa.sealing_sample_status
+			,hsa.sealing_sample_principal
+			,he1.name AS SEALING_SAMPLE_PRINCIPAL_NAME
+			,hsa.registration_by
+			,he2.name AS REGISTRATION_BY_NAME
+			,hsa.storage_location
+			,hsa.supplier_id
+			,hs.supplier_name
+			,hsa.sample_giver 
+			,hsa.sample_give_date
+			,he3.name AS SAMPLE_GIVER_NAME
+			,hsa.enable_flag
+			,hsa.invalid_date
+			,hsa.scrapped_flag
+			,hsa.scrapped_document
+			,hsa.scrapped_date
+			,hsa.IQC_TIME
+			,hsa.SQE_TIME
+			,hsa.MANAGEMENT_TIME
+			,(SELECT *
+					FROM (SELECT hss.scrapped_id
+									FROM hqm_scrapped_detail hsd, hqm_sample_scrapped hss
+								 WHERE hsd.sample_id = hsa.sample_id
+									 AND hsd.scrapped_id = hss.scrapped_id
+								 ORDER BY hss.last_update_date DESC) a
+				 WHERE rownum = 1) AS SCRAPPED_ID
+			,(SELECT *
+					FROM (SELECT hss.applicant_document_code
+									FROM hqm_scrapped_detail hsd, hqm_sample_scrapped hss
+								 WHERE hsd.sample_id = hsa.sample_id
+									 AND hsd.scrapped_id = hss.scrapped_id
+								 ORDER BY hss.last_update_date DESC) a
+				 WHERE rownum = 1) AS SCRAPPED_DOCUMENT_CODE
+	FROM hqm_sample_account hsa
+			,hcm_plant hp
+			,hcm_item_b hi
+			,hr_employee he1
+			,hr_employee he2
+			,hcs_suppliers hs
+			,hr_employee he3
+ WHERE hp.plant_id = hsa.plant_id 
+	 AND hi.item_id = hsa.item_id
+     and hi.plant_id =hsa.plant_id
+	 AND he1.employee_id(+) = hsa.sealing_sample_principal
+	 AND he2.employee_id(+) = hsa.registration_by
+	 AND hs.supplier_id(+) = hsa.supplier_id
+	 AND he3.employee_id(+) = hsa.sample_giver
+   <if test="itemId != null">
+     AND hsa.item_id = #{itemId}
+   </if>
+   
+   <if test="sampleModel != null">
+     AND hsa.sample_model  LIKE concat('%',concat(#{sampleModel},'%'))
+   </if> 
+   
+   <if test="sealingSamplePositionStatus != null">
+     AND hsa.sealing_sample_position_status = #{sealingSamplePositionStatus}
+   </if>
+   
+    <if test="sealingSampleStatus != null">
+     AND hsa.sealing_sample_status = #{sealingSampleStatus}
+   </if>
+   
+    <if test="sealingSamplePrincipal != null">
+     AND hsa.sealing_sample_principal = #{sealingSamplePrincipal}
+   </if>
+   
+    <if test="registrationBy != null">
+     AND hsa.registration_by = #{registrationBy}
+   </if>
+   
+    <if test="sampleGiver != null">
+     AND hsa.sample_giver = #{sampleGiver}
+   </if>
+   
+   <if test="sampleGiveDateStart != null">
+     AND hsa.sample_give_date &gt;= #{sampleGiveDateStart} 
+   </if>
+   
+   <if test="sampleGiveDateEnd != null">
+     AND hsa.sample_give_date &lt;= #{sampleGiveDateEnd}
+   </if>
+   
+   <if test="description != null">
+     AND hsa.description LIKE concat('%',concat(#{description},'%')) 
+   </if>
+   
+   <if test="enableFlag != null">
+      AND hsa.enable_flag =#{enableFlag}
+   </if>
+   
+      <if test="supplierId != null">
+      AND hsa.supplier_id =#{supplierId}
+   </if>
+   
+   <if test="scrappedFlag != null">
+     AND hsa.scrapped_flag = #{scrappedFlag}
+   </if>
+    and  hsa.sample_type ='1' 
+   order by hsa.creation_date desc  
+</select>
+    
+  
+
+<select id="modelLov" resultMap="BaseResultMap"  parameterType="com.hand.hqm.hqm_sample_account.dto.SampleAccount">   
+
+SELECT t.sample_model, t.sample_id, hi.item_code, t.description
+	FROM hqm_sample_account t, hcm_item hi
+ WHERE hi.item_id = t.item_id
+	 AND t.plant_id = hi.plant_id
+	 AND t.enable_flag = 'Y'
+	 
+	 <if test="sampleModel != null">
+     AND T.sample_model LIKE concat(#{sampleModel}, '%')
+    </if>  
+	<if test="itemCode!=null">
+      AND hi.item_code LIKE concat('%',concat(#{itemCode,jdbcType=VARCHAR},'%'))
+    </if>
+
+</select>
+
+<select id="modelLovFORcs" resultMap="BaseResultMap"  parameterType="com.hand.hqm.hqm_sample_account.dto.SampleAccount">   
+SELECT t.sample_model, t.sample_id, t.sample_code
+	FROM hqm_sample_account t   
+ WHERE   t.sample_type = '3'
+	 <if test="sampleModel != null">
+     AND T.sample_model LIKE concat(#{sampleModel}, '%')
+    </if> 
+	<if test="sampleCode!= null">
+      AND T.sample_code LIKE concat(#{sampleCode}, '%')
+    </if>
+
+</select>
+
+<select id="selectMaxNumber" resultMap="BaseResultMap" parameterType="com.hand.hqm.hqm_sample_account.dto.SampleAccount">
+SELECT h.sample_code
+	FROM hqm_sample_account h
+ WHERE h.sample_model = #{sampleModel}
+
+ ORDER BY substr(h.sample_code, instr(h.sample_code, '-')) DESC
+</select> 
+
+<select id="selectMaxCodeByDay" resultMap="BaseResultMap" parameterType="com.hand.hqm.hqm_sample_account.dto.SampleAccount">
+select h.sample_code from hqm_sample_account h where
+ h.sample_code  LIKE concat(#{sampleCode}, '%')
+   order by h.sample_code  desc
+</select> 
+
+
+
+<select id="myselectforcs" resultMap="BaseResultMap"  parameterType="com.hand.hqm.hqm_sample_account.dto.SampleAccount">   
+			SELECT hsa.sample_id
+			,hsa.plant_id
+			,hp.plant_code
+			,hsa.sample_model
+			,hsa.sample_code
+			,hsa.test_code
+			,hsa.sample_Type
+			,hsa.produce_flag
+			,hsa.competing_brand
+			,hsa.sample_attribute
+			,hsa.sample_give_date
+			,hsa.sealing_sample_position_status
+			,hsa.sealing_sample_status
+			,hsa.test_by
+			,he1.name AS test_by_name
+			,hsa.created_by
+			,he2.name AS CREAT_BY_NAME
+			,hsa.keep_by
+			,he3.name AS keep_by_name
+			,hsa.storage_location
+			,hsa.available_status
+			,hsa.scrapped_flag
+			,hsa.scrapped_date
+			,hsa.machine_Component
+			,(SELECT *
+					FROM (SELECT hss.scrapped_id
+									FROM hqm_scrapped_detail hsd, hqm_sample_scrapped hss
+								 WHERE hsd.sample_id = hsa.sample_id
+									 AND hsd.scrapped_id = hss.scrapped_id
+								 ORDER BY hss.last_update_date DESC) a
+				 WHERE rownum = 1) AS SCRAPPED_ID
+			,(SELECT *
+					FROM (SELECT hss.applicant_document_code
+									FROM hqm_scrapped_detail hsd, hqm_sample_scrapped hss
+								 WHERE hsd.sample_id = hsa.sample_id
+									 AND hsd.scrapped_id = hss.scrapped_id
+								 ORDER BY hss.last_update_date DESC) a
+				 WHERE rownum = 1) AS SCRAPPED_DOCUMENT_CODE
+			,hsa.sample_use_date
+	FROM hqm_sample_account hsa
+			,hcm_plant hp
+			,hr_employee he1
+			,hr_employee he2
+			,hr_employee he3
+ WHERE hp.plant_id = hsa.plant_id
+	 AND he1.employee_id(+) = hsa.test_by
+	 AND he2.employee_id(+) = hsa.registration_by
+	 AND he3.employee_id(+) = hsa.keep_by
+   <if test="sampleCode != null">
+     AND hsa.sample_code   LIKE concat('%',concat(#{sampleCode},'%'))
+   </if>
+   
+   <if test="sampleModel != null">
+     AND hsa.sample_model LIKE concat('%',concat(#{sampleModel},'%'))
+   </if>
+   
+   <if test="sealingSamplePositionStatus != null">
+     AND hsa.sealing_sample_position_status = #{sealingSamplePositionStatus}
+   </if>
+   
+    <if test="sealingSampleStatus != null">
+     AND hsa.sealing_sample_status = #{sealingSampleStatus}
+   </if>
+   
+    <if test="competingBrand != null">
+     AND hsa.competing_brand  LIKE concat('%',concat(#{competingBrand},'%'))
+   </if>
+   
+    <if test="keepBy != null">
+     AND hsa.keep_By = #{keepBy}
+   </if>
+   
+    <if test="testBy != null">
+     AND hsa.test_by = #{testBy}
+   </if>
+   
+   <if test="sampleGiveDateStart != null">
+     AND hsa.sample_give_date &gt;= #{sampleGiveDateStart} 
+   </if>
+   
+   <if test="sampleGiveDateEnd != null">
+     AND hsa.sample_give_date &lt;= #{sampleGiveDateEnd} 
+   </if>
+   
+   <if test="testCode != null">
+     AND hsa.test_code LIKE concat('%',concat(#{testCode},'%')) 
+   </if>
+   
+   <if test="produceFlag != null">
+      AND hsa.produce_Flag =#{produceFlag}
+   </if> 
+   
+   <if test="availableStatus != null">
+     AND hsa.available_status = #{availableStatus}
+   </if>
+   
+   <if test="storageLocation != null">
+     AND hsa.storage_location  LIKE concat('%',concat(#{storageLocation},'%')) 
+   </if>
+   <if test="scrappedFlag != null">
+     AND hsa.scrapped_flag = #{scrappedFlag}
+   </if>
+     and  hsa.sample_type ='3'
+   order by hsa.creation_date desc  
+</select>
+
+
+
+</mapper>

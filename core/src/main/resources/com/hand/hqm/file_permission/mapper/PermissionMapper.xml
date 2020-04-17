@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.file_permission.mapper.PermissionMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.file_permission.dto.Permission">
+        <result column="PERMISSION_ID" property="permissionId" jdbcType="DECIMAL" />
+        <result column="FILE_ID" property="fileId" jdbcType="DECIMAL" />
+        <result column="CHARACTER_ID" property="characterId" jdbcType="DECIMAL" />
+        <result column="USER_ID" property="userId" jdbcType="DECIMAL" />
+        <result column="ENABLE_FLAG" property="enableFlag" jdbcType="VARCHAR" />
+        <result column="PERMISSION_CODE" property="permissionCode" jdbcType="VARCHAR" />
+        
+         <result column="USER_NAME" property="userName" jdbcType="VARCHAR" />
+         <result column="ROLE_NAME" property="roleName" jdbcType="VARCHAR" />
+         <result column="ROLE_ID" property="roleId" jdbcType="DECIMAL" />
+    </resultMap>
+
+<select id="myselect" resultMap="BaseResultMap" parameterType="com.hand.hqm.file_permission.dto.Permission">
+SELECT fp.FILE_ID, fp.permission_id, fp.character_id, fp.user_id, sr.role_name, su.user_name ,fp.permission_code
+	FROM file_permission fp, sys_role_b sr, sys_user su
+ WHERE fp.character_id = sr.role_id(+)
+	 AND fp.user_id = su.user_id(+)
+	 and  fp.FILE_ID =#{fileId} 
+	  <if test="userId!=null">
+   	AND fp.user_id = #{userId}
+   </if> 
+   <if test="characterId!=null">
+   	AND fp.CHARACTER_ID = #{characterId}
+   </if> 
+   <if test="permissionCode!=null">
+   	AND fp.permission_code = #{permissionCode} 
+   </if>   
+   order by fp.last_update_date desc      
+</select>
+
+<select id="selectlcheckone" resultMap="BaseResultMap" parameterType="com.hand.hqm.file_permission.dto.Permission">
+  SELECT * FROM file_permission t
+ WHERE t.file_id = #{fileId}
+	 AND t.permission_code = #{permissionCode} 
+
+</select>
+
+<select id="selectlchecktwo" resultMap="BaseResultMap" parameterType="com.hand.hqm.file_permission.dto.Permission">
+ SELECT * FROM file_permission t
+ WHERE t.file_id = #{fileId}
+	 AND t.permission_code = #{permissionCode}
+   AND  T.CHARACTER_ID  IS NOT NULL
+   AND T.USER_ID IS NULL
+
+</select>
+
+<select id="selectlcheckthree" resultMap="BaseResultMap" parameterType="com.hand.hqm.file_permission.dto.Permission">
+SELECT * FROM file_permission t
+ WHERE t.file_id = #{fileId}
+	 AND t.permission_code = #{permissionCode}
+   AND T.USER_ID =#{userId} 
+
+</select>
+
+<select id="myselectline" resultMap="BaseResultMap" parameterType="com.hand.hqm.file_permission.dto.Permission">
+  select su.user_id ,su.user_name from sys_user_role sur,sys_user su 
+   where  sur.user_id =su.user_id and sur.role_id = #{roleId}
+</select>
+
+<select id="sysUserLov" resultMap="BaseResultMap" parameterType="com.hand.hqm.file_permission.dto.Permission">
+	SELECT y.user_name, y.user_id
+	 FROM sys_user y, sys_user_role t
+     WHERE 1 = 1
+	 AND y.user_id = t.user_id
+	 AND t.role_id = #{roleId}   
+		<if test="userName!=null"> 
+			and  y.user_name like concat('%',concat(#{userName},'%'))
+		</if> 
+		
+</select>
+
+<select id="checkUserRole" resultMap="BaseResultMap" parameterType="com.hand.hqm.file_permission.dto.Permission">  
+  select sur.user_id ,sur.role_id from sys_user_role sur
+   where   sur.role_id = #{characterId} and  sur.user_id =#{userId}
+</select>
+
+
+<select id="checkcount" resultMap="BaseResultMap" parameterType="com.hand.hqm.file_permission.dto.Permission">  
+  SELECT *
+	FROM file_permission h
+ WHERE h.user_id =#{userId}
+	 AND h.character_id =#{characterId}
+	 AND h.file_id =#{fileId}
+	 AND h.permission_code =#{permissionCode} 
+	 
+</select>
+
+
+
+<select id="checkcountwithNull" resultMap="BaseResultMap" parameterType="com.hand.hqm.file_permission.dto.Permission">  
+   SELECT *
+	FROM file_permission h
+ WHERE  h.character_id =#{characterId}
+	 AND h.file_id =#{fileId}
+	 AND h.permission_code =#{permissionCode} 
+	 and h.user_id is null 
+</select>
+ 
+</mapper>  

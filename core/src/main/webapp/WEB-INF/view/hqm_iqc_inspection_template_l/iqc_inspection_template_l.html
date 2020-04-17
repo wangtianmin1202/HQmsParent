@@ -1,0 +1,387 @@
+<#include "../include/header.html">
+<style>
+	.k-file-name{
+		font-size:14px;
+		color:#333;
+	}
+	.k-file-size{
+		margin-left:15px;
+		color:#9d9d9d;
+	}
+</style>
+<script>
+    
+    function onSuccess(e) {
+        if(e.response.success=== true){
+            $("#file_view_list").data('kendoGrid').dataSource.read();
+        }
+        kendo.ui.showInfoDialog({
+            message  : e.response.message
+        })
+    }
+
+    function onUpload(e){
+        e.data = {
+            sourceType : viewModel.model.sourceType || '',
+            sourceKey  : viewModel.model.sourceKey || '',
+        }
+    }
+</script>
+<script type="text/javascript">
+    var viewModel = Hap.createGridViewModel("#grid");
+//     viewModel.create = function(){
+//     	kendo.ui.showDialog({
+//             title: '自定义窗口',
+//             width: 800,
+//             message: $('#fileWin').html(),
+//             buttons: [{
+//                 text: "按钮3",
+//                 type: 'danger',
+//                 click: function (e) {
+                	
+                	
+//                     e.dialog.destroy();
+//                     e.deferred.resolve({
+//                         button: "BUTTON2"
+//                     });
+//                 }
+//             }]
+//         });
+//     }
+</script>
+<body>
+<div id="fileWin" style="display:none">
+	<form id="mainform" class="form-horizontal">
+	<div class="row">
+		<div class="form-group">
+			<label class="col-sm-3 control-label"><@spring.message "attachcategory.attachment"/></label>
+			<div class="col-sm-4">
+			<div class="demo-section k-content">
+				<input name="files" id="files1" type="file" />
+			</div>
+
+			<script>
+				$(document).ready(function() {
+					$("#files1").kendoUpload({
+						async: {
+                        saveUrl: "${base.contextPath}/sys/attach/upload?${_csrf.parameterName}=${_csrf.token}",
+						autoUpload: true
+						},
+						upload       : function(e){
+							
+						},
+                        success      : function(e){
+                        	
+                        },
+						showFileList:true
+									});
+								});
+				</script>
+			</div>
+		</div>
+	</div>
+	</form>
+</div>			
+<div id="page-content">
+    <div class="pull-left" id="toolbar-btn" style="padding-bottom:10px;">
+        <span class="btn btn-primary k-grid-add" style="float:left;margin-right:5px;" data-bind="click:create"><@spring.message "hap.new"/></span>
+        <span class="btn btn-success k-grid-save-changes" data-bind="click:save" style="float:left;margin-right:5px;"><@spring.message "hap.save"/></span>
+        <span  data-bind="click:remove" class="btn btn-danger" style="float:left;"><@spring.message "hap.delete"/></span>
+        <span class="btn btn-primary  k-grid-excel" style="float:left;" onclick='Hap.importExcel("sys_code_b")' ><i class="fa fa-arrow-circle-up" style="margin-right:3px;"></i><@spring.message "excel.import"/></span>
+        
+    </div>
+    <script>kendo.bind($('#toolbar-btn'), viewModel);</script>
+    <div class="pull-right" id="query-form" style="padding-bottom:10px;">
+            <input type="text" data-role="maskedtextbox" style="float:left;width:150px;margin-right:5px;" placeholder='<@spring.message "IqcInspectionTemplateL.orderCode"/>'
+                   data-bind="value:model.orderCode" class="k-textbox">
+            <input type="text" data-role="maskedtextbox" style="float:left;width:150px;margin-right:5px;" placeholder='<@spring.message "IqcInspectionTemplateL.enableType"/>'
+                   data-bind="value:model.enableType" class="k-textbox">
+            <input type="text" data-role="maskedtextbox" style="float:left;width:150px;margin-right:5px;" placeholder='<@spring.message "IqcInspectionTemplateL.sampleProcedureType"/>'
+                   data-bind="value:model.sampleProcedureType" class="k-textbox">
+            
+        <span class="btn btn-primary" style="float:left;width:70px" data-bind="click:query" type="submit"><@spring.message "hap.query"/></span>
+        <div style="clear:both"></div>
+    </div>
+    <script>kendo.bind($('#query-form'), viewModel);</script>
+    <div style="clear:both">
+        <div id="grid"></div>
+    </div>
+</div>
+
+<script type="text/javascript">
+	
+    Hap.initEnterQuery('#query-form', viewModel.query);
+    var BaseUrl = _basePath;
+    dataSource = new kendo.data.DataSource({
+        transport: {
+            read: {
+                url: BaseUrl + "/hqm/iqc/inspection/template/l/query",
+                type: "POST",
+                dataType: "json"
+            },
+            update: {
+                url: BaseUrl + "/hqm/iqc/inspection/template/l/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            destroy: {
+                url: BaseUrl + "/hqm/iqc/inspection/template/l/remove",
+                type: "POST",
+                contentType: "application/json"
+            },
+            create: {
+                url: BaseUrl + "/hqm/iqc/inspection/template/l/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            parameterMap: function (options, type) {
+                if (type !== "read" && options.models) {
+                    var datas = Hap.prepareSubmitParameter(options, type)
+                    return kendo.stringify(datas);
+                } else if (type === "read") {
+                    return Hap.prepareQueryParameter(viewModel.model.toJSON(), options)
+                }
+            }
+        },
+        batch: true,
+//         serverPaging: true,
+        pageSize: 10,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+                id: "lineId",
+                fields: {}
+            }
+        }
+    });
+
+    $("#grid").kendoGrid({
+        dataSource: dataSource,
+        resizable: true,
+        scrollable: true,
+        editable:{
+        	createAt:"bottom",
+        	
+        },
+//         navigatable: false,
+//         selectable: 'multiple, rowbox',
+        dataBound: function () {
+            if (parent.autoResizeIframe) {
+                parent.autoResizeIframe('${RequestParameters.functionCode!}')
+            }
+        },
+//         pageable: {
+//             pageSizes: [5, 10, 20, 50],
+//             refresh: true,
+//             buttonCount: 5
+//         },
+        columns: [
+            {
+                field: "lineId",
+                title: '<@spring.message "iqcinspectiontemplatel.lineid"/>',
+                width: 120
+            },
+                    {
+                field: "headerId",
+                title: '<@spring.message "iqcinspectiontemplatel.headerid"/>',
+                width: 120
+            },
+                    {
+                field: "inspectionAttribute",
+                title: '<@spring.message "iqcinspectiontemplatel.inspectionattribute"/>',
+                width: 120
+            },
+                    {
+                field: "orderCode",
+                title: '<@spring.message "iqcinspectiontemplatel.ordercode"/>',
+                width: 120
+            },
+                    {
+                field: "enableType",
+                title: '<@spring.message "iqcinspectiontemplatel.enabletype"/>',
+                width: 120
+            },
+                    {
+                field: "sampleProcedureType",
+                title: '<@spring.message "iqcinspectiontemplatel.sampleproceduretype"/>',
+                width: 120
+            },
+                    {
+                field: "inspectionLevels",
+                title: '<@spring.message "iqcinspectiontemplatel.inspectionlevels"/>',
+                width: 120
+            },
+                    {
+                field: "qualityCharacterGrade",
+                title: '<@spring.message "iqcinspectiontemplatel.qualitycharactergrade"/>',
+                width: 120
+            },
+                    {
+                field: "acceptanceQualityLimit",
+                title: '<@spring.message "iqcinspectiontemplatel.acceptancequalitylimit"/>',
+                width: 120
+            },
+                    {
+                field: "standardType",
+                title: '<@spring.message "iqcinspectiontemplatel.standardtype"/>',
+                width: 120
+            },
+                    {
+                field: "textStandrad",
+                title: '<@spring.message "iqcinspectiontemplatel.textstandrad"/>',
+                width: 120
+            },
+                    {
+                field: "standradFrom",
+                title: '<@spring.message "iqcinspectiontemplatel.standradfrom"/>',
+                width: 120
+            },
+                    {
+                field: "standradTo",
+                title: '<@spring.message "iqcinspectiontemplatel.standradto"/>',
+                width: 120
+            },
+                    {
+                field: "standradUom",
+                title: '<@spring.message "iqcinspectiontemplatel.standraduom"/>',
+                width: 120
+            },
+                    {
+                field: "frequencyType",
+                title: '<@spring.message "iqcinspectiontemplatel.frequencytype"/>',
+                width: 120
+            },
+                    {
+                field: "frequency",
+                title: '<@spring.message "iqcinspectiontemplatel.frequency"/>',
+                width: 120
+            },
+                    {
+                field: "inspectionTool",
+                title: '<@spring.message "iqcinspectiontemplatel.inspectiontool"/>',
+                width: 120
+            },
+                    {
+                field: "remark",
+                title: '<@spring.message "iqcinspectiontemplatel.remark"/>',
+                width: 120
+            },
+                    {
+                field: "enableTime",
+                title: '<@spring.message "iqcinspectiontemplatel.enabletime"/>',
+                width: 120
+            },
+                    {
+                field: "disableTime",
+                title: '<@spring.message "iqcinspectiontemplatel.disabletime"/>',
+                width: 120
+            },
+                    {
+                field: "sourceType",
+                title: '<@spring.message "iqcinspectiontemplatel.sourcetype"/>',
+                width: 120
+            },
+                    {
+                field: "historyNum",
+                title: '<@spring.message "iqcinspectiontemplatel.historynum"/>',
+                width: 120
+            },
+                    {
+                field: "isSync",
+                title: '<@spring.message "iqcinspectiontemplatel.issync"/>',
+                width: 120
+            },
+                    {
+                field: "fillInType",
+                title: '<@spring.message "iqcinspectiontemplatel.fillintype"/>',
+                width: 120
+            },
+                    {
+                field: "enableFlag",
+                title: '<@spring.message "iqcinspectiontemplatel.enableflag"/>',
+                width: 120
+            },
+                    {
+                field: "globalAttribute1",
+                title: '<@spring.message "iqcinspectiontemplatel.globalattribute1"/>',
+                width: 120
+            },
+                    {
+                field: "globalAttribute2",
+                title: '<@spring.message "iqcinspectiontemplatel.globalattribute2"/>',
+                width: 120
+            },
+                    {
+                field: "globalAttribute3",
+                title: '<@spring.message "iqcinspectiontemplatel.globalattribute3"/>',
+                width: 120
+            },
+                    {
+                field: "globalAttribute4",
+                title: '<@spring.message "iqcinspectiontemplatel.globalattribute4"/>',
+                width: 120
+            },
+                    {
+                field: "globalAttribute5",
+                title: '<@spring.message "iqcinspectiontemplatel.globalattribute5"/>',
+                width: 120
+            },
+                    {
+                field: "globalAttribute6",
+                title: '<@spring.message "iqcinspectiontemplatel.globalattribute6"/>',
+                width: 120
+            },
+                    {
+                field: "globalAttribute7",
+                title: '<@spring.message "iqcinspectiontemplatel.globalattribute7"/>',
+                width: 120
+            },
+                    {
+                field: "globalAttribute8",
+                title: '<@spring.message "iqcinspectiontemplatel.globalattribute8"/>',
+                width: 120
+            },
+                    {
+                field: "globalAttribute9",
+                title: '<@spring.message "iqcinspectiontemplatel.globalattribute9"/>',
+                width: 120
+            },
+                    {
+                field: "globalAttribute10",
+                title: '<@spring.message "iqcinspectiontemplatel.globalattribute10"/>',
+                width: 120
+            },
+                    {
+                field: "globalAttribute11",
+                title: '<@spring.message "iqcinspectiontemplatel.globalattribute11"/>',
+                width: 120
+            },
+                    {
+                field: "globalAttribute12",
+                title: '<@spring.message "iqcinspectiontemplatel.globalattribute12"/>',
+                width: 120
+            },
+                    {
+                field: "globalAttribute13",
+                title: '<@spring.message "iqcinspectiontemplatel.globalattribute13"/>',
+                width: 120
+            },
+                    {
+                field: "globalAttribute14",
+                title: '<@spring.message "iqcinspectiontemplatel.globalattribute14"/>',
+                width: 120
+            },
+                    {
+                field: "globalAttribute15",
+                title: '<@spring.message "iqcinspectiontemplatel.globalattribute15"/>',
+                width: 120
+            },
+            { command: "edit" }
+        ],
+//         editable: true
+    });
+
+</script>
+</body>
+</html>

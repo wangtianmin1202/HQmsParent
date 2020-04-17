@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <#include "../include/header.html"/>
+    <style>
+        *{
+            margin:0px;padding:0px;
+        }
+        /*设置body宽高自适应*/
+        html,body
+        {
+            height:100%;
+            width: 100%;
+        }
+        .content-div
+        {
+            height:100%;
+            width: 100%;
+        }
+    </style>
+    <style type="text/css">
+        /*文件上传 控件*/
+        .upload{position:relative; display:inline-block; height:33px;line-height:33px; overflow:hidden;vertical-align:middle; cursor:pointer;}
+        .upload .upload-input-file{position:absolute; right:0; top:0; font-size:100px; opacity:0; filter:alpha(opacity=0);cursor:pointer;}
+        .upload .upload-btn{outline:none;border:0; padding:0px 15px;color:#fff;background:#1D92AF;cursor:pointer; /*border-radius:3px;*/}
+        .upload .upload-url { -moz-box-sizing: border-box; -webkit-box-sizing: border-box; box-sizing: border-box; border-radius:2px;
+            border: solid 1px #ddd; width: 200px; height:30px;-webkit-line-height: 1;line-height: 30px\9;-ms-line-height: 30px; text-indent:3px;}
+        .upload .upload-tip {display:none; background-color:#1c84c6; padding:2px 10px; color:#fefefe; font-size:12px !important;border-radius:3px;}
+    </style>
+    <script src="${base.contextPath}/common/code?functionAndTableNameRel=FUNCTION_AND_TABLE_NAME_REL" type="text/javascript"></script>
+    <script type="text/javascript">
+        var viewModel = Hap.createGridViewModel("#grid");
+        viewModel.functionAndTableNameRel = functionAndTableNameRel;
+    </script>
+</head>
+<body>
+    <div class="content-div" id="content" >
+        <span id="IMPORT">
+            <form id="myForm1" action="" enctype="multipart/form-data" style="float: left;width: 70px;">
+                <div style="float: left">
+                    <span class="upload">
+                        <span class="btn btn-primary" style="float:left;" >
+                            <i class="fa fa-file-excel-o" style="margin-right:3px;"></i>导入数据
+                        </span>
+                        <span class="upload-tip"></span>
+                        <input accept="application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                               type="file" id="file" name="file" onchange="importTableData()"  class="upload-input-file" />
+                    </span>
+                </div>
+            </form>
+        </span><BR/>
+        <div style="margin-top: 10%;width: 100%;text-align: center">
+            <select  data-role="dropdownlist" id="tableName" data-value-primitive="true" data-text-field="meaning" style="width:50%" data-value-field="value"
+                     data-bind="source: functionAndTableNameRel, value:tableName"></select>
+            <span onclick="importTemplate()" class="btn btn-primary" >导出模板</span><br/>
+
+        </div>
+        <script>
+            // 导出模板
+            function importTemplate() {
+                var tableName = $("#tableName").val();
+                var $inputToken=$('<input>').attr({name:"${_csrf.parameterName}",value:"${_csrf.token}",type:"hidden"});
+                var idsInput=$('<input>').attr({name:"tableName",id:"tableName",value:tableName});
+                var $form = $("<form>");
+                $form.attr({
+                    target: 'id_iframe',
+                    method: 'post',
+                    action: '${base.contextPath}/exportTableColumn'
+                });
+                $form.append($inputToken);
+                $form.append(idsInput);
+                $form.id='smbForm';
+                $("#batchDiv").empty().append($form);
+                $($form).submit();
+                $("#batchDiv").empty();
+            }
+            function importTableData() {
+                var formData = new FormData($("#myForm1")[0]);
+                $.ajax({
+                    url: '${base.contextPath}/importTableData',
+                    type: 'POST',
+                    data: formData,
+                    async : false,
+                    cache : false,
+                    contentType : false,
+                    processData : false,
+                    success:function (data) {
+                        if(data.success){
+                            Hap.showToast({
+                                type: 'success',
+                                message: '导入数据成功'
+                            });
+                        }else {
+                            kendo.ui.showInfoDialog({
+
+                                message: data.message
+                            });
+                        }
+                    }
+                });
+                $("#file").val("");
+            }
+        </script>
+    </div>
+    <script>kendo.bind($('#content'), viewModel);</script>
+</body>
+</html>

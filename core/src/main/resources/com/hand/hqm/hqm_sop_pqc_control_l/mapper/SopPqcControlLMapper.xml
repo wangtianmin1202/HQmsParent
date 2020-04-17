@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_sop_pqc_control_l.mapper.SopPqcControlLMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_sop_pqc_control_l.dto.SopPqcControlL">
+        <result column="STANDARD_OP_ID" property="standardOpId" jdbcType="DECIMAL" />
+        <result column="WORKSTATION_ID" property="workstationId" jdbcType="DECIMAL" />
+        <result column="WORKSTATION_CODE" property="workstationCode" jdbcType="VARCHAR" />
+        <result column="WORKSTATION_DES" property="workstationDes" jdbcType="VARCHAR" />
+        <result column="ENABLE_FLAG" property="enableFlag" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE1" property="globalAttribute1" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE2" property="globalAttribute2" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE3" property="globalAttribute3" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE4" property="globalAttribute4" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE5" property="globalAttribute5" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE6" property="globalAttribute6" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE7" property="globalAttribute7" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE8" property="globalAttribute8" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE9" property="globalAttribute9" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE10" property="globalAttribute10" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE11" property="globalAttribute11" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE12" property="globalAttribute12" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE13" property="globalAttribute13" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE14" property="globalAttribute14" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE15" property="globalAttribute15" jdbcType="VARCHAR" />
+        
+        <result column="STANDARD_OP_CODE" property="standardOpCode" jdbcType="VARCHAR" />
+        <result column="STANDARD_OP_DES" property="standardOpDes" jdbcType="VARCHAR" />
+        <result column="PROD_LINE_ID" property="prodLineId" jdbcType="VARCHAR" />
+        
+    </resultMap>
+    <select id="standardlov" resultMap="BaseResultMap"  parameterType="com.hand.hqm.hqm_sop_pqc_control_l.dto.SopPqcControlL">
+     SELECT h.standard_op_id,
+       h.standard_op_code,
+       h.standard_op_des,
+       l.workstation_id,
+       l.workstation_code,
+       l.workstation_des
+  FROM hqm_sop_pqc_control_h h
+  LEFT JOIN hqm_sop_pqc_control_l l
+    ON h.standard_op_id = l.standard_op_id
+ WHERE 1 = 1
+   AND h.enable_flag = 'Y'
+		   <if test="standardOpCode!=null">
+		  AND h.standard_op_code = LIKE concat('%',concat( #{standardOpCode},'%'))
+		   </if>
+		   <if test="plantId!=null">
+       	AND	h.plant_id = #{plantId}
+       </if>
+       <if test="prodLineId!=null">
+       	AND	h.prod_line_id = #{prodLineId}
+       </if>
+       <if test="standardOpId!=null">
+		  AND t.standard_op_id = #{standardOpId}
+	</if>
+   </select>
+<select id="workstationLov" resultMap="BaseResultMap"  parameterType="com.hand.hqm.hqm_sop_pqc_control_l.dto.SopPqcControlL">
+     SELECT t.* FROM hqm_sop_pqc_control_l t WHERE 1=1
+     <if test="standardOpId!=null">
+		  AND t.standard_op_id = #{standardOpId}
+	</if>
+	<if test="workstationCode!=null">
+		  AND t.workstation_code = #{workstationCode}
+	</if>
+	<if test="workstationDes!=null">
+		  AND t.workstation_des = #{workstationDes}
+	</if>
+	
+   </select>
+</mapper>

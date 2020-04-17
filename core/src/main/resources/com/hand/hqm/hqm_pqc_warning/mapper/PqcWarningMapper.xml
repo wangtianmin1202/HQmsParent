@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_pqc_warning.mapper.PqcWarningMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_pqc_warning.dto.PqcWarning">
+        <result column="WARNING_ID" property="warningId" jdbcType="DECIMAL" />
+        <result column="PLANT_ID" property="plantId" jdbcType="DECIMAL" />
+        <result column="WARNING_LEVEL" property="warningLevel" jdbcType="VARCHAR" />
+        <result column="LEVEL_DESC" property="levelDesc" jdbcType="VARCHAR" />
+        <result column="WARNING_OBJECT" property="warningObject" jdbcType="VARCHAR" />
+        <result column="WARNING_TIME" property="warningTime" jdbcType="DECIMAL" />
+        <result column="ENABLE_FLAG" property="enableFlag" jdbcType="VARCHAR" />
+        <result column="PLANT_CODE" property="plantCode" jdbcType="VARCHAR" />
+    </resultMap>
+
+
+<select id="reSelect" resultMap="BaseResultMap" parameterType="com.hand.hqm.hqm_pqc_warning.dto.PqcWarning">
+SELECT t.*, hp.plant_code
+  FROM hqm_pqc_warning t
+  JOIN hcm_plant hp
+    ON t.plant_id = hp.plant_id
+ WHERE 1 = 1
+ <if test="plantId != null">
+ AND t.plant_id = #{plantId}
+ </if>
+</select>
+
+</mapper>

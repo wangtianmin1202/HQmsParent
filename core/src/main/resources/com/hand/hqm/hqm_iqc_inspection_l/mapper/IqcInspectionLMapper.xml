@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_iqc_inspection_l.mapper.IqcInspectionLMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_iqc_inspection_l.dto.IqcInspectionL">
+        <result column="LINE_ID" property="lineId" jdbcType="DECIMAL" />
+        <result column="HEADER_ID" property="headerId" jdbcType="DECIMAL" />
+        <result column="INSPECTION_ATTRIBUTE" property="inspectionAttribute" jdbcType="VARCHAR" />
+        <result column="ORDER_CODE" property="orderCode" jdbcType="DECIMAL" />
+        <result column="SAMPLE_PROCEDURE_TYPE" property="sampleProcedureType" jdbcType="VARCHAR" />
+        <result column="INSPECTION_LEVELS" property="inspectionLevels" jdbcType="VARCHAR" />
+        <result column="QUALITY_CHARACTER_GRADE" property="qualityCharacterGrade" jdbcType="VARCHAR" />
+        <result column="SIZE_CODE_LETTER" property="sizeCodeLetter" jdbcType="VARCHAR" />
+        <result column="ACCEPTANCE_QUALITY_LIMIT" property="acceptanceQualityLimit" jdbcType="VARCHAR" />
+        <result column="SAMPLE_SIZE" property="sampleSize" jdbcType="DECIMAL" />
+        <result column="STANDARD_TYPE" property="standardType" jdbcType="VARCHAR" />
+        <result column="AC" property="ac" jdbcType="VARCHAR" />
+        <result column="RE" property="re" jdbcType="VARCHAR" />
+        <result column="TEXT_STANDRAD" property="textStandrad" jdbcType="VARCHAR" />
+        <result column="STANDRAD_UOM" property="standradUom" jdbcType="VARCHAR" />
+        <result column="STANDRAD_FROM" property="standradFrom" jdbcType="VARCHAR" />
+        <result column="STANDRAD_TO" property="standradTo" jdbcType="VARCHAR" />
+        <result column="FREQUENCY_TYPE" property="frequencyType" jdbcType="VARCHAR" />
+        <result column="FREQUENCY" property="frequency" jdbcType="DECIMAL" />
+        <result column="INSPECTION_TOOL" property="inspectionTool" jdbcType="VARCHAR" />
+        <result column="REMARK" property="remark" jdbcType="VARCHAR" />
+        <result column="INSPECTION_COUNT" property="inspectionCount" jdbcType="DECIMAL" />
+        <result column="CONFORMING_QTY" property="conformingQty" jdbcType="DECIMAL" />
+        <result column="NON_CONFORMING_QTY" property="nonConformingQty" jdbcType="DECIMAL" />
+        <result column="IS_ADD" property="isAdd" jdbcType="VARCHAR" />
+        <result column="ENABLE_TYPE" property="enableType" jdbcType="VARCHAR" />
+        <result column="DATA_FROM" property="dataFrom" jdbcType="VARCHAR" />
+        
+        <result column="ATTRIBUTE_ID" property="attributeId" jdbcType="DECIMAL" />
+        <result column="ATTRIBUTE_TYPE" property="attributeType" jdbcType="VARCHAR" />
+        <result column="ATTRIBUTE_INSPECTION_RES" property="attributeInspectionRes" jdbcType="VARCHAR" />
+        
+        <result column="PRECISION" property="precision" jdbcType="DECIMAL" />
+        <result column="SAMPLE_WAY_ID" property="sampleWayId" jdbcType="DECIMAL" />
+        <result column="SAMPLE_TYPE" property="sampleType" jdbcType="DECIMAL" />
+        <result column="PARAMETER" property="parameter" jdbcType="VARCHAR" />
+        <result column="INSPECTION_METHOD" property="inspectionMethod" jdbcType="VARCHAR" />
+        
+        <result column="FILL_IN_TYPE" property="fillInType" jdbcType="VARCHAR" />
+        <result column="ROW_N" property="rowN" jdbcType="DECIMAL" />
+        <result column="TEMPLATE_LINE_ID" property="templateLineId" jdbcType="DECIMAL" />
+        
+        <result column="SAMPLE_WAY_CODE" property="sampleWayCode" jdbcType="VARCHAR"/>
+        <result column="SAMPLE_PLAN" property="samplePlan" jdbcType="VARCHAR"/>
+    </resultMap>
+
+<select id="timeItemSelectN" resultMap="BaseResultMap"
+            parameterType="com.hand.hqm.hqm_iqc_inspection_l.dto.IqcInspectionL">
+            SELECT temp.attribute_inspection_res,temp.sample_plan
+  FROM (SELECT t.attribute_inspection_res,t.sample_plan
+          FROM hqm_iqc_inspection_l t
+          JOIN hqm_iqc_inspection_h h
+            ON t.header_id = h.header_id
+         WHERE h.item_id = (SELECT he.item_id FROM hqm_iqc_inspection_h he WHERE he.header_id = #{headerId})
+           AND h.source_type = '0'
+           AND h.inspection_status = '5'
+           AND t.attribute_id = #{attributeId}
+         ORDER BY h.inspection_date DESC) temp
+ WHERE rownum &lt;= #{valueN}
+            
+            </select>
+
+<select id="reSelect" resultMap="BaseResultMap"
+            parameterType="com.hand.hqm.hqm_iqc_inspection_l.dto.IqcInspectionL">
+SELECT t.ac,
+       hsm.acceptance_quality_limit,
+       t.attribute_id,
+       t.attribute_inspection_res,
+       t.attribute_type,
+       t.conforming_qty,
+       t.created_by,
+       t.creation_date,
+       t.data_from,
+       t.enable_type,
+       t.fill_in_type,
+       t.frequency,
+       t.frequency_type,
+       t.header_id,
+       t.inspection_attribute,
+       t.inspection_count,
+       hsm.inspection_levels,
+       t.inspection_method,
+       t.inspection_tool,
+       t.is_add,
+       t.line_id,
+       t.non_conforming_qty,
+       t.object_version_number,
+       t.order_code,
+       t.parameter,
+       t.precision,
+       t.quality_character_grade,
+       t.re,
+       t.remark,
+       t.sample_size,
+       t.sample_type,
+       t.sample_way_id,
+       t.size_code_letter,
+       t.standard_type,
+       t.standrad_from,
+       t.standrad_to,
+       t.standrad_uom,
+       t.text_standrad,
+       t.sample_plan,
+       hsm.sample_procedure_type
+  FROM hqm_iqc_inspection_l t, hqm_sample_manage hsm
+ WHERE 1 = 1
+   AND t.sample_way_id = hsm.sample_way_id
+<if test="headerId != null">
+AND t.header_id = #{headerId}
+</if>
+<if test="headerId == null">
+AND t.header_id = '-1'
+</if>
+ORDER BY t.template_line_id
+</select>
+
+<select id="selectAttribute" resultMap="BaseResultMap"
+            parameterType="com.hand.hqm.hqm_iqc_inspection_l.dto.IqcInspectionL">
+SELECT t.*, hsm.sample_way_code
+  FROM hqm_iqc_inspection_l t, hqm_sample_manage hsm
+ WHERE 1 = 1
+   AND t.sample_way_id = hsm.sample_way_id
+AND t.header_id = #{headerId}
+ORDER BY t.template_line_id
+</select>
+<select id="reSelectFornon" resultMap="BaseResultMap"
+            parameterType="com.hand.hqm.hqm_iqc_inspection_l.dto.IqcInspectionL">
+select rownum as ROW_N,a.* from (SELECT t.*
+FROM hqm_iqc_inspection_l t 
+WHERE 1 = 1 
+and t.attribute_inspection_res ='NG'
+<if test="headerId != null">
+AND t.header_id = #{headerId}
+</if>
+<if test="headerId == null">
+AND t.header_id = '-1'
+</if>
+ORDER BY t.attribute_inspection_res,t.attribute_id) a
+</select>
+
+</mapper>

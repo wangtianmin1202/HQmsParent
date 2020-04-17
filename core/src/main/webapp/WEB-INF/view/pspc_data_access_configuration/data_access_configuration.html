@@ -1,0 +1,685 @@
+<#include "../include/header.html">
+<script src="${base.contextPath}/common/code?PSPC_SAMPLING_POSITION=PSPC.SAMPLING.POSITION" type="text/javascript"></script>
+<script src="${base.contextPath}/common/code?PSPC_SAMPLING_TYPE=PSPC.SAMPLING.TYPE" type="text/javascript"></script>
+
+<script type="text/javascript">
+    var viewModel = Hap.createGridViewModel("#grid",{
+        model: {},
+        PSPC_SAMPLING_POSITION:PSPC_SAMPLING_POSITION,
+        PSPC_SAMPLING_TYPE:PSPC_SAMPLING_TYPE,
+        create: function(){
+            $('#grid').data('kendoGrid').addRow();
+            //createDialog.center().open();
+        },
+        cancelDialog:function () {
+            createDialog.center().close();
+        },
+    });
+
+    viewModel.saveDialog = function(){
+        //保存按钮逻辑
+        console.log(viewModel.model.isometricSampling);
+        $.ajax({
+            url: "${base.contextPath}/pspc/data/access/configuration/submit/ui",
+            type: "POST",
+            dataType: "json",
+            data : {
+                "ceGroupId":viewModel.model.ceGroupId,"attachmentGroupId":viewModel.model.attachmentGroupId,
+                "ceParameterId":viewModel.model.ceParameterId,"configurationStatus":viewModel.model.configurationStatus,
+                "effectiveType":viewModel.model.effectiveType,"timeSampling":viewModel.model.timeSampling,
+                "isometricSampling":viewModel.model.isometricSampling,"samplingPosition":viewModel.model.samplingPosition,
+                "dataUpperLimit":viewModel.model.dataUpperLimit,"dataLowerLimit":viewModel.model.dataLowerLimit,
+                "tenantId":"-1","siteId":"-1",
+            },
+            // contentType: "application/json",
+            async: false,
+            success: function (data) {
+                console.log(data);
+                //弹窗消息
+                kendo.ui.showConfirmDialog({message: "保存成功！"});
+                createDialog.close();
+                $('#grid').data('kendoGrid').dataSource.page(1);
+            }
+        });
+    };
+
+
+    //红色*
+    var spanRed = '<span style='+'color:red'+'>&nbsp;&nbsp;*</span>';
+
+
+</script>
+
+<style>
+    .head-div{
+        margin-top: 10px;
+        padding-left: 50px;
+    }
+    .head-div2{
+        margin-top: 10px;
+        padding-left: 43px;
+    }
+    .head-div div{
+        height: 30px;
+    }
+    .head-div label{
+        color: black;
+        font-size: 14px;
+        line-height: 30px;
+        text-align: right;
+        width: 100%;
+    }
+    .head-div input{
+        width:150px;
+        /*margin-right:5px;*/
+    }
+    .dialog-div label{
+        color: black;
+        font-size: 14px;
+        line-height: 30px;
+        text-align: right;
+    }
+    .dialog-div input{
+        width:150px;
+    }
+    td a{
+        color:#204d74;
+    }
+    .dialog-div .row{
+        margin-top: 10px;
+    }
+    .btn-foot{
+        width: 95%;
+        position: absolute;
+        bottom: 20px;
+    }
+</style>
+<body>
+<div id="page-content">
+    <div class="pull-left" id="toolbar-btn" style="padding-bottom:10px;">
+        <span class="btn btn-primary k-grid-add" style="float:left;margin-right:5px;" data-bind="click:create"><@spring.message "hap.new"/></span>
+        <span class="btn btn-success k-grid-save-changes" data-bind="click:save" style="float:left;margin-right:5px;"><@spring.message "hap.save"/></span>
+        <span  data-bind="click:remove" class="btn btn-danger" style="float:left;"><@spring.message "hap.delete"/></span>
+    </div>
+    <script>kendo.bind($('#toolbar-btn'), viewModel);</script>
+    <div class="pull-right" id="query-form" style="padding-bottom:10px;">
+        <!--控制要素组LOV-->
+        <div style="float:left;margin-right:5px;">
+            <label style="margin-top:5px;margin-right:10px;float:left;font-size: 14px;color:black"><@spring.message "pspcdataaccessconfiguration.cegroup"/>:</label>
+            <input type="text" id="ceGroupId" style="width:150px;"
+                   data-bind="value:model.ceGroupId" class="">
+            <script>
+                $("#ceGroupId").kendoLov($.extend(${lovProvider.getLov(base.contextPath, base.locale,
+                "PSPC_PSPC_CE_GROUP")},{
+                    // textField: 'ceGroupId',
+                    // valueField:'ceGroupId',
+                    select: function (e) {
+                        viewModel.model.set("ceGroupId", e.item.ceGroupId);
+                    }
+                }));
+            </script>
+        </div>
+        <!--控制要素LOV-->
+        <div style="float:left;margin-left:15px;">
+            <label style="margin-top:5px;float:left;margin-right:10px;font-size: 14px;color:black"><@spring.message "pspcdataaccessconfiguration.ceparameter"/>:</label>
+            <input type="text" id="ceParameterId" style="width:150px;"
+                   data-bind="value:model.ceParameterId" class="">
+            <script>
+                $("#ceParameterId").kendoLov($.extend(${lovProvider.getLov(base.contextPath, base.locale,
+                "PSPC_PSPC_CE_PARAMETER")}, {
+                    query: function (e) {
+                        e.param['ceGroupId'] = viewModel.model.ceGroupId;
+                    }
+                }));
+            </script>
+        </div>
+        <!--附着对象组LOV-->
+        <div style="float:left;margin-left:15px;">
+            <label style="margin-top:5px;float:left;margin-right:10px;font-size: 14px;color:black"><@spring.message "pspcdataaccessconfiguration.attachmentgroup"/>:</label>
+            <input type="text" id="attachmentGroupId" style="width:150px;"
+                   data-bind="value:model.attachmentGroupId" class="">
+            <script>
+                $("#attachmentGroupId").kendoLov($.extend(${lovProvider.getLov(base.contextPath, base.locale,
+                "PSPC_PSPC_ATTACHMENT_GROUP_PRO")},{
+                    query: function (e) {
+                        e.param['ceGroupId'] = viewModel.model.ceGroupId;
+                    }
+                }));
+            </script>
+        </div>
+        <span class="btn btn-default" style="float:left;width:70px;margin-left:15px;" data-bind="click:reset"
+              type="submit"><@spring.message "hap.reset"/></span>
+        <span class="btn btn-primary" style="margin-left:10px;float:left;width:70px" data-bind="click:query" type="submit"><@spring.message "hap.query"/></span>
+        <div style="clear:both"></div>
+    </div>
+    <script>kendo.bind($('#query-form'), viewModel);</script>
+    <div style="clear:both">
+        <div id="grid"></div>
+    </div>
+
+
+    <!--新建按钮弹窗-->
+    <div id="createDialog" class="dialog-div" style="display: none">
+        <div class="container" style="width: 95%">
+            <div class="row">
+                <label class="col-sm-3 col-md-3"><span style='color:red'>*&nbsp;&nbsp;</span>控制要素组:</label>
+                <div class="col-sm-2 sol-md-2">
+                    <input type="text" id="ceGroupId2" style="width:150px;"
+                           data-bind="value:model.ceGroupId" class="" placeholder='<@spring.message "dataaccessconfiguration.cegroupid"/>'>
+                    <script>
+                        $("#ceGroupId2").kendoLov($.extend(${lovProvider.getLov(base.contextPath, base.locale,
+                "HCM_LOV_EMPLOYEES")}));
+                    </script>
+                </div>
+            </div>
+            <div class="row">
+                <label class="col-sm-3 col-md-3"><span style='color:red'>*&nbsp;&nbsp;</span>附着对象组:</label>
+                <div class="col-sm-2 sol-md-2">
+                    <input type="text" id="attachmentGroupId2" style="width:150px;"
+                           data-bind="value:model.attachmentGroupId" class="" placeholder='<@spring.message "dataaccessconfiguration.attachmentgroupid"/>'>
+                    <script>
+                        $("#attachmentGroupId2").kendoLov($.extend(${lovProvider.getLov(base.contextPath, base.locale,
+                "HCM_LOV_EMPLOYEES")}));
+                    </script>
+                </div>
+            </div>
+            <div class="row">
+                <label class="col-sm-3 col-md-3"><span style='color:red'>*&nbsp;&nbsp;</span><@spring.message "pspcdataaccessconfiguration.ceparameter"/>:</label>
+                <div class="col-sm-2 sol-md-2">
+                    <input type="text" id="ceParameterId2" style="width:150px;"
+                           data-bind="value:model.ceParameterId" class="" placeholder='<@spring.message "dataaccessconfiguration.ceparameterid"/>'>
+                    <script>
+                        $("#ceParameterId2").kendoLov($.extend(${lovProvider.getLov(base.contextPath, base.locale,
+                "HCM_LOV_EMPLOYEES")}));
+                    </script>
+                </div>
+            </div>
+            <!-- 有效性 -->
+            <div class="head-div row">
+                <div class="col-md-2">
+                    <label >有效性：</label>
+                </div>
+                <div class="col-md-2">
+                    <input type="checkbox" id="statusCheckbox" checked  data-bind="value:model.configurationStatus" style="width: 20px;height: 20px;top: 50%;
+                                            transform: translateY(-50%);
+                                            position: relative;">
+                </div>
+                <script>
+                    if( $('#statusCheckbox').is(':checked') ){
+                        viewModel.model.set("configurationStatus","有效");
+                    }else {
+                        viewModel.model.set("configurationStatus","无效");
+                    }
+                </script>
+
+            </div>
+            <!--时间抽样-->
+            <div class="row">
+                <label class="col-sm-3 col-md-3"><span style=''>&nbsp;&nbsp;</span>时间抽样:</label>
+                <div class="col-sm-5 sol-md-5">
+                    1/
+                    <input type="number" style="width: 60%" class="k-textbox" data-bind="value:model.timeSampling" id="timeSampling">
+                    (秒)
+                </div>
+            </div>
+            <!--等距抽样-->
+            <div class="row">
+                <label class="col-sm-3 col-md-3"><span style=''>&nbsp;&nbsp;</span>等距抽样:</label>
+                <div class="col-sm-5 sol-md-5">
+                    1/
+                    <input type="number" style="width: 60%" class="k-textbox" data-bind="value:model.isometricSampling" id="isometricSampling">
+                    (个)
+                </div>
+            </div>
+            <!--抽样取值位置-->
+            <div class="row">
+                <label class="col-sm-3 col-md-3"><span style=''>&nbsp;&nbsp;</span>抽样取值位置:</label>
+                <div class="col-sm-2 sol-md-2">
+                    <input class="k-textbox" data-bind="value:model.samplingPosition" id="samplingPosition">
+                </div>
+            </div>
+            <!--数据过滤上限-->
+            <div class="row">
+                <label class="col-sm-3 col-md-3"><span style=''>&nbsp;&nbsp;</span>数据过滤上限:</label>
+                <div class="col-sm-2 sol-md-2">
+                    <input class="k-textbox" data-bind="value:model.dataUpperLimit" id="dataUpperLimit">
+                </div>
+            </div>
+            <!--数据过滤下限-->
+            <div class="row">
+                <label class="col-sm-3 col-md-3"><span style=''>&nbsp;&nbsp;</span>数据过滤下限:</label>
+                <div class="col-sm-2 sol-md-2">
+                    <input class="k-textbox" data-bind="value:model.dataLowerLimit" id="dataLowerLimit">
+                </div>
+            </div>
+
+
+        </div>
+        <div class="btn-foot">
+            <div class="pull-right">
+                <span class="btn btn-default" data-bind="click:cancelDialog" style="float:left;margin-right:10px;" ><@spring.message "hap.cancel"/></span>
+                <span class="btn btn-primary k-grid-add" data-bind="click:saveDialog" style="float:left;margin-right:5px;" ><@spring.message "hap.ok"/></span>
+            </div>
+        </div>
+    </div>
+    <script>kendo.bind($('#createDialog'), viewModel);</script>
+</div>
+
+
+
+<script type="text/javascript">
+    Hap.initEnterQuery('#query-form', viewModel.query);
+    var BaseUrl = _basePath;
+    dataSource = new kendo.data.DataSource({
+        transport: {
+            read: {
+                url: BaseUrl + "/pspc/data/access/configuration/query",
+                type: "POST",
+                dataType: "json"
+            },
+            update: {
+                url: BaseUrl + "/pspc/data/access/configuration/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            destroy: {
+                url: BaseUrl + "/pspc/data/access/configuration/remove",
+                type: "POST",
+                contentType: "application/json"
+            },
+            create: {
+                url: BaseUrl + "/pspc/data/access/configuration/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            parameterMap: function (options, type) {
+                if (type !== "read" && options.models) {
+                    var datas = Hap.prepareSubmitParameter(options, type);
+                    for (var i = 0; i < datas.length; i++) {
+                        datas[i].tenantId = "-1";
+                        datas[i].siteId = "-1";
+                        // if(datas[i].dataLowerLimit!=""&&datas[i].dataLowerLimit!=undefined&&datas[i].dataLowerLimit!=null
+                        // &&datas[i].dataUpperLimit!=""&&datas[i].dataUpperLimit!=undefined&&datas[i].dataUpperLimit!=null) {
+                        //     if (datas[i].dataLowerLimit > datas[i].dataUpperLimit) {
+                        //         kendo.ui.showErrorDialog({message: "过滤下限不能超过过滤上限,请重新输入！"});
+                        //         return;
+                        //     }
+                        // }
+                    }
+                    return kendo.stringify(datas);
+                } else if (type === "read") {
+                    return Hap.prepareQueryParameter(viewModel.model.toJSON(), options)
+                }
+            }
+        },
+        batch: true,
+        serverPaging: true,
+        pageSize: 10,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+                id: "dataAccessConfigurationId",
+                fields: {
+                    ceGroupId:{
+                        defaultValue:null,
+                        validation:{
+                            required:true,
+                            required:{message:'<@spring.message "hcm.notnull" />'}
+                        }
+                    },
+                    attachmentGroupId:{
+                        defaultValue:null,
+                        validation:{
+                            required:true,
+                            required:{message:'<@spring.message "hcm.notnull" />'}
+                        }
+                    },
+                    ceParameterId:{
+                        defaultValue:null,
+                        validation:{
+                            required:true,
+                            required:{message:'<@spring.message "hcm.notnull" />'}
+                        }
+                    },
+                    configurationStatus:{
+                        type: "boolean",
+                        checkedValue: "Y",
+                        uncheckedValue: "N",
+                        defaultValue: "Y"
+                    },
+                    timeSampling:{
+                        type :"number",
+                        defaultValue: null,
+                        validation: {
+                            min:0
+                        }
+                    },
+                    isometricSampling:{
+                        type :"number",
+                        defaultValue: null,
+                        validation: {
+                            min:0
+                        }
+                    },
+                    dataUpperLimit:{
+                        type :"number",
+                        defaultValue: null,
+                        validation: {
+                        }
+                    },
+                    dataLowerLimit:{
+                        type :"number",
+                        defaultValue: null,
+                        validation: {
+                        }
+                    },
+                },
+                editable: function (col) {
+
+                    //设置如果抽样类型为等距抽样，则时间抽样只读。如果抽样类型为时间抽样，则等距抽样只读
+                    if(this.effectiveType == "ISOMETRIC"){
+                        if(col=="timeSampling"){
+                            return false;
+                        }
+                    }
+
+                    if(this.effectiveType == "TIME"){
+                        if(col=="isometricSampling"){
+                            return false;
+                        }
+                    }
+
+                    //设置新增后不可编辑
+                    if (col == 'ceGroupId'||col == 'attachmentGroupId'||col == 'ceParameterId') {
+                        if (!this.id==null || !this.isNew()) {
+                            return false;
+                        }
+                        return true;
+                    }
+
+                    //设置不可编辑
+                    if (col == 'employeesName'){
+                        return false;
+                    }
+                    return true;
+                }
+            }
+        }
+    });
+
+    $("#grid").kendoGrid({
+        dataSource: dataSource,
+        resizable: true,
+        scrollable: true,
+        navigatable: false,
+        selectable: 'multiple, rowbox',
+        dataBound: function () {
+            if (parent.autoResizeIframe) {
+                parent.autoResizeIframe('${RequestParameters.functionCode!}')
+            }
+        },
+        pageable: {
+            pageSizes: [5, 10, 20, 50],
+            refresh: true,
+            buttonCount: 5
+        },
+        columns: [
+            // {
+            //     field: "dataAccessConfigurationId",
+            //     title: '<@spring.message "dataaccessconfiguration.dataaccessconfigurationid"/>',
+            //     width: 120
+            // },
+            // {
+            //     field: "tenantId",
+            //     title: '<@spring.message "dataaccessconfiguration.tenantid"/>',
+            //     width: 120
+            // },
+            // {
+            //     field: "siteId",
+            //     title: '<@spring.message "dataaccessconfiguration.siteid"/>',
+            //     width: 120
+            // },
+            {
+                field: "ceGroupId", //控制要素组ID
+                title: '<@spring.message "pspcdataaccessconfiguration.cegroup"/>',
+                width: 120,
+                attributes: {style: "white-space:nowrap;text-overflow:ellipsis;text-align:center;"},
+                headerAttributes: {style: "text-align:center"},
+                template: function (dataItem) {
+                    return dataItem.ceGroup || ''
+                },
+                editor: function (container, options) {
+                    $('<input name="' + options.field + '" required/>')
+                        .appendTo(container)
+                        .kendoLov($.extend(<@lov "PSPC_PSPC_CE_GROUP" />, {
+                        valueField: "ceGroupId",
+                        textField: "ceGroup",
+                        model: options.model,
+                        select: function(e) {
+                            options.model.set("ceGroupId", e.item.ceGroupId);//注意这里set的是options里面的model，所以下面也用options
+                            options.model.set("ceGroup", e.item.ceGroup);
+                            // options.model.set("description", e.item.description);
+                            // options.model.set("statusCode", e.item.statusCode);
+                        }
+                    }));
+                },
+            },
+            {
+                field: "attachmentGroupId", //附着对象组ID
+                title: '<@spring.message "pspcdataaccessconfiguration.attachmentgroup"/>',
+                width: 120,
+                attributes: {style: "white-space:nowrap;text-overflow:ellipsis;text-align:center;"},
+                headerAttributes: {style: "text-align:center"},
+                template: function (dataItem) {
+                    return dataItem.attachmentGroup || ''
+                },
+                editor: function (container, options) {
+                    $('<input name="' + options.field + '" required/>')
+                        .appendTo(container)
+                        .kendoLov($.extend(<@lov "PSPC_PSPC_ATTACHMENT_GROUP_PRO" />, {
+                        valueField: "attachmentGroupId",
+                        textField: "attachmentGroup",
+                        model: options.model,
+                        query: function (e) {
+                            e.param['ceGroupId'] = options.model.ceGroupId; //查询框用viewModel.model,列里面用options.model。options包含一个grid里面所有的字段
+                        },
+                        select: function(e) {
+                            options.model.set("attachmentGroupDescription", e.item.attachmentGroupDescription);
+                        }
+                    }));
+                },
+            },
+            {
+                field: "ceParameterId", //控制要素ID
+                title: '<@spring.message "pspcdataaccessconfiguration.ceparameter"/>',
+                width: 120,
+                attributes: {style: "white-space:nowrap;text-overflow:ellipsis;text-align:center;"},
+                headerAttributes: {style: "text-align:center"},
+                template: function (dataItem) {
+                    return dataItem.ceParameter || ''
+                },
+                editor: function (container, options) {
+                    $('<input name="' + options.field + '" required/>')
+                        .appendTo(container)
+                        .kendoLov($.extend(<@lov "PSPC_PSPC_CE_PARAMETER" />, {
+                        valueField: "ceParameterId",
+                        textField: "ceParameter",
+                        model: options.model,
+                        query: function (e) {
+                            e.param['ceGroupId'] = options.model.ceGroupId; //查询框用viewModel.model,列里面用options.model。options包含一个grid里面所有的字段
+                        },
+                        select: function(e) {
+                            options.model.set("ceParameter", e.item.ceParameter);
+                            // options.model.set("ceParameterName", e.item.ceParameterName);
+                            // options.model.set("uom", e.item.uom);
+                        }
+                    }));
+                },
+            },
+            {
+                field: "configurationStatus", //状态
+                title: '<@spring.message "pspcdataaccessconfiguration.configurationstatus"/>',
+                width: 120,
+                attributes: {style: "white-space:nowrap;text-overflow:ellipsis;text-align:center;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+            {
+                field: "effectiveType", //抽样类型
+                title: '<@spring.message "pspcdataaccessconfiguration.samplingtype"/>',
+                width: 120,
+                attributes: {style: "white-space:nowrap;text-overflow:ellipsis;text-align:center;"},
+                headerAttributes: {style: "text-align:center"},
+                template: function (dataItem) {
+                    var v = dataItem.effectiveType;
+                    $.each(PSPC_SAMPLING_TYPE, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return false;
+                        }
+                    })
+                    return v||"";
+                },
+                editor: function (container, options) {
+                    $('<input name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            dataTextField: "meaning",
+                            dataValueField: "value",
+                            dataSource: PSPC_SAMPLING_TYPE,
+                            valuePrimitive: true
+                        });
+                },
+            },
+            {
+                field: "timeSampling", //时间抽样
+                title: '<@spring.message "pspcdataaccessconfiguration.timesampling"/>',
+                width: 120,
+                attributes: {style: "white-space:nowrap;text-overflow:ellipsis;text-align:center;"},
+                headerAttributes: {style: "text-align:center"},
+                // editor: function (container, options) {
+                //     $('<input  name="' + options.field + '" />').appendTo(container).kendoMaskedTextBox({
+                //         change: function () {
+                //             //如果抽样类型为等距抽样，则时间抽样列只读
+                //             if (options.model.effectiveType == "ISOMETRIC") {
+                //
+                //                 // var grid = $("#grid").data("kendoGrid");
+                //                 // grid.refresh();
+                //             }
+                //         }
+                //     });
+                // }
+            },
+            {
+                field: "isometricSampling", //等距抽样
+                title: '<@spring.message "pspcdataaccessconfiguration.isometricsampling"/>',
+                width: 120,
+                attributes: {style: "white-space:nowrap;text-overflow:ellipsis;text-align:center;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+            {
+                field: "samplingPosition", //抽样取值位置
+                title: '<@spring.message "pspcdataaccessconfiguration.samplingposition"/>',
+                width: 120,
+                attributes: {style: "white-space:nowrap;text-overflow:ellipsis;text-align:center;"},
+                headerAttributes: {style: "text-align:center"},
+                template: function (dataItem) {
+                    var v = dataItem.samplingPosition;
+                    $.each(PSPC_SAMPLING_POSITION, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return false;
+                        }
+                    })
+                    return v||"";
+                },
+                editor: function (container, options) {
+                    $('<input name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            dataTextField: "meaning",
+                            dataValueField: "value",
+                            dataSource: PSPC_SAMPLING_POSITION,
+                            valuePrimitive: true
+                        });
+                }
+            },
+            {
+                field: "dataUpperLimit", //数据过滤上限
+                title: '<@spring.message "pspcdataaccessconfiguration.dataupperlimit"/>',
+                width: 120,
+                attributes: {style: "white-space:nowrap;text-overflow:ellipsis;text-align:center;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+            {
+                field: "dataLowerLimit", //数据过滤下限
+                title: '<@spring.message "pspcdataaccessconfiguration.datalowerlimit"/>',
+                width: 120,
+                attributes: {style: "white-space:nowrap;text-overflow:ellipsis;text-align:center;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+            // {
+            //     field: "",
+            //     title: '<@spring.message "hap.action"/>',
+            //     width: 120,
+            //     template:function (dataItem) {
+            //
+            //         return '<label>' +
+            //             '<a href="#" onclick="classifyEdit('+dataItem.dataAccessConfigurationId+',\''+dataItem.ceGroupId+'\',\''+dataItem.attachmentGroupId+'\',\''+dataItem.ceParameterId+'\')">编辑</a>' +
+            //             '&nbsp;&nbsp;&nbsp;' +
+            //             '<a href="#" onclick="classifyDelete('+dataItem.dataAccessConfigurationId+')">删除</a></label>';
+            //     }
+            // }
+        ],
+        editable: true
+    });
+
+
+    /**
+     * 编辑
+     */
+    // function classifyEdit(dataAccessConfigurationId,ceGroupId,attachmentGroupId,ceParameterId) {
+    //     $('#ceGroupId').val(ceGroupId);
+    //     $('#attachmentGroupId').val(attachmentGroupId);
+    //     $('#ceParameterId').val(ceParameterId);
+    //     createDialog.open();
+    // };
+
+    /**
+     * 删除
+     */
+    // function classifyDelete(dataAccessConfigurationId) {
+    //     kendo.ui.showInfoDialog({
+    //         title:"提示",
+    //         message: "确定删除？",
+    //         buttons:[{text: "确定",
+    //             type: 'primary',
+    //             click: function (e) {
+    //                 $.ajax({
+    //                     url: BaseUrl + "/pspc/data/access/configuration/remove/ui",
+    //                     type: "POST",
+    //                     // contentType: "application/json",
+    //                     data : {"dataAccessConfigurationId":dataAccessConfigurationId},
+    //                     async: false,
+    //                     success: function (data) {
+    //                         console.log(data);
+    //                         //弹窗消息
+    //                         kendo.ui.showConfirmDialog({message: "删除成功！"});
+    //                         $('#grid').data('kendoGrid').dataSource.page(1);
+    //                     }
+    //                 });
+    //                 e.dialog.destroy();
+    //             }
+    //         },{text: "取消",
+    //             type: 'default',
+    //             click: function (e) {
+    //                 e.dialog.destroy();
+    //             }
+    //         }]
+    //     })
+    // }
+
+
+</script>
+</body>
+</html>

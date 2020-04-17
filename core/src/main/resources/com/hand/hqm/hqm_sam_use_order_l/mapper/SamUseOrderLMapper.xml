@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_sam_use_order_l.mapper.SamUseOrderLMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_sam_use_order_l.dto.SamUseOrderL">
+        <result column="KID" property="kid" jdbcType="DECIMAL" />
+        <result column="LINE_ID" property="lineId" jdbcType="DECIMAL" />
+        <result column="SAMPLE_TYPE" property="sampleType" jdbcType="VARCHAR" />
+        <result column="APPLICATION_NUM" property="applicationNum" jdbcType="DECIMAL" />
+        <result column="ISSUE_NUM" property="issueNum" jdbcType="DECIMAL" />
+        
+        <result column="USE_ORDER_NUMBER" property="useOrderNumber" jdbcType="VARCHAR" />
+        <result column="USE_ORDER_STATUS" property="useOrderStatus" jdbcType="VARCHAR" />
+        <result column="USE_DEPARTMENT" property="useDepartment" jdbcType="VARCHAR" />
+        <result column="USE_REASON" property="useReason" jdbcType="VARCHAR" />
+        <result column="PLANT_ID" property="plantId" jdbcType="DECIMAL" />
+        <result column="APPLICANT" property="applicant" jdbcType="DECIMAL" />
+        <result column="APPLICATION_DATE" property="applicationDate" jdbcType="DATE" />
+        <result column="APPROVER" property="approver" jdbcType="DECIMAL" />
+        <result column="APPROVAL_DATE" property="approvalDate" jdbcType="DATE" />
+        <result column="REMARK" property="remark" jdbcType="VARCHAR" />
+        <result column="SAMPLE_NUMBER" property="sampleNumber" jdbcType="VARCHAR" />
+        <result column="SAMPLE_DESCRIPTION" property="description" jdbcType="VARCHAR" />
+        <result column="DESCRIPTION" property="description" jdbcType="VARCHAR" />
+    </resultMap>
+    
+     <select id="myselect" resultMap="BaseResultMap"  parameterType="com.hand.hqm.hqm_sam_use_order_l.dto.SamUseOrderL">
+SELECT l.line_id
+			,h.plant_id
+			,h.use_order_number
+			,h.use_department
+			,h.use_reason
+			,h.applicant
+			,h.application_date
+			,h.approver
+			,h.approval_date
+			,h.use_order_status
+			,h.remark
+			,l.kid
+			,l.sample_type
+			,l.application_num 
+			,l.issue_num
+			,strcat(sp.sample_number) as SAMPLE_NUMBER
+	FROM hqm_sam_use_order_h h, hqm_sam_use_order_l l, hqm_sample sp
+ WHERE h.kid = l.kid
+	 AND sp.associated_document(+) = h.use_order_number 
+    <if test="useOrderNumber == null">
+     AND 1=2   
+   </if>
+   <if test="useOrderNumber != null">
+     and  h.use_order_number = #{useOrderNumber}
+   </if>
+ group by l.line_id
+      ,h.plant_id
+      ,h.use_order_number
+      ,h.use_department
+      ,h.use_reason
+      ,h.applicant
+      ,h.application_date
+      ,h.approver
+      ,h.approval_date
+      ,h.use_order_status
+      ,h.remark 
+      ,l.kid
+      ,l.sample_type
+      ,l.application_num
+      ,l.issue_num
+</select>
+
+</mapper>

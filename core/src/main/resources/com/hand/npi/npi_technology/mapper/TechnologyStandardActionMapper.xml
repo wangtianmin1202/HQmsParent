@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.npi.npi_technology.mapper.TechnologyStandardActionMapper">
+    <resultMap id="BaseResultMap" type="com.hand.npi.npi_technology.dto.TechnologyStandardAction">
+        <result column="STANDARD_ACTION_ID" property="standardActionId" jdbcType="DECIMAL" />
+        <result column="ACTION_NAME" property="actionName" jdbcType="VARCHAR" />
+        <result column="STANDARD_WORKING_HOURS" property="standardWorkingHours" jdbcType="DECIMAL" />
+        <result column="TECHNOLOGY_ACTION_NUMBER" property="technologyActionNumber" jdbcType="VARCHAR" />
+        <result column="ACTION_TYPE" property="actionType" jdbcType="VARCHAR" />
+    </resultMap>
+    
+    <select id="selectMaxNumber" resultMap="BaseResultMap"
+		parameterType="com.hand.npi.npi_technology.dto.TechnologyStandardAction">
+		select s.technology_action_number from npi_technology_standard_action s where s.technology_action_number like  concat(#{technologyActionNumber}, '%') 
+		order by s.technology_action_number desc
+	</select>
+
+
+</mapper>

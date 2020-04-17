@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hcs.hcs_doc_statement.mapper.DocStatementMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hcs.hcs_doc_statement.dto.DocStatement">
+        <result column="DOC_STATEMENT_ID" property="docStatementId" jdbcType="DECIMAL" />
+        <result column="DOC_STATEMENT_NUM" property="docStatementNum" jdbcType="VARCHAR" />
+        <result column="SUPPLIER_ID" property="supplierId" jdbcType="DECIMAL" />
+        <result column="SUPPLIER_SITE_ID" property="supplierSiteId" jdbcType="DECIMAL" />
+        <result column="PLANT_ID" property="plantId" jdbcType="DECIMAL" />
+        <result column="SUM_AMOUNT" property="sumAmount" jdbcType="DECIMAL" />
+        <result column="CURRENCY" property="currency" jdbcType="VARCHAR" />
+        <result column="DOC_STATEMENT_STATUS" property="docStatementStatus" jdbcType="VARCHAR" />
+        <result column="CONFIRM_TIME" property="confirmTime" jdbcType="TIMESTAMP" />
+        <result column="CONFIRM_BY" property="confirmBy" jdbcType="DECIMAL" />
+        <result column="REMARKS" property="remarks" jdbcType="VARCHAR" />
+        <result column="CREATION_DATE" property="creationDate" jdbcType="TIMESTAMP" />
+        
+        <!-- 业务字段 -->
+        <result column="PLANT_NAME" property="plantName" jdbcType="VARCHAR" />
+        <result column="SUPPLIER_CODE" property="supplierCode" jdbcType="VARCHAR" />
+        <result column="SUPPLIER_NAME" property="supplierName" jdbcType="VARCHAR" />
+        <result column="SUPPLIER_SITE_NAME" property="supplierSiteName" jdbcType="VARCHAR" />
+        <result column="START_TIME" property="startTime" jdbcType="VARCHAR" />
+        <result column="END_TIME" property="endTime" jdbcType="VARCHAR" />
+        <result column="CONFIRM_NAME" property="confirmName" jdbcType="VARCHAR" />
+        <result column="CREATION_NAME" property="creationName" jdbcType="VARCHAR" />
+        <result column="purchase_group" property="purchaseGroup" jdbcType="VARCHAR" /> 
+    </resultMap>
+	<!-- 查询今年最大流水号 -->
+	<select id="queryMaxNum" resultType="java.lang.Integer" parameterType="com.hand.hcs.hcs_doc_statement.dto.DocStatement">
+			select nvl(max(substr(hds.doc_statement_num,-7)),0)
+	        from hcs_doc_statement hds
+	        where extract(year from hds.creation_date)= extract(year from sysdate)
+	</select>
+	<!-- 对账单确认 查询 -->
+	<select id="query" resultMap="BaseResultMap" parameterType="com.hand.hcs.hcs_doc_statement.dto.DocStatement">
+			select distinct hds.doc_statement_id,
+			       hds.doc_statement_num,
+			       hds.doc_statement_status,
+			       hds.sum_amount,
+			       hds.currency,
+			       hds.plant_id,
+			       hp.descriptions PLANT_NAME,
+			       hds.supplier_id,
+			       hs.supplier_code,
+			       hs.supplier_name,
+			       hds.supplier_site_id,
+			       hss.description SUPPLIER_SITE_NAME,
+			       suu.user_name CREATION_NAME,
+			       hds.creation_date,
+			       hds.confirm_time,
+			       hds.confirm_by,
+			       sus.user_name CONFIRM_NAME,
+			       hds.remarks
+			from sys_user su
+			join hcs_doc_statement hds on decode(su.user_type,'S',su.supplier_id,hds.supplier_id) = hds.supplier_id
+			join hcm_plant hp on hds.plant_id = hp.plant_id
+			join hcs_suppliers hs on hds.supplier_id = hs.supplier_id
+			left join hcs_supplier_site hss on hds.supplier_site_id = hss.supplers_site_id
+			left join sys_user suu on hds.created_by = suu.user_id
+			left join sys_user sus on hds.confirm_by = sus.user_id
+			<if test="purchaseGroup != null">
+	         	left join hcs_asl_control hac on hac.purchase_group = #{purchaseGroup}
+	         	left join hcs_asl ha on hac.asl_id = ha.asl_id and ha.enable_flag = 'Y'
+	        </if>
+			where su.user_id = #{request.userId}
+			<if test="purchaseGroup!=null">
+				and ha.plant_id = hds.plant_id
+				and ha.supplier_id = hds.supplier_id
+			</if>
+			<if test="docStatementNum!=null">
+				and hds.doc_statement_num like concat('%',concat(#{docStatementNum,jdbcType=VARCHAR},'%'))
+			</if>
+			<if test="docStatementStatus!=null">
+				and hds.doc_statement_status = #{docStatementStatus}
+			</if>
+			<if test = "startTime != null">
+				and hds.creation_date &gt;= to_date(#{startTime}, 'yyyy-mm-dd hh24:mi:ss')
+			</if>
+			<if test = "endTime != null">
+				and hds.creation_date &lt;= to_date(#{endTime}, 'yyyy-mm-dd hh24:mi:ss')
+			</if>
+			<if test="docStatementId != null">
+				and hds.doc_statement_id = #{docStatementId}
+			</if>
+			order by hds.doc_statement_num desc
+	</select>
+	
+	<!-- 新建对账单查询 -->
+	<select id="queryAddInto" resultMap="BaseResultMap" parameterType="com.hand.hcs.hcs_doc_statement.dto.DocStatement">
+			select hds.doc_statement_id,
+			       hds.doc_statement_num,
+			       hds.supplier_id,
+			       hds.doc_statement_status,
+			       hds.sum_amount,
+			       hds.creation_date,
+			       su.user_name CREATION_NAME,
+       			   hds.currency,
+       			   hds.plant_id
+			from hcs_doc_statement hds
+			left join sys_user su on hds.created_by = su.user_id
+			where hds.supplier_id = #{supplierId}
+			and hds.doc_statement_status = 'N'
+			and hds.plant_id = #{plantId}
+			and hds.currency = #{currency}
+			order by hds.creation_date desc
+	</select>
+</mapper>

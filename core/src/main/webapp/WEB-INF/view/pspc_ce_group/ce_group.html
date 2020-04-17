@@ -1,0 +1,1353 @@
+<#include "../include/header.html">
+<script src="${base.contextPath}/common/code?TYPE_DOWN=TYPE_DOWN" type="text/javascript"></script>
+<script type="text/javascript">
+    var viewModel = {};
+    var attachmentGroupModel = Hap.createGridViewModel("#attachmentGroupGrid");
+    var ceParameterViewModel = Hap.createGridViewModel("#ceParameterGrid");
+    var attachmentModel = Hap.createGridViewModel("#attachmentGrid");
+    //TAB页的ID
+    var tabIdList = ['attachmentGroupGrid','ceParameterGrid'];
+    var lastCeGroupId;//上一个查询的控制要素组Id
+    var searchFlag = false;//查询标识
+</script>
+<style>
+    .head-div{
+        margin-top: 10px;
+    }
+    .head-div div{
+        height: 30px;
+    }
+    .head-div label{
+        color: black;
+        font-size: 14px;
+        line-height: 30px;
+        text-align: right;
+        width: 100%;
+    }
+    .head-div input{
+        width:150px;
+        /*margin-right:5px;*/
+    }
+    .dialog-div label{
+        color: black;
+        font-size: 14px;
+        line-height: 30px;
+        text-align: right;
+    }
+    .dialog-div input{
+        width:150px;
+    }
+    td a{
+        color:#204d74;
+    }
+    .dialog-div .row{
+        margin-top: 20px;
+    }
+    .btn-foot{
+        width: 95%;
+        position: absolute;
+        bottom: 20px;
+    }
+    .dialog-div
+</style>
+<body>
+<div id="dialog"></div>
+<div id="dialog2"></div>
+<div id="page-content">
+    <div class="pull-right" id="query-form" style="padding-bottom:10px;">
+        <span class="btn btn-primary k-grid-add" onclick="ceParameterGroupAdd()" style="float:left;margin-right:5px;">新增控制要素组</span>
+        <span class="btn btn-success k-grid-save-changes" onclick="ceGroupSave()" style="float:left;margin-right:5px;"><@spring.message "hap.save"/></span>
+        <span class="btn btn-success k-grid-save-changes" onclick="ceGroupCopySave()" style="float:left;margin-right:5px;"><@spring.message "pspcceparameter.copysave"/></span>
+        <span class="btn btn-danger" onclick="ceParameterGroupDelete()" style="float:left;"><@spring.message "hap.delete"/></span>
+        <div style="clear:both"></div>
+    </div>
+    <!-- 上方头信息 -->
+    <div style="clear:both;width: 100%" class="container">
+        <!-- 分类组 -->
+        <div class="head-div row">
+            <div class="col-md-2">
+                <label><span style='color:red'>*&nbsp;&nbsp;</span><@spring.message "pspcceparameter.ceparametergroup"/>：</label>
+            </div>
+            <div class="col-md-2" id="ceGroupDiv">
+                <input type="text" id="ceGroup" data-bind="value:model.ceGroupId" style="clear: both;width: 180px" required="required">
+            </div>
+            <script>
+                $("#ceGroup").kendoLov($.extend(<@lov "PSPC_PSPC_CE_GROUP"/>,{
+                    textField: 'ceGroup',
+                    select:function (e) {
+                        attachmentGroupModel.model.ceGroupId = e.item.ceGroupId;
+                        ceParameterViewModel.model.ceGroupId = e.item.ceGroupId;
+                        viewModel.ceGroupId = e.item.ceGroupId;
+                        viewModel.ceGroup = e.item.ceGroup;
+                        viewModel.description = e.item.description;
+                        viewModel.statusCode = e.item.statusCode;
+                        $('#ceGroupDesc').val(e.item.description);
+                        if(e.item.statusCode === 'Y')
+                        {
+                            document.getElementById("statusCode").checked = true;
+                            //$('#statusCode').attr('checked', 'checked');
+                        }
+                        else
+                        {
+                            document.getElementById("statusCode").checked = false;
+                            //$('#statusCode').removeAttr('checked');
+                        }
+
+                        //记录全局控制要素组信息，重置查询标识
+                        searchFlag = false;
+                    }
+                }));
+            </script>
+            <div class="col-md-2">
+                <span class="btn btn-default" style="float:left;margin-right:5px;" onclick="reset()"><@spring.message "hap.reset"/></span>
+                <span class="btn btn-primary k-grid-add" style="float:left;margin-right:5px;" onclick="queryCeGroup()"><@spring.message "hap.query"/></span>
+            </div>
+        </div>
+        <!-- 分类组描述 -->
+        <div class="head-div row">
+            <div class="col-md-2">
+                <label><@spring.message "pspcceparameter.ceparameterdes"/>：</label>
+            </div>
+            <div class="col-md-2">
+                <input class="k-textbox" id="ceGroupDesc" data-bind="value:model.description" >
+            </div>
+        </div>
+        <!-- 有效性 -->
+        <div class="head-div row">
+            <div class="col-md-2">
+                <label ><@spring.message "pspcceparameter.enableflag"/>：</label>
+            </div>
+            <div class="col-md-2">
+                <input id="statusCode" checked="true" type="checkbox" data-bind="value:model.statusCode" style="width: 20px;height: 20px;top: 50%; transform: translateY(-50%); position: relative;">
+            </div>
+        </div>
+    </div>
+    <!-- 分类项和控制要素 tab页切换 -->
+    <div style="margin-top: 10px">
+        <ul class="nav nav-tabs" id="mytab" style="height: 39px">
+            <li class="active" data-gridid="ceParameterGrid" >
+                <a href="#showTreeUnit" data-toggle="tab">
+                    <@spring.message "pspcceparameter.ceparameter"/>
+                </a>
+            </li>
+            <li class="" data-gridid="attachmentGroupGrid">
+                <a href="#showTreeUnit" data-toggle="tab" ><@spring.message "pspcceparameter.attachmentgroup"/></a>
+            </li>
+            <!--<span class="btn btn-primary k-grid-add" id="line-add"
+                  style="float:left;margin-right:5px;position: relative;top: 50%;transform: translateY(-50%);float: right"
+                  onclick="addNew()"><@spring.message "hap.new"/></span>
+            <span class="btn btn-danger" id="line-delete"
+                  style="float:left;margin-right:5px;position: relative;top: 50%;transform: translateY(-50%);float: right"
+                  onclick="deleteLine()"><@spring.message "hap.delete"/></span>
+            <span class="btn btn-success k-grid-save-changes" id="line-save"
+                  style="float:left;margin-right:5px;position: relative;top: 50%;transform: translateY(-50%);float: right"
+                  onclick="saveLine()"><@spring.message "hap.save"/></span>-->
+        </ul>
+        <div id="tabContent" class="tab-content">
+            <div class="tab-pane fade in active" style="margin-top: 10px;" id="maintain">
+                <div id="page-content1">
+                    <div id='grid-container' style="clear: both">
+                        <div id="ceParameterGridDiv">
+                            <span class="btn btn-primary k-grid-add"
+                                  style="margin-right:5px;position: relative;top: 50%;float: left"
+                                  onclick="ceParameterAdd()"><@spring.message "pspcceparameter.ceparameternew"/></span>
+                            <span class="btn btn-danger"
+                                  style="float:left;margin-right:5px;position: relative;top: 50%;float: right"
+                                  onclick="deleteLine()"><@spring.message "hap.delete"/></span>
+                            <!-- 编辑 -->
+                            <span class="btn btn-primary k-grid-add"
+                                  style="float:left;margin-right:5px;position: relative;top: 50%;float: right"
+                                  onclick="editParamter()"><@spring.message "hap.edit"/></span>
+
+
+                            <span class="btn btn-success k-grid-save-changes"
+                                  style="float:left;margin-right:5px;position: relative;top: 50%;float: right"
+                                  onclick="saveLine()"><@spring.message "hap.save"/></span>
+                            <span class="btn btn-primary k-grid-add"
+                                  style="float:left;margin-right:5px;position: relative;top: 50%;float: right"
+                                  onclick="addNew()"><@spring.message "hap.new"/></span>
+                            <div id="ceParameterGrid" style="margin-top: 15px;float: left;"></div>
+                        </div>
+
+                        <div id="attachmentGroupGridDiv" style="display: none">
+                            <span class="btn btn-danger"
+                                  style="float:left;margin-right:5px;position: relative;top: 50%;float: right"
+                                  onclick="deleteLine()"><@spring.message "hap.delete"/></span>
+                            <!-- 编辑 -->
+                            <span class="btn btn-primary k-grid-add"
+                                  style="float:left;margin-right:5px;position: relative;top: 50%;float: right"
+                                  onclick="editAttachment()"><@spring.message "hap.edit"/></span>
+
+                            <span class="btn btn-primary k-grid-add"
+                                  style="float:left;margin-right:5px;position: relative;top: 50%;float: right"
+                                  onclick="addNew()"><@spring.message "hap.new"/></span>
+                            <div id="attachmentGroupGrid" style="margin-top: 15px;float: left;"></div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <div id="showTreeUnit" class="tab-pane fade">
+                <div id="treeList"></div>
+            </div>
+        </div>
+    </div>
+</div>
+<div style="clear: both"></div>
+<!-- 控制要素组弹窗 -->
+<div id="ceParameterGroupDialog" class="dialog-div" style="display: none">
+    <div class="container" style="width: 95%">
+        <div class="row">
+            <label class="col-sm-4 col-md-4"><span style='color:red'>*&nbsp;&nbsp;</span><@spring.message "pspcceparameter.ceparametergroup"/>:</label>
+            <div class="col-sm-4 sol-md-4">
+                <input class="k-textbox" id="ceParameterGroupCode" />
+            </div>
+        </div>
+        <div class="row">
+            <label class="col-sm-4 col-md-4"><@spring.message "pspcceparameter.ceparameterdes"/>:</label>
+            <div class="col-sm-4 sol-md-4">
+                <input class="k-textbox" id="ceParameterGroupDesc" />
+            </div>
+        </div>
+        <div class="row">
+            <label class="col-sm-4 col-md-4"><@spring.message "pspcceparameter.enableflag"/>:</label>
+            <div class="col-sm-4 sol-md-4">
+                <input id="ceParameterGroupEnable" checked="checked" type="checkbox" style="width: 20px;height: 20px;top: 50%;">
+            </div>
+        </div>
+    </div>
+    <div class="btn-foot">
+        <div class="pull-right">
+            <span class="btn btn-default" onclick="closeDialog('ceParameterGroupDialog')" style="float:left;margin-right:10px;" ><@spring.message "hap.cancel"/></span>
+            <span class="btn btn-primary k-grid-add" onclick="addCeParameterGroup()" style="float:left;margin-right:5px;" ><@spring.message "hap.ok"/></span>
+        </div>
+    </div>
+</div>
+<script>
+    var ceParameterGroupDialog = $("#ceParameterGroupDialog").kendoWindow({
+        width: 500,
+        height: 400,
+        title: '新建控制要素组',
+        visible: false,
+        modal: true,
+        actions: ["Close"],
+        close:function() {
+            //关闭后清空数据
+            $('#ceParameterGroupCode').val('');
+            $('#ceParameterGroupDesc').val('');
+            $('#ceParameterGroupEnable').attr('checked','checked');
+        }
+    }).data("kendoWindow");
+
+    //新增控制要素组
+    function addCeParameterGroup() {
+        var obj = {};
+        obj.ceGroup = $('#ceParameterGroupCode').val();
+        obj.description = $('#ceParameterGroupDesc').val();
+        obj.statusCode = $('#ceParameterGroupEnable').attr('checked')?'Y':'N';
+
+        //校验必输
+        if(!obj.ceGroup){
+            Hap.showToast({
+                type:'error',  //1.success 2.error
+                message: '请输入控制要素组',
+                // showDuration:3000,//3秒后显示成功框
+                hideDuration:2000, //展示3秒成功框
+                "positionClass": "toast-bottom-right",
+            });
+        }
+
+        closeDialog('ceParameterGroupDialog');
+
+        //传入后台
+        //postExecuteAjax("/pspc/ce/group/submit", obj, '控制要素组新增成功');
+    }
+</script>
+
+<!-- 控制要素弹窗 -->
+<div id="ceParameterDialog" class="dialog-div" style="display: none">
+    <div class="container" style="width: 95%">
+        <div class="row">
+            <label class="col-sm-4 col-md-4"><span style='color:red'>*&nbsp;&nbsp;</span><@spring.message "pspcceparameter.ceparameter"/>:</label>
+            <div class="col-sm-4 sol-md-4">
+                <input id="ceParameterId" type="hidden" />
+                <input class="k-textbox" id="ceParameterCode" style="background-color: #ddd;"/>
+            </div>
+        </div>
+        <div class="row">
+            <label class="col-sm-4 col-md-4"><@spring.message "pspcceparameter.ceparametername"/>:</label>
+            <div class="col-sm-4 sol-md-4">
+                <input class="k-textbox" id="ceParameterName" />
+            </div>
+        </div>
+        <div class="row">
+            <label class="col-sm-4 col-md-4"><@spring.message "pspcceparameter.uom"/>:</label>
+            <div class="col-sm-4 sol-md-4">
+                <input class="k-textbox" id="ceParameterUom" />
+            </div>
+        </div>
+        <div class="row">
+            <label class="col-sm-4 col-md-4"><@spring.message "pspcceparameter.remark"/>:</label>
+            <div class="col-sm-4 sol-md-4">
+                <!--<input class="k-textbox" id="ceParameterRemark" />-->
+                <textarea style="margin: 0; width: 145px; height: 80px;" id="ceParameterRemark"></textarea>
+            </div>
+        </div>
+    </div>
+    <div class="btn-foot">
+        <div class="pull-right">
+            <span class="btn btn-default" onclick="closeDialog('ceParameterDialog')" style="float:left;margin-right:10px;" ><@spring.message "hap.cancel"/></span>
+            <span class="btn btn-primary k-grid-add" onclick="EditCeParameter()" style="float:left;margin-right:5px;" ><@spring.message "hap.ok"/></span>
+        </div>
+    </div>
+</div>
+<script>
+    var ceParameterDialog = $("#ceParameterDialog").kendoWindow({
+        width: 500,
+        height: 400,
+        title: '编辑控制要素',
+        visible: false,
+        modal: true,
+        actions: ["Close"],
+        close:function() {
+            //关闭后清空数据
+            $('#ceParameterId').val('');
+            $('#ceParameterCode').val('').removeAttr('disabled');
+            $('#ceParameterName').val('');
+            $('#ceParameterUom').val('');
+            $('#ceParameterRemark').val('');
+            //$('#ceParameterCode').attr('disabled','disabled');
+            //$('#ceParameterCode').removeAttr('disabled');
+            $('#ceParameterGrid').data('kendoGrid').dataSource.read();
+        }
+    }).data("kendoWindow");
+
+    //编辑控制要素
+    function EditCeParameter() {
+        var obj = {};
+        obj.ceParameterId = $('#ceParameterId').val();
+        obj.ceParameter = $('#ceParameterCode').val();
+        obj.ceParameterName = $('#ceParameterName').val();
+        obj.uom = $('#ceParameterUom').val();
+        obj.remark = $('#ceParameterRemark').val();
+
+        //校验必输
+        if(!obj.ceParameter){
+            Hap.showToast({
+                type:'error',  //1.success 2.error
+                message: '请输入控制要素',
+                // showDuration:3000,//3秒后显示成功框
+                hideDuration:2000, //展示3秒成功框
+                "positionClass": "toast-bottom-right",
+            });
+        }
+
+        closeDialog('ceParameterDialog');
+
+        //传入后台
+        postExecuteAjax("/pspc/ce/parameter/update/by/id", obj, '控制要素保存成功');
+    }
+</script>
+
+<!-- 附着要素组弹窗 -->
+<!--附着对象层级维护弹窗-->
+<div id="attachmentGroupDialog"  style="display: none">
+</div>
+<script>
+    var attachmentGroupDialog = $("#attachmentGroupDialog").kendoWindow({
+        width: 800,
+        height: 450,
+        title: '<@spring.message "pspcceparameter. chooseattachedobject"/>',
+        visible: false,
+        iframe: true,
+        modal: false,
+        content:"ce_attachment_group_add.html",
+        actions: [
+            "Close"
+        ],
+
+        close:function() {
+            //$('#attachmentGroupGrid').data('kendoGrid').dataSource.read();
+        }
+    }).data("kendoWindow");
+
+    //删除附着对象
+    function deleteAttachment() {
+        var objs = [];
+        var grid = $('#attachmentGrid').data("kendoGrid") || {};
+        var checked = grid.selectedDataItems();
+        if (grid.selectedDataItems().length) {
+            $.each(checked, function (i, v) {
+                //删除后台数据，dirty为前台添加标识
+                if(!v.dirty && !!v.attachmentRelationId) {
+                    console.log(v);
+                    var obj = {};
+                    obj.attachmentRelationId = v.attachmentRelationId;
+                    obj.attachmentGroupId = v.attachmentGroupId;
+                    objs.push(obj);
+                }
+
+                //删除前端数据
+                grid.dataSource.remove(v);
+            });
+
+            //传入后台
+            if(objs.length > 0) {
+                postExecuteAjax("/pspc/attachment/relation/delete", objs, '附着对象及附着对象组关系删除成功');
+            }
+        }
+    }
+
+    //保存附着对象组 及附着对象关系
+    function attachmentGroupSave() {
+        //再新增关系
+        var objs = [];
+        var grid = $("#attachmentGrid").data("kendoGrid");
+        if (grid.items().length !== 0){
+            for(var i=0; i<grid.items().length; i++){
+                var rowItem = grid.items()[i]; //获取列表的当前选中行
+                var data = grid.dataItem(rowItem); //获取列表的当前行的数据源
+
+                //拼接前台新增加数据，dirty为前台添加标识
+                if(data.dirty && !!data.attachmentId) {
+                    var obj = {};
+                    obj.attachmentId = data.attachmentId;
+                    obj.attachmentGroupId = attachmentModel.model.attachmentGroupId;
+                    obj.ceGroupId = viewModel.ceGroupId;
+                    objs.push(obj);
+                }
+            }
+
+            //传入后台
+            if(objs.length > 0) {
+                postExecuteAjax("/pspc/attachment/relation/submit", objs, '附着对象维护成功');
+            }
+        }
+
+        closeDialog('attachmentGroupDialog');
+    }
+</script>
+
+<script type="text/javascript">
+    var BaseUrl = _basePath;
+    //控制要素数据源
+    var ceParameterDataSource = new kendo.data.DataSource({
+        transport: {
+            read: {
+                url: BaseUrl + "/pspc/ce/parameter/query/by/groupId",
+                type: "POST",
+                dataType: "json"
+            },
+            update: {
+                url: BaseUrl + "/pspc/ce/relationship/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            destroy: {
+                url: BaseUrl + "/pspc/ce/relationship/remove",
+                type: "POST",
+                contentType: "application/json"
+            },
+            create: {
+                url: BaseUrl + "/pspc/ce/relationship/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            parameterMap: function (options, type) {
+                if (type !== "read" && options.models) {
+                    var datas = Hap.prepareSubmitParameter(options, type);
+                    return kendo.stringify(datas);
+                } else if (type === "read") {
+                    return Hap.prepareQueryParameter(ceParameterViewModel.model.toJSON(), options)
+                }
+            }
+        },
+        batch: true,
+        serverPaging: true,
+        pageSize: 5,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+                id: "ceRelationshipId",
+                fields: {
+                    ceParameterId:{
+                        validation: {
+                            required: true,
+                            required: {message: "请选择控制要素"}
+                        }
+                    }
+                },
+                editable: function (col) {
+                    if (col === 'ceParameterId') {
+                        return this.isNew();
+                    }
+                    return true;
+                }
+            }
+        }
+    });
+    //控制要素列
+    var ceParameterColumns = [
+        {
+            field: "ceRelationshipId",
+            title: '<@spring.message "cerelationship.cerelationshipid"/>',
+            width: 120,
+            hidden: true
+        },
+        {
+            field: "ceGroupId",
+            title: '<@spring.message "cerelationship.cegroupid"/>',
+            width: 120,
+            hidden: true
+        },
+        {
+            field: "ceParameterId",
+            title: '<@spring.message "pspcceparameter.ceparameter"/>',
+            width: '20%',
+            template: function(item){
+                //判断是否修改了控制要素编码
+                /*if(!!item['ceParameter'] && !!item['oldCeParameterCode'] && item['ceParameter'] !== item['oldCeParameterCode']){
+                    item.set('ceParameterId', null);
+                    item.set('ceParameterName', null);
+                    item.set('uom', null);
+                    item.set('remark', null);
+                }*/
+                return item['ceParameter']||''
+            },
+            editor: function (container, options) {
+                $('<input name="' + options.field + '" required="required" />')
+                    .appendTo(container)
+                    .kendoLov($.extend(<@lov "PSPC_PSPC_CE_PARAMETER"/>, {
+                    textField: 'ceParameter',
+                    model: options.model
+                },{
+                    select: function (e) {
+                        options.model.set('ceParameterName', e.item.ceParameterName);
+                        options.model.set('oldCeParameterCode', e.item.ceParameter);
+                        options.model.set('uom', e.item.uom);
+                        options.model.set('remark', e.item.remark);
+                        options.model.set('ceGroupId', ceParameterViewModel.model.ceGroupId);
+                    }
+                }));
+            }
+        },
+        {
+            field: "ceParameterName",
+            title: '<@spring.message "pspcceparameter.ceparametername"/>',
+            width: '20%',
+            editor: function (container, options) {
+                var val = options.model.ceParameterName == null ? '' : options.model.ceParameterName;
+                $('<span>' + val + '</span>').appendTo(container);
+            }
+        },
+        {
+            field: "uom",
+            title: '<@spring.message "pspcceparameter.uom"/>',
+            width: '20%',
+            editor: function (container, options) {
+                var val = options.model.uom == null ? '' : options.model.uom;
+                $('<span>' + val + '</span>').appendTo(container);
+            }
+        },
+        {
+            field: "remark",
+            title: '<@spring.message "pspcceparameter.remark"/>',
+            width: '20%',
+            editor: function (container, options) {
+                var val = options.model.remark == null ? '' : options.model.remark;
+                $('<span>' + val + '</span>').appendTo(container);
+            }
+        }
+    ];
+    //附着对象组数据源
+    var attachmentGroupDataSource = new kendo.data.DataSource({
+        transport: {
+            read: {
+                url: BaseUrl + "/pspc/attachment/group/detail/query",
+                type: "POST",
+                dataType: "json"
+            },
+            update: {
+                url: BaseUrl + "/pspc/attachment/group/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            destroy: {
+                url: BaseUrl + "/pspc/attachment/group/remove",
+                type: "POST",
+                contentType: "application/json"
+            },
+            create: {
+                url: BaseUrl + "/pspc/attachment/group/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            parameterMap: function (options, type) {
+                if (type !== "read" && options.models) {
+                    var datas = Hap.prepareSubmitParameter(options, type)
+                    return kendo.stringify(datas);
+                } else if (type === "read") {
+                    return Hap.prepareQueryParameter(attachmentGroupModel.model.toJSON(), options)
+                }
+            }
+        },
+        batch: true,
+        serverPaging: true,
+        pageSize: 10,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+                id: "attachmentGroupId",
+                fields: {}
+            }
+        }
+    });
+    //附着对象组列
+    var attachmentGroupColumns = [
+        {
+            field: "attachmentGroupId",
+            title: '<@spring.message "attachmentgroup.attachmentgroupid"/>',
+            width: 120,
+            hidden: true
+        },
+        {
+            field: "attachmentGroupDescription",
+            title: '<@spring.message "pspcceparameter.attachmentgroup"/>',
+            width: '80%',
+            editor: function (container, options) {
+                var val = options.model.attachmentGroupDescription == null ? '' : options.model.attachmentGroupDescription;
+                $('<span>' + val + '</span>').appendTo(container);
+            }
+        },
+        // {
+        //     field: "action",
+        //     title: '<@spring.message "pspcceparameter.operating"/>',
+        //     width: '7%',
+        //     template:function (dataItem) {
+        //         return dataItem['action'] || '<label>' +
+        //             '<a href="#" onclick="attachmentGroupEdit('+dataItem.attachmentGroupId+')">编辑</a>' +
+        //             // '&nbsp;&nbsp;&nbsp;<a onclick="attachmentGroupDelete('+dataItem.ceParameterId+')">删除</a>' +
+        //             '</label>';
+        //     },
+        //     editor: function (container, options) {
+        //         var action = '<label>' +
+        //             '<a href="#" onclick="attachmentGroupEdit('+options.model.attachmentGroupId+')">编辑</a>' +
+        //             // '&nbsp;&nbsp;&nbsp;<a onclick="attachmentGroupDelete('+options.model.ceParameterId+')">删除</a>' +
+        //             '</label>';
+        //         options.model.set('action', action);
+        //         $(action).appendTo(container);
+        //     }
+        // }
+    ];
+    //附着对象数据源
+    // var attachmentDataSource = new kendo.data.DataSource({
+    //     transport: {
+    //         read: {
+    //             url: BaseUrl + "/pspc/attachment/query/by/group",
+    //             type: "POST",
+    //             dataType: "json"
+    //         },
+    //         update: {
+    //             url: BaseUrl + "/pspc/attachment/submit",
+    //             type: "POST",
+    //             contentType: "application/json"
+    //         },
+    //         destroy: {
+    //             url: BaseUrl + "/pspc/attachment/remove",
+    //             type: "POST",
+    //             contentType: "application/json"
+    //         },
+    //         create: {
+    //             url: BaseUrl + "/pspc/attachment/submit",
+    //             type: "POST",
+    //             contentType: "application/json"
+    //         },
+    //         parameterMap: function (options, type) {
+    //             if (type !== "read" && options.models) {
+    //                 var datas = Hap.prepareSubmitParameter(options, type)
+    //                 return kendo.stringify(datas);
+    //             } else if (type === "read") {
+    //                 return Hap.prepareQueryParameter(attachmentModel.model.toJSON(), options)
+    //             }
+    //         }
+    //     },
+    //     batch: true,
+    //     serverPaging: true,
+    //     pageSize: 5,
+    //     schema: {
+    //         data: 'rows',
+    //         total: 'total',
+    //         model: {
+    //             id: "attachmentId",
+    //             fields: {
+    //                 ceParameterId:{
+    //                     validation: {
+    //                         required: true,
+    //                         required: {message: "请选择附着对象"}
+    //                     }
+    //                 }
+    //             }
+    //         }
+    //     }
+    // });
+
+    var attachmentDataSource = new kendo.data.TreeListDataSource({
+        transport: {
+            read: {
+                url: BaseUrl + "/pspc/attachment/query/tree/data",
+                type: "POST",
+                dataType: "json"
+            },
+            update: {
+                url: BaseUrl + "/pspc/attachment/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            destroy: {
+                url: BaseUrl + "/pspc/attachment/remove",
+                type: "POST",
+                contentType: "application/json"
+            },
+            create: {
+                url: BaseUrl + "/pspc/attachment/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            parameterMap: function (options, type) {
+                if (type !== "read" && options.models) {
+                    var datas = Hap.prepareSubmitParameter(options, type)
+                    return kendo.stringify(datas);
+                } else if (type === "read") {
+                    return Hap.prepareQueryParameter(attachmentModel.model.toJSON(), options)
+                }
+            }
+        },
+        requestEnd: function (e) {
+            var response = e.response;
+            if (!response)
+                return;
+            var datas = [];
+            treelist(datas, response.rows || [], null,null);
+            response.rows = datas;
+        },
+        batch: true,
+        serverPaging: true,
+        pageSize: 10,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+                id: "id",
+                parentId: 'parentId',
+                fields: {},
+                expanded: true
+            }
+        }
+    });
+    //附着对象列
+    // var attachmentColumns = [
+    //     {
+    //         field: "attachmentId",
+    //         title: '<@spring.message "attachment.attachmentid"/>',
+    //         width: '34%',
+    //         template: function(item){
+    //             return item['attachmentCode']||''
+    //         },
+    //         editor: function (container, options) {
+    //             $('<input name="' + options.field + '" required="required"  />')
+    //                 .appendTo(container)
+    //                 .kendoLov($.extend(<@lov "PSPC_ATTACHMENT"/>, {
+    //                 textField: 'attachmentCode',
+    //                 model: options.model
+    //             },{
+    //                 select: function (e) {
+    //                     options.model.set('attachmentType', e.item.attachmentType);
+    //                     options.model.set('description', e.item.description);
+    //                 }
+    //             }));
+    //         }
+    //     },
+    //     {
+    //         field: "attachmentType",
+    //         title: '<@spring.message "attachment.attachmenttype"/>',
+    //         width: '33%',
+    //         editor: function (container, options) {
+    //             var val = options.model.attachmentType == null ? '' : options.model.attachmentType;
+    //             $('<span>' + val + '</span>').appendTo(container);
+    //         }
+    //     },
+    //     {
+    //         field: "description",
+    //         title: '<@spring.message "attachment.descriptions"/>',
+    //         width: '33%',
+    //         editor: function (container, options) {
+    //             console.log(options.model);
+    //             var val = options.model.description == null ? '' : options.model.description;
+    //             $('<span>' + val + '</span>').appendTo(container);
+    //         }
+    //     }
+    // ];
+
+    var attachmentColumns = [{
+        field: "functionCode",
+        title: '<@spring.message "pspcattachedobject.attachedobject"/>',
+        width: 80,
+        headerAttributes: {
+            style: "text-align: center"
+        }
+    }];
+    initGrid('ceParameterGrid', ceParameterDataSource, ceParameterColumns);
+    initGrid('attachmentGroupGrid', attachmentGroupDataSource, attachmentGroupColumns);
+    // initKendoTreeGrid('attachmentGrid', attachmentDataSource, attachmentColumns);
+
+    function initKendoTreeGrid(id,dataSource,columns) {
+        $("#"+id).kendoTreeList({
+            dataSource: dataSource,
+            resizable: true,
+            scrollable: true,
+            navigatable: false,
+            selectable: 'multiple, rowbox',
+            dataBound: function () {
+                if (parent.autoResizeIframe) {
+                    parent.autoResizeIframe('${RequestParameters.functionCode!}')
+                }
+            },
+            pageable: {
+                pageSizes: [5, 10, 20, 50],
+                refresh: true,
+                buttonCount: 5
+            },
+            columns: columns,
+            editable: false
+        }).data('kendoTreeList');
+    }
+
+    /**
+     * 重置
+     */
+    function reset() {
+        window.location.reload();
+    }
+
+    /**
+     * 查询
+     */
+    function queryCeGroup(){
+        if(!viewModel.ceGroupId){
+            Hap.showToast({
+                type:'error',  //1.success 2.error
+                message: '请选择控制要素组',
+                // showDuration:3000,//3秒后显示成功框
+                hideDuration:2000, //展示3秒成功框
+                "positionClass": "toast-bottom-right",
+            });
+            return;
+        }
+        $('#ceParameterGrid').data('kendoGrid').dataSource.read();
+        $('#attachmentGroupGrid').data('kendoGrid').dataSource.read();
+
+        //改变查询状态，记录当前查询ID
+        searchFlag = true;
+        lastCeGroupId = viewModel.ceGroupId;
+    }
+
+    /**
+     * 新建控制要素组
+     */
+    function ceParameterGroupAdd() {
+        // ceParameterGroupDialog.center().open();
+        var dialog = $("#dialog").kendoWindow({
+            actions: ["Close"],
+            width: 980,
+            height: 600,
+            title: '<@spring.message "新建控制要素组"/>',
+            visible: false,
+            iframe: true,
+            modal: false,
+            content: 'ce_group_add.html'
+        }).data("kendoWindow");
+        dialog.center().open();
+    }
+
+    /**
+     * 行信息新建
+     */
+    function addNew() {
+        if(!viewModel.ceGroupId || !searchFlag){
+            Hap.showToast({
+                type:'error',  //1.success 2.error
+                message: '请选择控制要素组并查询',
+                // showDuration:3000,//3秒后显示成功框
+                hideDuration:2000, //展示3秒成功框
+                "positionClass": "toast-bottom-right",
+            });
+            return;
+        }
+        var activeId = $('.active').data('gridid');
+        if(activeId === tabIdList[0]){
+            attachmentGroupModel.create();
+            attachmentGroupEdit(null);
+        }
+        if(activeId === tabIdList[1]){
+            ceParameterViewModel.create();
+        }
+    }
+
+    /**
+     * 副本保存
+     */
+    function ceGroupCopySave(){
+        //判断当前是否已经成功查询并改变了控制要素组
+        if(!viewModel.ceGroupId || !$('#ceGroup').data('kendoLov').text()
+            || !lastCeGroupId || viewModel.ceGroupId === lastCeGroupId){
+            Hap.showToast({
+                type:'error',  //1.success 2.error
+                message: '请先查询再切换控制要素组',
+                // showDuration:3000,//3秒后显示成功框
+                hideDuration:2000, //展示3秒成功框
+                "positionClass": "toast-bottom-right",
+            });
+            return;
+        }
+
+        //新旧ID传入后台处理
+        var obj = {};
+        obj.oldCeGroupId = lastCeGroupId;
+        obj.ceGroupId = viewModel.ceGroupId;
+
+        postExecuteAjax("/pspc/ce/group/copy/save", obj, '副本保存成功');
+    }
+
+    /**
+     * 控制要素组保存
+     */
+    function ceGroupSave(){
+        if(!viewModel.ceGroupId){
+            Hap.showToast({
+                type:'error',  //1.success 2.error
+                message: '请选择控制要素组',
+                // showDuration:3000,//3秒后显示成功框
+                hideDuration:2000, //展示3秒成功框
+                "positionClass": "toast-bottom-right",
+            });
+            return;
+        }
+
+        //控制要素组信息传到后台
+        var objs = [];
+        var obj = {};
+        obj.ceGroupId = viewModel.ceGroupId;
+        obj.ceGroup = viewModel.ceGroup;
+        obj.description = $('#ceGroupDesc').val();
+        obj.statusCode = document.getElementById("statusCode").checked ? 'Y' : 'N';
+        obj.frontUpdate = true;
+        objs.push(obj);
+
+        postExecuteAjax("/pspc/ce/group/submit", objs, '控制要素组保存成功');
+    }
+
+    /**
+     * tab页切换事件
+     * id:tab页下标
+     */
+    $('#mytab>li').click(function () {
+        //如果当前tab页激活的，则不进行操作
+        if($(this).hasClass("active")){
+            return;
+        }
+
+        //切换tab页
+        $(this).addClass("active");
+        $(this).siblings('li').removeClass("active");
+        //获得当前点击li的下标
+        var gridId = $(this).data('gridid');
+        //切换表格的数据源和列
+        $('#'+gridId+'Div').siblings('div').css('display','none');
+        $('#'+gridId+'Div').css('display','block');
+
+        if(!$('#ceGroup').val()){
+            return;
+        }
+        $('#'+gridId).data('kendoGrid').dataSource.read();
+
+    });
+
+    /**
+     * 初始化表格，重新赋值数据源和列
+     */
+    var grid;
+    function initGrid(id,dataSource,columns){
+        grid = $("#"+id).kendoGrid({
+            dataSource: dataSource,
+            resizable: true,
+            scrollable: true,
+            navigatable: false,
+            rownumber: true,
+            autoBind:false,
+            selectable: 'rowbox',
+            dataBound: function () {
+                if (parent.autoResizeIframe) {
+                    parent.autoResizeIframe('${RequestParameters.functionCode!}')
+                }
+            },
+            pageable: {
+                pageSizes: [5, 10, 20, 50],
+                refresh: true,
+                buttonCount: 5
+            },
+            columns: columns,
+            editable: true
+        }).data('kendoGrid');
+    }
+
+    /**
+     * 关闭弹窗
+     */
+    function closeDialog(dialogId) {
+        $('#'+dialogId).data('kendoWindow').close();
+    }
+
+    /**
+     * 新建控制要素
+     */
+    function ceParameterAdd() {
+        // ceParameterDialog.center().open();
+        var dialog2 = $("#dialog2").kendoWindow({
+            actions: ["Close"],
+            width: 980,
+            height: 600,
+            title: '<@spring.message "pspcceparameter.ceparameternew"/>',
+            visible: false,
+            iframe: true,
+            modal: false,
+            content: 'ce_parameter_add.html'
+        }).data("kendoWindow");
+        dialog2.center().open();
+    }
+
+    /**
+     * 控制要素编辑
+     */
+    function ceParameterEdit(id,ceParameter,name,uom) {
+        var realId = GetStringValue(id);
+        if(!realId){
+            Hap.showToast({
+                type:'error',  //1.success 2.error
+                message: '请先点击保存',
+                // showDuration:3000,//3秒后显示成功框
+                hideDuration:2000, //展示3秒成功框
+                "positionClass": "toast-bottom-right",
+            });
+            return;
+        }
+
+        //获取备注
+        var remark = '';
+        var gridData = ceParameterDataSource.data();
+        $.each(gridData, function (i, v) {
+            if(v.ceParameterId == realId) {
+                remark = v.remark;
+                return false;
+            }
+        });
+
+        //显示到弹出层
+        $('#ceParameterCode').attr('disabled','disabled');
+        $('#ceParameterId').val(realId);
+        $('#ceParameterCode').val(GetStringValue(ceParameter));
+        $('#ceParameterName').val(GetStringValue(name));
+        $('#ceParameterUom').val(GetStringValue(uom));
+        $('#ceParameterRemark').val(GetStringValue(remark));
+        ceParameterDialog.center().open();
+    }
+
+    /**
+     * 获取字符串变量的值
+     * @return {null}
+     */
+    function GetStringValue(val) {
+        if(!!val)
+            return val.replace('undefined', '').replace('null', '');
+        else
+            return null;
+    }
+
+    /**
+     * 附着对象组编辑
+     */
+    function attachmentGroupEdit(attachmentGroupId) {
+        if(!!attachmentGroupId) {
+            attachmentModel.model.attachmentGroupId = attachmentGroupId;
+        } else {
+            //新增要校验是否查询过
+            if(!viewModel.ceGroupId || !searchFlag){
+                Hap.showToast({
+                    type:'error',  //1.success 2.error
+                    message: '请选择控制要素组并查询',
+                    // showDuration:3000,//3秒后显示成功框
+                    hideDuration:2000, //展示3秒成功框
+                    "positionClass": "toast-bottom-right",
+                });
+                return;
+            }
+            attachmentModel.model.attachmentGroupId = null;
+        }
+        attachmentGroupDialog.center().open();
+    }
+
+    /**
+     * 行信息保存
+     */
+    function saveLine() {
+        if(!viewModel.ceGroupId || !searchFlag){
+            Hap.showToast({
+                type:'error',  //1.success 2.error
+                message: '请选择控制要素组并查询',
+                // showDuration:3000,//3秒后显示成功框
+                hideDuration:2000, //展示3秒成功框
+                "positionClass": "toast-bottom-right",
+            });
+            return;
+        }
+        var activeId = $('.active').data('gridid');
+        if(activeId === tabIdList[0]){
+            attachmentGroupModel.save();
+        }
+        if(activeId === tabIdList[1]){
+            ceParameterViewModel.save();
+        }
+    }
+
+    /**
+     * 控制要素组删除
+     */
+    function ceParameterGroupDelete() {
+        if(!viewModel.ceGroupId || !searchFlag){
+            Hap.showToast({
+                type:'error',  //1.success 2.error
+                message: '请选择控制要素组并查询',
+                // showDuration:3000,//3秒后显示成功框
+                hideDuration:2000, //展示3秒成功框
+                "positionClass": "toast-bottom-right",
+            });
+            return;
+        }
+
+        kendo.ui.showInfoDialog({
+            title:"提示",
+            message: "确定删除？",
+            buttons:[
+                {text: "取消",
+                    type: 'default',
+                    click: function (e) {
+                        e.dialog.destroy();
+                    }
+                },
+                {text: "确定",
+                    type: 'primary',
+                    click: function (e) {
+                        e.dialog.destroy();
+
+                        //删除对应的数据
+                        var obj = {};
+                        obj.ceGroupId = viewModel.ceGroupId;
+                        obj.description = $("#ceGroupDesc").val();
+                        postExecuteAjax("/pspc/ce/group/delete", obj, '控制要素组删除成功');
+                    }
+                }]
+        });
+    }
+
+    /**
+     * 行信息删除
+     */
+    function deleteLine() {
+        if(!viewModel.ceGroupId || !searchFlag){
+            Hap.showToast({
+                type:'error',  //1.success 2.error
+                message: '请选择控制要素组并查询',
+                // showDuration:3000,//3秒后显示成功框
+                hideDuration:2000, //展示3秒成功框
+                "positionClass": "toast-bottom-right",
+            });
+            return;
+        }
+
+        kendo.ui.showInfoDialog({
+            title:"提示",
+            message: "确定删除？",
+            buttons:[
+                {text: "取消",
+                    type: 'default',
+                    click: function (e) {
+                        e.dialog.destroy();
+                    }
+                },
+                {text: "确定",
+                    type: 'primary',
+                    click: function (e) {
+                        e.dialog.destroy();
+
+                        //删除对应的数据
+                        var activeId = $('.active').data('gridid');
+                        if(activeId === tabIdList[0]){
+                            deleteAttachmentGroup();
+                        }
+                        if(activeId === tabIdList[1]){
+                            deleteCeParameter();
+                        }
+                    }
+                }]
+        });
+    }
+
+    /**
+    * 控制要素组和控制要素关系删除
+    */
+    function deleteCeParameter() {
+        var objs = [];
+        var grid = $('#ceParameterGrid').data("kendoGrid") || {};
+        var checked = grid.selectedDataItems();
+        if (grid.selectedDataItems().length) {
+            $.each(checked, function (i, v) {
+                //删除后台数据，dirty为前台添加标识
+                if(!v.dirty && !!v.ceRelationshipId) {
+                    objs.push(v);
+                }
+
+                //删除前端数据
+                grid.dataSource.remove(v);
+            });
+
+            //传入后台
+            if(objs.length > 0) {
+                postExecuteAjax("/pspc/ce/relationship/delete", objs, '控制要素及控制要素组关系删除成功');
+                $('#ceParameterGrid').data('kendoGrid').dataSource.read();
+            }
+        }
+    }
+
+    /**
+    * 控制要素组和附着对象组关系删除
+    */
+    function deleteAttachmentGroup() {
+        var objs = [];
+        var grid = $('#attachmentGroupGrid').data("kendoGrid") || {};
+        var checked = grid.selectedDataItems();
+        if (grid.selectedDataItems().length) {
+            $.each(checked, function (i, v) {
+                //删除后台数据，dirty为前台添加标识
+                if(!v.dirty && !!v.attachmentGroupId) {
+                    objs.push(v);
+                }
+
+                //删除前端数据
+                grid.dataSource.remove(v);
+            });
+
+            //传入后台
+            if(objs.length > 0) {
+                postExecuteAjax("/pspc/attachment/group/relationship/delete", objs, '附着对象组及控制要素组关系删除成功');
+                $('#attachmentGroupGrid').data('kendoGrid').dataSource.read();
+            }
+        }
+    }
+
+    //执行异步请求处理，不需要判断执行结果
+    function postExecuteAjax(url, obj, successMsg) {
+        $.ajax({
+            type: "POST",
+            url: BaseUrl + url,
+            data:JSON.stringify(obj),//json序列化
+            datatype:"json", //此处不能省略
+            contentType: "application/json; charset=utf-8",
+            success:function(data){
+                if(data.success){
+                    Hap.showToast({
+                        type: 'success',  //1.success 2.error
+                        message: successMsg,
+                        // showDuration:3000,//3秒后显示成功框
+                        hideDuration: 2000, //展示3秒成功框
+                        "positionClass": "toast-bottom-right",
+                    });
+                } else {
+                    Hap.showToast({
+                        type: 'error',  //1.success 2.error
+                        message: data.message,
+                        // showDuration:3000,//3秒后显示成功框
+                        hideDuration: 4000, //展示3秒成功框
+                        "positionClass": "toast-bottom-right",
+                    });
+                }
+            },
+            error:function(data){
+                Hap.showToast({
+                    type:'error',  //1.success 2.error
+                    message: data,
+                    // showDuration:3000,//3秒后显示成功框
+                    hideDuration:2000, //展示3秒成功框
+                    "positionClass": "toast-bottom-right",
+                });
+            }
+        });
+    }
+
+    /**
+     * 编辑控制要素
+     */
+    function editParamter() {
+        var rows = $('#ceParameterGrid').data('kendoGrid').selectedDataItems();
+        if(rows.length == 0){
+            Hap.showToast({
+                type: 'error',  //1.success 2.error
+                message: "请选择数据",
+                // showDuration:3000,//3秒后显示成功框
+                hideDuration: 3000, //展示3秒成功框
+                "positionClass": "toast-bottom-right",
+            });
+            return;
+        }
+        var trRow = rows[0];
+        ceParameterEdit(trRow.ceParameterId+'',trRow.ceParameter,trRow.ceParameterName,trRow.uom);
+    }
+
+    /**
+     * 编辑附着对象
+     */
+    function editAttachment(){
+        var rows = $('#attachmentGroupGrid').data('kendoGrid').selectedDataItems();
+        if(rows.length == 0){
+            Hap.showToast({
+                type: 'error',  //1.success 2.error
+                message: "请选择数据",
+                // showDuration:3000,//3秒后显示成功框
+                hideDuration: 3000, //展示3秒成功框
+                "positionClass": "toast-bottom-right",
+            });
+            return;
+        }
+        var trRow = rows[0];
+        // ceParameterEdit(trRow.ceParameterId+'',trRow.ceParameter,trRow.ceParameterName,trRow.uom);
+        attachmentGroupEdit(trRow.attachmentGroupId);
+    }
+
+    function treelist(arr, childrens, parentId,parentCode) {
+        for (var i = 0; i < childrens.length; i++) {
+            childrens[i].parentId = parentId;
+            childrens[i].parentCode = parentCode;
+            childrens[i].hasChildren = true;
+            arr.push(childrens[i])
+            if (childrens[i].children && childrens[i].children.length > 0) {
+                treelist(arr, childrens[i].children, childrens[i].id,childrens[i].functionCode);
+            } else {
+                childrens[i].hasChildren = false;
+            }
+        }
+    }
+
+</script>
+</body>
+</html>

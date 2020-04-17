@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_use_detail_after.mapper.UseDetailAfterMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_use_detail_after.dto.UseDetailAfter">
+        <result column="USE_LINE_ID" property="useLineId" jdbcType="DECIMAL" />
+        <result column="USE_ID" property="useId" jdbcType="DECIMAL" />
+        <result column="SAMPLE_ID" property="sampleId" jdbcType="DECIMAL" />
+        <result column="USE_QTY" property="useQty" jdbcType="DECIMAL" />
+        <result column="REMARK" property="remark" jdbcType="VARCHAR" />
+        
+        <result column="document_status" property="documentStatus" jdbcType="VARCHAR" />
+        <result column="creation_date_column" property="creationDateColumn" jdbcType="DATE" />
+        <result column="created_name" property="createdName" jdbcType="VARCHAR" />
+        <result column="sample_model" property="sampleModel" jdbcType="VARCHAR" />
+        <result column="item_code" property="itemCode" jdbcType="VARCHAR" />
+        <result column="sealing_sample_status" property="sealingSampleStatus" jdbcType="VARCHAR" />
+        <result column="sample_give_date" property="sampleGiveDate" jdbcType="DATE" />
+    </resultMap>
+
+<select id="reSelect" resultMap="BaseResultMap" parameterType="com.hand.hqm.hqm_use_detail_after.dto.UseDetailAfter">
+SELECT t.*,
+       hsu.document_status,
+       hsu.creation_date         AS creation_date_column,
+       he.name                   AS created_name,
+       hsa.sample_model, 
+       hsa.sealing_sample_status,
+       hsa.sample_give_date
+  FROM hqm_use_detail t
+  JOIN hqm_sample_use hsu
+    ON t.use_id = hsu.use_id
+  JOIN sys_user su
+    ON hsu.created_by = su.user_id
+  JOIN hr_employee he
+    ON su.employee_id = he.employee_id
+  JOIN hqm_sample_account hsa
+    ON t.sample_id = hsa.sample_id
+
+ WHERE 1 = 1
+<if test="useId != null">
+AND t.use_id = #{useId}
+</if>
+ORDER BY t.creation_date DESC
+</select>
+</mapper>

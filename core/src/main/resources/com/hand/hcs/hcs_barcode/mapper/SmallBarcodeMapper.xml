@@ -1,0 +1,310 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hcs.hcs_barcode.mapper.SmallBarcodeMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hcs.hcs_barcode.dto.SmallBarcode">
+        <result column="SBARCODE_ID" property="sbarcodeId" jdbcType="DECIMAL" />
+        <result column="SBARCODE" property="sbarcode" jdbcType="VARCHAR" />
+        <result column="SBARCODE_TYPE" property="sbarcodeType" jdbcType="VARCHAR" />
+        <result column="STATUS" property="status" jdbcType="VARCHAR" />
+        <result column="PLANT_ID" property="plantId" jdbcType="DECIMAL" />
+        <result column="PLANT_CODE" property="plantCode" jdbcType="VARCHAR" />
+        <result column="ITEM_ID" property="itemId" jdbcType="DECIMAL" />
+        <result column="ITEM_CODE" property="itemCode" jdbcType="VARCHAR" />
+        <result column="ITEM_DESC" property="itemDesc" jdbcType="VARCHAR" />
+        <result column="ITEM_VERSION" property="itemVersion" jdbcType="VARCHAR" />
+        <result column="QUANTITY" property="quantity" jdbcType="DECIMAL" />
+        <result column="UOM" property="uom" jdbcType="VARCHAR" />
+        <result column="PRODUCTION_TIME" property="productionTime" jdbcType="DATE" />
+        <result column="LOT_CODE" property="lotCode" jdbcType="VARCHAR" />
+        <result column="PACKING_SIZE" property="packingSize" jdbcType="VARCHAR" />
+        <result column="PACKING_LEVEL" property="packingLevel" jdbcType="VARCHAR" />
+        <result column="REMARKS" property="remarks" jdbcType="VARCHAR" />
+        <result column="PACKING_FLAG" property="packingFlag" jdbcType="VARCHAR" />
+        <result column="OBARCODE_ID" property="obarcodeId" jdbcType="DECIMAL" />
+        <result column="OBARCODE" property="obarcode" jdbcType="VARCHAR" />
+        <result column="PRINT_TIME" property="printTime" jdbcType="DECIMAL" />
+        <result column="ENABLE_FLAG" property="enableFlag" jdbcType="VARCHAR" />
+        <result column="TICKET_NUMBER" property="ticketNumber" jdbcType="DECIMAL" />
+        <result column="TICKET_LINE_ID" property="ticketLineId" jdbcType="DECIMAL" />
+        <result column="TICKET_LINE_NUM" property="ticketLineNum" jdbcType="VARCHAR" />       
+        <result column="TICKET_ID" property="ticketId" jdbcType="DECIMAL" />   
+        <result column="PO_NUMBER" property="poNumber" jdbcType="DECIMAL" />
+        <result column="SHIPMENT_NUM" property="shipmentNum" jdbcType="DECIMAL" />
+        <result column="SUPPLIER_CODE" property="supplierCode" jdbcType="VARCHAR" />
+        <result column="SQC_SATUS" property="sqcSatus" jdbcType="VARCHAR" />
+        <result column="SPREADING" property="spreading" jdbcType="VARCHAR" />
+        <result column="FREEZE_FLAG" property="freezeFlag" jdbcType="VARCHAR" />
+        <result column="FREE_FLAG" property="freeFlag" jdbcType="VARCHAR" />
+        <result column="SUPPLIER_ID" property="supplierId" jdbcType="DECIMAL" />
+        <result column="SUPPLIER_CODE" property="supplierCode" jdbcType="VARCHAR" />
+        <result column="SUPPLIER_NAME" property="supplierName" jdbcType="VARCHAR" />
+        <result column="SUPPLIERS_SITE_ID" property="suppliersSiteId" jdbcType="DECIMAL" />
+        <result column="SUPPLIER_SITE" property="supplierSite" jdbcType="VARCHAR" />
+        <result column="TICKET_LINE_ID" property="ticketLineId" jdbcType="DECIMAL" />
+        <result column="PO_HEADER_ID" property="poHeaderId" jdbcType="DECIMAL" />
+        <result column="PO_LINE_ID" property="poLineId" jdbcType="DECIMAL" />
+        <result column="LINE_LOCATION_ID" property="lineLocationId" jdbcType="DECIMAL" />
+        <result column="REFUND_ORDER_ID" property="refundOrderId" jdbcType="DECIMAL" />
+        
+        <result column="CASE_NUMBER" property="caseNumber" jdbcType="VARCHAR" />
+        <result column="PRODUCTION_REGION" property="productionRegion" jdbcType="VARCHAR" />
+        <result column="PRODUCTION_EQUIPMENT" property="productionEquipment" jdbcType="VARCHAR" />
+        <result column="BARCODE_CONTENT" property="barcodeContent" jdbcType="VARCHAR" />
+        <result column="PO_NUMBER_PRINT" property="poNumberPrint" jdbcType="VARCHAR" />
+        
+   		<result column="ITEM_NAME" property="itemName" jdbcType="VARCHAR" />
+   		<result column="PLANT_NAME" property="plantName" jdbcType="VARCHAR" />
+   		<result column="CREATION_DATE" property="creationDate" jdbcType="TIMESTAMP" />
+   		
+   		<!-- 业务字段 -->
+   		<result column="OBARCODE_NUM" property="obarcodeNum" jdbcType="VARCHAR" />
+   		<result column="purchase_group" property="purchaseGroup" jdbcType="VARCHAR" />
+    </resultMap>
+    <!-- 物料标签查询 -->
+    <select id="query" resultMap="BaseResultMap" parameterType="com.hand.hcs.hcs_barcode.dto.SmallBarcode">   
+	  select *
+       from (select distinct hsb.sbarcode_id, --小箱条码id
+                        hsb.sbarcode, --小箱条码号
+                        hsb.sbarcode_type, --小箱条码类型
+                        hsb.status, --小箱条码状态
+                        hsb.plant_id, --工厂id
+                        hsb.item_id, --物料id
+                        hsb.item_version, --版本号
+                        hsb.quantity, --数量
+                        hsb.uom, --单位
+                        hsb.packing_size, --规格
+                        hsb.packing_level, --包装级别
+                        hsb.sqc_satus, --sqc质量状态
+                        hsb.spreading, --档位
+                        hsb.freeze_flag, --是否冻结
+                        hsb.production_time, --生产日期
+                        hsb.lot_code, --生产批次
+                        hsb.remarks, --备注
+                        hsb.enable_flag, --有效标识；y/n
+                        hsb.free_flag, --条码可赋值标记：y/n
+                        hsb.packing_flag, --包装标记：y/n
+                        hsb.print_time, --打印次数
+                        hsb.creation_date,--创建时间
+                        hsbc.supplier_id, --供应商id
+                        hsbc.suppliers_site_id, --供应商地点id
+                        hsbc.ticket_id, --发出送货单id
+                        (select hph.po_header_id
+							from hcs_delivery_ticket_l hdtl 
+							left join hcs_po_headers hph on hdtl.po_header_id = hph.po_header_id
+							where hdtl.ticket_line_id = hsbc.ticket_line_id) as po_header_id, --发出采购订单id
+                        hsbc.po_line_id, --发出采购订单行id
+                        hsbc.line_location_id, --发出采购订单发运行id
+                        hsbc.obarcode_id, --大箱条码id
+                        hsbc.refund_order_id, --退货单id
+                        hsb.CASE_NUMBER,
+                        hsb.PRODUCTION_REGION,
+                        hsb.PRODUCTION_EQUIPMENT,
+                        hsb.BARCODE_CONTENT,
+                        hsb.PO_NUMBER_PRINT,
+                        
+                        (select hc.plant_code
+                           from HCM_PLANT hc
+                          where hsb.plant_id = hc.plant_id) as plant_code,
+                          (select  hc.descriptions
+                           from HCM_PLANT hc
+                          where hsb.plant_id = hc.plant_id) as plant_name,
+                        (select hi.ITEM_CODE
+                           from HCM_ITEM hi
+                          where hsb.item_id = hi.ITEM_ID
+                            and hsb.plant_id = hi.PLANT_ID) as ITEM_CODE,
+                        (select hi.descriptions
+                           from HCM_ITEM hi
+                          where hsb.item_id = hi.ITEM_ID
+                            and hsb.plant_id = hi.PLANT_ID) as ITEM_DESC,
+                        (select hob.obarcode
+                           from HCS_OUT_BARCODE hob
+                          where hsbc.obarcode_id = hob.obarcode_id) as obarcode,
+                        (select hdth.ticket_number
+                           from HCS_DELIVERY_TICKET_H hdth
+                          where hsbc.ticket_id = hdth.ticket_id) as ticket_number,
+                        (select hdtl.ticket_line_num
+                           from HCS_DELIVERY_TICKET_L hdtl
+                          where hsbc.ticket_line_id = hdtl.ticket_line_id) as ticket_line_num,
+                        (select hpll.shipment_num
+                           from HCS_PO_LINE_LOCATIONS hpll
+                          where hsbc.line_location_id = hpll.line_location_id) as shipment_num,
+                        (select hph.po_number
+							from hcs_delivery_ticket_l hdtl 
+							left join hcs_po_headers hph on hdtl.po_header_id = hph.po_header_id
+							where hdtl.ticket_line_id = hsbc.ticket_line_id) as po_number,
+                        (select hs.supplier_code
+                           from HCS_SUPPLIERS hs
+                          where hsbc.supplier_id = hs.supplier_id) as supplier_code,
+                        (select hs.supplier_name
+                           from HCS_SUPPLIERS hs
+                          where hsbc.supplier_id = hs.supplier_id) as supplier_name,
+                        (select hss.description
+                           from HCS_SUPPLIER_SITE hss
+                          where hsbc.suppliers_site_id = hss.supplers_site_id) as supplier_site,
+                          (select hob.OBARCODE_NUM
+                           from HCS_OUT_BARCODE hob
+                          where hsbc.obarcode_id = hob.obarcode_id) as obarcodeNum
+        
+          from 
+          HCS_SMALL_BARCODE hsb, 
+          HCS_SMALL_BARCODE_CONTROL hsbc,
+          sys_user su
+          where 
+          hsb.sbarcode_id = hsbc.sbarcode_id
+          and decode(su.user_type, 'S' , su.supplier_id,hsbc.supplier_id) = hsbc.supplier_id
+          and su.user_id = #{request.userId}) v
+          <if test="purchaseGroup != null">
+          	left join hcs_asl_control hac on hac.purchase_group = #{purchaseGroup}
+          	left join hcs_asl ha on hac.asl_id = ha.asl_id and ha.enable_flag = 'Y'
+          </if>
+ 		  where 1 = 1
+		<if test="purchaseGroup!=null">
+			and v.item_id = ha.item_id
+			and v.plant_id = ha.plant_id
+			and v.supplier_id = ha.supplier_id
+		</if>
+		<if test="sbarcode!=null">
+	    AND v.sbarcode like concat('%',concat(#{sbarcode},'%'))
+	    </if>
+	    <if test="status">
+	    AND v.status like concat('%',concat(#{status},'%'))
+	    </if>
+	    <if test="itemId!=null">
+	    AND v.item_id=#{itemId}
+	    </if>
+	    <if test="plantId!=null">
+	    AND v.plant_id=#{plantId}
+	    </if>
+	    <if test="obarcode!=null">
+	    AND v.obarcode like concat('%',concat(#{obarcode},'%'))
+	    </if>
+	    <if test="ticketNumber!=null">
+	    AND v.ticket_number like concat('%',concat(#{ticketNumber},'%')) 
+	    </if>
+	    <if test="poNumber!=null">
+	    AND v.po_number like concat('%',concat(#{poNumber},'%'))  
+	    </if>
+	    <if test = "creationStartTime != null">
+		AND v.creation_date &gt;= to_date(#{creationStartTime}, 'yyyy-mm-dd hh24:mi:ss')
+		</if>
+		<if test = "creationEndTime != null">
+		AND v.creation_date &lt;= to_date(#{creationEndTime}, 'yyyy-mm-dd hh24:mi:ss')
+		</if>
+	    <if test = "productionStartTime != null">
+		AND v.production_time &gt;= to_date(#{productionStartTime}, 'yyyy-mm-dd hh24:mi:ss')
+		</if>
+		<if test = "productionEndTime != null">
+		AND v.production_time &lt;= to_date(#{productionEndTime}, 'yyyy-mm-dd hh24:mi:ss')
+		</if>
+		<if test="plantCode!=null">
+	    AND v.plant_code=#{plantCode}
+	    </if>
+	    <if test="packingFlag!=null">
+	    AND v.packing_flag=#{packingFlag}
+	    </if>
+	    <if test="enableFlag!=null">
+	    AND v.enable_flag=#{enableFlag}
+	    </if>
+	    <if test="supplierId!=null">
+	    AND v.supplier_id=#{supplierId}
+	    </if>
+	    <if test="suppliersSiteId!=null">
+	    AND v.suppliers_site_id=#{suppliersSiteId}
+	    </if>
+	    <if test="obarcodeNum!=null">
+	    AND v.obarcodeNum like concat('%',concat(#{obarcodeNum},'%'))  
+	    </if>
+	    order by v.creation_date desc,substr(v.sbarcode,-4) desc
+    </select>
+
+    <!-- 关联小箱条码 -->
+    <select id="querySmallBarcode" resultMap="BaseResultMap" parameterType="com.hand.hcs.hcs_barcode.dto.SmallBarcode">
+    	select hsb.sbarcode_id,
+	           hsb.sbarcode,
+	           hsb.status, 
+	           hsb.plant_id,
+	           hp.plant_code,
+	           hp.descriptions PLANT_NAME,
+	           hsb.item_id,
+	           hi.ITEM_CODE,
+	           hi.descriptions ITEM_NAME,
+	           hsb.item_version,
+	           hsb.quantity,
+	           hsb.uom,
+	           hsb.production_time,
+	           hsb.lot_code,
+	           hsb.packing_size,
+	           hsb.packing_level,
+	           hsb.remarks,
+	           hsbc.obarcode_id,
+	           hsb.creation_date
+	    from sys_user su
+	    join hcs_small_barcode_control hsbc on decode(su.user_type,'S',su.supplier_id, -1) = hsbc.supplier_id
+	    join hcs_small_barcode hsb on hsbc.sbarcode_id = hsb.sbarcode_id
+	    join hcm_plant hp on hsb.plant_id = hp.plant_id
+	    join hcm_item hi on hsb.item_id = hi.ITEM_ID
+	    where hsb.enable_flag = 'Y'
+	    and hsb.status != 'C'
+	    and hi.PLANT_ID = hsb.plant_id
+	    and su.user_id = #{request.userId}
+		<if test="obarcodeId==null">
+			and hsb.packing_flag='N'
+		</if>
+		and hsb.plant_id = hi.PLANT_ID
+		<if test="obarcodeId!=null">
+			and hsbc.obarcode_id = #{obarcodeId}
+		</if>
+		<if test = "productionStartTime != null">
+			and hsb.creation_date &gt;= to_date(#{productionStartTime}, 'yyyy-mm-dd hh24:mi:ss')
+		</if>
+		<if test = "productionEndTime != null">
+			and hsb.creation_date &lt;= to_date(#{productionEndTime}, 'yyyy-mm-dd hh24:mi:ss')
+		</if>
+		<if test="itemId!=null">
+			and hsb.item_id = #{itemId}
+		</if>
+		<if test="sbarcode!=null">
+			and hsb.sbarcode LIKE concat('%',concat(#{sbarcode},'%'))
+		</if>
+    </select>
+
+    
+    <select id="selectitems" resultType="java.lang.String" parameterType="com.hand.hcm.hcm_item.dto.Item">
+     select purchase_uom from HCM_ITEM where 1=1 
+        <if test="itemId!=null">
+	    AND ITEM_ID=#{itemId}
+	    </if>
+	    <if test="plantId!=null">
+	    AND PLANT_ID=#{plantId}
+	    </if>
+    </select>
+	<!-- 打印外箱条码查询 -->
+	<select id="printQuery" resultMap="BaseResultMap" parameterType="com.hand.hcs.hcs_barcode.dto.SmallBarcode">
+		select hsb.item_version,
+               hi.ITEM_CODE,
+               hi.descriptions item_name,
+               sum(hsb.quantity) quantity
+        from hcs_out_barcode hob 
+        join hcs_out_barcode_control hobc on hob.obarcode_id = hobc.obarcode_id
+        join hcs_small_barcode_control hsbc on hob.obarcode_id = hsbc.obarcode_id
+        join hcs_small_barcode hsb on hsbc.sbarcode_id = hsb.sbarcode_id
+        join hcm_item hi on hsb.item_id = hi.ITEM_ID
+        where hsb.plant_id = hi.PLANT_ID
+        and hsbc.obarcode_id = #{obarcodeId}
+        group by hsb.item_version,
+                 hi.ITEM_CODE,
+                 hi.descriptions,
+                 hsb.quantity
+	</select>
+	
+	<!-- 查询当天最大流水号 -->
+	<select id="selectMaxNum" resultType="java.lang.Integer" parameterType="com.hand.hcs.hcs_out_barcode.dto.OutBarcode">
+		select nvl(max(substr(hsb.sbarcode,-4)),0)
+	    from hcs_small_barcode hsb 
+	    join hcs_small_barcode_control hsbc on hsb.sbarcode_id = hsbc.sbarcode_id
+	    where 1 = 1
+	    and trunc(hsb.creation_date)=trunc(sysdate)
+	    and hsbc.supplier_id = #{supplierId}
+	</select>
+</mapper>

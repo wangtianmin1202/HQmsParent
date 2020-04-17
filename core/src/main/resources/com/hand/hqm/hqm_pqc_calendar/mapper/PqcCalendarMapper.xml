@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_pqc_calendar.mapper.PqcCalendarMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_pqc_calendar.dto.PqcCalendar">
+        <result column="CALENDAR_ID" property="calendarId" jdbcType="DECIMAL" />
+        <result column="PLANT_ID" property="plantId" jdbcType="DECIMAL" />
+        <result column="PLAN_DATE" property="planDate" jdbcType="DATE" />
+        <result column="WEEK" property="week" jdbcType="VARCHAR" />
+        <result column="PLANT_CODE" property="plantCode" jdbcType="VARCHAR" />
+        
+        <result column="LAYERED_USER_ID" property="layeredUserId" jdbcType="DECIMAL" />
+        <result column="LAYERED_NAME" property="layeredName" jdbcType="VARCHAR" />
+        <result column="LAYERED_STATUS" property="layeredStatus" jdbcType="VARCHAR" />
+        
+        <result column="SAFETY_USER_ID" property="safetyUserId" jdbcType="DECIMAL" />
+        <result column="SAFETY_NAME" property="safetyName" jdbcType="VARCHAR" />
+        <result column="SAFETY_STATUS" property="safetyStatus" jdbcType="VARCHAR" />
+        
+        <result column="PWA_USER_ID" property="pwaUserId" jdbcType="DECIMAL" />
+        <result column="PWA_NAME" property="pwaName" jdbcType="VARCHAR" />
+        <result column="PWA_STATUS" property="pwaStatus" jdbcType="VARCHAR" />
+        
+        <result column="FORK_ID" property="forkId" jdbcType="DECIMAL" />
+        <result column="USER_ID" property="userId" jdbcType="DECIMAL" />
+        <result column="FORK_TYPE" property="forkType" jdbcType="VARCHAR" />
+        <result column="EMPLOYEE_NAME" property="employeeName" jdbcType="VARCHAR" />
+        <result column="PLANT_DESCRIPTIONS" property="plantDescriptions" jdbcType="VARCHAR" />
+        
+        <result column="PERSON_NAME" property="personName" jdbcType="VARCHAR" />
+        <result column="INSPECTION_CONTEXT" property="inspectionContext" jdbcType="VARCHAR" />
+        <result column="INSPECTION_RESULT" property="inspectionResult" jdbcType="VARCHAR" />
+        <result column="PERSON_LAYERED_STATUS" property="personLayeredStatus" jdbcType="VARCHAR" />
+        <result column="PERSON_USER_ID" property="personUserId" jdbcType="DECIMAL" />
+        
+    </resultMap>
+<!-- 当前月份的数据天数 -->
+<select id="currentMonthHave" resultType="java.lang.Float" parameterType="com.hand.hqm.hqm_pqc_calendar.dto.PqcCalendar">
+
+SELECT COUNT(1)
+  FROM hqm_pqc_calendar t
+ WHERE t.plant_id = #{plantId}
+   AND to_char(t.plan_date, 'yyyy-MM') = #{yearMonth}
+
+</select>
+
+<!-- 基础查询 -->
+<select id="reSelect" resultMap="BaseResultMap" parameterType="com.hand.hqm.hqm_pqc_calendar.dto.PqcCalendar">
+
+SELECT t.*,
+       to_char(t.plan_date, 'D') AS week,
+       hp.plant_code,
+       sua.user_id AS layered_user_id,
+       hea.name AS layered_name,
+       a.layered_status,
+       sub.user_id AS safety_user_id,
+       heb.name AS safety_name,
+       b.safety_status,
+       suc.user_id AS pwa_user_id,
+       hec.name AS pwa_name,
+       c.pwa_status,
+       d.layered_person AS person_user_id,
+       hed.name AS person_name,
+       d.inspection_context,
+       d.inspection_result,
+       d.layered_status AS person_layered_status
+  FROM hqm_pqc_calendar t
+  JOIN hcm_plant hp
+    ON t.plant_id = hp.plant_id
+  LEFT JOIN hqm_pqc_calendar_a a
+    ON a.calendar_id = t.calendar_id
+  LEFT JOIN sys_user sua
+    ON a.layered_person = sua.user_id
+  LEFT JOIN hr_employee hea
+    ON sua.employee_id = hea.employee_id
+
+  LEFT JOIN hqm_pqc_calendar_b b
+    ON b.calendar_id = t.calendar_id
+  LEFT JOIN sys_user sub
+    ON b.safety_person = sub.user_id
+  LEFT JOIN hr_employee heb
+    ON sub.employee_id = heb.employee_id
+
+  LEFT JOIN hqm_pqc_calendar_c c
+    ON c.calendar_id = t.calendar_id
+  LEFT JOIN sys_user suc
+    ON c.pwa_person = suc.user_id
+  LEFT JOIN hr_employee hec
+    ON suc.employee_id = hec.employee_id
+
+  LEFT JOIN hqm_pqc_calendar_d d
+    ON d.calendar_id = t.calendar_id
+  LEFT JOIN sys_user sud
+    ON d.layered_person = sud.user_id
+  LEFT JOIN hr_employee hed
+    ON sud.employee_id = hed.employee_id
+ WHERE 1 = 1
+
+   AND t.plant_id = #{plantId}
+   AND to_char(t.plan_date, 'yyyy-MM') = #{yearMonth}
+<if test="week != null">
+AND to_char(t.plan_date,'D') = #{week}
+</if>
+
+ORDER BY t.plan_date
+</select>
+
+
+
+<!-- 检验日历通知查询 -->
+<select id="forkQuery" resultMap="BaseResultMap" parameterType="com.hand.hqm.hqm_pqc_calendar.dto.PqcCalendar">
+SELECT fork.*,
+       hr.name         AS employee_name,
+       h.plan_date,
+       hp.plant_code,
+       hp.plant_id,
+       hp.descriptions AS plant_descriptions
+  FROM (SELECT a.calendar_id,
+               a.calendar_a_id AS fork_id,
+               a.layered_person AS user_id,
+               'A' AS fork_type
+          FROM hqm_pqc_calendar_a a
+        UNION ALL
+        SELECT b.calendar_id,
+               b.calendar_b_id AS fork_id,
+               b.safety_person AS user_id,
+               'B' AS fork_type
+          FROM hqm_pqc_calendar_b b
+        UNION ALL
+        SELECT c.calendar_id, c.calendar_c_id AS fork_id, c.pwa_person AS user_id, 'C' AS fork_type
+          FROM hqm_pqc_calendar_c c) fork
+  JOIN hqm_pqc_calendar h
+    ON fork.calendar_id = h.calendar_id
+  JOIN hcm_plant hp
+    ON h.plant_id = hp.plant_id
+  LEFT JOIN sys_user su
+    ON fork.user_id = su.user_id
+  LEFT JOIN hr_employee hr
+    ON su.employee_id = hr.employee_id
+WHERE 1=1
+<if test="forkType != null">
+AND fork.fork_type = #{forkType}
+</if>
+<if test="userId != null">
+AND fork.user_id = #{userId}
+</if>
+</select>
+</mapper>

@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_pqc_inspection_c.mapper.PqcInspectionCMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_pqc_inspection_c.dto.PqcInspectionC">
+        <result column="CONNECT_ID" property="connectId" jdbcType="DECIMAL" />
+        <result column="LINE_ID" property="lineId" jdbcType="DECIMAL" />
+        <result column="SAMPLE_QTY" property="sampleQty" jdbcType="DECIMAL" />
+        <result column="SIZE_CODE_LETTER" property="sizeCodeLetter" jdbcType="VARCHAR" />
+        <result column="AC" property="ac" jdbcType="VARCHAR" />
+        <result column="RE" property="re" jdbcType="VARCHAR" />
+        <result column="TEXT_STANDRAD" property="textStandrad" jdbcType="VARCHAR" />
+        <result column="STANDRAD_FROM" property="standradFrom" jdbcType="VARCHAR" />
+        <result column="STANDRAD_TO" property="standradTo" jdbcType="VARCHAR" />
+        <result column="STANDRAD_UOM" property="standradUom" jdbcType="VARCHAR" />
+        <result column="CONFORMING_QTY" property="conformingQty" jdbcType="DECIMAL" />
+        <result column="NON_CONFORMING_QTY" property="nonConformingQty" jdbcType="DECIMAL" />
+        <result column="REMARK" property="remark" jdbcType="VARCHAR" />
+        <result column="ATTRIBUTE_ID" property="attributeId" jdbcType="DECIMAL" />
+        <result column="ATTRIBUTE_INSPECTION_RES" property="attributeInspectionRes" jdbcType="VARCHAR" />
+        <result column="ATTRIBUTE_TYPE" property="attributeType" jdbcType="VARCHAR" />
+        
+        <result column="INSPECTION_ATTRIBUTE" property="inspectionAttribute" jdbcType="VARCHAR" />
+        <result column="STANDARD_TYPE" property="standardType" jdbcType="VARCHAR" />
+        <result column="FILL_IN_TYPE" property="fillInType" jdbcType="VARCHAR" />
+        <result column="INSPECTION_TOOL" property="inspectionTool" jdbcType="VARCHAR" />
+        <result column="INSPECTION_ATTRIBUTE_TYPE" property="inspectionAttributeType" jdbcType="VARCHAR" />
+        
+        <result column="PRECISION" property="precision" jdbcType="DECIMAL" />
+        <result column="SAMPLE_WAY_ID" property="sampleWayId" jdbcType="DECIMAL" />
+        <result column="SAMPLE_TYPE" property="sampleType" jdbcType="DECIMAL" />
+        <result column="PARAMETER" property="parameter" jdbcType="DECIMAL" />
+        <result column="INSPECTION_METHOD" property="inspectionMethod" jdbcType="VARCHAR" />
+        <result column="SAMPLE_PROCEDURE_TYPE" property="sampleProcedureType" jdbcType="VARCHAR" />
+        
+        <result column="HEADER_ID" property="headerId" jdbcType="VARCHAR" />
+    </resultMap>
+
+<select id="myselect" resultMap="BaseResultMap" parameterType="com.hand.hqm.hqm_pqc_inspection_c.dto.PqcInspectionC">
+	SELECT t.*,
+       hia.inspection_attribute,
+       hia.standard_type,
+       hia.fill_in_type,
+       hia.inspection_tool,
+       hia.attribute_type AS inspection_attribute_type,
+       hsm.sample_procedure_type
+  FROM hqm_pqc_inspection_c t
+  LEFT JOIN hqm_sample_manage hsm
+    ON t.sample_way_id = hsm.sample_way_id, hqm_inspection_attribute hia
+ WHERE 1 = 1
+   AND t.attribute_id = hia.attribute_id
+   <if test="lineId !=null">
+   AND t.line_id = #{lineId}
+   </if>
+   <if test="connectId !=null">
+   AND t.connect_id = #{connectId}
+   </if>
+   ORDER BY t.attribute_inspection_res, t.attribute_id
+</select>
+
+<select id="selectfornon" resultMap="BaseResultMap" parameterType="com.hand.hqm.hqm_pqc_inspection_c.dto.PqcInspectionC">
+	SELECT t.*,
+       hia.inspection_attribute, 
+       hia.standard_type,
+       hia.fill_in_type,
+       hia.inspection_tool,
+       hia.attribute_type AS inspection_attribute_type,
+       hsm.sample_procedure_type
+  FROM hqm_pqc_inspection_c t
+   JOIN hqm_sample_manage hsm
+     ON  t.sample_way_id = hsm.sample_way_id  
+  JOIN hqm_inspection_attribute hia
+     ON t.attribute_id = hia.attribute_id
+   JOIN hqm_pqc_inspection_l l
+     ON l.line_id  = t.line_id 
+  JOIN hqm_pqc_inspection_h h
+    ON l.header_id = h.header_id
+  JOIN hcm_item hi
+    ON l.item_id = hi.item_id
+   AND h.plant_id = hi.plant_id
+  JOIN hqm_sop_pqc_control_h hs
+    ON l.standard_op_id = hs.standard_op_id
+   AND hi.plant_id = hs.plant_id
+  LEFT JOIN hqm_sop_pqc_control_l hw
+    ON l.workstation_id = hw.workstation_id
+ WHERE 1 = 1
+     and t.attribute_inspection_res ='NG'   
+	<if test="headerId!=null">
+		AND h.header_id = #{headerId}
+	</if>
+	<if test="lineId!=null">
+		AND t.line_id = #{lineId}
+	</if>
+</select>
+</mapper>

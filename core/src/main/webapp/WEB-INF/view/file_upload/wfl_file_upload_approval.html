@@ -1,0 +1,390 @@
+<#include "../activiti/approve_header.html">
+<script src="${base.contextPath}/common/code?WORKFLOW_STATUS=SYS_WORKFLOW_STATUS" type="text/javascript"></script>
+<script src="${base.contextPath}/common/code?YES_NO=SYS.YES_NO" type="text/javascript"></script>
+<script type="text/javascript">
+    //        var viewModel = Hap.createGridViewModel("#grid");
+    var BaseUrl = _basePath;
+    var busiViewModel = Hap.createGridViewModel("#busiGrid", {
+        model: {
+            processInstanceId: '${RequestParameters.processInstanceId!0}',
+            businessKey: '${RequestParameters.businessKey!}' || null,
+        },
+        queryInfo:function(){
+    		if(${RequestParameters.processInstanceId!0} != 0){
+    			$.ajax({
+    				url:BaseUrl+"/file/upload/queryByCondition?processInstanceId=${RequestParameters.processInstanceId!0}",
+    				success:function(data){
+    					var a0 = data.rows[0] || {};
+    					for(var k in a0){
+    						busiViewModel.model.set(k,a0[k]);
+    					}
+    				}
+    			})
+    		}
+    	},
+    });
+    busiViewModel.queryInfo();
+</script>
+<div class="approve-block">
+    <h3>审批表单</h3>
+    <!--<iframe id="includeFrame" style="width:100%" name="includeFrame" onLoad="onIncludeFrameLoad()"></iframe>-->
+
+    <form id = "mainForm" style="paddiing-bottom:50px;padding-top:15px" class="form-horizontal" method="post" enctype="application/json;charset=UTF-8">
+		<div class="row">
+			<div class="col-sm-6">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-4 control-label">申请人</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="applicant"  data-role="maskedtextbox" class="k-textbox"
+								data-bind="value:model.applicant" data-label="申请人"  disabled>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="col-sm-6">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-4 control-label">申请时间</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="applicationTime"  data-role="datepicker" class="k-datepicker"
+								data-bind="value:model.applicationTime" disabled>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-sm-6">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-4 control-label">DIN</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="processNumber"  data-role="maskedtextbox" class="k-textbox"
+								data-bind="value:model.processNumber" disabled>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="col-sm-6">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-4 control-label">文件编号，图号</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="documentNumber"  data-role="maskedtextbox" class="k-textbox"
+								data-bind="value:model.documentNumber" disabled>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-sm-6">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-4 control-label">PCI编号</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="pciNumber"  data-role="maskedtextbox" class="k-textbox"
+								data-bind="value:model.pciNumber" disabled>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="col-sm-6">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-4 control-label">相关对应料号</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="materialNumber"  data-role="maskedtextbox" class="k-textbox"
+								data-bind="value:model.materialNumber" disabled>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-sm-6">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-4 control-label">提交单编号</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="applicationNumber"  data-role="maskedtextbox" class="k-textbox"
+								data-bind="value:model.applicationNumber" disabled>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="col-sm-6">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-4 control-label">软件Release note编号</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="softNumber"  data-role="maskedtextbox" class="k-textbox"
+								data-bind="value:model.softNumber" disabled>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-sm-6">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-4 control-label">文件名称</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="fileName"  data-role="maskedtextbox" class="k-textbox"
+								data-bind="value:model.fileName" disabled>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="col-sm-6">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-4 control-label">文件类型</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="fileTypeId"
+								data-bind="value:model.fileTypeId" disabled>
+						</div>
+						<script>
+							$('#fileTypeId').kendoComboBox({
+								filter:"contains",
+								valuePrimitive:true,
+								dataTextField:"text",
+								dataValueField:"value",
+								dataSource:{
+									transport:{
+										read:_basePath + "/file/type/queryFileTypeName",
+									}
+								}
+							}).data("kendoComboBox");
+						</script>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-sm-6">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-4 control-label">供应商名称</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="borrowedSupplier" 
+								data-bind="value:model.borrowedSupplier,text:model.borrowedSupplierName" disabled>
+						</div>
+						<script>
+		                	$("#borrowedSupplier").kendoLov($.extend
+		                	    (<@lov"LOV_SUPPLIER_SRM"/>, {
+		                	}));
+				        </script> 
+					</div>
+				</div>
+			</div>
+			<div class="col-sm-6">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-4 control-label">是否采购下挂件零件</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="isPurchase"  
+								data-bind="value:model.isPurchase" disabled>
+						</div>
+						<script>
+	    					$("#isPurchase").kendoComboBox({
+	    				        dataTextField: "meaning",
+	    				        dataValueField: "value",
+	    				        valuePrimitive: true,
+	    				        dataSource: YES_NO,
+	    					});
+						</script>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-sm-6">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-4 control-label">相关项目</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="relatedItems"  data-role="maskedtextbox" class="k-textbox"
+								data-bind="value:model.relatedItems" disabled>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="col-sm-6">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-4 control-label">文档上传</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="fileId"  data-role="maskedtextbox" class="k-textbox"
+								data-bind="value:model.fileId" >
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-sm-6">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-4 control-label">版本号</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="versionNumber"  data-role="maskedtextbox" class="k-textbox"
+								data-bind="value:model.versionNumber" disabled>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="col-sm-6">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-4 control-label">文档链接</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="documentUrl"  data-role="maskedtextbox" class="k-textbox"
+								data-bind="value:model.documentUrl" disabled>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-sm-6">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-4 control-label">标准查新记录</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="queryRecord"  data-role="maskedtextbox" class="k-textbox"
+								data-bind="value:model.queryRecord" disabled>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="col-sm-6">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-4 control-label">产品类别</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="productCategory"  data-role="maskedtextbox" class="k-textbox"
+								data-bind="value:model.productCategory" disabled>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-sm-12">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-2 control-label">变更履历</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="revisionHistory"  data-role="maskedtextbox" class="k-textbox"
+								data-bind="value:model.revisionHistory" disabled>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		
+	</form>
+</div>
+<#include "../activiti/approve_footer.html">
+
+<script type="text/javascript">
+	kendo.bind($('#mainForm'), busiViewModel);
+
+    // 覆盖具体审批操作
+    function actionCallBack(p) {
+        p = p || {};
+        p.action = p.action || 'complete'
+        if ('pending' == currentTaskInfo.delegationState && 'delegate' != p.action) {
+            p.action = 'resolve'
+        }
+        var variables = [];
+        if (p.action != 'delegate') {
+            var formVars = {};
+            // if (includeFrame.getFormProperties) {
+            //     formVars = includeFrame.getFormProperties() || {};
+            // }
+
+            //TODO 必输内容校验；仅传递定义过的属性
+            formVars.approveResult = p.approveResult;
+            formVars.comment = $("#ta-comment").val();
+            $.each(formVars, function (k, v) {
+                variables.push({name: k, value: v});
+            })
+        }
+
+        var carbonCopyUsers = "";
+        var usersDate = dataSourceCC.data();
+        for (var i = 0; i < usersDate.length; i++) {
+            if (i == 0) {
+                carbonCopyUsers = usersDate[i].employeeCode;
+            } else {
+                carbonCopyUsers = carbonCopyUsers + "," + usersDate[i].employeeCode;
+            }
+        }
+
+        var param = {
+            assignee: p.targetUser || null,
+            action: p.action,
+            comment: $("#ta-comment").val(),
+            variables: variables,
+            jumpTarget: p.jumpTarget || null,
+            carbonCopyUsers: carbonCopyUsers,
+            currentTaskId: '${RequestParameters.taskId!0}',
+        };
+
+        var dtoData = busiViewModel.model.toJSON();
+        dtoData.__status = 'update';
+        
+        var data = {
+            actionRequest: param,
+            //list: $("#busiGrid").data("kendoGrid").dataSource.data()
+            dto:dtoData,
+        };
+
+        /* $.each(data.list, function (i, n) {
+            n.__status = 'update';
+        }); */
+        Hap.blockUI();
+        $.ajax({
+            // url: contextPath_ + '/wfl/runtime/<#if isAdmin!false>admin/</#if>tasks/' + currentTaskId,
+            url: contextPath_ + '/file/upload/approveProcess?processInstanceId=${RequestParameters.processInstanceId!0}' + "&flowNum=${RequestParameters.flowNum!0}",
+            type: 'POST',
+            contentType: 'application/json',
+            data: kendo.stringify(data),
+            success: function (args) {
+                if (args.success === false) {
+                    kendo.ui.showErrorDialog({
+                        title: $l('hap.error'),
+                        message: args.message
+                    });
+                } else {
+                    if (p.callback) {
+                        p.callback(args);
+                    } else {
+                        closeCurrentWin()
+//                                kendo.ui.showInfoDialog({
+//                                    title: $l('hap.tip.info'),
+//                                    message: '操作完成!'
+//                                }).done(function () {
+//                                    closeCurrentWin()
+//                                });
+                    }
+                }
+            }, error: function (args) {
+                kendo.ui.showInfoDialog({
+                    title: $l('hap.error'),
+                    message: kendo.stringify(args)
+                });
+            },
+            complete: function () {
+                Hap.unblockUI();
+            }
+        })
+    }
+
+
+</script>
+</html>

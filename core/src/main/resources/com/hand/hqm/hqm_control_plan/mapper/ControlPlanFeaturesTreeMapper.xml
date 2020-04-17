@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_control_plan.mapper.ControlPlanFeaturesTreeMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_control_plan.dto.ControlPlanFeaturesTree">
+        <result column="FEATURES_ID" property="featuresId" jdbcType="DECIMAL" />
+        <result column="PARENT_FEATURES_ID" property="parentFeaturesId" jdbcType="DECIMAL" />
+        <result column="CONTROL_PLAN_ID" property="controlPlanId" jdbcType="DECIMAL" />
+        <result column="RANKS" property="ranks" jdbcType="DECIMAL" />
+        <result column="FEATURES_NAME" property="featuresName" jdbcType="VARCHAR" />
+        <result column="FEATURES_TYPE" property="featuresType" jdbcType="VARCHAR" />
+        <result column="FEATURES_CONTENT" property="featuresContent" jdbcType="VARCHAR" />
+        <result column="EQUIPMENT" property="equipment" jdbcType="VARCHAR" />
+        <result column="SPECIAL_CHARACTER_TYPE" property="specialCharacterType" jdbcType="VARCHAR" />
+        <result column="STANDRAD" property="standrad" jdbcType="VARCHAR" />
+        <result column="DETECTION_EQUIPMENT" property="detectionEquipment" jdbcType="VARCHAR" />
+        <result column="SAMPLE_SIZE" property="sampleSize" jdbcType="DECIMAL" />
+        <result column="DETECTION_FREQUENCY" property="detectionFrequency" jdbcType="VARCHAR" />
+        <result column="CONTROL_METHOD" property="controlMethod" jdbcType="VARCHAR" />
+        <result column="GR_R" property="grR" jdbcType="DECIMAL" />
+        <result column="PROCESS_CAPABILITY" property="processCapability" jdbcType="VARCHAR" />
+        <result column="REACTION_PLAN" property="reactionPlan" jdbcType="VARCHAR" />
+        <result column="OBJECT_VERSION_NUMBER" property="objectVersionNumber" jdbcType="DECIMAL" />
+        <result column="FEATURE" property="feature" jdbcType="DECIMAL" />
+        <result column="PROCESS_ID" property="processId" jdbcType="DECIMAL" />
+        <result column="ENABLE_FLAG" property="enableFlag" jdbcType="VARCHAR" />
+    </resultMap>
+
+    <select id="selectParentFeatures" parameterType="com.hand.hqm.hqm_control_plan.dto.ControlPlanFeaturesTree" resultMap="BaseResultMap">
+        SELECT
+		    hc.*
+        FROM
+            HQM_CONTROL_PLAN_FEATURES hc
+        WHERE
+            hc.parent_features_id IS NULL
+            and hc.control_plan_id=#{controlPlanId}
+            <if test="enableFlag != null and enableFlag != ''">
+        		and hc.enable_flag = #{enableFlag}
+        	</if> 
+            <if test="featuresName != null and featuresName != ''">
+                and hc.features_name like concat('%',concat(#{featuresName,jdbcType=VARCHAR},'%'))
+            </if>
+    </select>
+    
+    <select id="selectFeaturesByParent" parameterType="com.hand.hqm.hqm_control_plan.dto.ControlPlanFeaturesTree" resultMap="BaseResultMap">
+        SELECT
+		    hc.*
+        FROM
+            HQM_CONTROL_PLAN_FEATURES hc
+        WHERE 1 = 1
+        <if test="enableFlag != null and enableFlag != ''">
+        	and hc.enable_flag = #{enableFlag}
+        </if> 
+        and hc.parent_features_id =#{parentFeaturesId}
+    </select>
+    
+    <select id="selectFeaturesByChild" parameterType="com.hand.hqm.hqm_control_plan.dto.ControlPlanFeaturesTree" resultMap="BaseResultMap">
+        SELECT HC.*
+  		  FROM HQM_CONTROL_PLAN_FEATURES HC
+ 		 WHERE HC.FEATURES_ID IN (SELECT HC.PARENT_FEATURES_ID
+                           FROM HQM_CONTROL_PLAN_FEATURES HC
+                          WHERE HC.PARENT_FEATURES_ID IS NOT NULL
+                            AND HC.CONTROL_PLAN_ID = #{controlPlanId}
+                            AND HC.ENABLE_FLAG = 'N'
+                            <if test="featuresName != null and featuresName != ''">
+                			AND hc.features_name like concat('%',concat(#{featuresName,jdbcType=VARCHAR},'%'))
+            				</if>)
+        UNION    
+        SELECT
+		    hc.*
+        FROM
+            HQM_CONTROL_PLAN_FEATURES hc
+        WHERE
+            hc.parent_features_id IS NULL
+            and hc.control_plan_id= #{controlPlanId}
+            AND HC.ENABLE_FLAG = 'N'
+            <if test="featuresName != null and featuresName != ''">
+            	AND hc.features_name like concat('%',concat(#{featuresName,jdbcType=VARCHAR},'%'))
+        	</if>		
+    </select>
+         
+   <select id="checkProcess" parameterType="com.hand.hqm.hqm_control_plan.dto.ControlPlanFeaturesTree" resultType="Integer">
+        SELECT
+		    count(*)
+        FROM
+            HQM_CONTROL_PLAN_FEATURES hc
+        WHERE
+        	hc.enable_flag = 'Y'
+        	and 
+            hc.features_name =#{featuresName}
+            and hc.parent_features_id IS NULL
+            <if test="controlPlanId != null and controlPlanId != ''">
+            and hc.control_plan_id =#{controlPlanId}
+            </if>
+            <!-- <if test="featuresId != null and featuresId != ''">
+            and hc.features_id !=#{featuresId}
+            </if> -->
+    </select> 
+    
+    <select id="checkFeatures" parameterType="com.hand.hqm.hqm_control_plan.dto.ControlPlanFeaturesTree" resultType="Integer">
+        SELECT
+		    count(*)
+        FROM
+            HQM_CONTROL_PLAN_FEATURES hc
+        WHERE
+        	hc.enable_flag = 'Y'
+        	and 
+            hc.features_name =#{featuresName}
+            and hc.parent_features_id = #{parentFeaturesId}
+            <!-- <if test="featuresId != null and featuresId != ''">
+            and hc.features_id !=#{featuresId}
+            </if> -->
+    </select>
+</mapper>

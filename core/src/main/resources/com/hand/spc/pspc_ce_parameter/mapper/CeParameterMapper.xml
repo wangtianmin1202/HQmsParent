@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.spc.pspc_ce_parameter.mapper.CeParameterMapper">
+    <resultMap id="BaseResultMap" type="com.hand.spc.pspc_ce_parameter.dto.CeParameter">
+        <result column="ce_parameter_id" property="ceParameterId" jdbcType="DECIMAL" />
+        <result column="tenant_id" property="tenantId" jdbcType="DECIMAL" />
+        <result column="site_id" property="siteId" jdbcType="DECIMAL" />
+        <result column="ce_parameter" property="ceParameter" jdbcType="VARCHAR" />
+        <result column="ce_parameter_name" property="ceParameterName" jdbcType="VARCHAR" />
+        <result column="uom" property="uom" jdbcType="VARCHAR" />
+        <result column="remark" property="remark" jdbcType="VARCHAR" />
+
+        <result column="ce_group_id" property="ceGroupId" jdbcType="DECIMAL" />
+        <result column="ce_relationship_id" property="ceRelationshipId" jdbcType="DECIMAL" />
+    </resultMap>
+
+
+    <select id="selectCeParameterByGroupId" parameterType="com.hand.spc.pspc_ce_parameter.dto.CeParameter" resultMap="BaseResultMap">
+        SELECT pcpr.ce_relationship_id
+              ,pcpr.ce_group_id
+              ,pcp.ce_parameter_id
+              ,pcp.ce_parameter
+              ,pcp.ce_parameter_name
+              ,pcp.uom
+              ,pcp.remark
+        FROM   pspc_ce_relationship pcpr
+              ,pspc_ce_parameter    pcp
+        WHERE  pcpr.ce_parameter_id = pcp.ce_parameter_id
+        AND    pcpr.ce_group_id = #{ceGroupId}
+    </select>
+
+
+    <select id="selectCeParameterSelective" parameterType="com.hand.spc.pspc_ce_parameter.dto.CeParameter" resultMap="BaseResultMap">
+        SELECT pcp.ce_parameter_id
+              ,pcp.ce_parameter
+              ,pcp.ce_parameter_name
+              ,pcp.uom
+              ,pcp.remark
+              ,pcp.tenant_id
+              ,pcp.site_id
+        FROM   pspc_ce_parameter    pcp
+        WHERE  1 = 1
+        <if test="ceParameter != null">
+            AND pcp.ce_parameter LIKE '%' || #{ceParameter} || '%'
+        </if>
+        <if test="ceParameterName != null">
+            AND pcp.ce_parameter_name LIKE '%' || #{ceParameterName} || '%'
+        </if>
+    </select>
+
+    <select id="slectCeParamterLov" parameterType="com.hand.spc.pspc_ce_parameter.dto.CeParameter" resultMap="BaseResultMap">
+       SELECT
+            pcp.ce_parameter_id,
+            pcp.ce_parameter,
+            pcp.ce_parameter_name,
+            pcp.remark
+        FROM
+            pspc_ce_parameter pcp
+            LEFT JOIN pspc_ce_relationship pcr ON pcp.ce_parameter_id = pcr.ce_parameter_id
+            LEFT JOIN pspc_ce_group pcg ON pcg.ce_group_id = pcr.ce_group_id
+        <where>
+            1 = 1
+            <if test="ceGroupId != null and ceGroupId != ''">
+              AND pcg.ce_group_id = #{ceGroupId}
+            </if>
+            <if test="ceParameter != null and ceParameter != ''">
+                AND pcp.ce_parameter like CONCAT(CONCAT('%',#{ceParameter}),'%')
+            </if>
+            <if test="remark != null and remark != ''">
+                AND pcp.remark like CONCAT(CONCAT('%',#{remark}),'%')
+            </if>
+            <if test="ceParameterName != null and ceParameterName != ''">
+                AND pcp.ce_parameter_name like CONCAT(CONCAT('%',#{ceParameterName}),'%')
+            </if>
+        </where>
+    </select>
+</mapper>

@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.spc.repository.mapper.SampleSubgroupRelationRMapper">
+
+    <insert id="batchInsertRows" parameterType="java.util.List">
+    <foreach collection="list" item="item" index="index" open="begin" close=";end;" separator=";">
+        INSERT INTO pspc_sample_subgroup_relation (
+        tenant_id,
+        site_id,
+        sample_subgroup_id,
+        sample_data_id,
+        sample_value,
+        entity_code,
+        entity_version)VALUES(
+            #{item.tenantId},
+            #{item.siteId},
+            #{item.sampleSubgroupId},
+            #{item.sampleDataId},
+            #{item.sampleValue},
+            #{item.entityCode},
+            #{item.entityVersion})
+        </foreach>
+    </insert>
+
+
+    <select id="selectBySampleSubgroup" parameterType="com.hand.spc.repository.dto.CPKAnalyseReqDTO"
+            resultType="com.hand.spc.repository.dto.SampleSubgroupRelationR">
+
+
+        SELECT
+        *
+        FROM
+        pspc_sample_subgroup_relation
+        WHERE
+        sample_subgroup_id IN
+        ( SELECT
+        sample_subgroup_id
+        FROM
+        pspc_sample_subgroup
+        WHERE
+        tenant_id = #{tenantId}
+        AND site_id = #{siteId}
+        AND entity_code = #{entityCode}
+        AND entity_version = #{entityVersion}
+        <if test="startDate != null">AND sample_subgroup_time &gt;= #{startDate}
+        </if>
+            <if test="
+        endDate != null">
+                AND sample_subgroup_time &lt;= #{endDate}
+            </if>
+            <if test="startDate == null and endDate == null">
+                LIMIT 0,#{size}
+            </if>
+            )
+    </select>
+    
+    <select id="selectBySampleSubgroupByAD" parameterType="com.hand.spc.repository.dto.AndersonDarlingDTO"
+            resultType="com.hand.spc.repository.dto.SampleSubgroupRelationR">
+        SELECT
+        *
+        FROM
+        pspc_sample_subgroup_relation
+        WHERE
+        sample_subgroup_id IN
+        (
+            SELECT t.sample_subgroup_id
+            FROM
+            (
+                SELECT
+                sample_subgroup_id
+                FROM
+                pspc_sample_subgroup
+                WHERE
+                tenant_id = #{tenantId}
+                AND site_id = #{siteId}
+                AND entity_code = #{entityCode}
+                AND entity_version = #{entityVersion}
+                <if test="startDate != null and endDate != null">
+                    AND sample_subgroup_time &gt;= #{startDate}
+                    AND sample_subgroup_time &lt;= #{endDate}
+                </if>
+                <if test="startDate == null and endDate == null">
+                    LIMIT 0, #{size}
+                </if>
+            ) as t
+        )
+
+    </select>
+
+
+</mapper>

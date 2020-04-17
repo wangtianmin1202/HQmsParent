@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.spc.pspc_ce_group.mapper.CeGroupMapper">
+    <resultMap id="BaseResultMap" type="com.hand.spc.pspc_ce_group.dto.CeGroup">
+        <result column="ce_group_id" property="ceGroupId" jdbcType="DECIMAL" />
+        <result column="tenant_id" property="tenantId" jdbcType="DECIMAL" />
+        <result column="site_id" property="siteId" jdbcType="DECIMAL" />
+        <result column="ce_group" property="ceGroup" jdbcType="VARCHAR" />
+        <result column="description" property="description" jdbcType="VARCHAR" />
+        <result column="status_code" property="statusCode" jdbcType="VARCHAR" />
+    </resultMap>
+
+
+    <select id="selectCeGroup" parameterType="com.hand.spc.pspc_ce_group.dto.CeGroup" resultMap="BaseResultMap">
+        SELECT pcg.ce_group_id
+              ,pcg.ce_group
+              ,pcg.description
+              ,pcg.status_code
+              ,pcg.tenant_id
+              ,pcg.site_id
+          FROM pspc_ce_group pcg
+         WHERE 1 = 1
+         <if test="ceGroup != null">
+             AND pcg.ce_group LIKE '%' || #{ceGroup} || '%'
+         </if>
+         <if test="description != null">
+             AND pcg.description LIKE '%' || #{description} || '%'
+         </if>
+    </select>
+
+</mapper>

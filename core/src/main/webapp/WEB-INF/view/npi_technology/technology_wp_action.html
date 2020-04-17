@@ -1,0 +1,221 @@
+<#include "../include/header.html">
+
+
+<script type="text/javascript">
+    var viewModel = Hap.createGridViewModel("#grid");
+</script>
+
+<body>
+
+<div id="page-content">
+    <div class="pull-left" id="toolbar-btn" style="padding-bottom:10px;">
+        <span class="btn btn-primary k-grid-add" style="float:left;margin-right:5px;" data-bind="click:create"><@spring.message "hap.new"/></span>
+        <span class="btn btn-success k-grid-save-changes" data-bind="click:save" style="float:left;margin-right:5px;"><@spring.message "hap.save"/></span>
+        <span  data-bind="click:remove" class="btn btn-danger" style="float:left;"><@spring.message "hap.delete"/></span>
+    </div>
+    <script>kendo.bind($('#toolbar-btn'), viewModel);</script>
+    <div id="queryPanel" class="pull-right" style="padding-bottom:10px;">
+    
+    	<div class="k-query-simple" id="query-form">
+        </div>
+        <script>kendo.bind($('#query-form'), viewModel);</script>
+        <div class="k-query-detail" id="query-form2">
+            <div class="rows" style="margin-top:5px">
+
+            </div>
+        </div>
+        <script>kendo.bind($('#query-form2'), viewModel);</script>
+    
+        
+    </div>
+    <script>
+    kendo.bind($('#query-form'), viewModel);
+    $('#queryPanel').kendoQueryPanel({
+        queryFunction: function () {
+            viewModel.query();
+        },
+        resetFunction: function () {
+            viewModel.reset();
+        }
+    });
+    </script>
+    <div style="clear:both">
+        <div id="grid"></div>
+    </div>
+</div>
+
+<script>
+    Hap.initEnterQuery('#query-form', viewModel.query);
+    var BaseUrl = _basePath;
+    dataSource = new kendo.data.DataSource({
+        transport: {
+            read: {
+                url: BaseUrl + "/hqm/technology/wp/action/query",
+                type: "POST",
+                dataType: "json"
+            },
+            update: {
+                url: BaseUrl + "/hqm/technology/wp/action/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            destroy: {
+                url: BaseUrl + "/hqm/technology/wp/action/remove",
+                type: "POST",
+                contentType: "application/json"
+            },
+            create: {
+                url: BaseUrl + "/hqm/technology/wp/action/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            parameterMap: function (options, type) {
+                if (type !== "read" && options.models) {
+                    var datas = Hap.prepareSubmitParameter(options, type)
+                    return kendo.stringify(datas);
+                } else if (type === "read") {
+                    return Hap.prepareQueryParameter(viewModel.model.toJSON(), options)
+                }
+            }
+        },
+        batch: true,
+        serverPaging: true,
+        pageSize: 20,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+                id: "id",
+                fields: {}
+            }
+        }
+    });
+
+</script>
+
+<script>
+    var grid = $("#grid").kendoGrid({
+        dataSource: dataSource,
+        resizable: true,
+        scrollable: true,
+        navigatable: false,
+        sortable:true,
+        selectable: 'multiple, rowbox',
+        dataBound: function () {
+            if (parent.autoResizeIframe) {
+                parent.autoResizeIframe('${RequestParameters.functionCode!}')
+            }
+        },
+        pageable: {
+            pageSizes: [5, 10, 20, 50],
+            refresh: true,
+            buttonCount: 5
+        },
+        columns: [
+            {
+                field: "id",
+                title: '<@spring.message "technologywpaction.id"/>',
+                width: 120
+            },
+                    {
+                field: "actionNumber",
+                title: '<@spring.message "technologywpaction.actionnumber"/>',
+                width: 120
+            },
+                    {
+                field: "materielNumber",
+                title: '<@spring.message "technologywpaction.materielnumber"/>',
+                width: 120
+            },
+                    {
+                field: "materielAttribute",
+                title: '<@spring.message "technologywpaction.materielattribute"/>',
+                width: 120
+            },
+                    {
+                field: "meteringCount",
+                title: '<@spring.message "technologywpaction.meteringcount"/>',
+                width: 120
+            },
+                    {
+                field: "assemblingDetail",
+                title: '<@spring.message "technologywpaction.assemblingdetail"/>',
+                width: 120
+            },
+                    {
+                field: "standardWorkingHours",
+                title: '<@spring.message "technologywpaction.standardworkinghours"/>',
+                width: 120
+            },
+                    {
+                field: "equipment",
+                title: '<@spring.message "technologywpaction.equipment"/>',
+                width: 120
+            },
+                    {
+                field: "lowerLimit",
+                title: '<@spring.message "technologywpaction.lowerlimit"/>',
+                width: 120
+            },
+                    {
+                field: "upperLimit",
+                title: '<@spring.message "technologywpaction.upperlimit"/>',
+                width: 120
+            },
+                    {
+                field: "unit",
+                title: '<@spring.message "technologywpaction.unit"/>',
+                width: 120
+            },
+                    {
+                field: "measurementMethod",
+                title: '<@spring.message "technologywpaction.measurementmethod"/>',
+                width: 120
+            },
+                    {
+                field: "controlCapacity",
+                title: '<@spring.message "technologywpaction.controlcapacity"/>',
+                width: 120
+            },
+                    {
+                field: "controlFrequency",
+                title: '<@spring.message "technologywpaction.controlfrequency"/>',
+                width: 120
+            },
+                    {
+                field: "controlMethod",
+                title: '<@spring.message "technologywpaction.controlmethod"/>',
+                width: 120
+            },
+                    {
+                field: "reactionPlan",
+                title: '<@spring.message "technologywpaction.reactionplan"/>',
+                width: 120
+            },
+                    {
+                field: "msa",
+                title: '<@spring.message "technologywpaction.msa"/>',
+                width: 120
+            },
+                    {
+                field: "spc",
+                title: '<@spring.message "technologywpaction.spc"/>',
+                width: 120
+            },
+                    {
+                field: "characteristicId",
+                title: '<@spring.message "technologywpaction.characteristicid"/>',
+                width: 120
+            },
+                    {
+                field: "workingProcedureId",
+                title: '<@spring.message "technologywpaction.workingprocedureid"/>',
+                width: 120
+            },
+        ],
+        editable: true
+    }).data("kendoGrid");
+	Hap.autoResizeGrid("#grid");
+</script>
+</body>
+</html>

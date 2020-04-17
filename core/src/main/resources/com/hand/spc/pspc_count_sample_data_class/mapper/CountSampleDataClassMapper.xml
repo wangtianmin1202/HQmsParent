@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.spc.pspc_count_sample_data_class.mapper.CountSampleDataClassMapper">
+    <resultMap id="BaseResultMap" type="com.hand.spc.pspc_count_sample_data_class.dto.CountSampleDataClass">
+        <result column="COUNT_SAMPLE_DATA_CLASSIFY_ID" property="countSampleDataClassifyId" jdbcType="DECIMAL" />
+        <result column="TENANT_ID" property="tenantId" jdbcType="DECIMAL" />
+        <result column="SITE_ID" property="siteId" jdbcType="DECIMAL" />
+        <result column="COUNT_SAMPLE_DATA_ID" property="countSampleDataId" jdbcType="DECIMAL" />
+        <result column="CLASSIFY_ID" property="classifyId" jdbcType="DECIMAL" />
+        <result column="CLASSIFY_COUNT_VALUE" property="classifyCountValue" jdbcType="DECIMAL" />
+    </resultMap>
+
+
+</mapper>

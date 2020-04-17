@@ -1,0 +1,1825 @@
+<#include "../include/header.html"> 
+<!-- 
+tianmin.wang:2019-08-21
+8D明细主页面 核心
+ -->
+<script src="${base.contextPath}/lib/bootstrap-3.3.7/js/bootstrap.min.js"></script>
+<script src="${base.contextPath}/lib/js/echarts.common.min.js"></script>
+<style>
+	#page-info>span{
+		font-size:12px;
+		padding:0px;
+	}
+	ul{
+		list-style:none;
+	}
+</style>
+<body>
+
+<script>
+	var BaseUrl = _basePath;
+	var orderId = "${RequestParameters.orderId!'-1'}";
+	var viewModel = kendo.observable({
+		model:{
+			orderId:orderId,
+		},
+	});
+	
+</script>
+<script>
+//定义共用方法
+	function getMeaningByValue(meaning,dataSource){
+		var v = meaning ? meaning : "";
+	    $.each(dataSource, function (i, n) {
+	        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+	            v = n.meaning;
+	            return v;
+	        }
+	    })
+	    return v;
+	}
+	function getDimensionInfo(){
+		if(orderId=="-1")return;
+		$.ajax({
+	        url: '${base.contextPath}/hqm/8d/order/select',
+	        type: 'POST',
+	        data: {
+	        	orderId:orderId,
+	        },
+	        async: false,
+	        dataType: "json",
+	        success: function (response) {
+	            if (response.success) {
+	            	if(response.rows.length>0){
+	            		viewModel.set("model",response.rows[0]);
+	            	}
+	            } else {
+	            	
+	            }
+	        }
+	    });
+		changOperationStatus();
+	}
+	function getProblemDescriptionInfo(){
+		//D2信息
+		if(orderId=="-1")return;
+		$.ajax({
+	        url: '${base.contextPath}/hqm/8d/problem/description/select',
+	        type: 'POST',
+	        data: {
+	        	orderId:orderId,
+	        },
+	        async: false,
+	        dataType: "json",
+	        success: function (response) {
+	            if (response.success) {
+	            	if(response.rows.length>0){
+	            		viewModelD2.set("model",response.rows[0]);
+	            		
+	            	}
+	            } else {
+	            	
+	            }
+	        }
+	    });
+	}
+	function getRootCauseInfo(){
+		//D4info
+		if(orderId=="-1")return;
+		$.ajax({
+	        url: '${base.contextPath}/hqm/8d/root/cause/query',
+	        type: 'POST',
+	        data: {
+	        	orderId:orderId,
+	        },
+	        async: false,
+	        dataType: "json",
+	        success: function (response) {
+	        	console.log(response);
+	            if (response.success) {
+	            	if(response.rows.length>0){
+	            		fishBoneStr = response.rows[0].rootCause;
+	            		dataStrToLi(fishBoneStr);
+	            	}
+	            } else {
+	            	
+	            }
+	        }
+	    })
+	}
+	function judgeStepStatus(step){
+		//返回值 是否再操作
+		if(viewModel.model.processDetail.split(',')[step]=='2'){
+			return false;
+		}else{
+			return true;
+		}
+	}
+	function changOperationStatus()
+		//根据状态隐藏相关操作按钮
+		if(!judgeStepStatus(1)){
+			$("#toolbar-btn-d1").hide();
+			$("#bottom-btn-d1").hide();
+			
+		}
+		if(!judgeStepStatus(2)){
+			$("#bottom-btn-d2").hide();
+			
+		}
+		if(!judgeStepStatus(3)){
+			$("#toolbar-btn-d3").hide();
+			$("#bottom-btn-d3").hide();
+		}
+	}
+	function openAllPanel(){
+		$('.collapse').collapse('show');
+		
+	}
+	function closeAllPanel(){
+		$('.collapse').collapse('hide');
+	}
+</script>
+<div class="col-md-12">
+<div class="col-md-1">
+</div>
+<div class="col-md-10">
+<div id="page-content" style="margin-bottom:20px;">
+	<div class="pull-left" id="toolbar-btn" style="margin-bottom:30px;">
+			<span class="btn btn-success k-grid-save-changes" data-bind="click:save" style="float:left;margin-right:5px;"><@spring.message "hap.save"/></span>
+	        <span class="btn btn-primary k-grid-add" style="float:left;margin-right:5px;" data-bind="click:create"><@spring.message "打印"/></span>
+	        <span  data-bind="click:commit" class="btn btn-danger" style="float:left;"><@spring.message "提交"/></span>
+	</div>
+	<div id="page-info" style="clear:both;border: 2px solid #EEEEEE;border-radius:10px;">
+	
+		<div class="row"  style="margin-top:10px;">
+			<div class="col-md-1">
+				<span id="statusSpan" style="color:white;background-color:orange;font-size:14px;">In&nbsp;Progress</span>
+			</div>
+			<div class="col-md-5">
+				<span class="col-md-2" >8D主题:</span>
+				<span id="orderThemeInput" data-bind="text:model.orderTheme"></span>
+				<script>
+					kendo.bind($("#orderThemeInput"),viewModel);
+				</script>
+			</div>
+		</div>
+		
+		<div class="row"  style="margin-top:10px;">
+		
+			<div class="col-md-2">
+				<div class="col-md-4" style="padding:0px;">
+					<span>8D单号:</span>
+				</div>
+				<div class="col-md-8" style="padding:0px;">
+					<span id="orderCodeSpan" data-bind="text:model.orderCode"></span>
+					<script>
+						kendo.bind($("#orderCodeSpan"),viewModel);
+					</script>
+				</div>
+			</div>
+			
+			<div class="col-md-2">
+				<div class="col-md-4" style="padding:0px;">
+					<span>当前进程:</span>
+				</div>
+				<div class="col-md-8" style="padding:0px;">
+					<span id="orderProcessDes" data-bind="text:model.orderProcessDes"></span>
+					<script>
+						kendo.bind($("#orderProcessDes"),viewModel);
+					</script>
+				</div>
+			</div>
+			<div class="col-md-2">
+				<div class="col-md-4" style="padding:0px;">
+					<span>8D来源:</span>
+				</div>
+				<div class="col-md-8" style="padding:0px;">
+					<span id="sourceTypeSpan" data-bind="text:model.sourceType"></span>
+					<script>
+						kendo.bind($("#sourceTypeSpan"),viewModel);
+					</script>
+				</div>
+			</div>
+			
+			<div class="col-md-2">
+				<div class="col-md-4" style="padding:0px;">
+					<span>执行组长:</span>
+				</div>
+				<div class="col-md-8" style="padding:0px;">
+					<span id="memberNameSpan" data-bind="text:model.memberName"></span>
+					<script>
+						kendo.bind($("#memberNameSpan"),viewModel);
+					</script>
+				</div>
+			</div>
+			
+			<div class="col-md-2">
+				<div class="col-md-4" style="padding:0px;">
+					<span>来源单据:</span>
+				</div>
+				<div class="col-md-8" style="padding:0px;">
+					<span id="sourceOrderSpan" data-bind="text:model.sourceOrder"></span>
+					<script>
+						kendo.bind($("#sourceOrderSpan"),viewModel);
+					</script>
+				</div>
+			</div>
+			
+		</div>
+		
+		<div class="row"  style="margin-top:10px;margin-bottom:20px;">
+		
+			<div class="col-md-2">
+				<div class="col-md-4" style="padding:0px;">
+					<span>创建时间:</span>
+				</div>
+				<div class="col-md-8" style="padding:0px;">
+					<span id="createDateSpan" data-bind="text:model.createDate"></span>
+					<script>
+						kendo.bind($("#createDateSpan"),viewModel);
+					</script>
+				</div>
+			</div>
+			
+			<div class="col-md-2">
+				<div class="col-md-4" style="padding:0px;">
+					<span>更新时间:</span>
+				</div>
+				<div class="col-md-8" style="padding:0px;">
+					<span class="col-md-12" id="updateDateSpan" data-bind="text:model.updateDate"></span>
+					<script>
+						kendo.bind($("#updateDateSpan"),viewModel);
+					</script>
+				</div>
+			</div>
+			
+			<div class="col-md-2">
+				<div class="col-md-4" style="padding:0px;">
+					<span >预计完成:</span>
+				</div>
+				<div class="col-md-8" style="padding:0px;">
+					<span id="expectedCompleteTimeSpan" data-bind="text:model.expectedCompleteTime"></span>
+					<script>
+						kendo.bind($("#expectedCompleteTimeSpan"),viewModel);
+					</script>
+				</div>
+			</div>
+			<div class="col-md-2">
+				<div class="col-md-4" style="padding:0px;">
+					<span>发起人:</span>
+				</div>
+				<div class="col-md-8" style="padding:0px;">
+				
+					<span id="createNameSpan" data-bind="text:model.createName"></span>
+					<script>
+						kendo.bind($("#createNameSpan"),viewModel);
+					</script>
+				</div>
+			</div>
+			
+			
+		</div>
+	</div>
+	<div id="page-btn" style="clear:both;margin-top:20px;">
+		
+		<a href="javascript:void(0)" onclick="openAllPanel()" style="color:blue;border-radius:10px;">
+		<@spring.message "hap.allopen"/>
+		</a>
+		<a href="javascript:void(0)" onclick="closeAllPanel()" style="color:blue;border-radius:10px;">
+		<@spring.message "hap.allclose"/>
+		</a>
+	</div>
+</div>
+
+<div>
+
+<div class="panel-group" id="accordion">
+	<div class="panel panel-default">
+		<div class="panel-heading">
+			<h1 class="panel-title">
+				<a data-toggle="collapse" data-parent="#accordion"
+					href="#collapse1">
+					<div style="float:left;width:100%;">
+					<span>D1&nbsp;团队组建&nbsp;Team&nbsp;Assembled</span>
+					<div style="float:right;">
+					<span id="d1TimeSpan">2019-08-23</span>
+					<span>&nbsp;</span>
+					<span id="d1StatusSpan" style="color:green;">Complete</span>
+					</div>
+					</div>
+				</a>
+			</h1>
+		</div>
+		<div id="collapse1" class="panel-collapse collapse">
+			<div class="panel-body">
+				
+				
+				<!-- D1所有内容都放在这里面 -->
+				<div id="childWindowD1" style="display:none;"></div>
+					<script type="text/javascript">
+	    				function openMultipleLov(par){
+	    					var dialog = $("#childWindowD1").kendoWindow({
+	    						actions: ["Close"],
+	    			            width: 600,
+	    			            height: 600,
+	    			            title: '人员选择',
+	    			            content: './dimension_user_multople_lov.html?parentParameter='+par,
+	    			            iframe: true,
+	    			            visible: false,
+	    			            resizable: false,
+	    			            modal: true,
+	    			            close: function () {
+	    			            }
+	    					}).data("kendoWindow");
+	    					dialog.center().open();
+	    				}
+	    				function openSingleLov(par){
+	    					if(!judgeStepStatus(1)){
+	    						Hap.showToast({
+	                    			type:'warning',
+	                    			"positionClass": "toast-bottom-right",
+	                    			message:"当前进程已结束",
+	                    			hideDuration:3*1000
+	                    		});
+	    						return;
+	    					}
+	    					var dialog = $("#childWindowD1").kendoWindow({
+	    						actions: ["Close"],//Max//Min
+	    			            width: 600,
+	    			            height: 600,
+	    			            title: '人员选择',
+	    			            content: './dimension_user_single_lov.html?parentParameter='+par,
+	    			            iframe: true,
+	    			            visible: false,
+	    			            resizable: false,
+	    			            modal: true,
+	    			            close: function () {
+	    			            }
+	    					}).data("kendoWindow");
+	    					dialog.center().open();
+	    				}
+	    				
+					</script>
+					<script type="text/javascript">
+	    				var viewModelD1 = Hap.createGridViewModel("#gridD1");
+	    				viewModelD1.create = function(){
+	    					openMultipleLov("-1");
+	    				}
+	    				viewModelD1.commitFunction = function(){
+	    					//提交D1
+	    					var datas = gridD1.dataSource._data;
+	    					for(var i=0;i<datas.length;i++){
+	    						datas[i].orderId = orderId;
+// 	    						for(var key in datas[i]){
+// 	    							if(!isNaN(key.substr(-1))||key=="dirty"||key=="dirtyFields"){
+// 	    								delete datas[i][key];
+// 	    							}
+// 	    						}
+	    					}
+	    					kendo.ui.showConfirmDialog({
+		                        title: '提示',
+		                        message: '提交后该步骤里的内容不可再编辑，确认提交?'
+		                    }).done(function (e) {
+		                        if(e.button.toUpperCase() == "OK"){
+		                        	$.ajax({
+			    				        url: '${base.contextPath}/hqm/8d/team/assembled/commit',
+			    				        type: 'POST',
+			    				        data: kendo.stringify(datas),
+			    				        async: false,
+			    				        contentType: "application/json",
+//		 	    				        dataType: "json",
+			    				        success: function (response) {
+			    				            if (response.success) {
+			    				            	getDimensionInfo();
+			    				            	kendo.ui.showInfoDialog({
+			    				                      message: "成功"
+			    				               });
+			    				            } else {
+			    				            	kendo.ui.showWarningDialog({
+			    				                    message: response.message
+			    				                });
+			    				            }
+			    				        }
+			    				    });
+		                        }else{
+		                        	
+		                        }
+		                    });
+	    					//hqm/8d/team/assembled/commit
+	    					
+	    				}
+					</script>
+					<div class="pull-left" id="toolbar-btn-d1">
+						<span class="fa fa-plus" data-bind="click:create" 
+						style="font-size:30px;border:2px solod #EEEEEE;border-radius:10px;margin-right:20px;margin-left:30px;">
+						</span>
+						<span class="fa fa-minus" data-bind="click:remove" style="font-size:30px;border:2px solod #EEEEEE;border-radius:10px;">
+						</span>
+					</div>
+					<script type="text/javascript">
+	    				kendo.bind("#toolbar-btn-d1",viewModelD1);
+					</script>
+				
+				
+					<div  style="clear:both;">
+	        			<div id="gridD1"></div>
+	        			<div style="margin-bottom:20px;"></div>
+	    			</div>
+    			<div class="row">
+    			<div class="pull-right" id="bottom-btn-d1">
+			        <span class="btn btn-primary" data-bind="click:save"  style="margin-right:5px"><@spring.message "hap.save"/></span>
+			        <span class="btn btn-default" data-bind="click:commitFunction" style="margin-right:25px;"><@spring.message "提交"/></span>
+				</div>
+				</div>
+				<script type="text/javascript">
+					kendo.bind($('#bottom-btn-d1'),viewModelD1);
+				</script>
+    			<!-- 表格构建 HQM_8D_MEMBER_ROLE-->
+    			<script src="${base.contextPath}/common/code?HQM_8D_MEMBER_ROLE=HQM_8D_MEMBER_ROLE"></script>
+    			
+    			<script>
+    				var dataSourceD1 = new kendo.data.DataSource({
+    		        transport: {
+    		            read: {
+    		                url: BaseUrl + "/hqm/8d/team/assembled/select",
+    		                type: "POST",
+    		                dataType: "json"
+    		            },
+    		            update: {
+    		                url: BaseUrl + "/hqm/8d/team/assembled/submit",
+    		                type: "POST",
+    		                contentType: "application/json"
+    		            },
+    		            destroy: {
+    		                url: BaseUrl + "/hqm/8d/team/assembled/remove",
+    		                type: "POST",
+    		                contentType: "application/json"
+    		            },
+    		            create: {
+    		                url: BaseUrl + "/hqm/8d/team/assembled/submit",
+    		                type: "POST",
+    		                contentType: "application/json"
+    		            },
+    		            parameterMap: function (options, type) {
+    		                if (type !== "read" && options.models) {
+    		                    var datas = Hap.prepareSubmitParameter(options, type)
+    		                    $.each(datas,function(i,e){
+    		                    	e.orderId = orderId;
+    		                    });
+    		                    return kendo.stringify(datas);
+    		                } else if (type === "read") {
+    		                	viewModelD1.model.orderId = orderId;
+    		                    return Hap.prepareQueryParameter(viewModelD1.model.toJSON(), options)
+    		                }
+    		            }
+    		        },
+    		        batch: true,
+    		        serverPaging: true,
+    		        pageSize: 100,
+    		        schema: {
+    		            data: 'rows',
+    		            total: 'total',
+    		            model: {
+    		                id: "kid",
+    		                fields: {}
+    		            }
+    		        }
+    		    });
+    				
+    		   var gridD1 = $("#gridD1").kendoGrid({
+    		        dataSource: dataSourceD1,
+    		        resizable: true,
+    		        scrollable: true,
+    		        navigatable: false,
+    		        selectable: 'multiple, rowbox',
+    		        dataBound: function () {
+//     		        	if (parent.autoResizeIframe) {
+//     		                parent.autoResizeIframe('${RequestParameters.functionCode!}')
+//     		            }
+						
+    		        },
+//     		        pageable: {
+//     		            pageSizes: [5, 10, 20, 50],
+//     		            refresh: true,
+//     		            buttonCount: 5
+//     		        },
+    		        columns: [
+    		                    
+    		                    {
+    		                field: "memberRole",
+    		                title: '<@spring.message "dimensionteamassembled.memberrole"/>',//角色
+    		                width: 80,
+    		                template: function (dataItem) {
+    		                    var v = dataItem.memberRole ? dataItem.memberRole : "";
+    		                    $.each(HQM_8D_MEMBER_ROLE, function (i, n) {
+    		                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+    		                            v = n.meaning;
+    		                            return v;
+    		                        }
+    		                    });
+    		                    return v;
+    		                },
+    		                editor: function (container, options) {
+    		                    $('<input name="' + options.field + '"/>')
+    		                        .appendTo(container)
+    		                        .kendoDropDownList({
+    		                            dataTextField: "meaning",
+    		                            dataValueField: "value",
+    		                            valuePrimitive: true,
+    		                            dataSource: HQM_8D_MEMBER_ROLE
+    		                        });
+    		                },
+    		            },
+    		            {
+    		                field: "orgUnitDes",
+    		                title: '<@spring.message "dimensionteamassembled.orgunitdes"/>',//部门
+    		                width: 120
+    		            },
+    		            {
+    		                field: "orgPositionName",
+    		                title: '<@spring.message "dimensionteamassembled.orgpositionname"/>',//职位
+    		                width: 120
+    		            },
+    		            {
+    		                field: "employeeName",
+    		                title: '<@spring.message "dimensionteamassembled.employeename"/>',//姓名
+    		                width: 120
+    		            },
+    		            {
+    		                field: "employeeEmail",
+    		                title: '<@spring.message "dimensionteamassembled.employeeemail"/>',//邮件
+    		                width: 180
+    		            },
+    		            {
+    		                field: "employeeMobil",
+    		                title: '<@spring.message "dimensionteamassembled.employeemobil"/>',//电话
+    		                width: 120
+    		            },
+    		            {
+    		               
+    		                title: '<@spring.message "dimensionteamassembled.checkuser"/>',//选择
+    		                width: 40,
+    		                attributes: {style: "text-align:center;"},
+    		                headerAttributes: {style: "text-align:center;"},
+    		                template:function(item){
+    		                	return '<a style="color:blue" href="javascript:void(0);" onclick="openSingleLov(\'' + item.uid + '\')">'+ '<span class="fa fa-exchange"></span>' +'</a>'
+    		                }
+    		            },
+    		        ],
+    		        editable: true
+    		    }).data("kendoGrid");
+				</script>
+			</div>
+		</div>
+	</div>
+	<div class="panel panel-default">
+		<div class="panel-heading">
+			<h1 class="panel-title">
+				<a data-toggle="collapse" data-parent="#accordion"
+					href="#collapse2"> 
+					<div style="float:left;width:100%;">
+					<span>D2&nbsp;问题描述&nbsp;Problem&nbsp;Description</span>
+					<div style="float:right;">
+					<span id="d2TimeSpan">2019-08-23</span>
+					<span>&nbsp;</span>
+					<span id="d2StatusSpan" style="color:green;">Complete</span>
+					</div>
+					</div>
+					
+					</a>
+			</h1>
+		</div>
+		<div id="collapse2" class="panel-collapse collapse">
+		<div class="panel-body">
+		<div id="d2-content-validate">
+			<script>
+			function arrayToTable(returnArray){
+				console.log(returnArray);
+				var array = new Array();
+		        array.push("<table class='lineTable' style='width: 100%;height: 30px;color: black;font-size:16px;'>");
+		        //表头
+		        array.push("<tr style='width: 100%'>");
+		        array.push("<th style='width: 20%;border-top: 1px solid #EEEEEE;border-right: 1px solid #EEEEEE;'>");
+		        array.push("8D单号");
+		        array.push("</th>");
+		        array.push("<th style='width: 20%;border-top: 1px solid #EEEEEE;border-right: 1px solid #EEEEEE;'>");
+		        array.push("状态");
+		        array.push("</th>");
+		        array.push("<th style='width: 20%;border-top: 1px solid #EEEEEE;border-right: 1px solid #EEEEEE;'>");
+		        array.push("来源单据");
+		        array.push("</th>");
+		        array.push("<th style='width: 20%;border-top: 1px solid #EEEEEE;border-right: 1px solid #EEEEEE;'>");
+		        array.push("创建日期");
+		        array.push("</th>");
+		        array.push("<th style='width: 20%;border-top: 1px solid #EEEEEE;border-right: 1px solid #EEEEEE;'>");
+		        array.push("最后更新日期");
+		        array.push("</th>");
+		        array.push("</tr>");
+		        for(var i=0;i<returnArray.length;i++){
+		        	array.push("<tr style='width: 100%'>");
+		            array.push("<td style='border-top: 1px solid #EEEEEE;border-right: 1px solid #EEEEEE;border-bottom: 1px solid #EEEEEE'>");
+		            array.push(""+returnArray[i].sourceOrder+"");
+		            array.push("</td>");
+		            array.push("<td style='border-top: 1px solid #EEEEEE;border-right: 1px solid #EEEEEE;border-bottom: 1px solid #EEEEEE'>");
+		            array.push(""+returnArray[i].orderCode+"");
+		            array.push("</td>");
+		            array.push("<td style='border-top: 1px solid #EEEEEE;border-right: 1px solid #EEEEEE;border-bottom: 1px solid #EEEEEE'>");
+		            array.push(""+returnArray[i].orderStatus+"");
+		            array.push("</td>");
+		            array.push("<td style='border-top: 1px solid #EEEEEE;border-right: 1px solid #EEEEEE;border-bottom: 1px solid #EEEEEE'>");
+		            array.push(""+returnArray[i].dimensionCreationDate+"");
+		            array.push("</td>");
+		            array.push("<td style='border-top: 1px solid #EEEEEE;border-right: 1px solid #EEEEEE;border-bottom: 1px solid #EEEEEE'>");
+		            array.push(""+returnArray[i].dimensionLastUpdateDate+"");
+		            array.push("</td>");
+		            array.push("</tr>");
+		        }
+		        array.push("</table>");
+		        $('#d2TableContent').append(array.join(''));
+			}
+			function arrayToChart(returnArray){
+				var xArray = new Array();
+				var yArray = new Array();
+				$.each(returnArray,function(i,o){
+					xArray.push(o.ngMemberCode);
+					yArray.push(o.step);
+				});
+				var option = {
+					    xAxis: {
+					        type: 'category',
+					        data: xArray
+					    },
+					    yAxis: {
+					        type: 'value',
+					        interval: 1,
+					    },
+					    series: [{
+					        data: yArray,
+					        type: 'bar'
+					    }]
+					};
+					if($('#d2TableContent').css("height").substr(0,-2)<=100){
+						
+						$('#d2ChartInner').css("height","100px");
+					}
+					else{
+						$('#d2ChartInner').css("height",$('#d2TableContent').css("height").substr(0,-2)+'px')
+					}
+			        // 使用刚指定的配置项和数据显示图表。
+			        chartD2.setOption(option);
+			}
+			</script>
+			<script>
+				function getDimensionsByItemChart(){
+					//$("#d2TableContent").html("");
+					var returnArray = new Array();
+					$.ajax({
+				        url: '${base.contextPath}/hqm/8d/problem/description/selectdimensionbyitemgroupcount',
+				        type: 'POST',
+				        data: {itemId:viewModelD2.model.itemId},
+				        async: false,
+				        dataType: "json",
+				        success: function (response) {
+				        	if (response.success) {
+				        		returnArray = response.rows;
+				            } else {
+				            	kendo.ui.showErrorDialog({title:"错误",message:response.message});
+				            }
+				        }
+				    });
+					if(returnArray.length == 0)return returnArray;
+					arrayToChart(returnArray,viewModelD2.model.itemDescriptions);
+					return returnArray;
+				}
+				function getDimensionsByItemComponentChart(){
+					//$("#d2TableContent").html("");
+					var returnArray = new Array();
+					$.ajax({
+				        url: '${base.contextPath}/hqm/8d/problem/description/selectdimensionbyitemgroupcount',
+				        type: 'POST',
+				        data: {itemIdComponent:viewModelD2.model.itemIdComponent},
+				        async: false,
+				        dataType: "json",
+				        success: function (response) {
+				        	if (response.success) {
+				        		returnArray = response.rows;
+				            } else {
+				            	kendo.ui.showErrorDialog({title:"错误",message:response.message});
+				            }
+				        }
+				    });
+					if(returnArray.length == 0)return returnArray;
+					arrayToChart(returnArray,viewModelD2.model.itemComponentDescriptions);
+					return returnArray;
+				}
+				function getDimensionsByItem(){
+					$("#d2TableContent").html("");
+					var returnArray = new Array();
+					$.ajax({
+    			        url: '${base.contextPath}/hqm/8d/problem/description/selectdimensionbyitem',
+    			        type: 'POST',
+    			        data: {itemId:viewModelD2.model.itemId},
+    			        async: false,
+    			        dataType: "json",
+    			        success: function (response) {
+    			        	if (response.success) {
+    			        		returnArray = response.rows;
+				            } else {
+				            	kendo.ui.showErrorDialog({title:"错误",message:response.message});
+				            }
+    			        }
+    			    });
+					if(returnArray.length == 0)return returnArray;
+					arrayToTable(returnArray);
+					return returnArray;
+				}
+				function getDimensionsByItemComponent(){
+					$("#d2TableContent").html("");
+					var returnArray = new Array();
+					$.ajax({
+    			        url: '${base.contextPath}/hqm/8d/problem/description/selectdimensionbyitem',
+    			        type: 'POST',
+    			        data: {itemIdComponent:viewModelD2.model.itemIdComponent},
+    			        async: false,
+    			        dataType: "json",
+    			        success: function (response) {
+    			        	if (response.success) {
+    			        		returnArray = response.rows;
+				            } else {
+				            	kendo.ui.showErrorDialog({title:"错误",message:response.message});
+				            }
+    			        }
+    			    });
+					if(returnArray.length == 0)return returnArray;
+					arrayToTable(returnArray);
+					return returnArray;
+				}
+			</script>
+			<script>
+				var viewModelD2 = kendo.observable({
+					model:{
+						orderId:orderId,
+					},
+					save:function(){
+						//D2保存
+						var validator = $("#d2-content-validate").data("kendoValidator");
+						if(!validator.validate())return;
+						var data = JSON.parse(JSON.stringify(viewModelD2.model));
+						$.ajax({
+        			        url: '${base.contextPath}/hqm/8d/problem/description/save',
+        			        type: 'POST',
+        			        data: data,
+        			        async: false,
+        			        dataType: "json",
+        			        success: function (response) {
+        			        	if (response.success) {
+					            	getProblemDescriptionInfo();
+					            	kendo.ui.showInfoDialog({title:"提示",message:"保存成功"});
+					            	
+					            } else {
+					            	kendo.ui.showErrorDialog({title:"错误",message:response.message});
+					            }
+        			        }
+        			    });
+					},
+					commitFunction:function(){
+						//D2提交
+						kendo.ui.showConfirmDialog({
+	                        title: '提示',
+	                        message: '提交后该步骤里的内容不可再编辑，确认提交?'
+	                    }).done(function (e) {
+	                    	var data = JSON.parse(JSON.stringify(viewModelD2.model));
+	                        if(e.button.toUpperCase() == "OK"){
+	                        	$.ajax({
+	            			        url: '${base.contextPath}/hqm/8d/problem/description/commit',
+	            			        type: 'POST',
+	            			        data: data,
+	            			        async: false,
+	            			        dataType: "json",
+	            			        success: function (response) {
+	            			        	if (response.success) {
+	    					        		getProblemDescriptionInfo();
+	    					            	kendo.ui.showInfoDialog({title:"提示",message:"保存成功"});
+	    					            } else {
+	    					            	kendo.ui.showErrorDialog({title:"错误",message:response.message});
+	    					            }
+	            			        }
+	            			    });
+	                        	
+	                        }
+	                    });
+						
+					},
+					showChartItem:function(){
+						getDimensionsByItem();
+						getDimensionsByItemChart();
+					},
+					showChartCompent:function(){
+						getDimensionsByItemComponent();
+						getDimensionsByItemComponentChart();
+					}
+				});
+			</script>
+			<div class="row">
+			<div class="col-xs-12">
+			
+			<div class="col-xs-2">
+				<div class="row"><span>问题产品编码</span></div>
+				<div class="row">
+				<input id="itemIdLovD2" style="width:100%" name="itemId" required data-bind="value:model.itemId,text:model.itemCode">
+				<script type="text/javascript">
+					kendo.bind($("#itemIdLovD2"),viewModelD2);
+					$("#itemIdLovD2").kendoLov($.extend
+				    	    (<@lov"LOV_ITEM"/>, {
+				    	        textField: 'itemCode',
+				    	        valueField:'itemId',
+				    	        query:function(e){
+				    	        	e.param.plantId = viewModel.model.plantId;
+				    	        },
+				    	        change:function(e){
+				    	        	viewModelD2.model.set('itemDescriptions',this._dataItem.itemDescriptions);
+				    	        }
+				    	    }));
+				</script>
+				</div>
+				<div class="row">问题地点</div>
+				<div class="row">
+				<input id="occurPlaceD2" style="width:100%" name="occurPlace" data-bind="value:model.occurPlace" data-role="maskedtextbox">
+				<script type="text/javascript">
+					kendo.bind($("#occurPlaceD2"),viewModelD2);
+				</script>
+				</div>
+			</div>
+			<div class="col-xs-2">
+				<div class="row"><span>问题产品描述</span></div>
+				<div class="row">
+				<input id="itemDescriptionsD2" data-role="maskedtextbox" style="width:100%" name="itemDescriptions" disabled data-bind="value:model.itemDescriptions">
+				<script type="text/javascript">
+					kendo.bind($("#itemDescriptionsD2"),viewModelD2);
+				</script>
+				</div>
+				<div class="row">问题产线</div>
+				<div class="row">
+				<input style="width:100%" id="prodLineIdLovD2" name="prodLineId" data-bind="value:model.prodLineId,text:model.prodLineCode">
+				<script type="text/javascript">
+					kendo.bind($("#prodLineIdLovD2"),viewModelD2);
+					$("#prodLineIdLovD2").kendoLov($.extend
+				    	    (<@lov"LOV_PROD_LINE"/>, {
+				    	        textField: 'prodLineCode',
+				    	        valueField:'prodLineId',
+				    	        query:function(e){
+				    	        	e.param.plantId = viewModel.model.plantId;
+				    	        },
+				    	        change:function(e){
+				    	        	
+				    	        }
+				    	    }));
+				</script>
+				</div>
+			</div>
+			<div class="col-xs-2">
+				<div class="row"><span>问题零件编码</span></div>
+				<div class="row">
+				<input id="itemIdComponentLovD2" style="width:100%" data-bind="value:model.itemIdComponent,text:model.itemComponentCode">
+				<script type="text/javascript">
+					kendo.bind($("#itemIdComponentLovD2"),viewModelD2);
+					$("#itemIdComponentLovD2").kendoLov($.extend
+				    	    (<@lov"LOV_ITEM"/>, {
+				    	        textField: 'itemCode',
+				    	        valueField:'itemId',
+				    	        query:function(e){
+				    	        	e.param.plantId = viewModel.model.plantId;
+				    	        },
+				    	        change:function(e){
+				    	        	viewModelD2.model.set('itemComponentDescriptions' ,this._dataItem.itemDescriptions);
+				    	        }
+				    	    }));
+				</script>
+				</div>
+				<div class="row">不良代码组</div>
+				<div class="row">
+				<input id="ngGroupIdD2" style="width:100%" required data-bind="value:model.ngGroupId,text:model.ngGroupCode">
+				<script type="text/javascript">
+					kendo.bind($("#ngGroupIdD2"),viewModelD2);
+					$("#ngGroupIdD2").kendoLov($.extend
+				    	    (<@lov"lOV_NG_GROUP"/>, {
+				    	        textField: 'ngGroupCode',
+				    	        valueField:'ngGroupId',
+				    	        
+				    	        change:function(e){
+				    	        	viewModelD2.model.itemComponentDescriptions = this._dataItem.itemDescriptions;
+				    	        }
+				    	    }));
+				</script>
+				</div>
+			</div>
+			<div class="col-xs-2">
+				<div class="row"><span>问题零件描述</span></div>
+				<div class="row">
+				<input id="itemComponentDescriptionsD2" data-role="maskedtextbox" style="width:100%" disabled data-bind="value:model.itemComponentDescriptions">
+				<script type="text/javascript">
+					kendo.bind($("#itemComponentDescriptionsD2"),viewModelD2);
+				</script>
+				</div>
+				<div class="row">不良代码</div>
+				<div class="row">
+				<input id="ngMemberIdD2" style="width:100%" required data-bind="value:model.ngMemberId,text:model.ngMemberCode">
+				<script type="text/javascript">
+					kendo.bind($("#ngMemberIdD2"),viewModelD2);
+					$("#ngMemberIdD2").kendoLov($.extend
+				    	    (<@lov"LOV_NG_CODE"/>, {
+				    	        textField: 'ngCode',
+				    	        valueField:'ngMenberId',
+				    	        query:function(e){
+				    	        	e.param.ngGroupId = viewModelD2.model.ngGroupId;
+				    	        },
+				    	        change:function(e){
+				    	        	
+				    	        }
+				    	    }));
+				</script>
+				</div>
+			</div>
+			<div class="col-xs-2">
+				<div class="row"><span>发生时间</span></div>
+				<div class="row">
+				<input id="occurTimeD2" style="width:100%" required data-bind="value:model.occurTime">
+				<script type="text/javascript">
+						kendo.bind($("#occurTimeD2"),viewModelD2);
+						$("#occurTimeD2").kendoDateTimePicker({
+							format:"yyyy-MM-dd hh:mm:ss"
+						});
+					</script>
+				</div>
+				<div class="row">问题数量</div>
+				<div class="row">
+					<input id="problemQtyD2" style="width:100%" data-bind="value:model.problemQty">
+					<script type="text/javascript">
+						kendo.bind($("#problemQtyD2"),viewModelD2);
+						$("#problemQtyD2").kendoNumericTextBox({
+							min:0,
+						});
+					</script>
+				</div>
+			</div>
+			<div class="col-xs-2">
+				<div class="row"><span>问题来源</span></div>
+				<div class="row">
+				<input id="problemSourceD2" style="width:100%" data-bind="value:model.problemSource">
+				<script src="${base.contextPath}/common/code?HQM_8D_PROBLEM_SOURCE=HQM_8D_PROBLEM_SOURCE"></script>
+				<script type="text/javascript">
+					kendo.bind($("#problemSourceD2"),viewModelD2);
+					$("#problemSourceD2").kendoComboBox({
+				        dataTextField: "meaning",
+				        dataValueField: "value",
+				        valuePrimitive: true,
+				        dataSource: HQM_8D_PROBLEM_SOURCE
+					});
+				</script>
+				</div>
+				<div class="row">问题等级</div>
+				<div class="row">
+				<input id="problemLevelD2" style="width:100%" data-bind="value:model.problemLevel">
+				<script src="${base.contextPath}/common/code?HQM_8D_PROBLEM_LEVEL=HQM_8D_PROBLEM_LEVEL"></script>
+				<script type="text/javascript">
+					kendo.bind($("#problemLevelD2"),viewModelD2);
+					$("#problemLevelD2").kendoComboBox({
+				        dataTextField: "meaning",
+				        dataValueField: "value",
+				        valuePrimitive: true,
+				        dataSource: HQM_8D_PROBLEM_LEVEL
+					});
+				</script>
+				</div>
+			</div>
+			
+			</div>
+			</div>
+			
+			<div class="row">
+			<div class="col-xs-12">
+			<div class="col-xs-2">
+				<div class="row">
+				<span>供应商</span>
+				</div>
+				<div class="row">
+    			<input id="supplierIdLovD2" data-bind="value:model.supplierId,text:model.supplierCode">
+    			<script>
+    			kendo.bind($("#supplierIdLovD2"),viewModelD2);
+				$("#supplierIdLovD2").kendoLov($.extend
+			    	    (<@lov"LOV_SUPPLIER"/>, {
+			    	        textField: 'supplierCode',
+			    	        valueField:'supplierId',
+			    	        query:function(e){
+			    	        	e.param.plantId = viewModel.model.plantId;
+			    	        },
+			    	        change:function(e){
+			    	        	
+			    	        }
+			    	    }));
+                </script>
+				</div>
+			</div>
+			
+			</div>
+			</div>
+			
+			<div class="row">
+			<div class="col-xs-12">
+			<div class="col-xs-10">
+				<div class="row">
+				<span>问题描述</span>
+				</div>
+				<div class="row" style="margin-bottom:10px;">
+    			<textarea style="width:100%;height:80px"  id="problemDescriptionD2" data-bind="value:model.problemDescription"></textarea>
+    			<script>
+                	$("#problemDescriptionD2").kendoTextArea({
+                    });
+                </script>
+				</div>
+			</div>
+			<div class="col-xs-2">
+				
+				<div class="row">
+				<span>文件上传</span>
+				</div>
+				<div class="row">
+				<div id="fileDownLoadD2" style="display:none;">
+				
+				</div>
+				<div id="excelimport">
+					<form id="mainform" class="form-horizontal">
+					<div class="row" style="width:100%">
+						<div class="form-group">
+							
+							<div class="col-sm-12">
+							<div class="demo-section k-content">
+								<input name="files" id="files1" type="file" accept=".xlsx,.pdf,.word" />
+							</div>
+							
+							<script>
+							
+								$("#files1").kendoUpload({
+									async: {
+				                    	saveUrl: "${base.contextPath}/hcm/item/category/query?${_csrf.parameterName}=${_csrf.token}",//
+										autoUpload: true
+									},
+									showFileList:false,
+									upload: function(e){
+										e.data = {
+												orderId:orderId,
+									        }
+									},
+				                    success: function(e){
+				                        var response = e.response;
+				                        if(response.success){
+				                        	kendo.ui.showInfoDialog({message: "导入成功"});
+				                        	}else{
+				                        	kendo.ui.showErrorDialog({message: response.message});
+				                        	}
+				                     },
+										
+								});
+								$("div .k-dropzone").append('<div style="float:left;width:85px;" class="k-button" aria-label="下载"><span id="downLoadFilesD2">下载</span></div>');
+								$("div .k-dropzone").css("margin-bottom","10px")
+								$("#downLoadFilesD2").on('click',function(){
+									//ajax查询上传的文件
+									var fileArray = new Array();
+									$.ajax({
+		            			        url: '${base.contextPath}/hqm/8d/upload/files/query',
+		            			        type: 'POST',
+		            			        data: {
+		            			        	orderId:orderId,
+		            			        	step:2,
+		            			        	type:'S2'
+		            			        },
+		            			        async: false,
+		            			        dataType: "json",
+		            			        success: function (response) {
+		            			        	if (response.success) {
+		            			        		fileArray = response.rows;
+		    					            } else {
+		    					            	kendo.ui.showErrorDialog({title:"错误",message:response.message});
+		    					            }
+		            			        }
+		            			    });
+									$("#fileDownLoadD2").html("");
+									$.each(fileArray,function(i,o){
+										$('<iframe class="multi-download" src="'+ o.fileUrl +'" style="display:none"></iframe>').appendTo($("#fileDownLoadD2"));
+									});
+								});
+								</script>
+							</div>
+						</div>
+					</div>
+					</form>
+				</div>
+			</div>
+			</div>
+			</div>
+			</div>
+			
+			<div id="middle-btn-d2" class="row" style="margin-top:20px;padding-left:22px;">
+			<span class="btn btn-default" style="float:left;margin-right:5px;" data-bind="click:showChartItem"><@spring.message "同物料8D经验"/></span>
+			<span class="btn btn-default" style="float:left;margin-right:5px;" data-bind="click:showChartCompent"><@spring.message "同零件8D经验"/></span>
+			</div>
+			<script type="text/javascript">
+					kendo.bind($('#middle-btn-d2'),viewModelD2);
+			</script>
+			<div id="d2Chart" class="row" style="margin-bottom:20px;margin-top:10px;padding-left:22px;">
+			<div class="col-xs-12">
+				<div id="d2Table" class="col-xs-10">
+					<div id="d2TableContent">
+					
+					</div>
+				</div>
+				<div id="d2Chart" class="col-xs-2" style="padding-left:10px;">
+					<div id="d2ChartInner" style="border:1px solid #fff0f0;width: 200px;height:100px;">
+					</div>
+					<script type="application/javascript">
+				        // 基于准备好的dom，初始化echarts实例
+				        var chartD2 = echarts.init(document.getElementById('d2ChartInner'));
+				        
+				    </script>
+				</div>
+			</div>
+			</div>
+			
+			<div class="row">
+    			<div class="pull-right" id="bottom-btn-d2">
+			        <span class="btn btn-primary" data-bind="click:save"  style="margin-right:5px"><@spring.message "hap.save"/></span>
+			        <span class="btn btn-default" data-bind="click:commitFunction" style="margin-right:25px;"><@spring.message "提交"/></span>
+				</div>
+				<script type="text/javascript">
+					kendo.bind($('#bottom-btn-d2'),viewModelD2);
+				</script>
+			</div>
+			
+		</div>
+		<script>
+			$("#d2-content-validate").kendoValidator({
+		    	messages: {
+		            required: '<@spring.message "hap.validation.notempty"/>'
+		    	},
+				invalidMessageType : "tooltip"
+		    });
+		</script>
+		</div>
+		</div>
+	</div>
+	<div class="panel panel-default">
+		<div class="panel-heading">
+			<h1 class="panel-title">
+				<a data-toggle="collapse" data-parent="#accordion"
+					href="#collapse3"> 
+					<div style="float:left;width:100%;">
+					<span>D3&nbsp;临时措施&nbsp;Immediate&nbsp;Actions</span>
+					<div style="float:right;">
+					<span id="d3TimeSpan">2019-08-23</span>
+					<span>&nbsp;</span>
+					<span id="d3StatusSpan" style="color:green;">Complete</span>
+					</div>
+					</div>
+				 </a>
+			</h1>
+		</div>
+		<div id="collapse3" class="panel-collapse collapse">
+			<div class="panel-body">
+			<div>
+			<script>
+			
+ 		   function detailInit(e) {
+ 			  
+ 			   var uid = e.data.uid;
+ 			   var queryModel = {
+ 					   headActionId:e.data.headActionId?e.data.headActionId:(-1),
+ 			   };
+ 			   var innerDataSource = new kendo.data.DataSource({
+ 			        transport: {
+ 			            read: {
+ 			                url: BaseUrl + "/hqm/8d/immediate/actions/line/query",
+ 			                type: "POST",
+ 			                dataType: "json"
+ 			            },
+ 			            update: {
+ 			                url: BaseUrl + "/hqm/8d/immediate/actions/line/submit",
+ 			                type: "POST",
+ 			                contentType: "application/json"
+ 			            },
+ 			            destroy: {
+ 			                url: BaseUrl + "/hqm/8d/immediate/actions/line/remove",
+ 			                type: "POST",
+ 			                contentType: "application/json"
+ 			            },
+ 			            create: {
+ 			                url: BaseUrl + "/hqm/8d/immediate/actions/line/submit",
+ 			                type: "POST",
+ 			                contentType: "application/json"
+ 			            },
+ 			            parameterMap: function (options, type) {
+ 			                if (type !== "read" && options.models) {
+ 			                    var datas = Hap.prepareSubmitParameter(options, type)
+ 			                    $.each(datas,function(i,v){
+ 			                    	v.headActionId = queryModel.headActionId;
+ 			                    });
+ 			                    return kendo.stringify(datas);
+ 			                } else if (type === "read") {
+ 			                    return Hap.prepareQueryParameter(queryModel, options)
+ 			                }
+ 			            }
+ 			        },
+ 			        batch: true,
+ 			        serverPaging: true,
+ 			        pageSize: 20,
+ 			        schema: {
+ 			            data: 'rows',
+ 			            total: 'total',
+ 			            model: {
+ 			                id: "lineActionId",
+ 			                fields: {
+ 			                	planTime:{
+ 			                		type:"date",
+ 			                		validation: {
+ 			                            required: true,
+ 			                        },
+ 			                	},
+ 			                	userId:{
+ 			                		defaultValue:"${Session.userId}"
+ 			                	},
+ 			                	userName:{
+ 			                		defaultValue:"${Session.userName}"
+ 			                	},
+ 			                }
+ 			            }
+ 			        }
+ 			    });
+ 		        $("<div id='gridDetailD3"+uid+"'/>").appendTo(e.detailCell).kendoGrid({
+ 		            dataSource: innerDataSource,
+ 		            scrollable: false,
+ 		            sortable: true,
+ 		            
+//  		            pageable: true,
+ 		            rownumber: true,
+ 		            //selectable: 'rowbox,multiple',
+ 		            columns: [
+ 		                        {
+ 		                    field: "executeImmediateAction",
+ 		                    title: '<@spring.message "dimensionimmediateactionsline.executeimmediateaction"/>',
+ 		                    width: 120
+ 		                },
+ 		                        {
+ 		                    field: "actionDescription",
+ 		                    title: '<@spring.message "dimensionimmediateactionsline.actiondescription"/>',
+ 		                    width: 120
+ 		                },
+ 		                        {
+ 		                    field: "userId",
+ 		                    title: '<@spring.message "dimensionimmediateactionsline.userid"/>',
+ 		                    width: 120,
+ 		                    hidden:true,
+ 		                },
+ 		               {
+ 		                    field: "userName",
+ 		                    title: '<@spring.message "dimensionimmediateactionsline.userid"/>',
+ 		                    width: 120,
+ 		                    hidden:true,
+ 		                },
+ 		                        {
+ 		                    field: "planTime",
+ 		                    title: '<@spring.message "dimensionimmediateactionsline.plantime"/>',
+ 		                    width: 120,
+ 		                    format:"{0:yyyy-MM-dd hh:mm:ss}",
+ 		                   	editor: function (container, options) {
+ 		                      $('<input required name="' + options.field + '"/>')
+ 		                              .appendTo(container)
+ 		                              .kendoDateTimePicker();
+ 		                  }
+ 		                },
+ 		                        {
+ 		                    field: "actualTime",
+ 		                    title: '<@spring.message "dimensionimmediateactionsline.actualtime"/>',
+ 		                    width: 120,
+ 		                   	format:"{0:yyyy-MM-dd hh:mm:ss}",
+ 		                  	editor: function (container, options) {
+ 		                     $('<input name="' + options.field + '"/>')
+ 		                             .appendTo(container)
+ 		                             .kendoDateTimePicker();
+ 		                 }
+ 		                },
+ 		                        {
+ 		                    field: "actionStatus",
+ 		                    title: '<@spring.message "dimensionimmediateactionsline.actionstatus"/>',
+ 		                    width: 120
+ 		                },
+ 		                        {
+ 		                    field: "remark",
+ 		                    title: '<@spring.message "dimensionimmediateactionsline.remark"/>',
+ 		                    width: 120
+ 		                },
+ 		                {
+ 		                    command: [
+ 		                        
+ 		                        {name: "destroy", className: "btn-remove",},
+ 		                        
+ 		                    ],
+ 		                    //locked: true,
+ 		                    title: "操作",
+ 		                    width: 150,
+ 		                    headerAttributes: {
+ 		                        style: "text-align:center"
+ 		                    },
+ 		                    attributes: {
+ 		                        style: "text-align:center"
+ 		                    }
+ 		                }, 
+ 		            ],
+ 		            editable: true
+ 		            
+ 		        });
+ 		       if(!judgeStepStatus(3)){
+					$('#gridDetailD3'+uid).data("kendoGrid").hideColumn(7);
+				}
+ 		    }
+			function saveLineDetail(){
+				var datas = $("#gridD3").data("kendoGrid").dataSource.data();
+				$.each(datas,function(i,v){
+					if($("#gridDetailD3"+v.uid).length>0){
+						$("#gridDetailD3"+v.uid).data("kendoGrid").saveChanges();
+					}
+				});
+			}
+			function gridMasterRemoveRow(uid){
+					if(!judgeStepStatus(3)){
+						Hap.showToast({
+	            			type:'warning',
+	            			"positionClass": "toast-bottom-right",
+	            			message:"当前进程已结束",
+	            			hideDuration:3*1000
+	            		});
+						return;
+					}
+					//删除按钮所属行
+	 			   var selected = gridD3.dataSource.data();
+	 			   console.log(selected);
+	 			   $.each(selected,function(i,v){
+	 				  console.log(v.headActionId);
+	 					console.log(v.__status);
+	 				   if(v["uid"] == uid ){
+	 				   gridD3.dataSource.remove(v);
+	 				   gridD3.dataSource.sync("destroy");
+	 				   deleteOne(v.headActionId);
+	 				  return false;
+	 			   }
+				 });
+	 		   }
+	 		function gridAddDetail(uid){
+		 			if(!judgeStepStatus(3)){
+						Hap.showToast({
+	            			type:'warning',
+	            			"positionClass": "toast-bottom-right",
+	            			message:"当前进程已结束",
+	            			hideDuration:3*1000
+	            		});
+						return;
+					}
+	 			//行明细新增
+	 			 $("#gridDetailD3"+uid).data("kendoGrid").addRow();
+	 		}
+	 		function deleteOne(headActionId){
+	 			//删除一个依据主键
+				$.ajax({
+			        url: '${base.contextPath}/hqm/8d/immediate/actions/head/deleteone',
+			        type: 'POST',
+			        data: {
+			        	headActionId:headActionId,
+			        },
+			        async: false,
+			        dataType: "json",
+			        success: function (response) {
+			            if (response.success) {
+			            	
+			            }
+			        }
+			    });
+			}
+			function saveOne(){
+				//新增立即保存返回主键并赋值给dataSource
+				var data = $("#gridD3").data("kendoGrid").dataSource.data()[0];
+				$.ajax({
+			        url: '${base.contextPath}/hqm/8d/immediate/actions/head/saveone',
+			        type: 'POST',
+			        data: {
+			        	immediateAction:data.immediateAction,
+			        	orderId:orderId,
+			        },
+			        async: false,
+			        dataType: "json",
+			        success: function (response) {
+			            if (response.success) {
+			            	console.log(response);
+			            	if(response.rows.length>0){
+			            		$("#gridD3").data("kendoGrid").dataSource._data[0].set('headActionId',response.rows[0].headActionId);
+			            		
+			            	}
+			            }
+			        }
+			    });
+			}
+			</script>
+			<script>
+			
+			 var viewModelD3 = Hap.createGridViewModel("#gridD3");
+			 viewModelD3.create = function(){
+				 saveLineDetail();
+				 $("#gridD3").data("kendoGrid").addRow();
+				 saveOne();
+				 console.log($("#gridD3").data("kendoGrid").dataSource);
+			 }
+			 viewModelD3.save = function(){
+				 saveLineDetail();
+			 }
+			 viewModelD3.commitFunction = function(){
+					//D2提交
+					kendo.ui.showConfirmDialog({
+                     title: '提示',
+                     message: '提交后该步骤里的内容不可再编辑，确认提交?'
+                 }).done(function (e) {
+                 	var data = JSON.parse(JSON.stringify(viewModelD2.model));
+                     if(e.button.toUpperCase() == "OK"){
+                     	$.ajax({
+         			        url: '${base.contextPath}/hqm/8d/immediate/actions/head/commit',
+         			        type: 'POST',
+         			        data: data,
+         			        async: false,
+         			        dataType: "json",
+         			        success: function (response) {
+         			        	if (response.success) {
+ 					        		getProblemDescriptionInfo();
+ 					            	kendo.ui.showInfoDialog({title:"提示",message:"保存成功"});
+ 					            } else {
+ 					            	kendo.ui.showErrorDialog({title:"错误",message:response.message});
+ 					            }
+         			        }
+         			    });
+                     	
+                     }
+                 });
+					
+				}
+			</script>
+			<div class="pull-left" id="toolbar-btn-d3" style="margin-bottom:10px;">
+				<span class="btn btn-primary k-grid-add" data-bind="click:create" style="border:2px solod #EEEEEE;border-radius:10px;margin-right:5px;margin-left:5px;">添加措施</span>
+<!-- 				<span class="btn btn-default" data-bind="click:remove" style="border:2px solod #EEEEEE;border-radius:10px;">删除措施</span> -->
+			</div>
+				<script type="text/javascript">
+					kendo.bind($('#toolbar-btn-d3'),viewModelD3);
+				</script>
+			<div  style="clear:both;">
+	        	<div id="gridD3"></div>
+	        	<div style="margin-bottom:20px;"></div>
+	    	</div>
+	    	
+	    	<div class="row">
+    			<div class="pull-right" id="bottom-btn-d3">
+			        <span class="btn btn-primary" data-bind="click:save"  style="margin-right:5px"><@spring.message "hap.save"/></span>
+			        <span class="btn btn-default" data-bind="click:commitFunction" style="margin-right:25px;"><@spring.message "提交"/></span>
+				</div>
+			</div>
+			
+			<script>
+    				var dataSourceD3 = new kendo.data.DataSource({
+    			        transport: {
+    			            read: {
+    			                url: BaseUrl + "/hqm/8d/immediate/actions/head/query",
+    			                type: "POST",
+    			                dataType: "json"
+    			            },
+    			            update: {
+    			                url: BaseUrl + "/hqm/8d/immediate/actions/head/submit",
+    			                type: "POST",
+    			                contentType: "application/json"
+    			            },
+    			            destroy: {
+    			                url: BaseUrl + "/hqm/8d/immediate/actions/head/remove",
+    			                type: "POST",
+    			                contentType: "application/json"
+    			            },
+    			            create: {
+    			                url: BaseUrl + "/hqm/8d/immediate/actions/head/submit",
+    			                type: "POST",
+    			                contentType: "application/json"
+    			            },
+    			            parameterMap: function (options, type) {
+    			                if (type !== "read" && options.models) {
+    			                    var datas = Hap.prepareSubmitParameter(options, type)
+    			                    $.each(datas,function(i,o){
+    			                    	o.orderId = orderId;
+    			                    });
+    			                    return kendo.stringify(datas);
+    			                } else if (type === "read") {
+    			                	viewModelD3.model.orderId = orderId;
+    			                    return Hap.prepareQueryParameter(viewModelD3.model.toJSON(), options)
+    			                }
+    			            }
+    			        },
+    			        batch: true,
+    			        serverPaging: true,
+    			        pageSize: 20,
+    			        schema: {
+    			            data: 'rows',
+    			            total: 'total',
+    			            model: {
+    			                id: "step",
+    			                fields: {
+    			                	immediateAction:{
+    			                		validation: {
+    			                            required: true,
+    			                            required:{message: "请输入"},
+    			                        },
+    			                	}
+    			                },
+    			            }
+    			        }
+    			    });
+
+    				
+    		   var gridD3 = $("#gridD3").kendoGrid({
+    		        dataSource: dataSourceD3,
+    		        resizable: false,
+    		        scrollable: true,
+    		        navigatable: false,
+    		        detailInit: detailInit,
+    		        //selectable: 'multiple, rowbox',
+    		        dataBound: function () {
+    		            if (parent.autoResizeIframe) {
+    		                parent.autoResizeIframe('${RequestParameters.functionCode!}')
+    		            }
+    		        },
+//     		        pageable: {
+//     		            pageSizes: [5, 10, 20, 50],
+//     		            refresh: true,
+//     		            buttonCount: 5
+//     		        },
+    		        columns: [
+    		            
+    		                    {
+    		                field: "immediateAction",
+    		                title: '<@spring.message "措施"/>',
+    		                width: 120
+    		            },
+    		            {
+    		                
+    		                //locked: true,
+    		                title: "操作",
+    		                width: 80,
+    		                headerAttributes: {
+    		                    style: "text-align:center"
+    		                },
+    		                attributes: {
+    		                    style: "text-align:center"
+    		                },
+    		                template:function(item){
+    		                	var con = 
+    		                	'<span class="fa fa-trash" style="margin-right:20px;font-size:20px;" onclick="gridMasterRemoveRow(\''+item.uid+'\')"></span>&nbsp;'+
+    		                	'<span style="font-size:20px;" class="fa fa-plus" onclick="gridAddDetail(\''+item.uid+'\')"></span>';
+    		                	return con;
+    		                }
+    		            }, 
+    		        ],
+    		        editable: true
+    		    }).data("kendoGrid");
+    		  </script>
+    		  
+			</div>
+			</div>
+		</div>
+	</div>
+	<div class="panel panel-default">
+		<div class="panel-heading">
+			<h1 class="panel-title">
+				<a data-toggle="collapse" data-parent="#accordion"
+					href="#collapse4"> 
+					<div style="float:left;width:100%;">
+					<span>D4&nbsp;原因分析&nbsp;Root&nbsp;Cause&nbsp;Analysis</span>
+					<div style="float:right;">
+					<span id="d1TimeSpan">2019-08-23</span>
+					<span>&nbsp;</span>
+					<span id="d1StatusSpan" style="color:green;">Complete</span>
+					</div>
+					</div>
+			 </a>
+			</h1>
+		</div>
+		<div id="collapse4" class="panel-collapse collapse in">
+			<div class="panel-body">
+			<div>
+			<div class="col-xs-12">
+			<div class="col-xs-3">
+			<div id="ulListContainer">
+			<ul id="rootUl"></ul>
+			<script>
+				var fishBoneStr ="";
+			    function dataStrToLi(dataStr){
+			        var re = /-/g;//-的正则
+			        //str.replace(/\s/g,"");//可以去掉空格
+			        //s.match(re).length;//求某一数据中包含的某一字符的数量
+			        var dataArray = dataStr.split('\n');
+			        var havedArray = new Array();
+			        var countLi = 0;
+			        $.each(dataArray,function(index,element){
+			             // element.replace(/\s/g,"");
+			            //debugger;
+			                if((element.match(re)||[]).length==0){
+			                    $("#rootUl").append(
+			                    		'<li id="fishLi0" deep="0" index="0" contenttext="'+element+'">'+
+			                    		'<span class="li-icon1 fa fa-chevron-right"></span>'+
+			                    		'<span class="li-content-span">'+
+			                    		'<span class="li-content">'+element.replace(/-/g,"")+'</span>'+
+			                    		'<input style="display:none;padding-right:5px;" class="li-content-input"/>'+
+			                    		'<span style="display:none;padding-right:5px;" class="li-icon2 fa fa-pencil-square-o"></span>'+
+			                    		//'<span style="display:none;padding-right:5px;" class="li-icon3 fa fa-minus" ></span>'+
+			                    		'<span style="display:none;padding-right:5px;" class="li-icon4 fa fa-plus"></span>'+
+			                    		'</span>'+
+			                    		'<ul></ul></li>');
+			                    havedArray.push({
+			                        fishLi:0,
+			                        deep:0,
+			                        index:0
+			                    });
+			                }else{
+			                    var searchResult = {};
+			                    //each循环找自己的父li
+			                    $.each(havedArray,function(inde,ele){
+			                        if(ele.deep==(element.match(re).length-1)){
+			                            searchResult = ele;
+			                        }
+			                    });
+			                    $("#fishLi"+searchResult.fishLi+" > ul").append(
+			                    		'<li id="fishLi'+countLi+'" deep="'+element.match(re).length+'" index="'+countLi+'" contenttext="'+element+'">'+
+			                    		'<span class="li-icon1 fa fa-chevron-right"></span>'+
+			                    		'<span class="li-content-span">'+
+			                    		'<span class="li-content">'+element.replace(/-/g,"")+'</span>'+
+			                    		'<input style="display:none;" class="li-content-input"/>'+
+			                    		//编辑
+			                    		'<span style="display:none;padding-right:5px;" class="li-icon2 fa fa-pencil-square-o"></span>'+
+			                    		//删除
+			                    		'<span style="display:none;padding-right:5px;" class="li-icon3 fa fa-minus"></span>'+
+			                    		//添加
+			                    		'<span style="display:none;padding-right:5px;" class="li-icon4 fa fa-plus"></span>'+
+			                    		'</span>'+
+			                    		'<ul></ul></li>');
+			                    havedArray.push({
+			                        fishLi:countLi,
+			                        deep:element.match(re).length,
+			                        index:countLi
+			                    });
+			            }
+			            countLi++;
+			        });
+			        //添加各种事件
+			        //为添加按钮添加事件执行
+			        $(".li-icon2").on("click",function(){
+			        	$(this).parent().parent().remove();
+			        });
+			        //为编辑按钮添加事件执行方法
+			        $(".li-icon2").on("click",function(){
+			        	$(this).parent().parent().remove();
+			        });
+			        //为删除按钮添加事件
+			        $(".li-icon3").on("click",function(){
+			        	$(this).parent().parent().remove();
+			        });
+			        //为li标签的打开关闭添加点击事件
+			        $(".li-icon1").on("click",function(){
+			        	
+			        	if($(this).hasClass("fa-chevron-right")){
+			        		$(this).removeClass("fa-chevron-right");
+			        		$(this).addClass("fa-chevron-down");
+			        		$(this).siblings("ul").hide();
+			        		return;
+			        	}
+			        	if($(this).hasClass("fa-chevron-down")){
+			        		$(this).removeClass("fa-chevron-down");
+			        		$(this).addClass("fa-chevron-right");
+			        		$(this).siblings("ul").show();
+			        		return;
+			        	}
+			        });
+			        $("#rootUl > li").css("font-size","14px");
+			        //鼠标移入时显示三个操作按钮
+			        $("#rootUl li > .li-content-span").on("mouseover",function(){
+			        	$(this).children(".li-icon2").show();
+			        	$(this).children(".li-icon3").show();
+			        	$(this).children(".li-icon4").show();
+			        });
+			        //鼠标移出时隐藏操作按钮
+			        $("#rootUl li > .li-content-span").on("mouseout",function(){
+			        	$(this).children(".li-icon2").hide();
+			        	$(this).children(".li-icon3").hide();
+			        	$(this).children(".li-icon4").hide();
+			        });
+			    }
+			    function deepChar(deep){
+			        var endStr = "";
+			        for (var i=0;i<deep;i++){
+			            endStr = endStr+"-";
+			
+			        }
+			        return endStr;
+			    }
+			    function liToDataStr(){
+			        var havedArray = new Array();
+			        $.each($("#liContent").find('li'),function(index,element){
+			            console.log($(element).attr("deep"));
+			            console.log($(element).attr("contenttext"));
+			            havedArray.push($(element).attr("contenttext"));
+			        });
+			        return havedArray.join("\n");
+			    }
+			
+			</script>
+			</div>
+			</div>
+			<div class="col-xs-6">
+			</div>
+			<div class="col-xs-3">
+			</div>
+			</div>
+			</div>
+		</div>
+	</div>
+	<div class="panel panel-default">
+		<div class="panel-heading">
+			<h1 class="panel-title">
+				<a data-toggle="collapse" data-parent="#accordion"
+					href="#collapse5"> D5 </a>
+			</h1>
+		</div>
+		<div id="collapse5" class="panel-collapse collapse">
+			<div class="panel-body">Nihil anim keffiyeh helvetica, craft
+				beer labore wes anderson cred nesciunt sapiente ea proident. Ad
+				vegan excepteur butcher vice lomo.</div>
+		</div>
+	</div>
+	<div class="panel panel-default">
+		<div class="panel-heading">
+			<h1 class="panel-title">
+				<a data-toggle="collapse" data-parent="#accordion"
+					href="#collapse6"> D6 </a>
+			</h1>
+		</div>
+		<div id="collapse6" class="panel-collapse collapse">
+			<div class="panel-body">Nihil anim keffiyeh helvetica, craft
+				beer labore wes anderson cred nesciunt sapiente ea proident. Ad
+				vegan excepteur butcher vice lomo.</div>
+		</div>
+	</div>
+	<div class="panel panel-default">
+		<div class="panel-heading">
+			<h1 class="panel-title">
+				<a data-toggle="collapse" data-parent="#accordion"
+					href="#collapse7"> D7 </a>
+			</h1>
+		</div>
+		<div id="collapse7" class="panel-collapse collapse">
+			<div class="panel-body">Nihil anim keffiyeh helvetica, craft
+				beer labore wes anderson cred nesciunt sapiente ea proident. Ad
+				vegan excepteur butcher vice lomo.</div>
+		</div>
+	</div>
+	<div class="panel panel-default">
+		<div class="panel-heading">
+			<h1 class="panel-title">
+				<a data-toggle="collapse" data-parent="#accordion"
+					href="#collapse8"> D8 </a>
+			</h1>
+		</div>
+		<div id="collapse8" class="panel-collapse collapse">
+			<div class="panel-body">Nihil anim keffiyeh helvetica, craft
+				beer labore wes anderson cred nesciunt sapiente ea proident. Ad
+				vegan excepteur butcher vice lomo.</div>
+		</div>
+	</div>
+</div>
+
+</div>
+</div>
+<div class="col-md-1">
+</div>
+</div>
+<script>
+	var orderId = "${RequestParameters.orderId!'-1'}";
+</script>
+
+<script type="text/javascript">
+	$(function() {
+		$('.collapse').collapse({
+			toggle : false
+		});
+		getDimensionInfo();//Dmain
+		getProblemDescriptionInfo();//D2
+		getRootCauseInfo();//D4
+	});
+</script>
+</body>
+</html>

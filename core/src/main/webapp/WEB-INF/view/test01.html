@@ -1,0 +1,157 @@
+<#include "./include/header.html">
+
+<body>
+<div class="row">
+    <button style="margin-left: 20px;margin-top: 20px" class="btn btn-primary" onclick="print()">打印</button>
+</div>
+<div class="row">
+    <button style="margin-left: 20px;margin-top: 20px" class="btn btn-primary" onclick="printPdf()">pdf预览打印</button>
+    <button style="margin-left: 20px;margin-top: 20px" class="btn btn-primary" onclick="dowLoadPdf()">pdf下载</button>
+    <button style="margin-left: 20px;margin-top: 20px" class="btn btn-primary" onclick="exportPdf()">pdf导出</button>
+</div>
+<div class="row">
+    <button style="margin-left: 20px;margin-top: 20px" class="btn btn-primary" onclick="exportWord()">word导出</button>
+</div>
+<div class="row">
+    <button style="margin-left: 20px;margin-top: 20px" class="btn btn-primary" onclick="exportExcel()">EXCEL导出</button>
+    <button style="margin-left: 20px;margin-top: 20px" class="btn btn-primary" onclick="exportExcelPage()">EXCEL分页
+    </button>
+    <button style="margin-left: 20px;margin-top: 20px" class="btn btn-primary" onclick="exportExcelSheet()">
+        EXCEL分sheet
+    </button>
+</div>
+
+<div class="row">
+    <button style="margin-left: 20px;margin-top: 20px" class="btn btn-primary" onclick="printOnHide()">不预览直接打印</button>
+</div>
+
+<div id="new"></div>
+<div style="visibility:hidden">
+    <iframe id="printFrame" style="width: 360px;height: 220px" frameborder="0" scrolling="no"></iframe>
+</div>
+<script>
+    function print() {
+    	
+    	$.get("${base.contextPath}/ureport/preview?_t=0&_u=database:user.ureport.xml&userId=10138",function(data,status){
+    		$('#printFrame').attr('src',"about:blank")
+            //var pwin = window.open("", "PrintWindow");
+            //console.log($('#printFrame')[0].contentWindow);
+            //return;
+            
+            $('#printFrame')[0].contentWindow.document.write(data);
+            
+            $('#printFrame')[0].contentWindow.document.close();
+            $('#printFrame')[0].contentWindow.onload = function(){
+            	$('#printFrame')[0].contentWindow.print();
+            }
+        });
+    	return;
+        var printHtml = "<head>" +
+            "    <meta http-equlv='Content-Type' content='text/html;charset=utf-8'>\n" +
+            "</head>";
+        var src = "${base.contextPath}/ureport/preview?_u=database:user.ureport.xml&userId=10138" ;
+        $("#printFrame").attr("src", src);
+        printHtml = printHtml + $("#printFrame").prop("outerHTML");
+        printHtml = printHtml + "<div style='height：60px;page-break-after:always'></div>";
+        var pwin = window.open("", "about:blank");
+        pwin.onload = function(){
+        	pwin.print();
+        }
+        pwin.document.write(printHtml);
+        pwin.document.close();
+        
+    }
+
+    function printPdf() {
+        var printHtml = "<head>\n" +
+            "    <meta http-equlv=\"Content-Type\" content=\"text/html;charset=utf-8\">\n" +
+            "</head>\n";
+
+        var src = "${base.contextPath}/ureport/pdf/show?_u=file:priviewPrint.ureport.xml&headId="
+            + "129";
+        var wind = window.open(src, 'newwindow', 'height=600, width=1200, top=100, left=100, toolbar=no, menubar=no, scrollbars=no, resizable=no,location=n o, status=no');
+
+    }
+
+    function dowLoadPdf() {
+        var printHtml = "<head>\n" +
+            "    <meta http-equlv=\"Content-Type\" content=\"text/html;charset=utf-8\">\n" +
+            "</head>\n";
+
+        var src = "${base.contextPath}/ureport/pdf?_u=file:priviewPrint.ureport.xml&headId="
+            + "129";
+        var wind = window.open(src, 'newwindow', 'height=600, width=1200, top=100, left=100, toolbar=no, menubar=no, scrollbars=no, resizable=no,location=n o, status=no');
+    }
+
+    function exportPdf() {
+        var printHtml = "<head>\n" +
+            "    <meta http-equlv=\"Content-Type\" content=\"text/html;charset=utf-8\">\n" +
+            "</head>\n";
+
+        var src = "${base.contextPath}/ureport/pdf?_u=file:priviewPrint.ureport.xml&headId="
+            + "129";
+        var wind = window.open(src, 'newwindow', 'height=600, width=1200, top=100, left=100, toolbar=no, menubar=no, scrollbars=no, resizable=no,location=n o, status=no');
+    }
+
+    function exportWord() {
+        var printHtml = "<head>\n" +
+            "    <meta http-equlv=\"Content-Type\" content=\"text/html;charset=utf-8\">\n" +
+            "</head>\n";
+
+        var src = "${base.contextPath}/ureport/word?_u=file:priviewPrint.ureport.xml&headId="
+            + "129";
+        var wind = window.open(src, 'newwindow', 'height=600, width=1200, top=100, left=100, toolbar=no, menubar=no, scrollbars=no, resizable=no,location=n o, status=no');
+    }
+
+
+    function exportExcel() {
+        var printHtml = "<head>\n" +
+            "    <meta http-equlv=\"Content-Type\" content=\"text/html;charset=utf-8\">\n" +
+            "</head>\n";
+
+        var src = "${base.contextPath}/ureport/excel?_u=file:priviewPrint.ureport.xml&headId="
+            + "129";
+        var wind = window.open(src, 'newwindow', 'height=600, width=1200, top=100, left=100, toolbar=no, menubar=no, scrollbars=no, resizable=no,location=n o, status=no');
+    }
+
+    function exportExcelPage() {
+        var printHtml = "<head>\n" +
+            "    <meta http-equlv=\"Content-Type\" content=\"text/html;charset=utf-8\">\n" +
+            "</head>\n";
+
+        var src = "${base.contextPath}/ureport/excel/paging?_u=file:priviewPrint.ureport.xml&headId="
+            + "129";
+        var wind = window.open(src, 'newwindow', 'height=600, width=1200, top=100, left=100, toolbar=no, menubar=no, scrollbars=no, resizable=no,location=n o, status=no');
+    }
+
+    function exportExcelSheet() {
+        var printHtml = "<head>\n" +
+            "    <meta http-equlv=\"Content-Type\" content=\"text/html;charset=utf-8\">\n" +
+            "</head>\n";
+
+        var src = "${base.contextPath}/ureport/excel/sheet?_u=file:priviewPrint.ureport.xml&headId="
+            + "129";
+        var wind = window.open(src, 'newwindow', 'height=600, width=1200, top=100, left=100, toolbar=no, menubar=no, scrollbars=no, resizable=no,location=n o, status=no');
+    }
+
+    function printOnHide() {
+        $.ajax({
+            url: "${base.contextPath}/urepot/printOnHide/ui",
+            type: "POST",
+            data: {'headId': "129"},
+            dataType: "json",
+            async: false,
+            success: function (data) {
+                if (data.success) {
+                    kendo.ui.showInfoDialog({message: "打印成功"});
+                }else {
+                    kendo.ui.showErrorDialog({message: data.message});
+                }
+            }
+        });
+    }
+
+
+</script>
+</body>
+</html>

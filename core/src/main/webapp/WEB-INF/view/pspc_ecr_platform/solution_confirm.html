@@ -1,0 +1,196 @@
+<#include "../include/header.html"> 
+<body> 
+		<div class="row"> 
+			<div class="col-xs-2">
+			  
+			</div> 
+			<div class="col-xs-8" > 
+				 <div id="executerDiv"  >
+  				<li>
+              <input type="checkbox" id="eq1" class="k-checkbox" checked="checked">
+              <label class="k-checkbox-label" for="eq1">Rear side airbags</label>
+            	</li>
+		</div>	  
+	        </div>
+	        <div class="col-xs-2">
+			
+ 		
+		</div> 
+		</div>
+		<div class="row"> 
+			<div class="col-xs-2">
+			  
+			</div> 
+			<div class="col-xs-8" > 
+				  <span id="rfqs" onclick="rfqConfirm()" class="btn btn-primary"   type="submit" style="margin-right:5px;float:left"><@spring.message "ecrsolution.rfqbtn"/></span>
+				    <span id="rfqs" onclick="test()" class="btn btn-primary"   type="submit" style="margin-right:5px;float:left">qtp</span>
+				    <span id="rfqs" onclick="testVtp()" class="btn btn-primary"   type="submit" style="margin-right:5px;float:left">vtp</span>
+				      <span id="rfqs" onclick="testPci()" class="btn btn-primary"   type="submit" style="margin-right:5px;float:left">pci</span>    
+	        </div>
+	        <div class="col-xs-2">
+			
+ 		
+		</div> 
+		</div>
+	   <script>
+	    var viewModel  = kendo.observable({
+	        siteIds : "",
+	        siteCodes : "",
+	        model: {
+	            ecrno:"",
+	            itemIds:[]
+	        }
+	    });
+	    viewModel.model.ecrno="${RequestParameters.ecrno!}";
+	   function test(){
+		   
+			// var data= viewModel.model.toJSON();
+			 $.ajax({
+			        url: '${base.contextPath}/hpm/ecr/rfq/task/process/taskFinish?ecrno='+viewModel.model.ecrno,
+			        data:JSON.stringify( viewModel.model.toJSON() ) ,
+			        type: 'POST',
+			        dataType: 'json',
+			        contentType: "application/json;charset=UTF-8",
+			        success: function (args) {
+			        	if(args.success){
+			        	 kendo.ui.showInfoDialog({
+		                     title: $l('hap.tip.info'),
+		                     message: "成功"
+		                 });
+			        	}
+			        	else{
+			        		kendo.ui.showInfoDialog({
+			                     title: $l('hap.tip.info'),
+			                     message:args.message
+			                 });
+			        	} 
+			        },
+			        async: true
+			    });
+		}
+	   
+	   
+	
+	   function testVtp(){ 
+			// var data= viewModel.model.toJSON();
+			 $.ajax({
+			        url: '${base.contextPath}/hpm/ecr/rfq/task/process/taskFinish/vtp?ecrno='+viewModel.model.ecrno,
+			        data:JSON.stringify( viewModel.model.toJSON() ) ,
+			        type: 'POST',
+			        dataType: 'json',
+			        contentType: "application/json;charset=UTF-8",
+			        success: function (args) {
+			        	if(args.success){
+			        	 kendo.ui.showInfoDialog({
+		                     title: $l('hap.tip.info'),
+		                     message: "成功"
+		                 });
+			        	}
+			        	else{
+			        		kendo.ui.showInfoDialog({
+			                     title: $l('hap.tip.info'),
+			                     message:args.message
+			                 });
+			        	} 
+			        },
+			        async: true
+			    });
+		}
+	   
+	   function testPci(){ 
+			// var data= viewModel.model.toJSON();
+			 $.ajax({
+			        url: '${base.contextPath}/hpm/ecr/rfq/task/process/taskFinish/pci?ecrno='+viewModel.model.ecrno,
+			        data:JSON.stringify( viewModel.model.toJSON() ) ,
+			        type: 'POST',
+			        dataType: 'json',
+			        contentType: "application/json;charset=UTF-8",
+			        success: function (args) {
+			        	if(args.success){
+			        	 kendo.ui.showInfoDialog({
+		                     title: $l('hap.tip.info'),
+		                     message: "成功"
+		                 });
+			        	}
+			        	else{
+			        		kendo.ui.showInfoDialog({
+			                     title: $l('hap.tip.info'),
+			                     message:args.message
+			                 });
+			        	} 
+			        },
+			        async: true
+			    });
+		}
+	   function rfqConfirm(){
+		   var item=[];
+		   for (var i=0;i<itemIds.length;i++){
+			   if($("#"+itemIds[i].itemId).prop("checked")){
+				   item.push(itemIds[i].itemId);
+			   }
+		   }
+			viewModel.model.set("itemIds",item); 
+			// var data= viewModel.model.toJSON();
+			 $.ajax({
+			        url: '${base.contextPath}/hpm/ecr/item/rfq/commit/process',
+			        data:JSON.stringify( viewModel.model.toJSON() ) ,
+			        type: 'POST',
+			        dataType: 'json',
+			        contentType: "application/json;charset=UTF-8",
+			        success: function (args) {
+			        	if(args.success){
+			        	 kendo.ui.showInfoDialog({
+		                     title: $l('hap.tip.info'),
+		                     message: "成功"
+		                 });
+			        	}
+			        	else{
+			        		kendo.ui.showInfoDialog({
+			                     title: $l('hap.tip.info'),
+			                     message:args.message
+			                 });
+			        	} 
+			        },
+			        async: true
+			    });
+		}
+	
+	    var div = document.getElementById("executerDiv");
+	    executerDiv.innerHTML="";
+	    
+	    var ul=document.createElement("ul"); 
+	 
+	         
+		var itemIds;
+	    $.ajax({
+		     url: '${base.contextPath}/hpm/ecr/item/drop/list',
+		     data:JSON.stringify( viewModel.model.toJSON() ) ,
+		     type: 'POST',
+		     dataType: 'json',
+		     contentType: "application/json;charset=UTF-8",
+		     success: function (args) {
+		    	 itemIds=args;
+		    	 for (var i=0;i<args.length;i++){
+		    		   var checkBox=document.createElement("input");
+		    		   	checkBox.setAttribute("type","checkbox");
+		    	    	checkBox.setAttribute("id",args[i].itemId);
+		    		   	checkBox.setAttribute("class",'k-checkbox');
+		    			var label=document.createElement("label"); 
+		    			label.setAttribute("id",args[i].itemId+"l");
+		    			label.setAttribute("class",'k-checkbox-label');
+		    			label.setAttribute("for",args[i].itemId);
+		    			label.innerHTML=args[i].itemCode;
+		    		    var li=document.createElement("li");
+		    		    li.appendChild(checkBox);       
+		    		    li.appendChild(label);  
+		    		    ul.appendChild(li);   
+		    	 }
+		     },
+		     async: false
+		 });
+	   	     	 
+	    div.appendChild(ul);
+	    </script> 
+	
+	 
+</body>

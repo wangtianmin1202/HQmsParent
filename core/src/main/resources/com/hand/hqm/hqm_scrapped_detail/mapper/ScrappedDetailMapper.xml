@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_scrapped_detail.mapper.ScrappedDetailMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_scrapped_detail.dto.ScrappedDetail">
+        <result column="SCRAPPED_LINE_ID" property="scrappedLineId" jdbcType="DECIMAL" />
+        <result column="SCRAPPED_ID" property="scrappedId" jdbcType="DECIMAL" />
+        <result column="SAMPLE_ID" property="sampleId" jdbcType="DECIMAL" />
+        <result column="REASON" property="reason" jdbcType="VARCHAR" />
+        
+        <result column="ITEM_CODE" property="itemCode" jdbcType="VARCHAR" />
+        <result column="SAMPLE_GIVE_DATE" property="sampleGiveDate" jdbcType="DATE" />
+        <result column="SEALING_SAMPLE_STATUS" property="sealingSampleStatus" jdbcType="VARCHAR" />
+        <result column="DESCRIPTION" property="description" jdbcType="VARCHAR" />
+         <result column="SAMPLE_MODEL" property="sampleModel" jdbcType="VARCHAR" />  
+         
+          <result column="SAMPLE_CODE" property="sampleCode" jdbcType="VARCHAR" /> 
+           <result column="CREATE_DATE" property="createDate" jdbcType="DATE" />
+          <result column="CREATE_NAME" property="createName" jdbcType="VARCHAR" />
+          <result column="DOCUMENT_STATUS" property="documentStatus" jdbcType="VARCHAR" />
+    </resultMap>
+
+<select id="myselect" resultMap="BaseResultMap"  parameterType="com.hand.hqm.hqm_scrapped_detail.dto.ScrappedDetail">   
+
+SELECT t.sample_id, t.scrapped_line_id,t.reason ,t.scrapped_id, h.SEALING_SAMPLE_STATUS, h.description,h.sample_model,h.sample_give_date,
+hi.item_code   
+	FROM hqm_scrapped_detail t, hqm_sample_account h, hcm_item hi 
+ WHERE h.sample_id = t.sample_id
+	 AND hi.item_id = h.item_id
+	 AND hi.plant_id = h.plant_id
+    <if test="scrappedId != null">
+     AND t.scrapped_id = #{scrappedId} 
+   </if>
+    </select> 
+  <select id="selectforcs" resultMap="BaseResultMap"  parameterType="com.hand.hqm.hqm_scrapped_detail.dto.ScrappedDetail">   
+
+    SELECT t.sample_id, t.scrapped_line_id,t.reason ,t.scrapped_id,
+             h.sample_model
+			,h.sample_code
+			,h.sealing_sample_status,
+			h.sample_give_date 
+	FROM hqm_scrapped_detail t, hqm_sample_account h
+ WHERE h.sample_id = t.sample_id
+ 
+    <if test="scrappedId != null">
+     AND t.scrapped_id = #{scrappedId}  
+   </if> 
+ 
+ </select> 
+ 
+ 
+ <select id="selectforsample" resultMap="BaseResultMap"  parameterType="com.hand.hqm.hqm_use_detail.mapper.UseDetailMapper">   
+
+SELECT  h.scrapped_id
+      ,h.scrapped_line_id
+      ,h.sample_id 
+      ,hq.sample_model
+      ,hq.sample_code
+      ,hq.sealing_sample_status
+      ,hq.sample_give_date
+      ,hs.creation_date as create_Date
+      ,hs.document_status
+      ,hr.name as create_Name
+  FROM hqm_scrapped_detail h, hqm_sample_account hq, hqm_sample_scrapped hs, hr_employee hr
+ WHERE hq.sample_id = h.sample_id
+   AND hs.scrapped_id = h.scrapped_id
+   AND hr.employee_id = hs.created_by
+    <if test="scrappedId != null">
+     AND  h.scrapped_id = #{scrappedId} 
+   </if>
+</select>
+</mapper>

@@ -1,0 +1,506 @@
+
+<#include "../include/header.html">
+<!--
+ * @description: 实验室员工新建编辑界面
+ -->
+
+<script src="${base.contextPath}/common/code?labUserEducation=LAB_USER_EDUCATION"></script>
+<script src="${base.contextPath}/common/code?labUserPost=LAB_USER_POST"></script>
+<body>
+
+<script type="text/javascript">
+	var oldViewModel = Hap.createGridViewModel("#grid");
+	var labUserId = '${RequestParameters.labUserId!-1}';
+	var BaseUrl = _basePath;
+	var filesList = [];
+	var viewModel = kendo.observable({
+		model: {
+			labUserId:labUserId
+		},
+		save: function(e){
+		 	var data= viewModel.model.toJSON();
+			var validator = $("#mainform").data("kendoValidator");
+			data.filesList = filesList;
+			console.log(data);
+			if (validator.validate()) {
+				$.ajax({
+			        url: '${base.contextPath}/plm/lab/user/create',
+			        type: 'POST',
+			        //data: data,
+			        data: JSON.stringify(data),
+			        contentType: 'application/json;charset=utf-8',
+			        dataType: "json",
+			        success: function (response) {
+			        	console.log(response);
+			            if (response.success) {
+			            	window.parent.$("#leftGrid").data("kendoGrid").dataSource.fetch();
+			            	window.parent.refreshLabUserPage(response.rows[0].labUserId);
+			            } else {
+			            	kendo.ui.showWarningDialog({
+			                    message: response.message
+			                });
+			            }
+			        }
+			    });
+			} 
+		},
+		closeWin: function(e){
+			window.parent.$("#childrenWindow").data("kendoWindow").close();
+        }
+	});
+
+	function getModel(){
+		if(labUserId!=-1){
+			
+			$.ajax({
+		        url: '${base.contextPath}/plm/lab/user/query',
+		        type: 'POST',
+		        data: {
+		        	labUserId: labUserId
+		        },
+		        async: false,
+		        dataType: "json",
+		        success: function (response) {
+		            if (response.success) {
+		            	viewModel.set('model',response.rows[0]);
+		            }
+		        }
+		    });
+			$.ajax({
+		        url: '${base.contextPath}/plm/lab/user/post/query',
+		        type: 'POST',
+		        data: {
+		        	labUserId: labUserId
+		        },
+		        async: false,
+		        dataType: "json",
+		        success: function (response) {
+		            if (response.success) {
+		            	viewModel.set('model.post1',response.rows[0].postCode);
+		            }
+		        }
+		    });
+			
+			$.ajax({
+		        url: '${base.contextPath}/plm/lab/user/file/query',
+		        type: 'POST',
+		        data: {labUserId:labUserId},
+		        async: false,
+		        dataType: "json",
+		        success: function (response) {
+		        	if (response.success) {
+		        		filesList=[];
+		        		$.each(response.rows,function(i,o){
+		        			filesList.push(o.filePath);
+		        		});
+		        		appendFileArray(filesList);
+		            } else {
+		            	kendo.ui.showErrorDialog({title:"错误",message:response.message});
+		            }
+		        }
+		    });
+			
+			
+			$('#lovUser').data('kendoLov').enable(false);
+			$('#abilityScore').data('kendoNumericTextBox').enable(false);
+			$('#post1ComboBox').data('kendoComboBox').enable(false);
+		}
+	}
+	
+</script>
+
+<div id="page-content" style="height:450px">
+	<form id="mainform"  class="form-horizontal" method="post" enctype="application/json;charset=UTF-8">
+		<div class="row" style="margin-left: 5px;">
+		 	<div class="container">
+		 		
+		 	  	<div class="row" style="margin-top:0px">
+		 	  		<!-- 员工 -->
+		 	  		<div class="col-xs-6">
+		 	  			<label class="col-xs-4 control-label" style="text-align:right;font-size:14px;"><@spring.message "员工"/></label>
+						<div class="col-xs-8">
+	                    <input id="lovUser" required style="width:100%;" name="userId" required
+	                               data-label="<@spring.message '员工'/>"
+									data-bind="enabled: model.isEnabled,value:model.userId,text:model.userName">
+						<span data-for="userId" class=".k-invalid-msg"></span>
+						</div>
+						<script>
+						$("#lovUser").kendoLov($.extend
+					    	    (<@lov"PLM_LAP_USER_LOV"/>, {
+					    	        textField: 'name',
+					    	        valueField:'employeeId',
+					    	        change:function(e){
+					    	        	viewModel.model.userName = this._dataItem.name;
+					    	        	viewModel.model.userId = this._dataItem.employeeId;
+					    	        }
+					    	    }));
+						</script>
+		 	  		</div>
+		 	  		<!-- major专业 -->
+		 	  		<div class="col-xs-6">
+		 	  			<label class="col-xs-4 control-label" style="text-align:right;font-size:14px;"><@spring.message "专业"/></label>
+						<div class="col-xs-8">
+							<input style="width:100%" name="major" required data-bind="value:model.major" data-role="maskedtextbox">
+							<span data-for="major" class=".k-invalid-msg"></span>
+						</div>
+		 	  		</div>
+						
+	            </div>
+	            
+				<div class="row" style="margin-top:15px">
+					<!-- 学历 education-->
+					<div class="col-xs-6">
+						<label class="col-xs-4 control-label" style="text-align:right;font-size:14px;"><@spring.message "学历"/></label>
+						<div class="col-xs-8">
+	                        <input style="width:100%" required name=" education"
+	                        		 id="educationComboBox"
+	                        		 data-label="<@spring.message '学历'/>"
+	                               data-bind="value:model.education">
+							<span data-for=" education" class=".k-invalid-msg"></span>
+							</div>
+							<script type="text/javascript">
+								$("#educationComboBox").kendoComboBox({
+							        dataTextField: "meaning",
+							        dataValueField: "value",
+							        valuePrimitive: true,
+							        dataSource: labUserEducation
+								});
+							</script>
+					</div>
+					<!-- 质量职责 quality -->
+					<div class="col-xs-6">
+						<label class="col-xs-4 control-label" style="text-align:right;font-size:14px;"><@spring.message "质量职责"/></label>
+						<div class="col-xs-8">
+							<input style="width:100%" name="quality" data-bind="value:model.quality" data-role="maskedtextbox">
+							<span data-for="quality" class=".k-invalid-msg"></span>
+						</div>
+					</div>
+				</div>
+				
+				<div class="row" style="margin-top:15px">
+					<!-- 岗位1 post	-->
+					<div class="col-xs-6">
+						<label class="col-xs-4 control-label" style="text-align:right;font-size:14px;"><@spring.message "主岗位"/></label>
+						<div class="col-xs-8">
+	                        <input style="width:100%"  name="post1"
+	                        		 id="post1ComboBox" required
+	                        		 data-label="<@spring.message '岗位'/>"
+	                               data-bind="value:model.post1">
+							<span data-for="post1" class=".k-invalid-msg"></span>
+							</div>
+							<script type="text/javascript">
+								$("#post1ComboBox").kendoComboBox({
+							        dataTextField: "meaning",
+							        dataValueField: "value",
+							        valuePrimitive: true,
+							        dataSource: labUserPost
+								});
+							</script>
+					</div>
+					<!-- 能力评分-->
+					<div class="col-xs-6">
+						<label class="col-xs-4 control-label" style="text-align:right;font-size:14px;"><@spring.message "能力评分"/></label>
+						<div class="col-xs-8">
+	                        <input style="width:100%" name="abilityScore"
+	                        		 id="abilityScore" 
+	                        		 data-label="<@spring.message '能力评分'/>"
+	                               data-bind="value:model.abilityScore">
+							<span data-for="abilityScore" class=".k-invalid-msg"></span>
+							<script type="text/javascript">
+							$("#abilityScore").kendoNumericTextBox({
+									min: 0.1,
+			                        max: 100,
+			                        step: 0.1
+								});
+							</script>
+						</div>
+					</div>
+				</div>
+					
+				<div class="row" style="margin-top:5px">
+					<!-- 岗位职责描述 job_desc	-->
+					<div class="col-xs-12">
+						<div class="row">
+							<label class="col-xs-3 control-label" style="text-align:left;font-size:14px;"><@spring.message "岗位职责描述(150字内)"/></label>
+						</div>
+						<div class="row" style="margin-top:2px">
+							<div class="col-xs-12" >
+		                        <textarea  id="jobDesc" maxlength="150" 
+		                        onchange="this.value=this.value.substring(0, 150)" 
+		                        onkeydown="this.value=this.value.substring(0, 150)" 
+		                        onkeyup="this.value=this.value.substring(0, 150)" 
+		                        style="width:100%;height:100px;" data-bind="value:model.jobDesc"></textarea>
+								<span data-for="jobDesc" class=".k-invalid-msg"></span>
+							</div>
+						</div>
+					 </div>
+				</div>
+				
+				<!-- 文件上传 -->
+				<div class="row" style="margin-top:5px">
+					
+					<div class="col-xs-12"> 
+						<div class="row">
+							<label class="col-xs-3 control-label" style="text-align:left;font-size:14px;"><@spring.message "文件上传"/></label>
+						</div>
+						<div class="row" style="margin-top:2px">
+							
+							<div class="col-xs-12" >
+							
+								<div id="excelimport">
+									<form id="mainform" class="form-horizontal">
+										<div class="row" style="width:100%">
+											<div class="form-group">
+												<div class="col-sm-12">
+													<div class="demo-section k-content">
+														<input name="files" id="files1" type="file" accept=".xlsx,.pdf,.doc,.png,.pptx" />
+													</div>
+												
+													<script>
+														// 删除文件
+														function fileRemoveHaved(filePath){
+															$.ajax({
+								            			        url: '${base.contextPath}/plm/lab/user/file/remove',
+								            			        type: 'POST',
+								            			        data: JSON.stringify({"filePath":filePath,"labUserId":labUserId}),
+								            			        async: false,
+								            			        contentType: "application/json",
+								            			        //dataType: "json",
+								            			        success: function (data) {
+								            			        	if (data.success) {
+								            			        		
+								            			        		if(filesList.length!=0){
+											                        		$.each(filesList,function(i,o){
+											                        		
+											                        			if(o==filePath){
+											                        				filesList.splice(i,1);
+											                        			}
+											                        		});
+											                        	}
+											                        	// 显示文件
+											                        	appendFileArray(filesList);
+								            			        		//getUploadedFiles();
+								            			        		kendo.ui.showInfoDialog({title:"提示",message:"删除成功"});
+								    					            } else {
+								    					            	kendo.ui.showErrorDialog({title:"错误",message:data.message});
+								    					            }
+								            			        }
+								            			    });
+														}
+														// 文件下载
+														function fileDownLoadHaved(fileUrl){
+															$("#fileDownLoadD2").html('');
+															window.open(fileUrl);
+															//单文件操作可以使用window.open
+															//多文件下载使用iframe嵌入的方式
+															//$('<iframe class="multi-download" src="'+ fileUrl +'" style="display:none"></iframe>').appendTo($("#fileDownLoadD2"));
+														}
+													// 显示文件数据
+														function appendFileArray(fileArray){
+															$("#filesContentDiv").html('');
+															$.each(fileArray,function(e,v){
+																var appStr = ''+
+																'<span style="font-size:12px;">'+v.substring(v.lastIndexOf("/")+1)+'</span>'+
+																'<span class="fa fa-trash" style="font-size:16px;cursor:pointer;margin-left:5px;" onclick="fileRemoveHaved(\''+v+'\')"></span>'+
+																'<span class="fa fa-download" style="font-size:16px;cursor:pointer;margin-left:5px;" onclick="fileDownLoadHaved(\''+v+'\')"></span><br>';
+																$("#filesContentDiv").append(appStr);
+															});
+														}
+														// 先上传后保存，无法使用查询功能
+														/* function getUploadedFiles(){
+															//ajax查询上传的文件
+															//$("#fileDownLoadD2").html("");
+															$("#filesContentDiv").html("");
+															var fileArray = new Array();
+															$.ajax({
+								            			        url: '${base.contextPath}/file/manager/queryFileUpload',
+								            			        type: 'POST',
+								            			        data: {                                                                               
+								            			        	fileIdList:viewModel.model.fileIdList
+								            			        },
+								            			        async: false,
+								            			        dataType: "json",
+								            			        success: function (response) {
+								            			        	if (response.success) {
+								            			        		debugger;
+								            			        		fileArray = response.rows;
+								            			        		appendFileArray(fileArray);
+								    					            } else {
+								    					            	kendo.ui.showErrorDialog({title:"错误",message:response.message});
+								    					            }
+								            			        }
+								            			    });
+							//									$("#fileDownLoadD2").html("");
+							//									$.each(fileArray,function(i,o){
+							//										$('<iframe class="multi-download" src="'+ o.fileUrl +'" style="display:none"></iframe>').appendTo($("#fileDownLoadD2"));
+							//									});
+														} */
+														$("#files1").kendoUpload({
+															async: {
+										                    	saveUrl: "${base.contextPath}/plm/lab/user/file/upload?${_csrf.parameterName}=${_csrf.token}&labUserId="+labUserId,
+																autoUpload: true,
+															},
+															showFileList:false,
+															upload: function(e){},
+										                    success: function(data){
+										                    	debugger;
+										                        if(data.response.success){
+										                        
+										                        	if(filesList.length!=0){
+										                        		$.each(filesList,function(i,o){
+										                        			debugger;
+										                        			if(o!=data.response.rows[0].filePath){
+										                        				filesList.push(data.response.rows[0].filePath);
+										                        			}
+										                        		});
+										                        	}else{
+										                        		filesList.push(data.response.rows[0].filePath);
+										                        	}
+										                       
+										                        	// 显示文件
+										                        	appendFileArray(filesList);
+										                        	kendo.ui.showInfoDialog({message: "导入成功"});
+										                        }else{
+										                        	kendo.ui.showErrorDialog({message: data.response.message});
+										                        }
+										                     },
+														});
+														$("div .k-dropzone").append('<div id="filesContentDiv" class="row"></div>');
+														$("div .k-dropzone").css("margin-bottom","10px");
+													</script>
+												</div>
+											</div>
+										</div>
+									</form>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</form>
+	
+</div>
+<div style="clear:both">
+	<div class="row" style="margin-left: 5px;">
+		<label class="col-xs-3 control-label" style="text-align:left;font-size:14px;"><@spring.message "历史评分"/></label>
+	</div>
+				
+	<div class="row" style="margin-left: 5px;">
+		<div class="col-xs-12"> 
+			<div id="grid" style="height:200px;"></div>
+		</div>
+	</div>
+        
+</div>
+<div id="mainBottom" class="text-right" style="bottom: 15px; padding-top:15px;border-top:1px solid #ebebeb;width:100%; background: #fff;">
+        <span class="btn btn-primary" data-bind="click:save" type="submit" style="margin-right:5px"><@spring.message "hap.save"/></span>
+        <span class="btn btn-default" data-bind="click:closeWin" type="button" style="margin-right:25px;"><@spring.message "hap.cancel"/></span>
+</div>
+
+<script>
+
+    var dataSource = new kendo.data.DataSource({
+        transport: {
+            read: {
+                url: BaseUrl + "/plm/lab/user/old/score/query",
+                type: "POST",
+                dataType: "json"
+            },
+            parameterMap: function (options, type) {
+               if (type === "read") {
+            	   oldViewModel.model.labUserId = labUserId;
+                    return Hap.prepareQueryParameter(oldViewModel.model.toJSON(), options)
+                }
+            }
+        },
+        batch: true,
+        serverPaging: true,
+        pageSize: 20,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+                id: "labUserId",
+                fields: {}
+            }
+        }
+    });
+
+
+	//$("#grid").kendoTooltip(toolTipOpt).data("kendoTooltip");
+    var grid = $("#grid").kendoGrid({
+        dataSource: dataSource,
+        resizable: true,
+        scrollable: true,
+        navigatable: false,
+        sortable:true,
+        selectable: 'multiple',
+        dataBound: function () {
+            if (parent.autoResizeIframe) {
+                parent.autoResizeIframe('${RequestParameters.functionCode!}')
+            }
+        },
+        pageable: {
+            pageSizes: [5, 10, 20, 50],
+            refresh: true,
+            buttonCount: 5
+        },
+        columns: [
+        
+                    {
+                field: "userName",
+                title: '<@spring.message "员工"/>',
+                width: 120,
+                attributes:{style:"white-space:nowrap;text-overflow:ellipsis;"}
+            },
+                
+                    {
+                field: "abilityScore",
+                title: '<@spring.message "评分"/>',
+                width: 120,
+                attributes:{style:"white-space:nowrap;text-overflow:ellipsis;"}
+            },
+                  
+            {
+                field: "createDate",
+                title: '<@spring.message "日期"/>',
+                width: 120,
+                attributes:{style:"white-space:nowrap;text-overflow:ellipsis;"}
+            },
+        ],
+        editable: false
+    }).data("kendoGrid");
+	Hap.autoResizeGrid("#grid");
+</script>
+
+
+<script type="text/javascript">
+    kendo.bind($('#mainBottom'),viewModel);
+	kendo.bind($('#mainform'), viewModel);
+
+    function isNotEmpty(obj) {
+        if(obj != undefined && obj != null && obj != ""){
+            return true;
+        }else{
+            return false;
+        }
+    }
+
+	//验证
+	$("#mainform").kendoValidator({
+    	messages: {
+            required: '<@spring.message "hap.validation.notempty"/>'
+    	},
+		invalidMessageType : "tooltip"
+    });
+	
+	$(function(){
+		getModel();
+		oldViewModel.model.labUserId = labUserId;
+		oldViewModel.query();
+	});
+</script>
+</body>
+</html>

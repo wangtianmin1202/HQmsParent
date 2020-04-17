@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.npi.npi_technology.mapper.EbomDetailMapper">
+    <resultMap id="BaseResultMap" type="com.hand.npi.npi_technology.dto.EbomDetail">
+        <result column="ID" property="id" jdbcType="DECIMAL" />
+        <result column="ITEM_LEVEL" property="itemLevel" jdbcType="DECIMAL" />
+        <result column="ITEM_ID" property="itemId" jdbcType="VARCHAR" />
+        <result column="ITEM_NO" property="itemNo" jdbcType="DECIMAL" />
+        <result column="PART_NUMBER" property="partNumber" jdbcType="VARCHAR" />
+        <result column="PART_DESCRIPTION" property="partDescription" jdbcType="VARCHAR" />
+        <result column="PARENT_PARTNUMBER" property="parentPartnumber" jdbcType="VARCHAR" />
+        <result column="QUANTITY" property="quantity" jdbcType="DECIMAL" />
+        <result column="UNIT" property="unit" jdbcType="VARCHAR" />
+        <result column="EXPIRATION_FROM" property="expirationFrom" jdbcType="DATE" />
+        <result column="EXPIRATION_TO" property="expirationTo" jdbcType="DATE" />
+        <result column="CHANGE_NUMBER" property="changeNumber" jdbcType="VARCHAR" />
+        <result column="ITEM_VERSION" property="itemVersion" jdbcType="VARCHAR" />
+        <result column="CREATE_DATE" property="createDate" jdbcType="DATE" />
+        <result column="PROCUREMENT" property="procurement" jdbcType="VARCHAR" />
+        <result column="SKU_ID" property="skuId" jdbcType="DECIMAL" />
+    </resultMap>
+
+
+	<select id="qeuryEBomPart"  resultMap="BaseResultMap">
+		select t.ITEM_ID,t.ITEM_VERSION ,t.part_number,t.part_description,t.quantity from NPI_EBOM_DETAIL t
+		where t.sku_id= #{skuId}
+	</select>
+	
+	<select id="checkMatQty" resultMap="BaseResultMap">
+		SELECT a.part_number,a.quantity,a.part_description
+          from NPI_EBOM_MAIN n
+        join Npi_Ebom_Detail A
+          on n.SKU_ID = a.SKU_ID
+        where n.ITEM_ID = #{skuCode} and n.IS_LATEST_VERSION = 'Y'
+          and a.part_number = #{matNumber}
+	</select>
+</mapper>

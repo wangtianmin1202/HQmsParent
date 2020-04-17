@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.spc.repository.mapper.CountSampleDataRMapper">
+    <!-- 可根据自己的需求，是否要使用 -->
+    <resultMap id="BaseResultMap" type="com.hand.spc.repository.dto.CountSampleDataR">
+        <result column="count_sample_data_id" property="countSampleDataId" jdbcType="DECIMAL"/>
+        <result column="tenant_id" property="tenantId" jdbcType="DECIMAL"/>
+        <result column="site_id" property="siteId" jdbcType="DECIMAL"/>
+        <result column="attachment_group_id" property="attachmentGroupId" jdbcType="DECIMAL"/>
+        <result column="ce_group_id" property="ceGroupId" jdbcType="DECIMAL"/>
+        <result column="ce_parameter_id" property="ceParameterId" jdbcType="DECIMAL"/>
+        <result column="sample_value_count" property="sampleValueCount" jdbcType="DECIMAL"/>
+        <result column="sample_time" property="sampleTime" jdbcType="DATE"/>
+        <result column="unqualified_quantity" property="unqualifiedQuantity" jdbcType="DECIMAL"/>
+        <result column="object_version_number" property="objectVersionNumber" jdbcType="DECIMAL"/>
+        <result column="creation_date" property="creationDate" jdbcType="DATE"/>
+        <result column="created_by" property="createdBy" jdbcType="DECIMAL"/>
+        <result column="last_updated_by" property="lastUpdatedBy" jdbcType="DECIMAL"/>
+        <result column="last_update_date" property="lastUpdateDate" jdbcType="DATE"/>
+    </resultMap>
+
+    <insert id="insertCountSampleData" parameterType="java.util.List">
+        INSERT INTO pspc_count_sample_data (
+        count_sample_data_id,
+        tenant_id,
+        site_id,
+        attachment_group_id,
+        ce_group_id,
+        ce_parameter_id,
+        sample_value_count,
+        sample_time,
+        unqualified_quantity,
+        object_version_number
+        ) SELECT
+        pcsdw.count_sample_data_wait_id,
+        pcsdw.tenant_id,
+        pcsdw.site_id,
+        pcsdw.attachment_group_id,
+        pcsdw.ce_group_id,
+        pcsdw.ce_parameter_id,
+        pcsdw.sample_value_count,
+        pcsdw.sample_time,
+        pcsdw.unqualified_quantity,
+        1
+        FROM
+        pspc_count_sample_data_wait pcsdw
+        WHERE
+        pcsdw.tenant_id=#{tenantId}
+        and pcsdw.site_id=#{siteId}
+        and pcsdw.count_sample_data_wait_id IN
+        <foreach collection="countSampleDataWaitIdList" item="id" index="index" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+    </insert>
+
+    <select id="queryCountSampleData" resultType="com.hand.spc.repository.dto.CountSampleDataR"
+            parameterType="com.hand.spc.repository.dto.CountSampleDataR">
+        SELECT
+            pcsd.sample_value_count,
+            pcsd.sample_time,
+            pcsd.count_sample_data_id,
+            pcsd.ce_group_id,
+            pcsd.ce_parameter_id,
+            pcsd.attachment_group_id,
+            pcsd.unqualified_quantity,
+            pcsd.object_version_number,
+            pcsd.creation_date,
+            pag.attachment_group_description,
+            pcp.ce_parameter,
+            pcg.ce_group
+        FROM
+            pspc_count_sample_data pcsd,
+            pspc_attachment_group pag,
+            pspc_ce_group pcg,
+            pspc_ce_parameter pcp
+        WHERE
+            pcsd.attachment_group_id = pag.attachment_group_id
+            AND pcsd.ce_group_id = pcg.ce_group_id
+            AND pcsd.ce_parameter_id = pcp.ce_parameter_id
+            AND pcsd.attachment_group_id = pag.attachment_group_id
+            AND pcsd.tenant_id = #{tenantId}
+            AND pcsd.site_id = #{siteId}
+        <if test="attachmentGroupId != null and attachmentGroupId != ''">
+            AND pcsd.attachment_group_id=#{attachmentGroupId}
+        </if>
+        <if test="ceGroupId !=null and ceGroupId!=''">
+            AND pcsd.ce_group_id =#{ceGroupId,jdbcType=DECIMAL}
+        </if>
+        <if test="ceParameterId !=null and ceParameterId!=''">
+            AND pcsd.ce_parameter_id =#{ceParameterId,jdbcType=DECIMAL}
+        </if>
+        <if test="sampleBeginTime !=null">
+            AND pcsd.sample_time &gt;= #{sampleBeginTime}
+        </if>
+        <if test="sampleEndTime !=null">
+            AND pcsd.sample_time &lt;= #{sampleEndTime}
+        </if>
+    </select>
+</mapper>

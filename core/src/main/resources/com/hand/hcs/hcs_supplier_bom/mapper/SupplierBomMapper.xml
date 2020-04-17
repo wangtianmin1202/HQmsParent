@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hcs.hcs_supplier_bom.mapper.SupplierBomMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hcs.hcs_supplier_bom.dto.SupplierBom">
+        <result column="BOM_ID" property="bomId" jdbcType="DECIMAL" />
+        <result column="PLANT_ID" property="plantId" jdbcType="DECIMAL" />
+        <result column="ITEM_ID" property="itemId" jdbcType="DECIMAL" />
+        <result column="BOM_VERSION" property="bomVersion" jdbcType="VARCHAR" />
+        <result column="START_DATE" property="startDate" jdbcType="DATE" />
+        <result column="END_DATE" property="endDate" jdbcType="DATE" />
+        <result column="DESCRIPTIONS" property="descriptions" jdbcType="VARCHAR" />
+        <result column="SUPPLIER_ID" property="supplierId" jdbcType="DECIMAL" />
+    </resultMap>
+	<!-- 获取有效数据 -->
+	<select id="queryInNow" resultMap="BaseResultMap" parameterType="com.hand.hcs.hcs_supplier_bom.dto.SupplierBom">
+		select hsb.* 
+		from hcs_supplier_bom hsb 
+		where hsb.PLANT_ID = #{plantId} 
+		and hsb.ITEM_ID = #{itemId}
+		and hsb.SUPPLIER_ID = #{supplierId}
+		and hsb.start_date &lt;= sysdate
+		and decode(hsb.end_date,null,sysdate,hsb.end_date) &gt;= sysdate
+	</select>
+</mapper>

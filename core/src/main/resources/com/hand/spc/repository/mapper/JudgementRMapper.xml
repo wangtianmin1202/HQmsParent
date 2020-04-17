@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="com.hand.spc.repository.mapper.JudgementRMapper">
+
+    <resultMap id="JudementResultMap" type="com.hand.spc.repository.dto.JudgementR">
+        <result column="judgement_id" property="judgementId" jdbcType="DECIMAL"/>
+        <result column="judgement_code" property="judgementCode" jdbcType="VARCHAR"/>
+        <result column="length_data" property="lengthData" jdbcType="DECIMAL"/>
+        <result column="limit_data" property="limitData" jdbcType="DECIMAL"/>
+        <result column="chart_detail_type" property="chartDetailType" jdbcType="VARCHAR"/>
+        <result column="message_type_code" property="messageTypeCode" jdbcType="VARCHAR"/>
+        <collection property="messageTypeDetailList" ofType="com.hand.spc.repository.dto.MessageTypeDetailR">
+			<result column="message_type_detail_id" property="messageTypeDetailId" jdbcType="DECIMAL"/>
+            <result column="element_category" property="elementCategory" jdbcType="VARCHAR"/>
+            <result column="element_code" property="elementCode" jdbcType="VARCHAR"/>
+            <result column="element_status" property="elementStatus" jdbcType="VARCHAR"/>
+        </collection>
+		<collection property="messageUploadConfigList" ofType="com.hand.spc.repository.dto.MessageUploadConfigR">
+			<result column="upload_config_id" property="uploadConfigId" jdbcType="DECIMAL"/>
+			<result column="config_code" property="configCode" jdbcType="VARCHAR"/>
+			<result column="config_type" property="configType" jdbcType="VARCHAR"/>
+			<result column="config_value" property="configValue" jdbcType="VARCHAR"/>
+			<result column="config_command" property="configCommand" jdbcType="VARCHAR"/>
+			<result column="description" property="description" jdbcType="VARCHAR"/>
+		</collection>
+    </resultMap>
+
+    <select id="listJudegement" resultMap="JudementResultMap">
+        SELECT
+        	PJ.judgement_short_code,
+			pj.judgement_id,
+			pj.judgement_code,
+			pj.length_data,
+			pj.limit_data,
+			pcd.chart_detail_type,
+			pj.message_type_code,
+			pmtd.message_type_detail_id,
+			pmtd.element_category,
+			pmtd.element_code,
+			pmtd.element_status,
+			pmuc.upload_config_id,
+            pmuc.config_code,
+            pmuc.config_type,
+            pmuc.config_value,
+            pmuc.config_command,
+            pmuc.description
+		FROM
+			pspc_chart_detail pcd,
+			pspc_judgement_group pjg,
+			pspc_judgement pj
+		LEFT JOIN pspc_message_type pmt ON pmt.tenant_id = pj.tenant_id
+		AND pmt.site_id = pj.site_id
+		AND pmt.message_type_code = pj.message_type_code
+		AND pmt.message_type_status = 'Y'
+		LEFT JOIN pspc_message_type_detail pmtd ON pmtd.tenant_id = pmt.tenant_id
+		AND pmtd.site_id = pmt.site_id
+		AND pmtd.message_type_id = pmt.message_type_id
+		LEFT JOIN pspc_message_type_upload_rel pmtur ON pmtur.tenant_id = pmt.tenant_id
+		AND pmtur.site_id = pmt.site_id
+		AND pmtur.message_type_id = pmt.message_type_id
+		LEFT JOIN pspc_message_upload_config pmuc ON pmtur.tenant_id = pmt.tenant_id
+		AND pmuc.site_id = pmt.site_id
+		AND pmuc.upload_config_id = pmtur.upload_config_id
+		WHERE
+			pjg.tenant_id = pcd.tenant_id
+		AND pjg.site_id = pcd.site_id
+		AND pjg.judgement_group_id = pcd.judgement_group_id
+		AND pjg.judgement_status = 'Y'
+		AND pj.tenant_id = pjg.tenant_id
+		AND pj.site_id = pjg.site_id
+		AND pj.judgement_group_id = pjg.judgement_group_id
+		AND pcd.enable_judge_group = 'Y'
+		AND pcd.tenant_id = #{tenantId}
+		AND pcd.site_id = #{siteId}
+		AND pcd.chart_id = #{chartId}
+    </select>
+
+	<select id="listCountJudegement" resultMap="JudementResultMap">
+		SELECT
+		PJ.judgement_short_code,
+		pj.judgement_id,
+		pj.judgement_code,
+		pj.length_data,
+		pj.limit_data,
+		pcd.chart_detail_type,
+		pj.message_type_code,
+		pmtd.message_type_detail_id,
+		pmtd.element_category,
+		pmtd.element_code,
+		pmtd.element_status,
+		pmuc.upload_config_id,
+        pmuc.config_code,
+        pmuc.config_type,
+        pmuc.config_value,
+        pmuc.config_command,
+        pmuc.description
+		FROM
+		pspc_chart_detail pcd,
+		pspc_judgement_group pjg,
+		pspc_judgement pj
+		LEFT JOIN pspc_message_type pmt ON pmt.tenant_id = pj.tenant_id
+		AND pmt.site_id = pj.site_id
+		AND pmt.message_type_code = pj.message_type_code
+		AND pmt.message_type_status = 'Y'
+		LEFT JOIN pspc_message_type_detail pmtd ON pmtd.tenant_id = pmt.tenant_id
+		AND pmtd.site_id = pmt.site_id
+		AND pmtd.message_type_id = pmt.message_type_id
+		LEFT JOIN pspc_message_type_upload_rel pmtur ON pmtur.tenant_id = pmt.tenant_id
+		AND pmtur.site_id = pmt.site_id
+		AND pmtur.message_type_id = pmt.message_type_id
+		LEFT JOIN pspc_message_upload_config pmuc ON pmtur.tenant_id = pmt.tenant_id
+		AND pmuc.site_id = pmt.site_id
+		AND pmuc.upload_config_id = pmtur.upload_config_id
+		WHERE
+		pjg.tenant_id = pcd.tenant_id
+		AND pjg.site_id = pcd.site_id
+		AND pjg.judgement_group_id = pcd.judgement_group_id
+		AND pjg.judgement_status = 'Y'
+		AND pj.tenant_id = pjg.tenant_id
+		AND pj.site_id = pjg.site_id
+		AND pj.judgement_group_id = pjg.judgement_group_id
+		AND pcd.chart_detail_type = 'M'
+		AND pcd.enable_judge_group = 'Y'
+		AND pcd.tenant_id = #{tenantId}
+		AND pcd.site_id = #{siteId}
+		AND pcd.chart_id = #{chartId}
+	</select>
+</mapper>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.npi.npi_technology.mapper.TechnologySpecAuditerMapper">
+    <resultMap id="BaseResultMap" type="com.hand.npi.npi_technology.dto.TechnologySpecAuditer">
+        <result column="ID" property="id" jdbcType="DECIMAL" />
+        <result column="START_CODE" property="startCode" jdbcType="VARCHAR" />
+        <result column="AUDITER_CODE" property="auditerCode" jdbcType="VARCHAR" />
+        <result column="PROCESS_NAME" property="processName" jdbcType="VARCHAR" />
+    </resultMap>
+
+
+</mapper>

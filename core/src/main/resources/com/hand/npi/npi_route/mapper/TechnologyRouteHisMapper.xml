@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.npi.npi_route.mapper.TechnologyRouteHisMapper">
+    <resultMap id="BaseResultMap" type="com.hand.npi.npi_route.dto.TechnologyRouteHis">
+        <result column="HIS_ID" property="hisId" jdbcType="DECIMAL" />
+        <result column="ROUTE_NUMBER" property="routeNumber" jdbcType="VARCHAR" />
+        <result column="NEW_VERSION_NUMBER" property="newVersionNumber" jdbcType="VARCHAR" />
+        <result column="OLD_VERSION_NUMBER" property="oldVersionNumber" jdbcType="VARCHAR" />
+        <result column="SKU_ID" property="skuId" jdbcType="DECIMAL" />
+        <result column="STANDARD_WORKING_HOURS_TOTAL" property="standardWorkingHoursTotal" jdbcType="DECIMAL" />
+        <result column="LINE" property="line" jdbcType="VARCHAR" />
+        <result column="E_BOM_VERSION" property="eBomVersion" jdbcType="VARCHAR" />
+        <result column="PROJECT_ID" property="projectId" jdbcType="VARCHAR" />
+        <result column="STATUS" property="status" jdbcType="VARCHAR" />
+    </resultMap>
+
+
+</mapper>

@@ -1,0 +1,100 @@
+<#include "../include/header.html">
+
+<script type="text/javascript">
+	var BaseUrl = _basePath;
+	var sparePartId = ${RequestParameters.sparePartId};
+	var sparePartLevel = '${RequestParameters.sparePartLevel}';
+    var viewModel = Hap.createGridViewModel(null,{
+    	model:{
+    		
+    	},
+    	closeWin:function(e) {
+    		window.parent.$("#leftNewWindow2").data("kendoWindow").close();
+    	},
+    	save:function(){
+    		var data = viewModel.model.toJSON();
+    		data.__status = "add";
+    		data.parentId = sparePartId;
+    		if(sparePartLevel == '1'){
+    			data.sparePartLevel = '2';
+    		} else if(sparePartLevel == '2'){
+    			data.sparePartLevel = '3';
+    		}
+    		
+    		var validator = $("#mainForm").data("kendoValidator");
+    		if(validator.validate()) {
+    			//Hap.blockUI();
+    			Hap.request({
+    				url: BaseUrl + "/npi/technology/spare/part/add",
+    				data: kendo.stringify(data),
+    				success:function(data){
+    					if(data.success){
+    						//Hap.unblockUI();
+    						viewModel.closeWin();
+    					}else{
+    						kendo.ui.showInfoDialog({
+                                title: $l('hap.tip.info'),
+                                message: data.message
+                            }).done(function () {
+                                //closeCurrentWin()
+                            });
+    					}
+    				}
+    			})
+    		}
+    	},
+    	
+    });
+</script>
+
+<body>
+
+<div id="page-content">
+	<form id = "mainForm" style="paddiing-bottom:50px;padding-top:15px" class="form-horizontal" method="post" enctype="application/json;charset=UTF-8">
+		<div class="row">
+			<div class="col-sm-9">
+				<div class="form-group" style="text-align: center">
+					<div class="col-sm-12">
+						<label class="col-sm-4 control-label">组件属性编码</label>
+							<input style="width:50%" id="sparePartCode"  data-role="maskedtextbox" class="k-textbox"
+								data-bind="value:model.sparePartCode" data-label="组件属性编码" required>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-sm-9">
+				<div class="form-group" style="text-align: center">
+					<div class="col-sm-12">
+						<label class="col-sm-4 control-label">组件属性名称</label>
+							<input style="width:50%" id="sparePartName"  data-role="maskedtextbox" class="k-textbox"
+								data-bind="value:model.sparePartName" data-label="组件属性名称" required>
+					</div>
+				</div>
+			</div>
+		</div>
+	</form>
+	<div style="clear:both">
+		<div id="grid"></div>
+	</div>
+	<div id="mainBottom" class="text-right" style="bottom:15px;position:fixed;float:left;padding-top:15px;border-top:1px solid #e8e1eb;
+		width:100%;background:#fff;margin-right:30px">
+		<span class="btn btn-primary" data-bind="click:save" type="submit" style="margin-right:5px">保存</span>
+		<!-- <span class="btn btn-primary" data-bind="click:createProcessInstance" type="submit" style="margin-right:5px">提交审批</span> -->
+		<span class="btn btn-default" data-bind="click:closeWin" type="button" style="margin-right:25px">取消</span>
+	</div>
+	<script>
+		kendo.bind($('#mainForm'), viewModel);
+		kendo.bind($('#mainBottom'), viewModel);
+	</script>
+	<script>
+		$('#mainForm').kendoValidator({
+			messages:{
+				required:'<@spring.message "hap.validation.notempty"/>'
+			},
+			invalidMessageType:"tooltip"
+		});
+	</script>
+</div>
+</body>
+</html>

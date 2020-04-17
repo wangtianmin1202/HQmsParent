@@ -1,0 +1,145 @@
+<!--
+ * description: 二次VTP模板编制
+ * author:tianmin.wang
+ * date:20200221
+ -->
+<#include "../include/header.html">
+<body>
+<script type="text/javascript">
+	var mainType = '${RequestParameters.mainType!"IQC"}';
+	var viewModel = kendo.observable({
+		model: {
+			status: '4',
+			sourceType: '15',
+			mainType: mainType
+		},
+		save: function(e){
+		 	var data = viewModel.model.toJSON();
+		 	console.log(data);
+			var validator = $("#mainform").data("kendoValidator");
+			if (validator.validate()) {
+				$.ajax({
+			        url: '${base.contextPath}/hqm/iqc/inspection/template/h/vtp/query',
+			        type: 'POST',
+			        data: data,
+			        async: false,
+			        dataType: "json",
+			        success: function (response) {
+			            if (response.success) {
+			            	window.parent.openVtpDetail(response.rows[0].headerId,viewModel.model.vtpNumber);
+			            	window.parent.$("#vtpCreateWindow").data("kendoWindow").close();
+			            } else {
+			            	kendo.ui.showWarningDialog({
+			                    message: response.message
+			                });
+			            }
+			        }
+			    });
+			}
+		},
+		closeWin: function(e){
+        	window.parent.$("#vtpCreateWindow").data("kendoWindow").close();
+        }
+	});
+
+</script>
+
+<div id="page-content">
+	<form id="mainform"  class="form-horizontal" method="post" enctype="application/json;charset=UTF-8">
+	<div class="row" style="margin-left: 5px;">
+	 	<div class="col-sm-12">
+	 		<!-- 工厂+ 物料编码 -->
+	 	  	<div class="row" style="margin-top:15px">
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message "asliqccontrol.plant"/>:</label>
+					<div class="col-sm-9">
+                        <input id="lovPlant" required style="width:100%" name="plantId" required
+                               data-label="<@spring.message 'asliqccontrol.plant'/>"
+								data-bind="enabled: model.isEnabled,value:model.plantId,text:model.plantCode"/>
+						<span data-for="plantId" class=".k-invalid-msg"></span>
+					</div>
+					<script>
+					$("#lovPlant").kendoLov($.extend
+				    	    (<@lov"LOV_PLANT"/>, {
+				    	        textField: 'plantCode',
+				    	        valueField:'plantId',
+				    	        change:function(e){
+				    	        	viewModel.model.plantCode = this._dataItem.plantCode;
+				    	        }
+				    	    }));
+					</script>
+				</div>
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message "hqm.qc.item"/>:</label>
+					<div class="col-sm-9">
+						<input required style="width:100%" id="lovItem" name="itemId" data-label="<@spring.message '物料'/>"  data-bind="value:model.itemId,text:model.itemCode"/>
+						<span data-for="itemId" class=".k-invalid-msg"></span>
+					</div>
+					<script>
+					$("#lovItem").kendoLov($.extend
+				    	    (<@lov"LOV_ITEM"/>, {
+				    	        textField: 'itemCode',
+				    	        valueField:'itemId',
+				    	        query:function(e){
+				    	        	e.param['plantId'] = viewModel.model.plantId ? viewModel.model.plantId : 0;
+				    	        },
+				    	        change:function(){
+				    	        	viewModel.model.itemCode = this._dataItem.itemCode;
+				    	        	viewModel.model.set('itemDescriptions',this._dataItem.itemDescriptions);
+				    	        }
+				    	    }));
+					</script>
+				</div>
+            </div>
+			<!-- VTP申请编号 + 物料版本 -->
+			<div class="row" style="margin-top:15px">
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message "iqcinspectiontemplateh.vtpnumber"/>:</label>
+					<div class="col-sm-9">
+						<input required style="width:100%" id="vtpNumber" name="vtpNumber" data-label="<@spring.message 'iqcinspectiontemplateh.vtpnumber'/>"  
+							data-bind="value:model.vtpNumber" data-role="maskedtextbox"/>
+						<span data-for="vtpNumber" class=".k-invalid-msg"></span>
+					</div>
+					
+				</div>
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message "iqcinspectiontemplateh.itemedition"/>:</label>
+					<div class="col-sm-9">
+						<input id="itemEdition" required style="width:100%" name="itemEdition" data-bind="value:model.itemEdition" data-role="maskedtextbox"/>
+						<span data-for="itemEdition" class=".k-invalid-msg"></span>
+					</div>
+				</div>
+			</div>
+		</div>
+	  </div>
+
+	</form>
+</div>
+<div id="mainBottom" class="text-right" style="bottom: 15px;position: fixed;  float: left;padding-top:15px;border-top:1px solid #ebebeb;width:100%; background: #fff;">
+        <span class="btn btn-primary" data-bind="click:save" type="submit" style="margin-right:5px"><@spring.message "hap.save"/></span>
+        <span class="btn btn-default" data-bind="click:closeWin" type="button" style="margin-right:25px;"><@spring.message "hap.cancel"/></span>
+</div>
+
+<script type="text/javascript">
+    kendo.bind($('#mainBottom'),viewModel);
+	kendo.bind($('#mainform'), viewModel);
+
+    function isNotEmpty(obj) {
+        if(obj != undefined && obj != null && obj != ""){
+            return true;
+        }else{
+            return false;
+        }
+    }
+    var initMinDate = new Date(1900, 0, 1);
+    var initMaxDate = new Date(2099, 11, 31);
+	//验证
+	$("#mainform").kendoValidator({
+    	messages: {
+            required: '<@spring.message "hap.validation.notempty"/>'
+    	},
+		invalidMessageType : "tooltip"
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hcm.hcm_production_line.mapper.ProductionLineMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hcm.hcm_production_line.dto.ProductionLine">
+        <result column="SCHEDULE_REGION_ID" property="scheduleRegionId" jdbcType="DECIMAL" />
+        <result column="PLANT_ID" property="plantId" jdbcType="DECIMAL" />
+        <result column="PROD_LINE_GROUP_ID" property="prodLineGroupId" jdbcType="DECIMAL" />
+        <result column="PROD_LINE_ID" property="prodLineId" jdbcType="DECIMAL" />
+        <result column="PROD_LINE_CODE" property="prodLineCode" jdbcType="VARCHAR" />
+        <result column="PROD_LINE_ALIAS" property="prodLineAlias" jdbcType="VARCHAR" />
+        <result column="PROD_LINE_TYPE" property="prodLineType" jdbcType="VARCHAR" />
+        <result column="DESCRIPTIONS" property="descriptions" jdbcType="VARCHAR" />
+        <result column="RATE_TYPE" property="rateType" jdbcType="VARCHAR" />
+        <result column="RATE" property="rate" jdbcType="DECIMAL" />
+        <result column="ACTIVITY" property="activity" jdbcType="DECIMAL" />
+        <result column="PLANNER" property="planner" jdbcType="DECIMAL" />
+        <result column="BUSINESS_AREA" property="businessArea" jdbcType="VARCHAR" />
+        <result column="ORDER_BY_CODE" property="orderByCode" jdbcType="VARCHAR" />
+        <result column="ENABLE_FLAG" property="enableFlag" jdbcType="VARCHAR" />
+        <result column="ISSUED_WAREHOUSE_CODE" property="issuedWarehouseCode" jdbcType="VARCHAR" />
+        <result column="ISSUED_LOCATOR_CODE" property="issuedLocatorCode" jdbcType="VARCHAR" />
+        <result column="FIX_TIME_FENCE" property="fixTimeFence" jdbcType="DECIMAL" />
+        <result column="SUPPLIER_ID" property="supplierId" jdbcType="DECIMAL" />
+        <result column="SUPPLIER_SITE_ID" property="supplierSiteId" jdbcType="DECIMAL" />
+        <result column="FORWARD_PLANNING_TIME_FENCE" property="forwardPlanningTimeFence" jdbcType="DECIMAL" />
+        <result column="MO_REFRESH_FLAG" property="moRefreshFlag" jdbcType="VARCHAR" />
+        <result column="COMPLETION_WAREHOUSE_CODE" property="completionWarehouseCode" jdbcType="VARCHAR" />
+        <result column="COMPLETION_LOCATOR_CODE" property="completionLocatorCode" jdbcType="VARCHAR" />
+        <result column="FROZEN_TIME_FENCE" property="frozenTimeFence" jdbcType="DECIMAL" />
+        <result column="ORDER_TIME_FENCE" property="orderTimeFence" jdbcType="DECIMAL" />
+        <result column="RELEASE_TIME_FENCE" property="releaseTimeFence" jdbcType="DECIMAL" />
+        <result column="INVENTORY_WAREHOUSE_CODE" property="inventoryWarehouseCode" jdbcType="VARCHAR" />
+        <result column="INVENTORY_LOCATOR_CODE" property="inventoryLocatorCode" jdbcType="VARCHAR" />
+        
+        <result column="PLANT_CODE" property="plantCode" jdbcType="VARCHAR" />
+        
+        <result column="CID" property="cid" jdbcType="DECIMAL" />
+    </resultMap>
+<select id="selectlov" resultMap="BaseResultMap" parameterType="com.hand.hcm.hcm_production_line.dto.ProductionLine">
+
+	SELECT t.prod_line_id, t.prod_line_code, t.descriptions, hp.plant_code
+  FROM hcm_production_line t, hcm_plant hp
+ WHERE t.plant_id = hp.plant_id
+ <if test="prodLineCode!=null">
+ AND t.prod_line_code LIKE concat('%',concat(#{prodLineCode},'%'))
+ </if>
+ <if test="descriptions!=null">
+  AND t.descriptions LIKE concat('%',concat(#{descriptions},'%'))
+ </if>
+  <if test="plantId!=null">
+  AND t.PLANT_ID =#{plantId}
+ </if>
+</select>
+<select id="queryShiftCode" resultType="java.lang.String" parameterType="com.hand.hcm.hcm_production_line.dto.ProductionLine">
+SELECT hcs.shift_code
+  FROM hcm_calendar hc
+  JOIN hcm_calendar_shift hcs
+    ON hc.calendar_id = hcs.calendar_id
+   AND hcs.shift_start_time &lt; SYSDATE
+   AND hcs.shift_end_time &gt; SYSDATE
+ WHERE hc.prod_line_id = #{prodLineId}
+	
+</select>
+</mapper>

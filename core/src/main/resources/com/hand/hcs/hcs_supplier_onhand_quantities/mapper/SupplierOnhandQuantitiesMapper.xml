@@ -1,0 +1,257 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hcs.hcs_supplier_onhand_quantities.mapper.SupplierOnhandQuantitiesMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hcs.hcs_supplier_onhand_quantities.dto.SupplierOnhandQuantities">
+        <result column="ONHAND_ID" property="onhandId" jdbcType="DECIMAL" />
+        <result column="BUSINESS_UNIT_ID" property="businessUnitId" jdbcType="DECIMAL" />
+        <result column="PERIOD_NAME" property="periodName" jdbcType="VARCHAR" />
+        <result column="SUPPLIER_ID" property="supplierId" jdbcType="DECIMAL" />
+        <result column="SUPPLIER_SITE_ID" property="supplierSiteId" jdbcType="DECIMAL" />
+        <result column="ITEM_ID" property="itemId" jdbcType="DECIMAL" />
+        <result column="ITEM_VERSION" property="itemVersion" jdbcType="VARCHAR" />
+        <result column="ROUGH_QUANTITY" property="roughQuantity" jdbcType="DECIMAL" />
+        <result column="SEMI_FINISHED_QUANTITY" property="semiFinishedQuantity" jdbcType="DECIMAL" />
+        <result column="FINISHED_QUANTITY" property="finishedQuantity" jdbcType="DECIMAL" />
+        <result column="REMARKS" property="remarks" jdbcType="VARCHAR" />
+        <result column="CID" property="cid" jdbcType="DECIMAL" />
+        <result column="LAST_UPDATE_DATE" property="lastUpdateDate" jdbcType="TIMESTAMP" />  
+        <result column="PLANT_ID" property="plantId" jdbcType="DECIMAL" />
+        <result column="ENABLE_FLAG" property="enableFlag" jdbcType="VARCHAR" />
+        <result column="USER_TYPE" property="userType" jdbcType="VARCHAR" />
+        <result column="FORMAT" property="format" jdbcType="VARCHAR" />
+        <result column="BOM_USAGE" property="bomUsage" jdbcType="DECIMAL" />
+        <result column="PRODUCTION_CYCLE" property="productionCycle" jdbcType="DECIMAL" />
+        <result column="PURCHASE_CYCLE" property="purchaseCycle" jdbcType="DECIMAL" />
+        <result column="last_updated_by" property="lastUpdatedBy" jdbcType="DECIMAL" />
+        
+        <!-- 业务字段 -->   
+        <result column="ITEM_CODE" property="itemCode" jdbcType="VARCHAR" />
+        <result column="ITEM_NAME" property="itemName" jdbcType="VARCHAR" />
+        <result column="PRIMARY_UOM" property="primaryUom" jdbcType="VARCHAR" />
+        <result column="SUPPLIER_NAME" property="supplierName" jdbcType="VARCHAR" />
+        <result column="SUPPLIER_CODE" property="supplierCode" jdbcType="VARCHAR" />
+        <result column="SUPPLIER_SITE_NAME" property="supplierSiteName" jdbcType="VARCHAR" />
+    	<result column="BUSINESS_UNIT_NAME" property="businessUnitName" jdbcType="VARCHAR" />
+    	<result column="PLANT_CODE" property="plantCode" jdbcType="VARCHAR" />
+    	<result column="PLANT_NAME" property="plantName" jdbcType="VARCHAR" />
+    	<result column="component_id" property="componentId" jdbcType="DECIMAL" />
+    	<result column="SAFETY_STOCK_VALUE" property="safetyStockValue" jdbcType="DECIMAL" />
+    	<result column="stock_qty" property="stockQty" jdbcType="DECIMAL" />
+    	<result column="wip_qty" property="wipQty" jdbcType="DECIMAL" />
+    	<result column="out_order_qty" property="outOrderQty" jdbcType="DECIMAL" />
+    	<result column="user_name" property="userName" jdbcType="VARCHAR" />
+    	<result column="parent_id" property="parentId" jdbcType="DECIMAL" />
+    	<result column="data_count" property="dataCount" jdbcType="DECIMAL" />
+    	<result column="bom_id" property="bomId" jdbcType="DECIMAL" />
+    	<result column="cg_code" property="cgCode" jdbcType="VARCHAR" />
+    	<result column="gj_code" property="gjCode" jdbcType="VARCHAR" />
+    	<result column="purchase_uom" property="purchaseUom" jdbcType="VARCHAR" />
+    </resultMap>
+
+		<!-- 供应商库存管理查询 -->
+		<select id="query" resultMap="BaseResultMap" parameterType="com.hand.hcs.hcs_po_line_locations.dto.PoLineLocations">
+				select   hi.ITEM_ID,
+			             hi.ITEM_CODE,
+			             hi.descriptions ITEM_NAME,
+			             hi.PRIMARY_UOM,
+			             hsoq.item_version,
+			             hsoq.rough_quantity,
+			             hsoq.semi_finished_quantity,
+			             hsoq.finished_quantity,
+			             hsoq.REMARKS,
+			             hs.supplier_name,
+			             hs.supplier_code,
+			             hsoq.onhand_id,
+			             hsoq.last_update_date,
+			             hp.plant_code,
+			             hp.descriptions PLANT_NAME,
+			             hsoq.plant_id
+			        from  sys_user su
+			        join hcs_supplier_onhand_quantities hsoq on decode(su.user_type,'S',su.supplier_id,hsoq.supplier_id) = hsoq.supplier_id
+			        join hcm_item hi on hsoq.item_id = hi.ITEM_ID
+			        join hcs_suppliers hs on hsoq.supplier_id = hs.supplier_id
+			        join hcm_plant hp on hsoq.plant_id = hp.plant_id
+			        where 1=1
+			        and hi.PLANT_ID = hsoq.plant_id
+			        and su.user_id = #{request.userId}
+					<if test = "itemCode != null">
+						and hi.ITEM_CODE LIKE concat('%',concat(#{itemCode,jdbcType=VARCHAR},'%'))
+					</if>
+					<if test = "supplierId != null">
+						and hs.SUPPLIER_ID = #{supplierId}
+					</if>
+					<if test = "plantId != null">
+						and hsoq.plant_id = #{plantId}
+					</if>
+					order by hsoq.last_update_date desc
+		</select>
+		
+		<!-- 供应商库存管理查询 -->
+		<select id="queryTree" resultMap="BaseResultMap" parameterType="com.hand.hcs.hcs_po_line_locations.dto.PoLineLocations">
+			select t.* from (	
+				select distinct hsoq.ITEM_ID,
+				       hi.ITEM_CODE,
+				       hi.descriptions ITEM_NAME,
+				       null component_id,
+				       hsoq.onhand_id,
+				       hsoq.format,
+				       hsoq.bom_usage,
+				       hsiv.item_version,
+				       hi.SAFETY_STOCK_VALUE,
+				       nvl((select sum(h1.stock_qty)
+				          from hcs_supplier_item_version h1
+				         where h1.item_id = hsoq.item_id
+				           and h1.plant_id = hsoq.plant_id
+				           and h1.supplier_id = hsoq.supplier_id
+				           and h1.bom_id = hsb.bom_id
+				           and h1.enable_flag = 'Y'),0 ) stock_qty,
+				       nvl((select sum(h1.wip_qty)
+				          from hcs_supplier_item_version h1
+				         where h1.item_id = hsoq.item_id
+				           and h1.plant_id = hsoq.plant_id
+				           and h1.supplier_id = hsoq.supplier_id
+				           and h1.bom_id = hsb.bom_id
+				           and h1.enable_flag = 'Y'),0 ) wip_qty,
+				       nvl((select sum(h1.out_order_qty)
+				          from hcs_supplier_item_version h1
+				         where h1.item_id = hsoq.item_id
+				           and h1.plant_id = hsoq.plant_id
+				           and h1.supplier_id = hsoq.supplier_id
+				           and h1.bom_id = hsb.bom_id
+				           and h1.enable_flag = 'Y'),0 ) out_order_qty,
+				        (select count(1)
+				          from hcs_supplier_item_version h1
+				         where h1.item_id = hsoq.item_id
+				           and h1.plant_id = hsoq.plant_id
+				           and h1.supplier_id = hsoq.supplier_id
+				           and h1.bom_id = hsb.bom_id
+				           and h1.enable_flag = 'Y') data_count,   
+				        hsoq.production_cycle,
+				        hsoq.purchase_cycle,
+				        hsoq.remarks,
+				        hsoq.user_type,
+				        hsoq.supplier_id,
+				        hsoq.plant_id,
+				        hs.supplier_code,
+				        hs.supplier_name,
+				        hsoq.last_updated_by,
+				        su.user_name,
+				        hsoq.last_update_date,
+				        hp.plant_code,
+				        hp.descriptions PLANT_NAME,
+				        null parent_id,
+				        hsb.bom_id,
+                		hsoq.creation_date ,
+                		hi.purchase_uom  
+				  from sys_user su
+				  left join hcs_supplier_onhand_quantities hsoq on decode(su.user_type, 'S', su.supplier_id, hsoq.supplier_id) = hsoq.supplier_id
+				  left join hcm_item hi on hsoq.item_id = hi.ITEM_ID and hsoq.plant_id = hi.PLANT_ID
+				  left join hcs_supplier_bom hsb on hsoq.item_id = hsb.item_id and hsoq.plant_id = hsb.plant_id and hsoq.supplier_id = hsb.supplier_id
+				  join hcs_supplier_item_version hsiv on hsb.item_id = hsiv.item_id and hsb.plant_id = hsiv.plant_id 
+				           and hsb.supplier_id = hsiv.supplier_id and hsb.bom_id = hsiv.bom_id and hsiv.main_version = 'Y'
+				  left join hcs_suppliers hs on hsoq.supplier_id = hs.supplier_id
+				  left join hcm_plant hp on hsoq.plant_id = hp.plant_id
+				  left join sys_user su on hs.last_updated_by = su.user_id
+				  left join hcs_supplier_bom hsb
+				            on hsoq.item_id = hsb.item_id
+				           and hsoq.plant_id = hsb.plant_id
+				           and hsoq.supplier_id = hsb.supplier_id
+		          left join hcs_supplier_bom_components hsbc
+		            		on hsb.bom_id = hsbc.bom_id  
+				 where 1 = 1
+				   and su.user_id = #{request.userId}
+				   and hsoq.enable_flag ='Y'
+				   <if test="cgCode != null">
+				   		and hi.plant_id = #{plantId}
+           				and hi.ITEM_CODE like concat('%',concat(#{cgCode},'%'))
+				   </if>
+				   <if test="gjCode != null">
+				   		and hsbc.plant_id = #{plantId}
+	          			and hsbc.ITEM_CODE like concat('%',concat(#{gjCode},'%'))
+				   </if>
+				   <if test="supplierId != null">
+				   		and hsoq.supplier_id = #{supplierId}
+				   </if>
+				   
+				   union all 
+				   
+				   select hsbc.item_id,
+				       hsbc.ITEM_CODE,
+				       hsbc.descriptions ITEM_NAME,
+				       hsbc.component_id,
+				       hsbc.component_id*-1 onhand_id,
+				       hsbc.format,
+				       hsbc.bom_usage,
+				       hsiv.item_version,
+				       hi2.SAFETY_STOCK_VALUE * hsbc.bom_usage SAFETY_STOCK_VALUE,
+				       nvl((select sum(h1.stock_qty)
+				          from hcs_supplier_item_version h1
+				         where h1.item_id = hsbc.item_id
+				           and h1.plant_id = hsbc.plant_id
+				           and h1.supplier_id = hsbc.supplier_id
+				           and h1.bom_id = hsb.bom_id
+				           and h1.enable_flag = 'Y'),0) stock_qty,
+				       nvl((select sum(h1.wip_qty)
+				          from hcs_supplier_item_version h1
+				         where h1.item_id = hsbc.item_id
+				           and h1.plant_id = hsbc.plant_id
+				           and h1.supplier_id = hsbc.supplier_id
+				           and h1.bom_id = hsb.bom_id
+				           and h1.enable_flag = 'Y'),0) wip_qty,
+				       nvl((select sum(h1.out_order_qty)
+				          from hcs_supplier_item_version h1
+				         where h1.item_id = hsbc.item_id
+				           and h1.plant_id = hsbc.plant_id
+				           and h1.supplier_id = hsbc.supplier_id
+				           and h1.bom_id = hsb.bom_id
+				           and h1.enable_flag = 'Y'),0) out_order_qty,
+				       (select count(1)
+				          from hcs_supplier_item_version h1
+				         where h1.item_id = hsbc.item_id
+				           and h1.plant_id = hsoq.plant_id
+				           and h1.supplier_id = hsoq.supplier_id
+				           and h1.bom_id = hsb.bom_id
+				           and h1.enable_flag = 'Y') data_count,     
+				        hsbc.production_cycle,
+				        hsbc.purchase_cycle,
+				        hsbc.remarks,
+				        hsbc.user_type,
+				        hsbc.supplier_id,
+				        hsbc.plant_id,
+				        hs.supplier_code,
+				        hs.supplier_name,
+				        hsbc.last_updated_by,
+				        su.user_name,
+				        hsbc.last_update_date ,
+				        hp.plant_code,
+				        hp.descriptions PLANT_NAME,
+				        hsoq.onhand_id parent_id,
+				        hsb.bom_id,
+                		hsbc.creation_date,
+                		hsbc.uom purchase_uom  
+				from sys_user su
+				left join hcs_supplier_onhand_quantities hsoq on decode(su.user_type, 'S', su.supplier_id, hsoq.supplier_id) = hsoq.supplier_id
+				left join hcm_item hi2 on hsoq.item_id = hi2.ITEM_ID and hsoq.plant_id = hi2.PLANT_ID
+				left join hcs_supplier_bom hsb on hsoq.item_id = hsb.item_id and hsoq.plant_id = hsb.plant_id and hsoq.supplier_id = hsb.supplier_id 
+				left join hcs_supplier_bom_components hsbc on hsb.bom_id = hsbc.bom_id
+				left join hcm_item hi on hsbc.item_id = hi.ITEM_ID and hsbc.plant_id = hi.PLANT_ID
+				left join hcm_plant hp on hsbc.plant_id = hp.plant_id
+				left join hcs_supplier_item_version hsiv on hsbc.item_id = hsiv.item_id and hsb.plant_id = hsiv.plant_id 
+				           and hsb.supplier_id = hsiv.supplier_id and hsb.bom_id = hsiv.bom_id and hsiv.main_version = 'Y' 
+				left join hcs_suppliers hs on hsbc.supplier_id = hs.supplier_id
+				where hsb.start_date &lt;= sysdate
+				and decode(hsb.end_date,null,sysdate,hsb.end_date) &gt;= sysdate
+				and hsbc.enable_flag = 'Y'
+				and su.user_id = #{request.userId}
+				<if test="gjCode != null">
+			   		and hsbc.plant_id = #{plantId}
+          			and hsbc.ITEM_CODE like concat('%',concat(#{gjCode},'%'))
+				</if>
+				<if test="supplierId != null">
+			   		and hsbc.supplier_id = #{supplierId}
+			   </if>
+			   ) t
+			   order by t.supplier_code desc,t.creation_date desc
+		</select>
+</mapper>

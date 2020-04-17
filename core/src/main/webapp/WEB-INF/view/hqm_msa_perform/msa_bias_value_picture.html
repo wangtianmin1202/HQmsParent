@@ -1,0 +1,558 @@
+<#include "../include/header.html">
+<script src="${base.contextPath}/lib/prints/doc_print.js" type="text/javascript" charset="UTF-8"></script>
+<script src="${base.contextPath}/common/code?HQM_CONTROL_CHART_TYPE=HQM_CONTROL_CHART_TYPE"></script>
+<script src="${base.contextPath}/lib/js/echarts.common.min.js?_v_=1553896255267" type="text/javascript" charset="UTF-8"></script>
+<!-- <script type="text/javascript" src="https://www.echartsjs.com/examples/vendors/echarts/echarts.min.js?_v_=1553896255267"></script>  -->
+<!-- <script type="text/javascript" src="https://www.echartsjs.com/examples/vendors/echarts-stat/ecStat.min.js?_v_=1553896255267"></script> -->
+<script type="text/javascript" src="${base.contextPath}/lib/js/echarts.min.js"></script> 
+<script type="text/javascript" src="${base.contextPath}/lib/js/ecStat.min.js"></script>
+
+<script type="text/javascript">
+    var parentData = window.parent.parentData;
+    //列
+    var groupAndDateList;
+	//行
+	var measureNumList;
+	//均值
+	var averageData = new Array();
+	//极差
+	var jcList = new Array();
+	//标准差
+	var bzcList = new Array();
+	//测量值集合
+	var measureValueList = new Array();
+	//平均极差
+	var averageJc;
+	//平均标准差
+	var averageBzc;
+	//s图能否查看标识
+	var sFlag;
+	//测量值均值
+	var cl
+    var viewModel = kendo.observable({
+		model: {
+		},
+		//返回
+		closeWin: function(e){
+        	window.parent.$("#pictureBiasWindow").data("kendoWindow").close();
+        },
+        //刷新
+        refresh: function(){
+        	initTable();
+        },
+        //去打印
+        toPrint: function(){
+//         	$("#iframePrint").attr("src","msa_bias_value_print.html");
+        	var dialog = $("#printWindow").kendoWindow({
+    				actions: ["Close"],
+    				width: "95%",
+    				height: "90%",
+    				title: '<@spring.message "打印msa"/>',
+    				visible: false,
+    				iframe: true,
+    				modal: true,
+    				content: 'msa_bias_value_print.html'
+    			}).data("kendoWindow");
+    			dialog.center().open();
+        }
+	});
+    $(function(){
+		//获取父页面参数
+		
+    	//均值
+    	averageData = window.parent.averageData;
+    	//列
+    	groupAndDateList = window.parent.groupAndDateList;
+    	//行
+    	measureNumList = window.parent.measureNumList;
+    	//平均极差
+    	averageJc = window.parent.averageJc;
+    	//极差
+		jcList = window.parent.jcList;
+    	//测量值集合
+    	measureValueList = window.parent.measureValueList;
+    	showXbar();
+    	histogram()
+    	
+		
+    	
+    	//平均值
+    	$("#cl").html(cl.toFixed(5));
+    	//偏倚均值
+    	var averageBias = (parseFloat(cl) - parseFloat(parentData.standardValue)).toFixed(5);
+    	$("#averageBias").html(averageBias);
+    	var jsonData = {
+    			"m": measureNumList.length,
+    			"g": groupAndDateList.length
+    	}
+    	$.ajax({
+    		url:"${base.contextPath}/hqm/d2/v/value/query",
+    		type:"POST",
+    		data:jsonData,
+    		jsonType:"json",
+    		success: function(resultData){
+    			if(resultData.success){
+    				var repeatBzc = (averageJc/resultData.rows[0].d2).toFixed(5);
+    				//重复性标准差
+    				$("#repeatBzc").html(repeatBzc);
+    				//重复性
+    				$("#repeat").html((repeatBzc/parentData.expectedDeterioration*100).toFixed(2)+'%');
+    				//均值标准差
+    				var avgBzc = (parseFloat(repeatBzc)/parseFloat(Math.sqrt(measureValueList.length))).toFixed(5);
+    				$("#avgBzc").html(avgBzc);
+    				var tStatistics = (Math.abs(averageBias)/avgBzc).toFixed(5);
+    				//t统计量
+    				$("#tStatistics").html(tStatistics);
+					//临界值
+					tinvs(averageBias,avgBzc,resultData.rows[0].v,0.05,tStatistics);
+					
+    			}
+    		}
+    	})
+    	
+    })
+    var msgResult;
+    //求临界值
+    function tinvs(averageBias,avgBzc,v,a,tStatistics){
+    	var jsonData = {
+    			"v": v,
+    			"a": a
+    	}
+    	$.ajax({
+    		url:"${base.contextPath}/hqm/d2/v/value/getTinvs",
+    		type:"POST",
+    		data:jsonData,
+    		jsonType:"json",
+    		success: function(resultData){
+    			if(resultData != -1){
+    				resultData = resultData.toFixed(3);
+					//临界值
+					$("#criticalValue").html(resultData);
+					//置信区间
+					var min = (parseFloat(averageBias)-parseFloat(avgBzc*resultData)).toFixed(3);
+					var max = (parseFloat(averageBias)+parseFloat(avgBzc*resultData)).toFixed(3);
+					$("#interval").html('['+ min +'，'+ max +']');
+    				var msaResult = '';
+    				var msaConclusion = '';
+					if(tStatistics < resultData && min <= 0 && max >= 0){
+						msaResult = 'OK';
+						msaConclusion = "本测量系统无偏倚";
+						msgResult = '<@spring.message "msaplan.bias.conclusion1"/>';
+    					$("#result").html(msgResult);
+    				}else if(tStatistics > resultData){
+    					msaResult = 'NG';
+    					msaConclusion = "t统计量大于临界值，该测量系统存在偏倚";
+    					msgResult = '<@spring.message "msaplan.bias.conclusion2"/>';
+    					$("#result").html(msgResult);
+    				}else if(min <= 0 || max >= 0){
+    					msaResult = 'NG';
+    					msaConclusion = "0不在置信区间内，该测量系统存在偏倚";
+    					msgResult = '<@spring.message "msaplan.bias.conclusion3"/>';
+    					$("#result").html(msgResult);
+    				}
+					if(parentData.measurePlanStatus != '3'){	
+	    				var msaPlanLine = {
+	    		    			"measurePlanId" : parentData.msaPlanId,
+	    		    			"msaContent" : '2',
+	    		    			"msaResult":msaResult,
+	    		    			"msaConclusion" : msaConclusion,
+	    		    			"measurePlanLineId": parentData.measurePlanLineId
+	    		    	}
+	    		    	$.ajax({
+	    		    		url: "${base.contextPath}/hqm/msa/plan/line/updateResult",
+	    		    		data: msaPlanLine,
+	    		    		type: "POST",
+	    		    		dataType: "json",
+	    		    		success: function(data){
+	    		    			if(data.success){
+	    		    				window.parent.viewModel.query();
+	    		    			}
+	    		    		}
+	    		    	})
+					}
+    			}else{
+    				//获取失败
+    			}
+    		}
+    	})
+    }
+   
+    function checkStr(str){
+		if(str == null || str === '' ||typeof(str) == "undefined"){
+    		return false;
+    	}
+		return true;
+    }
+</script>
+<body>
+<div style="display:none">
+	<iframe id="iframePrint" ></iframe>
+</div>
+<div id="printWindow"></div>
+<div id="page-content" style="heigth:100%">
+		<div class="row" style=";height:10%">
+			<div class="pull-left" id="toolbar-btn" style="padding-bottom:10px;">
+		    	<span type="button" class="btn btn-primary" style="float:left;margin-right:5px" data-bind="click:closeWin"><i class="fa fa-undo" style="margin-right:3px;"></i><@spring.message "hap.back"/></span>
+		    	<span class="btn btn-success k-grid-save-changes" data-bind="click:toPrint"  style="float:left;margin-right:5px;"><i class="fa fa-print" style="margin-right:3px;"></i><@spring.message "hap.print"/></span>
+		    </div>
+		    <script>kendo.bind($('#toolbar-btn'), viewModel);</script>
+	    </div>
+	    <div class="row" style="margin:0px;padding:0px">
+	    	<div id="picture" class="form-group col-sm-6" style="height:350px;">
+		    	<div id="" style="height:100%;width:100%;">
+		    	
+		    	</div>
+	    	</div>
+	    	<div id="picture2" class="form-group col-sm-6" style="height:350px">
+				<div id="" style="height:100%;width:100%;">
+		    	
+		    	</div>
+	    	</div>
+	    </div>
+	    <div class="row" style="margin-top:0px;padding:0px">
+	    	<div id="picture3" class="form-group col-sm-6" style="height:350px;">
+		    	<div id="" style="height:100%;width:100%;">
+		    	
+		    	</div>
+	    	</div>
+	    	<div id="picture4" class="form-group col-sm-6" style="height:350px">
+	    		<div class="row" style="margin-top:0px;padding:0px">
+					<table id="mytable" style='color: black;width: 100%;table-layout: fixed;font-size: small;text-align: center;border-color:#697882;overflow:scroll' border='2px'>
+						<tr>
+							<th style="text-align: center;width:10%"><@spring.message "msaplan.measure.average"/></th>
+							<th style="text-align: center;width:10%"><@spring.message "msaplan.measure.biasaverage"/></th>
+							<th style="text-align: center;width:20%"><@spring.message "msaplan.repeatability.deviation"/></th>
+							<th style="text-align: center;width:10%"><@spring.message "msaplan.repeatability"/></th>
+							<th style="text-align: center;width:10%"><@spring.message "msaplan.mean.deviation"/></th>
+							<th style="text-align: center;width:10%"><@spring.message "msaplan.t.statistic"/></th>
+							<th style="text-align: center;width:10%"><@spring.message "msaplan.threshold"/></th>
+							<th style="text-align: center;width:20%"><@spring.message "msaplan.confidence.interval"/></th>
+						</tr> 
+						<tr>
+							<td id="cl" style="width:10%"></td>
+							<td id="averageBias" style="width:10%">2</td>
+							<td id="repeatBzc" style="width:20%">1</td>
+							<td id="repeat" style="width:10%">1</td>
+							<td id="avgBzc" style="width:10%">1</td>
+							<td id="tStatistics" style="width:10%">1</td>
+							<td id="criticalValue" style="width:10%">1</td>
+							<td id="interval" style="width:20%">1</td>
+						</tr>
+					</table>
+				</div>
+				<div class="row" style="margin-top:10px;padding:0px">
+						<span class="col-sm-2" style="font-size:20px;"><@spring.message "msaplan.analysisconclusion"/></span>
+						<textarea class="col-sm-10" id="result" rows="8" cols="50" style="resize:none;font-size:20px"></textarea>
+				</div>
+	    	</div>
+	    </div>
+</div>
+<script type="text/javascript">
+	//UCL
+	var UCL;
+	//LCL
+	var LCL;
+	/* R图 */
+	var R_UCL;
+	var R_LCL; 
+	var xData;
+	//展示Xbar图
+	function showXbar(type){
+		/* if(type == 'S' && (!sFlag)){
+			kendo.ui.showInfoDialog({
+				title: "提示",
+    			message: 'S图无法查看'
+    		})
+    		return;
+		} */
+		xData = [];
+		for(var i=0; i<groupAndDateList.length; i++){
+			xData.push(i+1)
+		}
+		var averageDataSum = 0;
+		for(var i=0; i<averageData.length; i++){
+			averageDataSum += parseFloat(averageData[i])
+		}
+		//所有测量值均值
+		cl = averageDataSum/averageData.length;
+		
+		var jsonData = {
+				"n" : measureNumList.length
+		}
+		//各组标准差的平均值
+		/* var averageSum = 0;	
+		for(var i=0; i<bzcList.length; i++){
+			averageSum += Number(bzcList[i]);
+		}
+		averageBzc = averageSum/bzcList.length; */
+		//获取控制图系数
+		$.ajax({
+    		url:"${base.contextPath}/hqm/control/chart/value/query",
+    		type: "POST",
+    		data: jsonData,
+    		jsonType: "json",
+    		success: function(resultData){
+    			if(resultData.success){
+    				data = resultData.rows[0]
+    				
+    				/* Xbar图 */
+    				//UCL
+    				UCL = (cl + data.a2*averageJc).toFixed(3);
+    				//LCL
+    				LCL = (cl - data.a2*averageJc).toFixed(3);
+    				XbarR(averageData,UCL,LCL,cl,xData,'<@spring.message "msaplan.xbar.chart"/>','<@spring.message "msaplan.sample.average"/>','picture');
+    				/* R图 */
+    				R_UCL = (averageJc*data.d4).toFixed(3);
+       				R_LCL = (averageJc*data.d3).toFixed(3);
+       				XbarR(jcList,R_UCL,R_LCL,averageJc,xData,'<@spring.message "msaplan.Range.chart"/>','<@spring.message "msaplan.sample.range"/>','picture2');
+    			}
+    		}
+    	})
+		
+		
+	}
+//R图
+/*  
+ * dataList: 数据体
+ * UCL：不同图的UCL
+ * LCL：不同图的LCL
+ * CL：数据平均值
+ * LCL：x轴：测量次数的总个数
+ * title： 标题
+ * name: 数据描述
+ * id: div id
+ */
+function XbarR(dataList,UCL,LCL,CL,xData,title,name,id){
+	dataList.push(UCL);
+	dataList.push(LCL);
+	option = {
+		    title: {
+		        text: title,
+		        //subtext: '纯属虚构'
+		    },
+		    tooltip: {
+		        trigger: 'axis'
+		    },
+		    legend: {
+		        data:[name]
+		    },
+		    toolbox: {
+		        show: true,
+		        feature: {
+		            /* dataZoom: {
+		                yAxisIndex: 'none'
+		            }, */
+		            dataView: {readOnly: false},
+		            magicType: {type: ['line', 'bar']},
+		            restore: {},
+		            saveAsImage: {}
+		        }
+		    },
+		    xAxis:  {
+		        type: 'category',
+		        boundaryGap: false,
+		        data: xData
+		    },
+		    yAxis: {
+		    	//name: name,
+		        type: 'value',
+		        axisLabel: {
+		            formatter: '{value}'
+		        },
+		        min:'dataMin'
+		    },
+		    series: [
+		        {
+		            name:name,
+		            type:'line',
+		            data:dataList,
+		            markPoint: {
+		                data: [
+		                    {type: 'max', name: '最大值'},
+		                    {type: 'min', name: '最小值'}
+		                ]
+		            },
+		            markLine: {
+		                data: [
+		                    {
+		                    	yAxis: CL, 
+		                    	name: '平均值',
+		                    	label:{
+		                    			normal: {formatter: '平均值('+ CL +')'}
+		                    	},
+		                    	lineStyle:{
+		                    		color: 'green'
+		                    	}
+		                    },
+		                    {
+		                    	yAxis: UCL,  
+		                    	name: 'UCL',
+		                    	label:{
+		                    		normal: {formatter: 'UCL('+ UCL +')'}
+		                    	},
+		                    	lineStyle:{
+		                    		color: 'red',
+		                    		type: 'solid'
+		                    	}
+		                    },
+		                    {
+		                    	yAxis: LCL,  
+		                    	name: 'LCL',
+		                    	label:{
+		                    		normal: {formatter: 'LCL('+ LCL +')'}
+		                    	},
+		                    	lineStyle:{
+		                    		color: 'red',
+		                    		type: 'solid'
+		                    	}
+		                    }
+		                ]
+		            }
+		        },
+		    ]
+		};
+	$("#"+ id +"").empty();
+	$("#"+ id +"").append('<div id="'+ id +'a" style="height:100%;width:100%;"></div>')
+	var myChart = echarts.init(document.getElementById(id+'a'));
+	myChart.setOption(option);
+	dataList.splice(dataList.length-2,2);
+}
+//条形图
+function bar(){
+	option = {
+		    legend: {},
+		    tooltip: {},
+		    dataset: {
+		        source: [
+		            ['product', '2015', '2016', '2017'],
+		            ['Matcha Latte', 43.3, 85.8, 93.7],
+		            ['Milk Tea', 83.1, 73.4, 55.1],
+		            ['Cheese Cocoa', 86.4, 65.2, 82.5],
+		            ['Walnut Brownie', 72.4, 53.9, 39.1]
+		        ]
+		    },
+		    xAxis: {type: 'category'},
+		    yAxis: {},
+		    // Declare several bar series, each will be mapped
+		    // to a column of dataset.source by default.
+		    series: [
+		        {type: 'bar'},
+		        {type: 'bar'},
+		        {type: 'bar'}
+		    ]
+		};
+	var id = 'picture3';
+	$("#"+ id +"").empty();
+	$("#"+ id +"").append('<div id="'+ id +'c" style="height:100%;width:100%;"></div>')
+	var myChart = echarts.init(document.getElementById(id+'c'));
+	myChart.setOption(option);
+}
+function accSub(arg1, arg2) {
+    var r1, r2, m, n;
+    try {
+      r1 = arg1.toString().split(".")[1].length;
+    } catch (e) {
+      r1 = 0;
+    }
+    try {
+      r2 = arg2.toString().split(".")[1].length;
+    } catch (e) {
+      r2 = 0;
+    }
+    m = Math.pow(10, Math.max(r1, r2)); //last modify by deeka //动态控制精度长度
+    n = (r1 >= r2) ? r1 : r2;
+    return ((arg1 * m - arg2 * m) / m).toFixed(n);
+  }
+  var dataInfo;
+//直方图
+function histogram(){
+	var girth = measureValueList;
+
+	var bins = ecStat.histogram(girth);
+
+	var interval;
+	var min = Infinity;
+	var max = -Infinity;
+
+	dataInfo = echarts.util.map(bins.data, function (item, index) {
+	    var x0 = bins.bins[index].x0.toFixed(4);
+	    var x1 = bins.bins[index].x1.toFixed(4);
+	    
+	    interval = (x1-x0).toFixed(4);//accSub(x1,x0);
+	    min = Math.min(min, x0).toFixed(4);
+	    max = Math.max(max, x1).toFixed(4);
+	    return [x0, x1, item[1]];
+	});
+    
+	setTimeout("optionFuntion("+min+","+max+","+interval+")","200");
+	
+	
+}
+function optionFuntion(min,max,interval){
+	function renderItem(params, api) {
+	    var yValue = api.value(2);
+	    var start = api.coord([api.value(0), yValue]);
+	    var size = api.size([api.value(1) - api.value(0), yValue]);
+	    var style = api.style();
+
+	    return {
+	        type: 'rect',
+	        shape: {
+	            x: start[0] + 1,
+	            y: start[1],
+	            width: size[0] - 2,
+	            height: size[1]
+	        },
+	        style: style
+	    };
+	}
+	option = {
+		    title: {
+		        text: '<@spring.message "msaplan.measured.value.histogram"/>',
+		        /* subtext: 'By ecStat.histogram',
+		        sublink: 'https://github.com/ecomfe/echarts-stat', */
+		        left: 'center',
+		        top: 10
+		    },
+		    color: ['rgb(25, 183, 207)'],
+		    grid: {
+		        top: 80,
+		        containLabel: true
+		    },
+		    xAxis: [{
+		        type: 'value',
+		        min: min,
+		        max: max,
+		        interval: interval
+		    }],
+		    yAxis: [{
+		        type: 'value',
+		    }],
+		    series: [{
+		        name: 'height',
+		        type: 'custom',
+		        renderItem: renderItem,
+		        label: {
+		            normal: {
+		                show: true,
+		                position: 'insideTop'
+		            }
+		        },
+		        encode: {
+		            x: [0, 1],
+		            y: 2,
+		            tooltip: 2,
+		            label: 2
+		        },
+		        data: dataInfo
+		    }]
+		};
+	var id = 'picture3';
+	$("#"+ id +"").empty();
+	$("#"+ id +"").append('<div id="'+ id +'c" style="height:100%;width:100%;"></div>')
+	var myChart = echarts.init(document.getElementById(id+'c'));
+	myChart.setOption(option);
+}
+</script>
+</body>
+</html>

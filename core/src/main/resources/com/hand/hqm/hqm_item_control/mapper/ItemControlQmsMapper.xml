@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_item_control.mapper.ItemControlQmsMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_item_control.dto.ItemControlQms">
+    	<result column="KID" property="kid" jdbcType="DECIMAL" />
+        <result column="PLANT_ID" property="plantId" jdbcType="DECIMAL" />
+        <result column="ITEM_ID" property="itemId" jdbcType="DECIMAL" />
+        <result column="RECHECK_CYCLE" property="recheckCycle" jdbcType="DECIMAL" />
+        <result column="CHECK_PLACE" property="checkPlace" jdbcType="VARCHAR" />
+        <result column="PLATFORM" property="platform" jdbcType="VARCHAR" />
+        <result column="ITEM_CODE" property="itemCode" jdbcType="VARCHAR" />
+        <result column="ITEM_DESCRIPTIONS" property="itemDescriptions" jdbcType="VARCHAR" />
+        <result column="PLANT_CODE" property="plantCode" jdbcType="VARCHAR" />
+        <result column="CATEGORY_CODE" property="categoryCode" jdbcType="VARCHAR" />
+    </resultMap>
+
+<select id="reSelect" resultMap="BaseResultMap" parameterType="com.hand.hqm.hqm_item_control.dto.ItemControlQms">
+SELECT hi.item_id,
+       hi.plant_id,
+       t.recheck_cycle,
+       t.check_place,
+       hi.item_code,
+       hi.descriptions AS item_descriptions,
+       hp.plant_code,
+       hic.category_code,
+       t.kid,
+       hss.platform
+  FROM hcm_item hi
+  JOIN hqm_item_control t
+    ON t.item_id = hi.item_id
+   AND t.plant_id = hi.plant_id
+  JOIN hcm_plant hp
+    ON hi.plant_id = hp.plant_id
+  LEFT JOIN hcm_item_category_assign hica
+    ON hi.item_id = hica.item_id
+   AND hi.plant_id = hica.plant_id
+  LEFT JOIN hcm_item_category hic
+    ON hica.category_id = hic.category_id
+  LEFT JOIN hqm_switch_score hss
+    ON t.item_id = hss.item_id
+   AND t.plant_id = hss.plant_id
+ WHERE 1 = 1
+    <if test="itemId != null">
+    AND hi.item_id = #{itemId}
+    </if>
+    <if test="plantId != null">
+    AND hi.plant_id = #{plantId}
+    </if>
+    <if test="categoryId != null">
+    AND hica.category_id = #{categoryId}
+    </if>
+    <if test="itemType != null">
+    AND hi.item_type = #{itemType}
+    </if>
+</select>
+
+
+<update id="updateByUniqueKey" parameterType="com.hand.hqm.hqm_item_control.dto.ItemControlQms">
+UPDATE hqm_item_control t
+   SET t.recheck_cycle    = #{recheckCycle},
+       t.check_place      = #{checkPlace},
+       t.last_updated_by  = #{lastUpdatedBy},
+       t.last_update_date = SYSDATE
+ WHERE t.item_id = #{itemId}
+   AND t.plant_id = #{plantId}
+
+</update>
+</mapper>

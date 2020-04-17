@@ -1,0 +1,373 @@
+
+<#include "../include/header.html">
+
+<!--
+ * description: FQC检验单新建对话框 hqm_inspection_attribute
+ * author:tianmin.wang 
+ * date:20190730
+ -->
+
+<script src="${base.contextPath}/common/code?yesNo=SYS.YES_NO"></script><!-- 是否 -->
+<script src="${base.contextPath}/common/code?hqmIqcInspectionType=HQM_INSPECTION_TYPE"></script><!-- 检验类型 -->
+<script src="${base.contextPath}/common/code?hqmFqcSourceType=HQM_FQC_SOURCE_TYPE"></script>
+<script src="${base.contextPath}/common/code?hqmFqcInspectionFrom=HQM_FQC_INSPECTION_FROM"></script>
+<script src="${base.contextPath}/common/code?hqmDefaultPlant=HQM_DEFAULT_PLANT"></script>
+
+<body>
+
+<script type="text/javascript">
+	var inspectionType = "${RequestParameters.inspectionType!'FQC'}";
+	var forkId = "${RequestParameters.forkId!'-1'}";
+	var forkType = "${RequestParameters.forkType!'E'}"
+	var defaultPlant = {}
+	var viewModel = kendo.observable({
+		model: {
+			forkId: forkId,
+			forkType: forkType,
+			taskFrom:"1",
+			inspectionFrom:"0",
+			inspectionType:inspectionType,
+			sourceType:inspectionType=='OQC'?'9':''
+		},
+		save: function(e){
+		 	var data= viewModel.model.toJSON();
+			var validator = $("#mainform").data("kendoValidator");
+			if (validator.validate()) {
+				$.ajax({
+			        url: '${base.contextPath}/hqm/fqc/inspection/h/addnew',
+			        type: 'POST',
+			        data: data,
+			        async: false,
+			        dataType: "json",
+			        success: function (response) {
+			            if (response.success) {
+			            	window.parent.grid.dataSource.fetch();
+			            	if(forkId == '-1'){
+								window.parent.openInspectionAddedWindow(response.rows[0].inspectionNum);
+			            	}
+			            	window.parent.$("#createInspectionWindow").data("kendoWindow").close();
+			            } else {
+			            	kendo.ui.showErrorDialog({
+			                    message: response.message
+			                });
+			            }
+			        }
+			    });
+			}
+		},
+		closeWin: function(e){
+        	window.parent.$("#createInspectionWindow").data("kendoWindow").close();
+        }
+	});
+	function getDefaultPlant(){//hqmDefaultPlant
+		$.ajax({
+	        url: '${base.contextPath}/hcm/plant/query',
+	        type: 'POST',
+	        data: {
+	        	plantCode :hqmDefaultPlant[0].meaning
+	        },
+	        async: false,
+	        dataType: "json",
+	        success: function (response) {
+	            if (response.success) {
+	            	defaultPlant = response.rows[0];
+	            } else {
+	            	kendo.ui.showWarningDialog({
+	                    message: response.message
+	                });
+	            }
+	        }
+	    });
+	}
+</script>
+
+<div id="page-content">
+	<form id="mainform"  class="form-horizontal" method="post" enctype="application/json;charset=UTF-8">
+
+	<div class="row" style="margin-left: 5px;">
+	 	<div class="col-sm-12">
+	 		<!-- 工厂+生产线 -->
+	 	  	<div class="form-group" style="margin-top:20px;">
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message "asliqccontrol.plant"/>:</label>
+					<div class="col-sm-9">
+                        <input id="lovPlant" required style="width:100%" name="plantId"
+                               data-label="<@spring.message 'asliqccontrol.plant'/>"
+								data-bind="enabled: model.isEnabled,value:model.plantId,text: model.plantCode">
+						<span data-for="plantId" class=".k-invalid-msg"></span>
+					</div>
+					<script>
+					$("#lovPlant").kendoLov($.extend
+				    	    (<@lov"LOV_PLANT"/>, {
+				    	        textField: 'plantCode',
+				    	        valueField:'plantId',
+				    	        change:function(){
+				    	        	viewModel.model.plantCode = this._dataItem.plantCode;
+				    	        }
+				    	    }));
+					</script>
+				</div>
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message "fqcinspectionh.prodlineid"/>:</label>
+					<div class="col-sm-9">
+                        <input id="lovProdLine" required style="width:100%" name="prodLineId"
+                               data-label="<@spring.message 'fqcinspectionh.prodlineid'/>"
+								data-bind="enabled: model.isEnabled,value:model.prodLineId">
+						<span data-for="prodLineId" class=".k-invalid-msg"></span>
+					</div>
+					<script>
+					$("#lovProdLine").kendoLov($.extend
+				    	    (<@lov"LOV_PROD_LINE"/>, {
+				    	        textField: 'prodLineCode',
+				    	        valueField:'prodLineId',
+				    	        query:function(e){
+				    	        	e.param.plantId = viewModel.model.plantId;
+				    	        },
+				    	        change:function(){
+				    	        	viewModel.model.prodLineCode = this._dataItem.prodLineCode;
+				    	        }
+				    	    }));
+					</script>
+				</div>
+            </div>
+			<!-- 检验来源+来源类型 -->
+			<div class="form-group" style="margin-top:20px;">
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message "fqcinspectionh.inspectionfrom"/>:</label>
+					<div class="col-sm-9">
+                        <input style="width:100%" required name="inspectionFrom"
+                        		 id="inspectionFromComboBox"
+                        		 data-label="<@spring.message 'fqcinspectionh.inspectionfrom'/>"
+                               data-bind="value:model.inspectionFrom">
+						<span data-for="inspectionFrom" class=".k-invalid-msg"></span>
+						<script type="text/javascript">
+							$("#inspectionFromComboBox").kendoComboBox({
+						        dataTextField: "meaning",
+						        dataValueField: "value",
+						        valuePrimitive: true,
+						        dataSource: hqmFqcInspectionFrom
+							});
+						</script>
+					</div>
+				</div>
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message "hqm.qc.sourcetype"/>:</label>
+					<div class="col-sm-9">
+                        <input style="width:100%" required name="sourceType"
+                        		 id="sourceTypeComboBox"
+                        		 data-label="<@spring.message 'hqm.qc.sourcetype'/>"
+                               data-bind="value:model.sourceType">
+						<span data-for="sourceType" class=".k-invalid-msg"></span>
+						<script type="text/javascript">
+							$("#sourceTypeComboBox").kendoComboBox({
+						        dataTextField: "meaning",
+						        dataValueField: "value",
+						        valuePrimitive: true,
+						        dataSource: hqmFqcSourceType
+							});
+						</script>
+					</div>
+				</div>
+			</div>
+			<!-- 来源工单 + 生产日期 -->
+			<div class="form-group" style="margin-top:20px;">
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message "iqcinspectionh.isurgency"/>:</label>
+					<div class="col-sm-9">
+                        <input style="width:100%" required name="emergencyflag"
+                        data-label="<@spring.message 'iqcinspectionh.isurgency'/>"
+                        		 id="emergencyFlagComboBox"
+                               data-bind="value:model.emergencyFlag">
+						<span data-for="emergencyFlag" class=".k-invalid-msg"></span>
+						<script type="text/javascript">
+							$("#emergencyFlagComboBox").kendoComboBox({
+						        dataTextField: "meaning",
+						        dataValueField: "value",
+						        valuePrimitive: true,
+						        dataSource: yesNo
+							});
+						</script>
+					</div>
+				</div>
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message "hqm.qc.productiondate"/>:</label>
+					<div class="col-sm-9">
+                        <input id="produceDatePicker" required style="width:100%" name="produceDate"
+                        data-label="<@spring.message 'hqm.qc.productiondate'/>"
+                               data-bind="value:model.produceDate">
+						<span data-for="produceDate" class=".k-invalid-msg"></span>
+					</div>
+					<script type="text/javascript">
+						$("#produceDatePicker").kendoDatePicker({
+							//ARIATemplate: "Date: #=kendo.toString(data.current, 'G')#",
+							max: new Date(),
+							format: "yyyy-MM-dd",
+							change:function(){
+								viewModel.model.produceDate = this.value().format("yyyy-MM-dd hh:mm:ss");
+							}
+						});
+					</script>
+				</div>
+			</div>
+			<!-- 物料+描述 -->
+			<div class="form-group" style="margin-top:20px;">
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message "hqm.qc.item"/>:</label>
+					<div class="col-sm-9">
+						<input required style="width:100%" id="lovItem" name="itemId"
+						
+						data-label="<@spring.message 'hqm.qc.item'/>"
+						 data-bind="value:model.itemId">
+						<span data-for="supplierId" class=".k-invalid-msg"></span>
+					</div>
+					<script>
+					$("#lovItem").kendoLov($.extend
+						    (<@lov"LOV_ITEM"/>, {
+						        textField: 'itemCode',
+						        valueField:'itemId',
+						        query:function(e){
+						        	e.param['plantId'] = viewModel.model.plantId;
+						        },
+						        change:function() {
+		                            var v = this.value();
+		                            if (v == undefined  || v == ""){
+		                            }else{
+		                                viewModel.model.set('itemDescriptions',this._dataItem.itemDescriptions);
+		                            }
+		                        }
+						    }));
+					</script>
+				</div>
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message "hqm.qc.itemdescription"/>:</label>
+					<div class="col-sm-9">
+						<input  style="width:100%" name="itemDescriptions" disabled data-bind="value:model.itemDescriptions" data-role="maskedtextbox">
+						<span data-for="itemDescriptions" class=".k-invalid-msg"></span>
+					</div>
+				</div>
+			</div>
+			<!-- 生产数量+物料版本 -->
+			<div class="form-group" style="margin-top:20px;">
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message "hqm.qc.productionquantity"/>:</label>
+					<div class="col-sm-9">
+                        <input id="produceQtyNumberic" required style="width:100%" name="produceQty"
+                        data-label="<@spring.message 'hqm.qc.productionquantity'/>"
+                               data-bind="value:model.produceQty">
+						<span data-for="produceQty" class=".k-invalid-msg"></span>
+					</div>
+					<script type="text/javascript">
+						$("#produceQtyNumberic").kendoNumericTextBox({
+	                        min: 1,
+	                        step: 1,
+	                        format: "0"
+	                    });
+					</script>
+				</div>
+				<div id="sourceOrderDiv" class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message "fqcinspectionh.sourceorder"/>:</label>
+					<div class="col-sm-9">
+                        <input id="sourceOrder" required style="width:100%" name="sourceOrder"
+                               data-label="<@spring.message 'fqcinspectionh.sourceorder'/>" id="sourceOrder"
+                               data-bind="value:model.sourceOrder" data-role="maskedtextbox">
+						<span data-for="sourceOrder" class=".k-invalid-msg"></span>
+					</div>
+				</div>
+			</div>
+			<!-- 生产数量+备注 -->
+			<div class="form-group" style="margin-top:20px;">
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message "iqcinspectionh.remark"/>:</label>
+					<div class="col-sm-9">
+                        <input style="width:100%" name="remarkinput"
+                               data-label="<@spring.message 'iqcinspectionh.remark'/>" id="remarkinput"
+                               
+                               data-bind="value:model.remark" data-role="maskedtextbox">
+						<span data-for="remarkinput" class=".k-invalid-msg"></span>
+					</div>
+				</div>
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message "hqm.qc.inspector"/>:</label>
+					<div class="col-sm-9">
+                        <input id="inspectorUserName" style="width:100%" name="inspectorUserName"
+                        data-label="<@spring.message 'hqm.qc.inspector'/>"
+                               data-label="<@spring.message 'hqm.qc.inspector'/>"
+                               data-bind="value:model.inspectorId">
+						<span data-for="inspectorUserName" class=".k-invalid-msg"></span>
+					</div>
+					<script>
+					$("#inspectorUserName").kendoLov($.extend
+    			    	    (<@lov"user_lov"/>, {
+    			    	        textField: 'userName',
+    			    	        valueField:'userId',
+    			    	        change:function(){
+    			    	        	viewModel.model.inspectorId = this._dataItem.userId;
+    			    	        }
+    			    	    }));
+    				</script>
+				</div>
+			</div>
+			<!-- 来源工单 -->
+			<div class="form-group" style="margin-top:20px;">
+				
+				<div class="col-sm-6">
+					
+				</div>
+				
+			</div>
+			
+		</div>
+	  </div>
+
+
+	</form>
+</div>
+<div id="mainBottom" class="text-right" style="bottom: 15px;position: fixed;  float: left;padding-top:15px;border-top:1px solid #ebebeb;width:100%; background: #fff;">
+        <span class="btn btn-primary" data-bind="click:save" type="submit" style="margin-right:5px"><@spring.message "hap.save"/></span>
+        <span class="btn btn-default" data-bind="click:closeWin" type="button" style="margin-right:25px;"><@spring.message "hap.cancel"/></span>
+</div>
+
+<script type="text/javascript">
+    kendo.bind($('#mainBottom'),viewModel);
+	kendo.bind($('#mainform'), viewModel);
+
+    function isNotEmpty(obj) {
+        if(obj != undefined && obj != null && obj != ""){
+            return true;
+        }else{
+            return false;
+        }
+    }
+    var initMinDate = new Date(1900, 0, 1);
+    var initMaxDate = new Date(2099, 11, 31);
+	//验证
+	$("#mainform").kendoValidator({
+    	messages: {
+            required: '<@spring.message "hap.validation.notempty"/>'
+    	},
+		invalidMessageType : "tooltip"
+    });
+</script>
+<script>
+$(function(){
+	getDefaultPlant();
+	viewModel.model.set("plantCode", defaultPlant.plantCode)
+	viewModel.model.set("plantId", defaultPlant.plantId)
+	if(forkType == "C"){
+		viewModel.model.set("sourceType", "5")
+		$("#sourceOrder").attr("required", false)
+		$("#produceDatePicker").attr("required", false)
+		$("#lovProdLine").attr("required",false)
+		$("input[name='prodLineId_input']").css("background-color", "#fff");
+		$("#sourceTypeComboBox").data("kendoComboBox").enable(false)
+	}
+	if(inspectionType == "OQC"){
+		$("#sourceTypeComboBox").data("kendoComboBox").enable(false)
+		$("#inspectionFromComboBox").data("kendoComboBox").enable(false)
+		$("#sourceOrder").attr("required",false)
+		$("#sourceOrderDiv").hide()
+	}	
+})
+</script>
+</body>
+</html>

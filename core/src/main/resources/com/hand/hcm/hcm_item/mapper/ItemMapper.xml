@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hcm.hcm_item.mapper.ItemMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hcm.hcm_item.dto.Item">
+        <result column="ITEM_ID" property="itemId" jdbcType="DECIMAL" />
+        <result column="PLANT_ID" property="plantId" jdbcType="DECIMAL" />
+        <result column="ITEM_CODE" property="itemCode" jdbcType="VARCHAR" />
+        <result column="PRIMARY_UOM" property="primaryUom" jdbcType="VARCHAR" />
+        <result column="DESIGN_CODE" property="designCode" jdbcType="VARCHAR" />
+        <result column="PLAN_CODE" property="planCode" jdbcType="VARCHAR" />
+        <result column="ITEM_IDENTIFY_CODE" property="itemIdentifyCode" jdbcType="VARCHAR" />
+        <result column="ITEM_TYPE" property="itemType" jdbcType="VARCHAR" />
+        <result column="MAKE_BUY_CODE" property="makeBuyCode" jdbcType="VARCHAR" />
+        <result column="SUPPLY_TYPE" property="supplyType" jdbcType="VARCHAR" />
+        <result column="KEY_COMPONENT_FLAG" property="keyComponentFlag" jdbcType="VARCHAR" />
+        <result column="SCHEDULE_FLAG" property="scheduleFlag" jdbcType="VARCHAR" />
+        <result column="MAKE_TO_ORDER_FLAG" property="makeToOrderFlag" jdbcType="VARCHAR" />
+        <result column="PROD_LINE_RULE" property="prodLineRule" jdbcType="VARCHAR" />
+        <result column="ITEM_SIZE" property="itemSize" jdbcType="VARCHAR" />
+        <result column="UNIT_WEIGHT" property="unitWeight" jdbcType="DECIMAL" />
+        <result column="ENABLE_FLAG" property="enableFlag" jdbcType="VARCHAR" />
+        <result column="DEMAND_MERGE_TIME_FENCE" property="demandMergeTimeFence" jdbcType="VARCHAR" />
+        <result column="SUPPLY_MERGE_TIME_FENCE" property="supplyMergeTimeFence" jdbcType="VARCHAR" />
+        <result column="SAFETY_STOCK_METHOD" property="safetyStockMethod" jdbcType="VARCHAR" />
+        <result column="SAFETY_STOCK_PERIOD" property="safetyStockPeriod" jdbcType="DECIMAL" />
+        <result column="SAFETY_STOCK_VALUE" property="safetyStockValue" jdbcType="DECIMAL" />
+        <result column="MAX_STOCK_QTY" property="maxStockQty" jdbcType="DECIMAL" />
+        <result column="MIN_STOCK_QTY" property="minStockQty" jdbcType="DECIMAL" />
+        <result column="PRODUCT_CAPACITY_TIME_FENCE" property="productCapacityTimeFence" jdbcType="VARCHAR" />
+        <result column="PRODUCT_CAPACITY" property="productCapacity" jdbcType="DECIMAL" />
+        <result column="ECONOMIC_SPLIT_PARAMETER" property="economicSplitParameter" jdbcType="DECIMAL" />
+        <result column="MIN_ORDER_QTY" property="minOrderQty" jdbcType="DECIMAL" />
+        <result column="FIXED_LOT_MULTIPLE" property="fixedLotMultiple" jdbcType="DECIMAL" />
+        <result column="PACK_QTY" property="packQty" jdbcType="DECIMAL" />
+        <result column="SEQUENCE_LOT_CONTROL" property="sequenceLotControl" jdbcType="VARCHAR" />
+        <result column="EXPIRE_CONTROL_FLAG" property="expireControlFlag" jdbcType="VARCHAR" />
+        <result column="EXPIRE_DAYS" property="expireDays" jdbcType="DECIMAL" />
+        <result column="RELEASE_CONCURRENT_RULE" property="releaseConcurrentRule" jdbcType="VARCHAR" />
+        <result column="CID" property="cid" jdbcType="DECIMAL" />
+        <result column="MRP_PLANNING_CODE" property="mrpPlanningCode" jdbcType="DECIMAL" />
+        <result column="AUTO_SERIAL_ALPHA_PREFIX" property="autoSerialAlphaPrefix" jdbcType="VARCHAR" />
+        <result column="INVENTORY_ITEM_STATUS_CODE" property="inventoryItemStatusCode" jdbcType="VARCHAR" />
+        <result column="MAXIMUM_ORDER_QUANTITY" property="maximumOrderQuantity" jdbcType="DECIMAL" />
+        <result column="GLOBAL_ATTRIBUTE1" property="globalAttribute1" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE2" property="globalAttribute2" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE3" property="globalAttribute3" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE4" property="globalAttribute4" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE5" property="globalAttribute5" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE6" property="globalAttribute6" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE7" property="globalAttribute7" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE8" property="globalAttribute8" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE9" property="globalAttribute9" jdbcType="VARCHAR" />
+        <result column="GLOBAL_ATTRIBUTE10" property="globalAttribute10" jdbcType="VARCHAR" />
+        <result column="SYNC_DATE" property="syncDate" jdbcType="DATE" />
+        <result column="ITEM_DESCRIPTIONS" property="itemDescriptions" jdbcType="VARCHAR" />
+        <result column="purchase_uom" property="purchaseUom" jdbcType="VARCHAR" />
+        
+        <!-- 业务字段 -->
+        <result column="ITEM_NAME" property="itemName" jdbcType="VARCHAR" />
+        <result column="PLANT_NAME" property="plantName" jdbcType="VARCHAR" />
+        <result column="SUPPLIER_ID" property="supplierId" jdbcType="DECIMAL" />
+        <result column="PURCHASE_TYPE" property="purchaseType" jdbcType="VARCHAR" />
+        <result column="PLANT_CODE" property="plantCode" jdbcType="VARCHAR" />
+    </resultMap>
+    
+    <select id="getGuid" resultType="java.lang.String">
+    SELECT sys_guid() FROM dual
+    </select>
+    
+    <select id="query" resultMap="BaseResultMap" parameterType="com.hand.hcm.hcm_item.dto.Item">
+   		select hi.* from hcm_item hi where hi.ITEM_ID = #{itemId} and hi.PLANT_ID = #{plantId} and hi.ENABLE_FLAG = 'Y'
+    </select>
+    
+    <select id="lovselect" resultMap="BaseResultMap" parameterType="com.hand.hcm.hcm_item.dto.Item">
+		       SELECT t.item_id,
+       t.item_code,
+       t.item_type,
+       t.descriptions AS item_descriptions,
+       hp.plant_id,
+       hp.plant_code,
+       t.purchase_type,
+       t.primary_uom,
+       hic.category_code
+  FROM hcm_item t 
+  LEFT JOIN hcm_item_category_assign hica
+    ON t.item_id = hica.item_id
+   AND t.plant_id = hica.plant_id
+  LEFT JOIN hcm_item_category hic
+    ON hica.category_id = hic.category_id, hcm_plant hp
+ WHERE t.plant_id = hp.plant_id
+   AND t.enable_flag = 'Y'
+        <if test="itemCode!=null">
+            AND t.item_code LIKE concat('%',concat(#{itemCode,jdbcType=VARCHAR},'%'))
+        </if>
+        <if test="itemDescriptions!=null">
+            AND t.descriptions LIKE concat('%',concat(#{itemDescriptions,jdbcType=VARCHAR},'%'))
+        </if>
+        <if test="plantId!=null">
+            AND t.plant_id = #{plantId}
+        </if>
+        <if test="enableFlag!=null">
+            AND t.enable_flag = #{enableFlag}
+        </if>
+        <if test="itemType != null and itemType == '-MA'">
+            AND (t.item_type !='MA' OR t.item_type IS NULL)
+        </if>
+        <if test="itemType != null and itemType != '-MA' ">
+            AND t.item_type = #{itemType}
+        </if>
+<!--      <choose> -->
+<!--     <when test="title != null"> -->
+<!--       AND title like #{title} -->
+<!--     </when> -->
+<!--     <when test="author != null and author.name != null"> -->
+<!--       AND author_name like #{author.name} -->
+<!--     </when> -->
+<!--     <otherwise> -->
+<!--       AND featured = 1 -->
+<!--     </otherwise> -->
+<!--   </choose> -->
+    </select>
+    <!-- 根据用户供应商、工厂查询物料 -->
+    <select id="itemLovByUser" resultMap="BaseResultMap" parameterType="com.hand.hcm.hcm_item.dto.Item">
+<!--     	<choose> -->
+<!--     		<when test="supplierId != null"> -->
+    			
+<!--     		</when> -->
+<!--     		<otherwise> -->
+<!--     			select null supplier_id, -->
+<!-- 			           hp.plant_id, -->
+<!-- 			           hi.ITEM_ID, -->
+<!-- 			           hi.ITEM_CODE, -->
+<!-- 			           hi.descriptions ITEM_NAME, -->
+<!-- 			           hi.PRIMARY_UOM, -->
+<!-- 			           hp.descriptions PLANT_NAME -->
+<!-- 			    from  hcm_item hi  -->
+<!-- 			    join hcm_plant hp on hi.PLANT_ID = hp.plant_id -->
+<!-- 			    where 1=1 -->
+<!-- 			    and hi.ITEM_TYPE = 'MA' -->
+<!--     		</otherwise> -->
+<!--     	</choose> -->
+		select ha.supplier_id,
+	           hp.plant_id,
+	           hi.ITEM_ID,
+	           hi.ITEM_CODE,
+	           hi.descriptions ITEM_NAME,
+	           hi.PRIMARY_UOM,
+	           hp.descriptions PLANT_NAME,
+	           hi.purchase_uom
+	    from hcs_asl ha
+	    join hcm_item hi on ha.item_id = hi.ITEM_ID and hi.PLANT_ID = ha.plant_id
+	    join hcm_plant hp on hi.PLANT_ID = hp.plant_id
+	    where ha.asl_id in(select min(h.asl_id) from hcs_asl h 
+	    					where 1=1 
+						    <if test="supplierId != null">
+							    and h.supplier_id = #{supplierId}
+						    </if>
+	    			 		group by h.plant_id,h.item_id)
+	    <if test="supplierId != null">
+		    and ha.supplier_id = #{supplierId}
+	    </if>
+	    and ha.enable_flag = 'Y'
+    	<if test="itemCode!=null">
+            AND hi.item_code LIKE concat('%',concat(#{itemCode,jdbcType=VARCHAR},'%'))
+        </if>
+        <if test="itemName!=null">
+            AND hi.descriptions LIKE concat('%',concat(#{itemName,jdbcType=VARCHAR},'%'))
+        </if>
+        <if test="plantId!=null">
+            AND hi.plant_id = #{plantId}
+        </if>
+        <if test="plantName">
+            AND hp.descriptions LIKE concat('%',concat(#{plantName,jdbcType=VARCHAR},'%'))
+        </if>
+        <if test="enableFlag!=null">
+            AND hi.enable_flag =#{enableFlag}
+        </if>
+    </select>
+
+</mapper>

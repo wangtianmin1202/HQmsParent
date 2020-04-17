@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.spc.hqm_d_order.mapper.EightDOrderMapper">
+    <resultMap id="BaseResultMap" type="com.hand.spc.hqm_d_order.dto.EightDOrder">
+        <result column="ORDER_ID" property="orderId" jdbcType="DECIMAL" />
+        <result column="PLANT_ID" property="plantId" jdbcType="DECIMAL" />
+        <result column="ORDER_THEME" property="orderTheme" jdbcType="VARCHAR" />
+        <result column="ORDER_CODE" property="orderCode" jdbcType="VARCHAR" />
+        <result column="ORDER_STATUS" property="orderStatus" jdbcType="VARCHAR" />
+        <result column="ORDER_PROCESS" property="orderProcess" jdbcType="VARCHAR" />
+        <result column="EXPECTED_COMPLETE_TIME" property="expectedCompleteTime" jdbcType="DATE" />
+        <result column="SOURCE_TYPE" property="sourceType" jdbcType="VARCHAR" />
+        <result column="SOURCE_ORDER" property="sourceOrder" jdbcType="VARCHAR" />
+    </resultMap>
+    <select id="getSeqInter" resultType="java.lang.Long" parameterType="com.hand.spc.hqm_d_order.dto.EightDOrder">
+        SELECT
+            MAX(SUBSTR( hed.ORDER_CODE, INSTR( hed.ORDER_CODE, '-', 1, 2 ) + 1 )) + 1
+        FROM
+            HQM_8D_ORDER hed
+        WHERE
+            SUBSTR( hed.ORDER_CODE, 0, 11 ) = '8D-'||TO_CHAR(SYSDATE,'YYYYMMDD')
+    </select>
+
+
+</mapper>

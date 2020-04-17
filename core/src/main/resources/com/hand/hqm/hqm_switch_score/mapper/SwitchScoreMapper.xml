@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_switch_score.mapper.SwitchScoreMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_switch_score.dto.SwitchScore">
+        <result column="SCORE_ID" property="scoreId" jdbcType="DECIMAL" />
+        <result column="ITEM_ID" property="itemId" jdbcType="DECIMAL" />
+        <result column="PLANT_ID" property="plantId" jdbcType="DECIMAL" />
+        <result column="SUPPLIER_ID" property="supplierId" jdbcType="DECIMAL" />
+        <result column="SUPPLIER_SIT_ID" property="supplierSitId" jdbcType="DECIMAL" />
+        <result column="SAMPLE_PLAN_TYPE_NOW" property="samplePlanTypeNow" jdbcType="VARCHAR" />
+        <result column="SAMPLE_PLAN_TYPE_NEXT" property="samplePlanTypeNext" jdbcType="VARCHAR" />
+        <result column="NONNCONFORMING_LOT" property="nonnconformingLot" jdbcType="DECIMAL" />
+        <result column="CONSECUTIVE_CONFORMING_LOT" property="consecutiveConformingLot" jdbcType="DECIMAL" />
+        <result column="SWITCH_SCORE" property="switchScore" jdbcType="DECIMAL" />
+        <result column="CHANGE_FLAG" property="changeFlag" jdbcType="VARCHAR" />
+        <result column="PLATFORM" property="platform" jdbcType="VARCHAR" />
+        
+        <result column="ITEM_CODE" property="itemCode" jdbcType="VARCHAR" />
+        <result column="ITEM_DESCRIPTIONS" property="itemDescriptions" jdbcType="VARCHAR" />
+        <result column="PLANT_CODE" property="plantCode" jdbcType="VARCHAR" />
+        <result column="PLANT_DESCRIPTIONS" property="plantDescriptions" jdbcType="VARCHAR" />
+    </resultMap>
+
+<select id="reSelect" resultMap="BaseResultMap" parameterType="com.hand.hqm.hqm_switch_score.dto.SwitchScore">
+SELECT hi.item_code,
+       hi.descriptions              AS item_descriptions,
+       hp.plant_code,
+       hp.descriptions              AS plant_descriptions,
+       t.item_id,
+       t.plant_id,
+       t.supplier_id,
+       t.supplier_sit_id,
+       t.sample_plan_type_now,
+       t.sample_plan_type_next,
+       t.nonnconforming_lot,
+       t.consecutive_conforming_lot,
+       t.switch_score,
+       t.request_id,
+       t.program_id,
+       t.object_version_number,
+       t.change_flag,
+       t.platform,
+       t.score_id
+  FROM hqm_switch_score t
+ INNER JOIN hcm_item hi
+    ON t.item_id = hi.item_id
+   AND t.plant_id = hi.plant_id
+ INNER JOIN hcm_plant hp
+    ON t.plant_id = hp.plant_id
+ WHERE t.supplier_id IS NULL
+ <if test="itemId != null">
+ AND t.item_id = #{itemId}
+ </if>
+ <if test="platform != null">
+ AND t.platform = #{platform}
+ </if>
+</select>
+
+</mapper>

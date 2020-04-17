@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_fmea_staff.mapper.FmeaStaffMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_fmea_staff.dto.FmeaStaff">
+        <result column="FMEA_ID" property="fmeaId" jdbcType="DECIMAL" />
+        <result column="STAFF_ID" property="staffId" jdbcType="DECIMAL" />
+        <result column="KID" property="kid" jdbcType="DECIMAL" />
+        
+       <result column="USER_NAME" property="userName" jdbcType="VARCHAR" />
+       <result column="EMPLOYEE_CODE" property="employeeCode" jdbcType="VARCHAR" />
+       <result column="EMPLOYEE_ID" property="employeeId" jdbcType="DECIMAL" />
+       <result column="NAME" property="name" jdbcType="VARCHAR" />
+       <result column="ATTRIBUTE" property="attribute" jdbcType="VARCHAR" />
+        
+    </resultMap>
+<select id="lovstaff" resultMap="BaseResultMap" parameterType="com.hand.hqm.hqm_fmea_staff.dto.FmeaStaff">
+		      SELECT t.staff_id,
+		            hr.name as user_name
+	        FROM hqm_fmea_staff t, hr_employee hr
+ WHERE hr.EMPLOYEE_ID = t.staff_id
+        <if test="fmeaId!=null"> 
+            AND t.fmea_id =#{fmeaId}
+        </if>
+        <if test="userName!=null">
+            AND hr.name like concat('%',concat(#{userName,jdbcType=VARCHAR},'%'))  
+        </if>
+ 
+    </select>
+    
+    
+    <select id="LOV_EMPLOYEE_FMEA" resultMap="BaseResultMap" parameterType="com.hand.hqm.hqm_fmea_staff.dto.FmeaStaff">
+
+										 
+  	SELECT hr.employee_id, hr.employee_code, hr.name 
+									FROM HQM_FMEA_STAFF hf, hr_employee hr
+                  where  hf.staff_id =hr.employee_id
+                    								 
+        <if test="userName!=null">
+            AND hr.name like concat('%',concat(#{userName,jdbcType=VARCHAR},'%'))  
+        </if>   
+
+    </select>
+
+
+<select id="staffLOV" resultMap="BaseResultMap" parameterType="com.hand.hqm.hqm_fmea_staff.dto.FmeaStaff">      
+	  SELECT hr.employee_id, hr.employee_code, hr.name
+						FROM hr_employee hr
+		 WHERE 1 = 1
+						 AND NOT EXISTS (SELECT 1
+										FROM hqm_fema_staff hf
+									 WHERE hf.staff_id = hr.employee_id 
+										 AND hf.fmea_id = #{fmeaId})
+  
+</select>
+ 
+ 
+     <select id="myselect" resultMap="BaseResultMap"  parameterType="com.hand.hqm.hqm_fmea_staff.dto.FmeaStaff">
+         SELECT hf.fmea_id, hf.staff_id, hf.kid, hr.employee_code, hr.name
+	FROM hr_employee hr, hqm_fmea_staff hf
+ WHERE hr.employee_id = hf.staff_id
+	 AND hf.fmea_id =#{fmeaId}
+</select> 
+</mapper>

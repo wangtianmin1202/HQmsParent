@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.npi.npi_technology.mapper.TechnologySpecDetailMapper">
+    <resultMap id="BaseResultMap" type="com.hand.npi.npi_technology.dto.TechnologySpecDetail">
+        <result column="SPEC_DETAIL_ID" property="specDetailId" jdbcType="DECIMAL" />
+        <result column="SPEC_ID" property="specId" jdbcType="DECIMAL" />
+        <result column="SPEC_NUMBER" property="specNumber" jdbcType="VARCHAR" />
+        <result column="SPEC_REQUIREMENT" property="specRequirement" jdbcType="VARCHAR" />
+        <result column="TOOL" property="tool" jdbcType="VARCHAR" />
+        <result column="METERING_COUNT" property="meteringCount" jdbcType="VARCHAR" />
+        <result column="LINE" property="line" jdbcType="VARCHAR" />
+        <result column="LOWER_LIMIT" property="lowerLimit" jdbcType="DECIMAL" />
+        <result column="UPPER_LIMIT" property="upperLimit" jdbcType="DECIMAL" />
+        <result column="UNIT" property="unit" jdbcType="VARCHAR" />
+        <result column="MSA" property="msa" jdbcType="VARCHAR" />
+        <result column="SPC" property="spc" jdbcType="VARCHAR" />
+        <result column="CHARACTERISTIC_ID" property="characteristicId" jdbcType="DECIMAL" />
+        <result column="characteristic_name" property="characteristicName" jdbcType="DECIMAL" />
+        <result column="SPEC_VERSION" property="specVersion" jdbcType="VARCHAR"/>
+    </resultMap>
+
+	<select id="getCodeSeq" resultType="string">
+		select lpad(NPI_TECHNOLOGY_SPEC_CODE_S.NEXTVAL,6,'0') from dual
+	</select>
+	
+	<select id="dataQuery" resultMap="BaseResultMap">
+    	select t.* from NPI_TECHNOLOGY_SPEC_DETAIL t
+		<where>
+			<if test="dto.specId != null ">
+				t.SPEC_ID= #{dto.specId}
+			</if>
+			<if test="dto.specVersion != null ">
+				and t.SPEC_VERSION= #{dto.specVersion}
+			</if>
+		</where>
+    </select>
+
+    <!--根据SKU查询-->
+    <select id="selectSpecDetailBySkuCode" resultMap="BaseResultMap">
+        SELECT
+        NTSD.DETAIL_ID,
+        NTSD.SPEC_REQUIREMENT,
+        NTSD.METERING_COUNT,
+        NTSD.LOWER_LIMIT,
+        NTSD.UPPER_LIMIT,
+        NTSD.UNIT,
+        NTSD.MSA,
+        NTSD.SPC,
+        NCC.CHARACTERISTIC_NAME
+        FROM
+        NPI_TECHNOLOGY_SPEC_DETAIL NTSD
+        LEFT JOIN NPI_TECHNOLOGY_SPEC NTS ON NTS.SPEC_ID = NTSD.SPEC_ID
+        LEFT JOIN NPI_TECHNOLOGY_SPEC_MAT_DETAIL NTSMD ON NTS.SPEC_ID = NTSMD.SPEC_ID
+        LEFT JOIN NPI_CHARACTERISTIC_CLASSIFICATION NCC ON NTSD.CHARACTERISTIC_ID = NCC.CHARACTERISTIC_ID
+        LEFT JOIN (SELECT * FROM HPM_PROJECT HP LEFT JOIN HPM_PROJECT_LINE HPL ON HP.PROJECT_ID = HPL.PROJECT_ID) SUB ON SUB.SUCCESSION = NTSMD.MATERIEL_ATTRIBUTE_NUMBER
+        <where>
+            NTS.SPEC_ACTION_TYPE = '2' AND SUB.SKU_CODE = #{dto.skuCode}
+            <if test="dto.specRequirement != null ">
+                AND NTSD.SPEC_REQUIREMENT LIKE '%'||#{dto.specRequirement}||'%'
+            </if>
+        </where>
+    </select>
+</mapper>

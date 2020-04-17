@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<!--
+  description
+  @author KOCDZX0 2020/03/12 5:07 PM
+-->
+<#include "../include/header.html">
+<script type="text/javascript">
+    var viewModelHead =Hap.createGridViewModel("#gridHead");
+    var ecrno = "${RequestParameters.ecrno!0}";
+    viewModelHead.model.ecrno=ecrno;
+
+</script>
+<body>
+<div id="page-content">
+
+    <div id="gridRow" class="row">
+        <div style="clear: both;">
+            <div  id="gridHead"></div>
+        </div>
+    </div>
+
+</div>
+
+<script type="text/javascript">
+
+    var webWidth=window.screen.availHeight*0.4;
+    $('#gridRow').css("height",webWidth);
+
+    var BaseUrl = _basePath;
+
+    var dataSource = new kendo.data.DataSource({
+        transport: {
+            read: {
+                url: BaseUrl + "/hpm/ecr/technical/file/header/query",
+                type: "POST",
+                dataType: "json"
+            },
+            parameterMap: function (options, type) {
+                if (type !== "read" && options.models) {
+                    var datas = Hap.prepareSubmitParameter(options, type)
+                    return kendo.stringify(datas);
+                } else if (type === "read") {
+                    return Hap.prepareQueryParameter(viewModelHead.model.toJSON(), options)
+                }
+            }
+        },
+        batch: true,
+        serverPaging: true,
+         pageSize: 999,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+                id: "technicalId",
+                fields: {
+
+                }
+            }
+        }
+    });
+
+    //技术文件主数据展示
+    var gridHead = $("#gridHead").kendoGrid({
+        dataSource: dataSource,
+        resizable: true,
+        scrollable: true,
+        navigatable: false,
+        sortable:true,
+        // selectable: 'multiple, rowbox',
+        detailInit: detailInit,
+        dataBound: function () {
+            if (parent.autoResizeIframe) {
+                parent.autoResizeIframe('${RequestParameters.functionCode!}')
+            }
+        },
+
+        columns: [
+            {
+                field: "ecrno",
+                title: '<@spring.message "ecrmain.ecrno"/>',
+                width: 120
+            },
+            {
+                field: "taskno",
+                title: '<@spring.message "task.executionnumber"/>',
+                width: 120
+            },
+            {
+                field: "fileType",
+                title: '<@spring.message "ecrmain.technical.filetype"/>',
+                width: 120
+            },
+            {
+                field: "opreateFlag",
+                title: '<@spring.message "ecrmain.technical.oprateflag"/>',
+                width: 120
+            },
+            {
+                field: "remark",
+                title: '<@spring.message "hap.comment"/>',
+                width: 120
+            },
+            {
+                field: "dutyby",
+                title: '<@spring.message "ecrmain.qtp.dutyby"/>',
+                width: 120
+            },
+            {
+                field: "askFinishedDate",
+                title: '<@spring.message "ecrmain.qtp.askfinisheddate"/>',
+                width: 120
+            },
+            {
+                field: "planFinishedDate",
+                title: '<@spring.message "ecrmain.qtp.planfinisheddate"/>',
+                width: 120
+            },
+            {
+                field: "actFinishedDate",
+                title: '<@spring.message "ecrmain.qtp.actfinisheddate"/>',
+                width: 120
+            },
+        ],
+    }).data("kendoGrid");
+
+    //技术文件行数据展示
+    function detailInit(e) {
+        if (!e.data.technicalId) {
+            e.masterRow.find('.k-icon').removeClass('k-icon').removeClass('k-i-collapse')
+            e.detailRow.remove()
+            return false;
+        }
+        $("<div/>").appendTo(e.detailCell).kendoGrid({
+            dataSource: {
+                transport: {
+                    read: {
+                        url: BaseUrl + "/hpm/ecr/technical/file/line/query",
+                        type: "POST",
+                        dataType: "json"
+                    },
+                    parameterMap: function (options, type) {
+                        viewModelHead.model.set("technicalId", e.data.technicalId);
+                        return Hap.prepareQueryParameter(viewModelHead.model.toJSON(), options)
+                    }
+                },
+                batch: true,
+                serverPaging: true,
+                schema: {
+                    data: 'rows',
+                    total: 'total',
+                    model: {
+                        id: "kid",
+                        fields: {},
+                    }
+                }
+            },
+            sortable: true,
+            pageable: false,
+            columns: [
+                {
+                    field: "fileName",
+                    title: '<@spring.message "ecrmain.technical.filename"/>',
+                    width: 60,
+                    headerAttributes: {style: "text-align:center"},
+                    attributes: {style: "text-align:center;white-space:nowrap;text-overflow:ellipsis;text-align:center;"},
+
+                },
+                {
+                    field: "currentVersion",
+                    title: '<@spring.message "ecrmain.technical.currentversion"/>',
+                    headerAttributes: {style: "text-align:center"},
+                    attributes: {style: "text-align:center;white-space:nowrap;text-overflow:ellipsis;text-align:center;"},
+                    width: 80,
+                },
+                {
+                    field: "itemCode",
+                    title: '<@spring.message "hap.itemcode"/>',
+                    headerAttributes: {style: "text-align:center"},
+                    attributes: {style: "text-align:center;white-space:nowrap;text-overflow:ellipsis;text-align:center;"},
+                    width: 60,
+                },
+                {
+                    field: "editFlag",
+                    title: '<@spring.message "ecrmain.technical.editflag"/>',
+                    headerAttributes: {style: "text-align:center"},
+                    attributes: {style: "text-align:center;white-space:nowrap;text-overflow:ellipsis;text-align:center;"},
+                    width: 60,
+                },
+                {
+                    field: "newVersion",
+                    title: '<@spring.message "ecrmain.technical.newversion"/>',
+                    headerAttributes: {style: "text-align:center"},
+                    attributes: {style: "text-align:center;white-space:nowrap;text-overflow:ellipsis;text-align:center;"},
+                    width: 60,
+                },
+                {
+                    field: "remark",
+                    title: '<@spring.message "hap.comment"/>',
+                    headerAttributes: {style: "text-align:center"},
+                    attributes: {style: "text-align:center;white-space:nowrap;text-overflow:ellipsis;text-align:center;"},
+                    width: 60,
+                },
+                {
+                    field: "dutyby",
+                    title: '<@spring.message "ecrmain.qtp.dutyby"/>',
+                    headerAttributes: {style: "text-align:center"},
+                    attributes: {style: "text-align:center;white-space:nowrap;text-overflow:ellipsis;text-align:center;"},
+                    width: 60,
+                },
+                {
+                    field: "askFinishedDate",
+                    title: '<@spring.message "ecrmain.qtp.askfinisheddate"/>',
+                    headerAttributes: {style: "text-align:center"},
+                    attributes: {style: "text-align:center;white-space:nowrap;text-overflow:ellipsis;text-align:center;"},
+                    width: 60,
+                },
+                {
+                    field: "planFinishedDate",
+                    title: '<@spring.message "ecrmain.qtp.planfinisheddate"/>',
+                    headerAttributes: {style: "text-align:center"},
+                    attributes: {style: "text-align:center;white-space:nowrap;text-overflow:ellipsis;text-align:center;"},
+                    width: 60,
+                },
+                {
+                    field: "actFinishedDate",
+                    title: '<@spring.message "ecrmain.qtp.actfinisheddate"/>',
+                    headerAttributes: {style: "text-align:center"},
+                    attributes: {style: "text-align:center;white-space:nowrap;text-overflow:ellipsis;text-align:center;"},
+                    width: 60,
+                }
+            ]
+        });
+    }
+
+</script>
+</body>
+</html>

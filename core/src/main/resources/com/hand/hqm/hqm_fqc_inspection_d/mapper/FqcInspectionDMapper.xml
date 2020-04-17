@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_fqc_inspection_d.mapper.FqcInspectionDMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_fqc_inspection_d.dto.FqcInspectionD">
+        <result column="DATA_ID" property="dataId" jdbcType="DECIMAL" />
+        <result column="LINE_ID" property="lineId" jdbcType="DECIMAL" />
+        <result column="ORDER_NUM" property="orderNum" jdbcType="VARCHAR" />
+        <result column="DATA" property="data" jdbcType="VARCHAR" />
+        <result column="REMARK" property="remark" jdbcType="VARCHAR" />
+        <result column="NG_DESCRIPTION" property="ngDescription" jdbcType="VARCHAR" />
+        <result column="JUDGEMENT" property="judgement" jdbcType="VARCHAR" />
+        <result column="INSPECTION_TYPE" property="inspectionType" jdbcType="VARCHAR" />
+        <result column="SOLVE_WAY" property="solveWay" jdbcType="VARCHAR" />
+        <result column="APPROVAL_DES" property="approvalDes" jdbcType="VARCHAR" />
+        <result column="SERIAL_NUMBER" property="serialNumber" jdbcType="VARCHAR" />
+        <result column="SN_STATUS" property="snStatus" jdbcType="VARCHAR" />
+    </resultMap>
+</mapper>

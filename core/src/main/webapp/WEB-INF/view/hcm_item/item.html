@@ -1,0 +1,31 @@
+<#include "../include/header.html">
+
+<body>
+<div id="page-content">
+    <form method="post" target="hidden_frame" action="${base.contextPath}/hcm/item/function/test/upload?${_csrf.parameterName}=${_csrf.token}">
+        <div class="demo-section k-content">
+            <input name="files" id="files" type="file" multiple aria-label="files" />
+            <input name="par1" id="par1" value="1111111111" type="text" style="display: none;" />
+            <input name="par2" id="par2" value="2222222222" type="text" style="display: none;" />
+            <p style="padding-top: 1em; text-align: right">
+                <button type="submit" class="k-button k-primary">Submit</button>
+            </p>
+        </div>
+    </form>
+    <iframe name='hidden_frame' id="hidden_frame" style='display: none;'></iframe>
+    <script>
+        $("#files").kendoUpload();
+        $('#hidden_frame').load(function(){
+            var text=$(this).contents().find("body").text();
+            // 根据后台返回值处理结果
+            var j=$.parseJSON(text);
+            if(j.success)
+                $("#files").data("kendoUpload").clearAllFiles();
+        });
+    </script>
+</div>
+<script type="text/javascript">
+
+</script>
+</body>
+</html>

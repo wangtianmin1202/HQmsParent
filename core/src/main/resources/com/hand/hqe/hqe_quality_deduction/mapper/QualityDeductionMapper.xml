@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqe.hqe_quality_deduction.mapper.QualityDeductionMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqe.hqe_quality_deduction.dto.QualityDeduction">
+        <result column="QUALITY_DEDUCTION_ID" property="qualityDeductionId" jdbcType="DECIMAL" />
+        <result column="QUALITY_DEDUCTION_NUM" property="qualityDeductionNum" jdbcType="VARCHAR" />
+        <result column="PLANT_ID" property="plantId" jdbcType="DECIMAL" />
+        <result column="MATTER" property="matter" jdbcType="VARCHAR" />
+        <result column="ACTUAL_AMOUNT" property="actualAmount" jdbcType="DECIMAL" />
+        <result column="CURRENCY" property="currency" jdbcType="VARCHAR" />
+        <result column="TAX_CODE" property="taxCode" jdbcType="VARCHAR" />
+        <result column="ACCOUNT_DATE" property="accountDate" jdbcType="DATE" />
+        <result column="SUPPLIER_ID" property="supplierId" jdbcType="DECIMAL" />
+        <result column="REMARKS" property="remarks" jdbcType="VARCHAR" />
+        <result column="ATTACHMENT_ADD" property="attachmentAdd" jdbcType="VARCHAR" />
+        <result column="STATUS" property="status" jdbcType="VARCHAR" />
+        <result column="creation_date" property="creationDate" jdbcType="VARCHAR" />
+        
+        <!-- 业务字段 -->
+        <result column="supplier_code" property="supplierCode" jdbcType="VARCHAR" />
+        <result column="supplier_name" property="supplierName" jdbcType="VARCHAR" />
+        <result column="plant_code" property="plantCode" jdbcType="VARCHAR" />
+        <result column="plant_name" property="plantName" jdbcType="VARCHAR" />
+        <result column="TAX_INVOICE_NUM" property="taxInvoiceNum" jdbcType="VARCHAR" />
+        <result column="CREATE_START_TIME" property="createStartTime" jdbcType="VARCHAR" />
+        <result column="CREATE_END_TIME" property="createEndTime" jdbcType="VARCHAR" />
+        <result column="ACCOUNT_START_DATE" property="accountStartDate" jdbcType="VARCHAR" />
+        <result column="ACCOUNT_END_DATE" property="accountEndDate" jdbcType="VARCHAR" />
+    </resultMap>
+	
+	<!-- 质量扣款单据录入 -->
+	<select id="query" resultMap="BaseResultMap" parameterType="com.hand.hqe.hqe_quality_deduction.dto.QualityDeduction">
+		select hqd.*,
+		       hs.supplier_code,
+		       hs.supplier_name,
+		       hp.plant_code,
+		       hp.descriptions plant_name,
+		       hti.tax_invoice_num
+		from sys_user su 
+		join hqe_quality_deduction hqd on decode(su.user_type,'S',su.supplier_id,hqd.supplier_id) = hqd.supplier_id
+		left join hcs_suppliers hs on hqd.supplier_id = hs.supplier_id
+		left join hcs_doc_settlement hds on hqd.quality_deduction_num = hds.rel_doc_num_h
+		left join hcs_tax_invoice hti on hds.web_invoice_id = hti.web_invoice_id
+		left join hcm_plant hp on hqd.plant_id = hp.plant_id
+		where 1 = 1
+		and su.user_id = #{request.userId}
+		<if test="qualityDeductionNum != null">		
+			and hqd.quality_deduction_num like concat('%',concat(#{qualityDeductionNum},'%'))
+		</if>
+		<if test="supplierId != null">
+			and hqd.supplier_id = #{supplierId}
+		</if>
+		<if test="status != null">
+			and hqd.status = #{status}
+		</if>
+		<if test = "createStartTime != null">
+			and hqd.creation_date &gt;= to_date(#{createStartTime}, 'yyyy-mm-dd hh24:mi:ss')
+		</if>
+		<if test = "createEndTime != null">
+			and hqd.creation_date &lt;= to_date(#{createEndTime}, 'yyyy-mm-dd hh24:mi:ss')
+		</if>
+		<if test = "accountStartDate != null">
+			and to_date(to_char(hqd.ACCOUNT_DATE ,'yyyy-mm-dd'),'yyyy-mm-dd') &gt;= to_date(#{accountStartDate}, 'yyyy-mm-dd hh24:mi:ss')
+		</if>
+		<if test = "accountEndDate != null">
+			and to_date(to_char(hqd.ACCOUNT_DATE,'yyyy-mm-dd'),'yyyy-mm-dd') &lt;= to_date(#{accountEndDate}, 'yyyy-mm-dd hh24:mi:ss')
+		</if>
+		order by hqd.creation_date desc
+	</select>
+	<!-- 获取最大流水号 -->
+	<select id="queryMaxNum" resultType="java.lang.Integer" parameterType="com.hand.hqe.hqe_quality_deduction.dto.QualityDeduction">
+		select nvl(max(substr(hqd.quality_deduction_num,-3)),0)
+		from hqe_quality_deduction hqd
+		where extract(year from hqd.creation_date) = extract(year from sysdate)
+		and extract(month from hqd.creation_date) = extract(month from sysdate)
+		and hqd.supplier_id = #{supplierId}
+	</select>
+</mapper>

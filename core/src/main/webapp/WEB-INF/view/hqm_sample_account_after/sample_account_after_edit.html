@@ -1,0 +1,481 @@
+<!--
+ * description: FQC检验单编辑对话框 hqm_inspection_attribute
+ * author:tianmin.wang 
+ * date:20190730
+ -->
+<#include "../include/header.html">
+<script src="${base.contextPath}/common/code?yesNo=SYS.YES_NO"></script><!-- 是否 -->
+<script src="${base.contextPath}/common/code?HQM_H_SAMPLE_REVENIR_STATUS=HQM_H_SAMPLE_REVENIR_STATUS"></script><!-- 退回状态 -->
+<script src="${base.contextPath}/common/code?HQM_H_SAMPLE_POSITION_STATUS=HQM_H_SAMPLE_POSITION_STATUS"></script>
+<script src="${base.contextPath}/common/code?HQM_MACHINE_COMPONENT_TYPE=HQM_MACHINE_COMPONENT_TYPE"></script><!--是否有效 -->
+<script src="${base.contextPath}/common/code?HQM_RETURN_PRODUCT_TYPE=HQM_RETURN_PRODUCT_TYPE"></script><!--是否有效 -->
+<script src="${base.contextPath}/common/code?HQM_RETURN_PRODUCT_ISSUE=HQM_RETURN_PRODUCT_ISSUE"></script><!--是否有效 -->
+
+<body>
+
+<script type="text/javascript">
+
+var viewModel = Hap.createGridViewModel("#grid");
+
+$(function(){
+	var parentData = window.parent.parentData;
+	
+	viewModel.model.set('sampleType','2');
+	viewModel.model.set('sealingSampleStatus','1');
+	viewModel.model.set('scrappedFlag','N');
+	viewModel.model.set('description','NULL');
+	viewModel.model.set('registrationBy','${Session.userId}');
+	
+	viewModel.model.set('sampleId',parentData[0].sampleId);
+	
+	viewModel.model.set('plantId',parentData[0].plantId);
+	
+	viewModel.model.set('plantCode',parentData[0].plantCode);
+		
+	$("#plantId").siblings('span').children('input').val(parentData[0].plantCode);
+		
+	viewModel.model.set('sampleModel',parentData[0].sampleModel);
+	
+	viewModel.model.set('returnStatus',parentData[0].returnStatus);
+	viewModel.model.set('sampleGiver',parentData[0].sampleGiver);
+		
+	$("#sampleGiver").siblings('span').children('input').val(parentData[0].sampleGiverName);
+	
+	
+	viewModel.model.set('sampleGiveDate',parentData[0].sampleGiveDate);
+	viewModel.model.set('dealer',parentData[0].dealer);
+	
+	viewModel.model.set('storageLocation',parentData[0].storageLocation);
+	viewModel.model.set('sealingSamplePositionStatus',parentData[0].sealingSamplePositionStatus);
+	
+	
+	viewModel.model.set('supplierId',parentData[0].supplierId);
+		
+	$("#supplierId").siblings('span').children('input').val(parentData[0].supplierName)
+	
+	viewModel.model.set('productionDate',parentData[0].productionDate);
+	
+	
+	viewModel.model.set('machineComponent',parentData[0].machineComponent);
+	viewModel.model.set('appealNunber',parentData[0].appealNunber);
+	
+	
+	viewModel.model.set('productType',parentData[0].productType);
+	viewModel.model.set('returnReason',parentData[0].returnReason);
+	
+	
+	viewModel.model.set('itemId',parentData[0].itemId);
+	viewModel.model.set('itemDescriptions',parentData[0].itemDescriptions);
+	
+	viewModel.model.set('productIssue',parentData[0].productIssue);
+	viewModel.model.set('badElement',parentData[0].badElement);
+})
+//编辑
+viewModel.save = function(){
+	var validator = $("#mainform").data("kendoValidator");
+	if (validator.validate()) {
+		$.ajax({
+	   		url:"${base.contextPath}/hqm/sample/account/after/updateData",
+	   		type: "POST",
+	   		data: viewModel.model.toJSON(),
+	   		dataType: "json",
+	   		success: function(data){
+	   			if(data.success){
+	   				Hap.showToast({
+            			type:'success',
+            			"positionClass": "toast-bottom-right",
+            			message:'编辑成功',
+            			hideDuration:10*1000
+            		})
+	   				window.parent.viewModel.refresh();
+	   				window.parent.$("#editWindow").data("kendoWindow").close();
+	   			}else{
+	   				kendo.ui.showErrorDialog({
+							title: "提示",
+			    			message: data.message
+		    		})
+		    		return;
+	   		 }
+	   		}
+	   	})  
+	}
+}
+viewModel.closeWin = function(){
+	window.parent.$("#editWindow").data("kendoWindow").close();
+}
+	$(function(){
+		 $('#itemAndBad').css('display','none');
+		 $('#badC').css('display','none');
+		 if(viewModel.model.machineComponent == '2') {
+			 $('#itemAndBad').show();
+			 $('#badC').show();
+		 } 
+	})
+</script>
+
+<div id="page-content">
+	<form id="mainform"  class="form-horizontal" method="post" enctype="application/json;charset=UTF-8">
+
+	<div class="row" style="margin-left: 5px;">
+	 	<div class="col-sm-12">
+	 		<!-- 工厂+样品型号 -->
+	 	  	<div class="form-group" style="margin-top:20px;">
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message "asliqccontrol.plant"/>:</label>
+					<div class="col-sm-9">
+                        <input id="plantId" required style="width:100%" name='<@spring.message "asliqccontrol.plant"/>' 
+								data-bind="enabled: model.isEnabled,value:model.plantId">		
+						<span data-for='<@spring.message "asliqccontrol.plant"/>' class=".k-invalid-msg"></span>
+					</div>
+					<script>
+					kendo.bind($('#plantId'), viewModel);
+					$("#plantId").kendoLov($.extend
+				    	    (<@lov"LOV_PLANT"/>, {
+				    	        textField: 'plantCode',
+				    	        valueField:'plantId',
+				    	        query: function(e){
+				    	        	e.param['enableFlag'] = 'Y';
+	                	        }
+				    	    }));
+					</script>
+				</div>
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message 'sampleaccount.samplemodel'/>:</label>
+					<div class="col-sm-9">
+                        <input required style="width:100%" name="<@spring.message 'sampleaccount.samplemodel'/>" 
+                               id="sampleModel"
+                               data-bind="value:model.sampleModel" data-role="maskedtextbox">
+						<span data-for="<@spring.message 'sampleaccount.samplemodel'/>" class=".k-invalid-msg"></span>
+					</div>
+					<script type="text/javascript">
+						kendo.bind($('#sampleModel'), viewModel);
+					</script>
+				</div>
+            </div>
+			<!-- 退回状态+接收人 -->
+			<div class="form-group" style="margin-top:20px;">
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message 'sampleaccount.returnstatus'/>:</label>
+					<div class="col-sm-9">
+                        <input style="width:100%" required name="<@spring.message 'sampleaccount.returnstatus'/>"
+                        		 id="returnStatus"
+                               data-bind="value:model.returnStatus">
+						<span data-for="<@spring.message 'sampleaccount.returnstatus'/>" class=".k-invalid-msg"></span>
+						<script type="text/javascript">
+							kendo.bind($('#returnstatus'), viewModel);
+							$("#returnStatus").kendoComboBox({
+						        dataTextField: "meaning",
+						        dataValueField: "value",
+						        valuePrimitive: true,
+						        dataSource: HQM_H_SAMPLE_REVENIR_STATUS
+							});
+						</script>
+					</div>
+				</div>
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message 'sampleaccount.samplegivername'/>:</label>
+					<div class="col-sm-9">
+						<input id="sampleGiver" required style="width:100%" name="<@spring.message 'sampleaccount.samplegivername'/>" data-bind="value:model.sampleGiver" >
+						<span data-for="<@spring.message 'sampleaccount.samplegivername'/>" class=".k-invalid-msg"></span>
+					</div>
+					<script>
+					kendo.bind($('#sampleGiver'), viewModel);
+					$("#sampleGiver").kendoLov($.extend
+						    (<@lov"user_lov"/>, {
+						        textField: 'employeeName',
+						        valueField:'userId',
+						    }));
+					</script>
+				</div>
+			</div>
+			<!--  接收时间+ 经销商 -->
+			<div class="form-group" style="margin-top:20px;">
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message 'sampleaccount.samplereturndate'/>:</label>
+					<div class="col-sm-9">
+                        <input id="sampleGiveDate" required style="width:100%" name="<@spring.message 'sampleaccount.samplegivedate'/>"
+                               data-bind="value:model.sampleGiveDate">
+						<span data-for="<@spring.message 'sampleaccount.samplegivedate'/>" class=".k-invalid-msg"></span>
+					</div>
+					<script type="text/javascript">
+						$("#sampleGiveDate").kendoDateTimePicker({
+							max:new Date(),
+							format: "yyyy-MM-dd HH:mm:ss",
+							change:function(){
+								viewModel.model.sampleGiveDate = this.value().format("yyyy-MM-dd hh:mm:ss");
+							}
+						});
+					</script>
+				</div>
+				
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message 'sampleaccount.dealer'/>:</label>
+					<div class="col-sm-9">
+                        <input required style="width:100%" name="<@spring.message 'sampleaccount.dealer'/>"
+                               data-label="<@spring.message 'fqcinspectionh.sourceorder'/>" id="dealer"
+                               data-bind="value:model.dealer" data-role="maskedtextbox">
+						<span data-for="<@spring.message 'sampleaccount.dealer'/>" class=".k-invalid-msg"></span>
+						<script type="text/javascript">
+							kendo.bind($('#dealer'), viewModel);
+						</script>
+					</div>
+				</div>
+			</div>
+			
+			<!-- 存储位置+在库状态 -->
+			<div class="form-group" style="margin-top:20px;">
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message 'sampleaccount.storagelocation'/>:</label>
+					<div class="col-sm-9">
+                        <input style="width:100%" name="<@spring.message 'sampleaccount.storagelocation'/>"
+                               id="storageLocation"
+                               data-bind="value:model.storageLocation" data-role="maskedtextbox">
+						<span data-for="<@spring.message 'sampleaccount.storagelocation'/>" class=".k-invalid-msg"></span>
+						<script type="text/javascript">
+							kendo.bind($('#storageLocation'), viewModel);
+						</script>
+					</div>
+				</div>
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message 'sampleaccount.sealingsamplepositionstatus'/>:</label>
+					<div class="col-sm-9">
+                        <input style="width:100%" required name="<@spring.message 'sampleaccount.sealingsamplepositionstatus'/>"
+                        		 id="sealingSamplePositionStatus"
+                               data-bind="value:model.sealingSamplePositionStatus">
+						<span data-for="<@spring.message 'sampleaccount.sealingsamplepositionstatus'/>" class=".k-invalid-msg"></span>
+						<script type="text/javascript">
+							kendo.bind($('#sealingSamplePositionStatus'), viewModel);
+							$("#sealingSamplePositionStatus").kendoComboBox({
+						        dataTextField: "meaning",
+						        dataValueField: "value",
+						        valuePrimitive: true,
+						        dataSource: HQM_H_SAMPLE_POSITION_STATUS
+							});
+						</script>
+					</div>
+				</div>
+			</div>
+			
+			<!-- 供应商+生产日期 -->
+			<div class="form-group" >
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message 'sampleaccount.suppliername'/>:</label>
+					<div class="col-sm-9">
+                        <input style="width:100%" name="<@spring.message 'sampleaccount.suppliername'/>"
+                        		 id="supplierId"
+                               data-bind="value:model.supplierId">
+						<span data-for="<@spring.message 'sampleaccount.suppliername'/>" class=".k-invalid-msg"></span>
+						<script>
+								kendo.bind($('#supplierId'), viewModel);
+								$("#supplierId").kendoLov($.extend
+							    (<@lov"LOV_SUPPLIER"/>, {
+							        textField: 'supplierCode',
+							        valueField:'supplierId',
+							    }));
+						</script>
+					</div>
+				</div>			
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message 'sampleaccount.productiondate'/>:</label>
+					<div class="col-sm-9">
+                        <input id="productionDate" style="width:100%" name="<@spring.message 'sampleaccount.productiondate'/>"
+                               data-bind="value:model.productionDate">
+						<span data-for="<@spring.message 'sampleaccount.productiondate'/>" class=".k-invalid-msg"></span>
+					</div>
+					<script type="text/javascript">
+						$("#productionDate").kendoDateTimePicker({
+							max:new Date(),
+							format: "yyyy-MM-dd HH:mm:ss",
+							change:function(){
+								viewModel.model.productionDate = this.value().format("yyyy-MM-dd hh:mm:ss");
+							}
+						});
+					</script>
+				</div>
+			</div>
+		 <div class="form-group" style="margin-top:20px;">
+			  <div class="col-sm-6" >
+					<label class="col-sm-3 control-label"><@spring.message "sampleaccount.machineComponent"/>:</label>
+					<div class="col-sm-9">
+                       <input id="machineComponent"   style="width:100%" required  data-bind="value:model.machineComponent">	
+						<span data-for="machineComponent" class=".k-invalid-msg"></span>
+						<script>
+						kendo.bind($('#machineComponent'), viewModel);
+						$("#machineComponent").kendoComboBox({
+						    dataTextField: "meaning",
+						    dataValueField: "value",
+						    valuePrimitive: true,
+						    dataSource: HQM_MACHINE_COMPONENT_TYPE,
+						    change :function()
+						    {
+						    	viewModel.model.machineComponent=this.value();
+						    	if(viewModel.model.machineComponent==2)
+						    		{
+								 $('#itemAndBad').css('display','block');
+								 $('#badC').css('display','block');
+
+								// $('#badComponent').css('display','block');
+						    		}
+						    	else
+						    		{
+						    		 $('#itemAndBad').css('display','none');
+						    		 $('#badC').css('display','none');
+									// $('#badComponent').css('display','none');
+						    		}
+						    }
+						});	
+						</script>
+					</div> 
+				</div>		
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message 'sampleaccount.appealNunber'/>:</label>
+					<div class="col-sm-9">
+                        <input  style="width:100%" name="<@spring.message 'sampleaccount.appealNunber'/>" 
+                               id="appealNunber"
+                               data-bind="value:model.appealNunber" data-role="maskedtextbox">
+						<span data-for="<@spring.message 'sampleaccount.appealNunber'/>" class=".k-invalid-msg"></span>
+						<script type="text/javascript">
+							kendo.bind($('#appealNunber'), viewModel);
+						</script>
+					</div>
+				</div>
+		</div>
+			<div class="form-group" style="margin-top:20px;">
+			  <div class="col-sm-6" >
+					<label class="col-sm-3 control-label"><@spring.message "sampleaccount.productType"/>:</label>
+					<div class="col-sm-9">
+                       <input id="productType"  style="width:100%"   data-bind="value:model.productType">	
+						<span data-for="productType" class=".k-invalid-msg"></span>
+						<script>
+						kendo.bind($('#productType'), viewModel);
+						$("#productType").kendoComboBox({
+						    dataTextField: "meaning",
+						    dataValueField: "value",
+						    valuePrimitive: true,
+						    dataSource: HQM_RETURN_PRODUCT_TYPE
+						});	
+						</script>
+					</div> 
+				</div>		
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message 'sampleaccount.returnReason'/>:</label>
+					<div class="col-sm-9">
+                        <input required style="width:100%" name="<@spring.message 'sampleaccount.returnReason'/>" 
+                               id="returnReason"
+                               data-bind="value:model.returnReason" data-role="maskedtextbox">
+						<span data-for="<@spring.message 'sampleaccount.returnReason'/>" class=".k-invalid-msg"></span>
+						<script type="text/javascript">
+							kendo.bind($('#returnReason'), viewModel);
+						</script>
+					</div>
+				</div>
+		</div>
+		
+		<div id="itemAndBad" class="form-group" style="margin-top:20px;">
+			  	<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message "sampleaccount.itemid"/>:</label>
+					<div class="col-sm-9">
+						<input   style="width:100%" id="itemId" name="samplenumber" data-bind="value:model.itemId"  data-role="maskedtextbox">
+						<span data-for="itemId" class=".k-invalid-msg"></span>
+						<script>
+						kendo.bind($('#itemId'), viewModel);
+						$("#itemId").kendoLov($.extend
+							    (<@lov"LOV_ITEM"/>, {
+							        textField: 'itemCode',
+							        valueField:'itemId',
+							        query: function (e) {
+						                e.param['enableFlag'] = 'Y',
+						                e.param['plantId'] = viewModel.model.plantId
+						            },
+						            change: function(e){
+						            
+						            	if(!isNotEmpty(e.sender._prev)){
+						            		viewModel.model.set('itemDescriptions','')
+						            	}else{
+							            	viewModel.model.set('itemDescriptions',e.sender._dataItem.itemDescriptions)
+						            	}
+						            }
+							    }));
+					</script>
+					</div>					
+				</div>
+				<div class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message "sampleaccount.itemName"/>:</label>
+					<div class="col-sm-9">
+						<input id="itemName" style="width:100%" readOnly name="sampletype" data-role="maskedtextbox"
+                               data-label="<@spring.message 'sampleaccount.itemName'/>"
+                               data-bind="value:model.itemDescriptions">
+						<script type="text/javascript">
+							kendo.bind($('#itemName'), viewModel);
+						</script>
+					</div>
+				</div>
+				
+		</div>
+		
+			<div class="form-group" style="margin-top:20px;">
+			  <div class="col-sm-6" >
+					<label class="col-sm-3 control-label"><@spring.message "产品系列"/>:</label>
+					<div class="col-sm-9">
+                       <input id="productIssue"  style="width:100%"   data-bind="value:model.productIssue">	
+						<span data-for="productIssue" class=".k-invalid-msg"></span>
+						<script>
+						kendo.bind($('#productIssue'), viewModel);
+						$("#productIssue").kendoComboBox({
+						    dataTextField: "meaning",
+						    dataValueField: "value",
+						    valuePrimitive: true,
+						    dataSource: HQM_RETURN_PRODUCT_ISSUE
+						});	
+						</script>
+					</div> 
+				</div>		
+				<div id="badC" class="col-sm-6">
+					<label class="col-sm-3 control-label"><@spring.message 'sampleaccount.badelement'/>:</label>
+					<div class="col-sm-9">
+                        <input  style="width:100%" name="<@spring.message 'sampleaccount.badElement'/>" 
+                               id="badComponent"
+                               data-bind="value:model.badElement" data-role="maskedtextbox">
+						<span data-for="<@spring.message 'sampleaccount.badComponent'/>" class=".k-invalid-msg"></span>
+						<script type="text/javascript">
+							kendo.bind($('#badComponent'), viewModel);
+						</script>
+					</div>
+				</div>
+				
+		</div>
+		
+		</div>
+	  </div>
+
+
+	</form>
+</div>
+<div id="mainBottom" class="text-right" style="bottom: 15px;position: fixed;  float: left;padding-top:15px;border-top:1px solid #ebebeb;width:100%; background: #fff;">
+        <span class="btn btn-primary" data-bind="click:save" type="submit" style="margin-right:5px"><@spring.message "hap.save"/></span>
+        <span class="btn btn-default" data-bind="click:closeWin" type="button" style="margin-right:25px;"><@spring.message "hap.cancel"/></span>
+</div>
+
+<script type="text/javascript">
+    kendo.bind($('#mainBottom'),viewModel);
+	kendo.bind($('#mainform'), viewModel);
+
+    function isNotEmpty(obj) {
+        if(obj != undefined && obj != null && obj != ""){
+            return true;
+        }else{
+            return false;
+        }
+    }
+    var initMinDate = new Date(1900, 0, 1);
+    var initMaxDate = new Date(2099, 11, 31);
+	//验证
+	$("#mainform").kendoValidator({
+    	messages: {
+            required: '<@spring.message "hap.validation.notempty"/>'
+    	},
+		invalidMessageType : "tooltip"
+    });
+</script>
+</body>
+</html>

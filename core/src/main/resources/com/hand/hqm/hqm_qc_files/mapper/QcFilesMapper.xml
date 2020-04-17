@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_qc_files.mapper.QcFilesMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_qc_files.dto.QcFiles">
+        <result column="FILE_ID" property="fileId" jdbcType="DECIMAL" />
+        <result column="INSPECTION_TYPE" property="inspectionType" jdbcType="VARCHAR" />
+        <result column="HEADER_ID" property="headerId" jdbcType="DECIMAL" />
+        <result column="FILE_URL" property="fileUrl" jdbcType="VARCHAR" />
+        <result column="LAST_UPDATE_DATE" property="lastUpdateDate" jdbcType="DATE" />
+        
+        <!-- 业务字段 -->
+        <result column="FILE_NAME" property="fileName" jdbcType="VARCHAR" />
+        <result column="USER_NAME" property="userName" jdbcType="VARCHAR" />
+    </resultMap>
+	<!-- 质量文件管理查询 -->
+	<select id="query" resultMap="BaseResultMap" parameterType="com.hand.hqm.hqm_qc_files.dto.QcFiles">
+		select substr(hqf.file_url,instr(hqf.file_url,'/',-1)+1) file_name,
+		       hqf.inspection_type,
+		       hqf.file_id,
+		       hqf.file_url,
+		       hqf.last_update_date,
+		       hqf.last_updated_by ,
+		       hqf.header_id,
+		       su.user_name
+		from hqm_qc_files hqf 
+		left join sys_user su on hqf.last_updated_by = su.user_id
+		where 1=1
+		and hqf.header_id = #{headerId}
+		and hqf.inspection_type = #{inspectionType} 
+	</select>
+</mapper>

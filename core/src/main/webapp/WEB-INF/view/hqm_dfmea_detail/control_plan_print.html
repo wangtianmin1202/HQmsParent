@@ -1,0 +1,399 @@
+<#include "../include/header.html">
+<script src="${base.contextPath}/common/code?featuresTypeData=HQM_FEATURE_TYPE"></script>
+<script src="${base.contextPath}/common/code?specialCharacterTypeData=HQM_FMEA_SPECIAL_TYPE"></script>
+<script type="text/javascript">
+    var viewModel = Hap.createGridViewModel("#grid");
+    /* var viewModel = kendo.observable({
+        model: { },
+        query: function (e) {
+            $('#grid').data('kendoGrid').dataSource.read();
+        }
+    }); */
+    
+    var kid = "${RequestParameters.kid!}";
+    viewModel.model.set('fmeaId',kid);
+</script>
+<body>
+<div id="page-content">
+    <script>
+     $(function() {
+
+		$.ajax({
+			type : 'POST',
+			async: false,
+			url : "${base.contextPath}/hqm/dfmea/print/header/query?kid="+kid,
+			success : function(data) {
+				$("#controlObject").val(data.fmeaName);
+				$("#controlPlanCode").val(data.fmeaCode);
+				$("#writer").val(data.fmeaUseName);
+				$("#writers").val(data.useNames);
+				$("#cpcreationDate").val(data.analysisObject);
+				$("#cplastUpdateDate").val(data.lastUpdateDate);
+				$("#mainStaff").val(data.fmeaType);
+				$("#mainversion").val(data.currentVersion);
+			}
+		});
+	}) 
+	
+
+	
+    </script>
+    <div id="content_header" class="row" style="width: 100%;height: 45%;margin-top: 5px; margin-bottom: 5px;font-size:12px;">
+    	<div class="col-sm-12" style="height: 100%;">
+    		<div class="row" style="width: 100%;height: 11%;margin-top: 5px;text-align: center;font-size: 25px;">
+    			<div><span><b>潜在的失效模式和结果分析表</b></span></div>
+    		</div>
+    		<!-- row1 -->
+    		<div class="row" style="width: 100%;height: 11%;margin-top: 5px">
+    			<div class="col-sm-3" style="height: 100%">
+    			
+    				<div class="col-sm-4" style="height: 100%;text-align:right;">
+    					<span style="font-size:12px;">项目名称:</span>
+    				</div>
+    				<div class="col-sm-8" style="height: 100%">
+    					<input id="controlObject" data-role="maskedtextbox" style="width:230px;" disabled data-bind="value:model.controlObject">
+    				</div>
+    			
+    			</div>
+    			<div class="col-sm-3" style="height: 100%">
+    				<div class="col-sm-4" style="height: 100%;text-align:right;">
+    					<span style="font-size:12px">项目编号:</span>
+    				</div>
+    				<div class="col-sm-8" style="height: 100%">
+    				<input id="controlPlanCode" style="width:230px;" data-role="maskedtextbox" disabled  data-bind="value:model.controlPlanCode">
+    				</div>
+    			</div>
+    			
+    			<div class="col-sm-3" style="height: 100%">
+    				<div class="col-sm-4" style="height: 100%;text-align:right;">
+    					<span style="font-size:12px">负责人:</span>
+    				</div>
+    				<div class="col-sm-8" style="height: 100%">
+    				<input id="writer" style="width:230px;" data-role="maskedtextbox" disabled  data-bind="value:model.writerId">
+    				</div>
+    			</div>
+    			
+    			<div class="col-sm-3" style="height: 100%">
+    				<div class="col-sm-4" style="height: 100%;text-align:right;">
+    					<span style="font-size:12px">主要参与人员:</span>
+    				</div>
+    				<div class="col-sm-8" style="height: 100%">
+    				<input id="writers" style="width:230px;" data-role="maskedtextbox" disabled  data-bind="value:model.writerId">
+    				</div>
+    			</div>
+    		</div>
+    		
+    		<!-- row2 -->
+    		<div class="row" style="width: 100%;height: 11%;margin-top: 5px">
+    			<div class="col-sm-3" style="height: 100%">
+    			
+    				<div class="col-sm-4" style="height: 100%;text-align:right;">
+    					<span style="font-size:12px;">分析对象:</span>
+    				</div>
+    				<div class="col-sm-8" style="height: 100%">
+    					<input id="cpcreationDate" data-role="maskedtextbox" style="width:230px;" disabled data-bind="value:model.creationDate">
+    				</div>
+    			
+    			</div>
+    			<div class="col-sm-3" style="height: 100%">
+    			
+    				<div class="col-sm-4" style="height: 100%;text-align:right;">
+    					<span style="font-size:12px;">最后更新时间:</span>
+    				</div>
+    				<div class="col-sm-8" style="height: 100%">
+    					<input id="cplastUpdateDate" data-role="maskedtextbox" style="width:230px;" disabled data-bind="value:model.lastUpdateDate">
+    				</div>
+    			
+    			</div>
+    			<div class="col-sm-3" style="height: 100%">
+    				<div class="col-sm-4" style="height: 100%;text-align:right;">
+    					<span style="font-size:12px">FMEA类型:</span>
+    				</div>
+    				<div class="col-sm-8" style="height: 100%">
+    				<input id="mainStaff" style="width:230px;" data-role="maskedtextbox" disabled  data-bind="value:model.mainPeople">
+    				</div>
+    			</div>
+    			<div class="col-sm-3" style="height: 100%">
+    				<div class="col-sm-4" style="height: 100%;text-align:right;">
+    					<span style="font-size:12px">版本:</span>
+    				</div>
+    				<div class="col-sm-8" style="height: 100%">
+    				<input id="mainversion" style="width:230px;" data-role="maskedtextbox" disabled  data-bind="value:model.mainPeople">
+    				</div>
+    			</div>
+    		</div>
+    
+    	</div>
+    </div>
+    <script>kendo.bind($('#content_header'), viewModel);</script>
+        
+    <div style="clear:both">
+        <div id="grid"></div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    Hap.initEnterQuery('#query-form', viewModel.query);
+    var BaseUrl = _basePath;
+    dataSource = new kendo.data.DataSource({
+        transport: {
+            read: {
+                url: BaseUrl + "/hqm/dfmea/query/print",
+                type: "POST",
+                dataType: "json"
+            },
+            update: {
+                url: BaseUrl + "/hqm/control/plan/features/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            destroy: {
+                url: BaseUrl + "/hqm/control/plan/features/remove",
+                type: "POST",
+                contentType: "application/json"
+            },
+            create: {
+                url: BaseUrl + "/hqm/control/plan/features/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            parameterMap: function (options, type) {
+                if (type !== "read" && options.models) {
+                    var datas = Hap.prepareSubmitParameter(options, type)
+                    return kendo.stringify(datas);
+                } else if (type === "read") {
+                	 viewModel.model.fmeaId=kid;
+                	 console.log(viewModel.model.fmeaId);
+                    return Hap.prepareQueryParameter(viewModel.model.toJSON(), options)
+                }
+            }
+        },
+        batch: true,
+        serverPaging: true,
+        pageSize: 20,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+                id: "featuresId",
+                fields: {}
+            }
+        }
+    });
+
+    $("#grid").kendoGrid({
+        dataSource: dataSource,
+        resizable: true,
+        scrollable: true,
+        navigatable: false,
+        selectable: false,
+        dataBound: function () {
+            if (parent.autoResizeIframe) {
+                parent.autoResizeIframe('${RequestParameters.functionCode!}')
+            }
+        },
+        pageable:   false,
+        columns: [
+        	/* {
+                field: "branchName",
+                title: ' ',
+                width: 100,
+                headerAttributes: {
+                    style: "text-align: center"
+                }
+            }, */
+            {
+                field: "functionName",
+                title: '结构',
+                width: 100
+            },
+            {
+                field: "structureName",
+                title: '功能',
+                width: 120
+            },
+            {
+                field: "branchName",
+                title: '潜在失效模式',
+                width: 120
+            },
+            {
+                field: "invalidConsequence",
+                title: '潜在失效后果',
+                width: 120
+            },
+             {
+                field: "severity",
+                title: '严重度(S)',
+                width: 80
+            },
+            {
+                field: "specialCharacteristicType",
+                title: '特殊特性',
+                width: 80
+                
+            },
+            {
+                field: "failureReason",
+                title: '潜在失效原因',
+                width: 120
+            },
+            
+            {
+                field: "preventiveMeasure",
+                title: '现行预防措施',
+                width: 160,
+                attributes: {
+                    style: "white-space:pre-wrap"
+                }
+                
+            },
+                    {
+                field: "occurrence",
+                title: '频度(O)',
+                width: 70
+            },
+            {
+                field: "detectionMeasure",
+                title: '现行检测措施',
+                width: 160
+            },
+                    {
+                field: "detection",
+                title: '检测度(D)',
+                width: 80
+            },
+                    {
+                field: "rpn",
+                title: 'RPN值',
+                width: 80
+            },
+                {
+                    field: "suggestMeasure",
+                    title: '建议措施',
+                    width: 160
+            },  
+               {
+                field: "useName",
+                title: '责任人',
+                width: 70
+            }, 
+            {
+                field: "estimatedFinishTime",
+                title: '预计完成时间',
+                width: 150
+            },
+            {
+                field: "measureResult",
+                title: '措施结果',
+                width: 80
+            },
+                {
+            	field: "postSeverity",
+                title: 'S结果',
+                width: 60
+                },
+                {
+            	field: "postOccurrence",
+                title: 'O结果',
+                width: 60
+                },
+                 {
+            	field: "postDetection",
+                title: 'D结果',
+                width: 60
+                 },
+                  {           
+            	field: "postRpn",
+                title: 'RPN结果',
+                width: 150
+                  },
+        ],
+        dataBound: function () {                   
+            var dimension_col = 1;
+            var first_instance = null;
+            var rowspan = 0;
+            $('#grid table tbody').find("tr").each(function () {
+                var dimension_td = $(this).find('td:nth-child(' + dimension_col + ')');
+                if (first_instance == null) {
+                    first_instance = dimension_td;
+                    rowspan = 0;
+                } else if (dimension_td.text() == first_instance.text()) {
+                    $('#grid table tbody').find('tr').each(function () {
+                        if ($(this).find('td:nth-child(' + dimension_col + ')').text() == first_instance.text()) {
+                            rowspan++;
+                        }
+                    });
+                    dimension_td.hide();
+                    first_instance.attr('rowspan', rowspan);
+                    rowspan = 0;
+                } else {
+                    rowspan = 0;
+                    first_instance = dimension_td;
+                }
+                return;
+            });
+            
+            var dimension_col1 = 2;
+            var first_instance1 = null;
+            var rowspan1 = 0;
+            $('#grid table tbody').find("tr").each(function () {
+                var dimension_td = $(this).find('td:nth-child(' + dimension_col1 + ')');
+                if (first_instance1 == null) {
+                    first_instance1 = dimension_td;
+                    rowspan1 = 0;
+                } else if (dimension_td.text() == first_instance1.text()) {
+                    $('#grid table tbody').find('tr').each(function () {
+                        if ($(this).find('td:nth-child(' + dimension_col1 + ')').text() == first_instance1.text()) {
+                            rowspan1++;
+                        }
+                    });
+                    dimension_td.hide();
+                    first_instance1.attr('rowspan', rowspan1);
+                    rowspan1 = 0;
+                } else {
+                    rowspan1 = 0;
+                    first_instance1 = dimension_td;
+                }
+                return;
+            });
+            
+            var dimension_col2 = 3;
+            var first_instance2 = null;
+            var rowspan1 = 0;
+            $('#grid table tbody').find("tr").each(function () {
+                var dimension_td = $(this).find('td:nth-child(' + dimension_col2 + ')');
+                if (first_instance2 == null) {
+                    first_instance2 = dimension_td;
+                    rowspan2 = 0;
+                } else if (dimension_td.text() == first_instance2.text()) {
+                    $('#grid table tbody').find('tr').each(function () {
+                        if ($(this).find('td:nth-child(' + dimension_col2 + ')').text() == first_instance2.text()) {
+                            rowspan2++;
+                        }
+                    });
+                    dimension_td.hide();
+                    first_instance2.attr('rowspan', rowspan2);
+                    rowspan2 = 0;
+                } else {
+                    rowspan2 = 0;
+                    first_instance2 = dimension_td;
+                }
+                return;
+            });
+        },
+        editable: false
+    });
+    
+	setTimeout(function(){
+		var barcode = $('#page-content').html();
+		//window.document.body.innerHTML = barcode;
+		//$("img").css("clear","both");
+		window.print();
+		window.parent.$('#printWindow').data('kendoWindow').close();
+		parent.location.reload();
+	},0.1*1000)
+	
+</script>
+</body>
+</html>

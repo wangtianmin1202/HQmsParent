@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hcs.hcs_asl_control.mapper.AslControlMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hcs.hcs_asl_control.dto.AslControl">
+        <result column="CREATION_DATED" property="creationDated" jdbcType="DATE" />
+        <result column="ASL_ID" property="aslId" jdbcType="DECIMAL" />
+        <result column="SETTLE_TYPE" property="settleType" jdbcType="VARCHAR" />
+        <result column="SETTLE_MODE" property="settleMode" jdbcType="VARCHAR" />
+        <result column="PRIORITY" property="priority" jdbcType="DECIMAL" />
+        <result column="ECONOMICAL_LOT" property="economicalLot" jdbcType="DECIMAL" />
+        <result column="MINIMUN_PACKAGE" property="minimunPackage" jdbcType="DECIMAL" />
+        <result column="CALCULATE_TYPE" property="calculateType" jdbcType="VARCHAR" />
+        <result column="MAXIMUM_DAY_ORDER" property="maximumDayOrder" jdbcType="DECIMAL" />
+        <result column="LEAD_TIME" property="leadTime" jdbcType="DECIMAL" />
+        <result column="ISSUE_DAY" property="issueDay" jdbcType="DECIMAL" />
+        <result column="S_WASH_FLAG" property="sWashFlag" jdbcType="VARCHAR" />
+        <result column="CID" property="cid" jdbcType="DECIMAL" />
+        <result column="SETTLE_NODE" property="settleNode" jdbcType="VARCHAR" />
+        <result column="PURCHASE_GROUP" property="purchaseGroup" jdbcType="VARCHAR" />
+        <result column="URGENT_LEAD_TIME" property="urgentLeadTime" jdbcType="DECIMAL" />
+        <result column="TOTAL_CAPACITY" property="totalCapacity" jdbcType="DECIMAL" />
+        
+        <result column="UNDERDELIVERY_TOLERANCE_LIMIT" property="underdeliveryToleranceLimit" jdbcType="DECIMAL" />
+        <result column="OVERDELIVERY_TOLERANCE_LIMIT" property="overdeliveryToleranceLimit" jdbcType="DECIMAL" />
+        <result column="PURCHASE_LEAD_TIME" property="purchaseLeadTime" jdbcType="DECIMAL" />
+    </resultMap>
+
+<insert id="insertInterface" parameterType="com.hand.hcs.hcs_asl_control.dto.AslControl">
+
+INSERT INTO hcs_asl_control (asl_id, lead_time, purchase_group) VALUES (#{aslId}, #{leadTime}, #{purchaseGroup})
+
+</insert>
+</mapper>

@@ -1,0 +1,373 @@
+<html style="color: black">
+<script src="${base.contextPath}/lib/prints/doc_print.js" type="text/javascript" charset="UTF-8"></script>
+<#include "../include/header.html">
+<body style="width: 98%; margin-left: 15px;">
+<!--页面布局-->
+<div id="pageDiv" style="width: 100%;font-family: 宋体;color: #000000;">
+	
+</div>
+<script>
+	var parentData = window.parent.parentData;
+	
+	var unNegativeActualAmount = 0;
+	var unNegativeTax = 0;
+	var unNegativeTotalTax = 0;
+	var negativeActualAmount = 0;
+	var negativeTax = 0;
+	var negativeTotalTax = 0;
+	//每页行数
+	var pageSize = 15;
+	var count = 0;
+	jsonData = {
+			"webInvoiceId": parentData.webInvoiceId,
+	}
+	//获取数据
+	$.ajax({
+		url:"${base.contextPath}/hcs/doc/settlement/printQuery",
+		type:"POST",
+		data: jsonData,
+		dataType: "json",
+		success: function (data){
+			var array = [];
+			//表头
+			array = head(array);
+			
+			/* 表格 */
+			array.push("<table style='color: black;width: 100%;table-layout: fixed;font-size: small;text-align: center;' border='2px'>")
+
+			//表格首行
+			array.push("<tr style='white-space: nowrap'>")
+			array.push("<th style='text-align: center;width:15%'><@spring.message 'settlement.number'/></th>")
+			array.push("<th style='text-align: center;width:5%'><@spring.message 'settlement.linenum'/></th>")
+			array.push("<th style='text-align: center;width:10%'><@spring.message 'settlement.itemcode'/></th>")
+			array.push("<th style='text-align: center;width:10%'><@spring.message 'settlement.itemname'/></th>")
+			array.push("<th style='text-align: center;width:10%'><@spring.message 'settlement.docqty'/></th>")
+			array.push("<th style='text-align: center;width:10%'><@spring.message 'settlement.unitPrice'/></th>")
+			array.push("<th style='text-align: center;width:10%'><@spring.message 'settlement.priceUnit'/></th>")
+			array.push("<th style='text-align: center;width:8%'><@spring.message 'settlement.actualAmount'/></th>")
+			array.push("<th style='text-align: center;width:6%'><@spring.message 'settlement.taxCode'/></th>")
+			array.push("<th style='text-align: center;width:6%'><@spring.message 'settlement.tax'/></th>")
+			array.push("<th style='text-align: center;width:10%'><@spring.message 'settlement.totalTax'/></th>")
+			array.push("</tr>")
+			
+			//结算单据类型：D、R  actual_amount > 0
+			if(data.printQueryDRUnNegative != null && data.printQueryDRUnNegative.length > 0){
+				array = printQueryDR(array, data.printQueryDRUnNegative, 'unNegative');
+			}
+		    //结算单据类型：Q  actual_amount > 0
+			if(data.printQueryQUnNegative != null && data.printQueryQUnNegative.length > 0){
+				array = printQueryQ(array, data.printQueryQUnNegative, 'unNegative');
+			}
+			//调整行:adjust_amount > 0
+			if(data.printQueryAdjustmentUnNegative != null && data.printQueryAdjustmentUnNegative.length > 0){
+				array = printQueryAdjustment(array, data.printQueryAdjustmentUnNegative, 'unNegative');
+			}
+			//小计
+			array.push("<tr>")
+			array.push("<th colSpan='7' style='text-align: right;border-right-style:none'><@spring.message 'settlement.result'/>：</th>")
+			array.push("<th style='text-align:center;border-left-style:none;border-right-style:none'>")
+			array.push(unNegativeActualAmount)
+			array.push("</th> <th style='border-left-style:none;border-right-style:none'></th>")
+			array.push("<th style='text-align:center;border-left-style:none;border-right-style:none'>")
+			array.push(unNegativeTax)
+			array.push("</th>")
+			array.push("<th style='text-align:center;border-left-style:none;border-right-style:none'>")
+			array.push(unNegativeTotalTax)
+			array.push("</th>")
+			array.push("</th>")
+			array.push("</tr>")
+			
+			count++;
+			if(count === pageSize){
+				nextPage(array);
+			}
+			
+			//结算单据类型：D、R  actual_amount < 0
+			if(data.printQueryDRNegative != null && data.printQueryDRNegative.length > 0){
+				array = printQueryDR(array, data.printQueryDRNegative, 'negative');
+			}
+		    //结算单据类型：Q  actual_amount < 0
+			if(data.printQueryQNegative != null && data.printQueryQNegative.length > 0){
+				array = printQueryQ(array, data.printQueryQNegative, 'negative');
+			}
+			//调整行:adjust_amount < 0
+			if(data.printQueryAdjustmentNegative != null && data.printQueryAdjustmentNegative.length > 0){
+				array = printQueryAdjustment(array, data.printQueryAdjustmentNegative, 'negative');
+			}
+			
+			//小计
+			array.push("<tr>")
+			array.push("<th colSpan='7' style='text-align: right;border-right-style:none'><@spring.message 'settlement.result'/>：</th>")
+			array.push("<th style='text-align:center;border-left-style:none;border-right-style:none'>")
+			array.push(negativeActualAmount)
+			array.push("</th><th style='border-left-style:none;border-right-style:none'></th>")
+			array.push("<th style='text-align:center;border-left-style:none;border-right-style:none'>")
+			array.push(negativeTax)
+			array.push("</th>")
+			array.push("<th style='text-align:center;border-left-style:none;border-right-style:none'>")
+			array.push(negativeTotalTax)
+			array.push("</th>")
+			array.push("</th>")
+			array.push("</tr>")
+			array.push("</table>")
+			//总计
+			array.push("<table style='color: black;width: 100%;table-layout: fixed;font-size: big;text-align: center;border-color: transparent;' border='2px' >")
+			array.push("<tr>")
+			array.push("<th colSpan='7' style='text-align: right;border-right-style:none;width:70%'><@spring.message 'settlement.resultall'/>：</th>")
+			array.push("<th style='text-align: right;border-left-style:none;border-right-style:none;width:8%'>")
+			array.push(float2(negativeActualAmount+unNegativeActualAmount))
+			array.push("</th><th style='border-left-style:none;border-right-style:none;width:6%'></th>")
+			array.push("<th style='text-align: right;border-left-style:none;border-right-style:none;width:8%'>")
+			array.push(float2(negativeTax+unNegativeTax))
+			array.push("</th>")
+			array.push("<th style='text-align:center;border-left-style:none;border-right-style:none;width:10%'>")
+			array.push(float2(negativeTotalTax+unNegativeTotalTax))
+			array.push("</th>")
+			array.push("</th>")
+			array.push("</tr>")
+			array.push("</table>")
+			
+			
+			
+			$('#pageDiv').append(array.join(''));
+			
+			setTimeout(function(){
+				window.print();
+				window.parent.viewModel.refresh();
+				window.parent.$('#printWindow').data('kendoWindow').close();
+				parent.location.reload();
+			},0.1*1000);
+		}
+	})
+	//绘制表头
+	function head(array){
+		//标题
+		array.push("<div style='width:100%;page-break-after:always'>")
+		
+		array.push("<h1 style='width:100%;text-align: center;'>")
+		array.push("<@spring.message 'settlement.detail'/>")
+		array.push("</h1>")
+		//表头(第一行)
+		array.push("<div style='width:100%;text-align:left;font-size:16px'>")
+		array.push("<b><@spring.message 'settlement.suppliercode'/>：</b>")
+		array.push(parentData.supplierCode)
+		array.push("</div>")
+		//第二行
+		array.push("<div style='width:100%;text-align:left;font-size:16px'>")
+		array.push("<b><@spring.message 'settlement.suppliername'/>：</b>")
+		array.push(parentData.supplierName)
+		array.push("</div>")
+
+		//第三行
+		array.push("<div style='width:100%'>")
+		array.push("<span style='width:50%;text-align:left;font-size:16px'>")
+		array.push("<b><@spring.message 'settlement.webInvoiceNum'/>：</b>")
+		array.push(parentData.taxInvoiceNum)
+		array.push("</span>")			
+		array.push("<span style='width:50%;float:right;text-align:right;font-size:16px'>")
+		array.push("<b><@spring.message 'settlement.currency'/>：</b>")
+		array.push(parentData.currency)
+		array.push("</span>")
+		array.push("</div>")
+		return array;
+	}
+	//结算单据类型：D、R 
+	function printQueryDR(array,printQueryDRList,flag){
+		for(var i = 0; i < printQueryDRList.length; i++){
+			array.push("<tr>")
+			
+			array.push("<td>")
+			array.push(nvl(printQueryDRList[i].relPoNumH,''))
+			array.push("</td>")
+			array.push("<td>")
+			array.push(nvl(printQueryDRList[i].relPoNumL,''))
+			array.push("</td>")
+			array.push("<td>")
+			array.push(nvl(printQueryDRList[i].itemCode,''))
+			array.push("</td>")
+			array.push("<td>")
+			array.push(nvl(printQueryDRList[i].itemName,''))
+			array.push("</td>")
+			array.push("<td>")
+			array.push(nvl(printQueryDRList[i].docQty,''))
+			array.push("</td>")
+			array.push("<td>")
+			array.push(nvl(printQueryDRList[i].unitPrice,''))
+			array.push("</td>")
+			array.push("<td>")
+			array.push(nvl(printQueryDRList[i].priceUnit,''))
+			array.push("</td>")
+			array.push("<td class='actualAmount_+"+ flag +"'>")
+			array.push(nvl(printQueryDRList[i].actualAmount,0))
+			array.push("</td>")
+			array.push("<td class='taxCode_+"+ flag +"'>")
+			array.push(nvl(printQueryDRList[i].taxCode,0))
+			array.push("</td>")
+			array.push("<td class='tax_+"+ flag +"'>")
+			array.push(nvl(printQueryDRList[i].tax,0))
+			array.push("</td>")
+			array.push("<td class='totalTax_+"+ flag +"'>")
+			array.push(nvl(printQueryDRList[i].totalTax,0))
+			array.push("</td>")
+			
+			array.push("</tr>")
+			if(flag === 'unNegative'){
+				unNegativeActualAmount += nvl(printQueryDRList[i].actualAmount,0);
+				unNegativeTax += nvl(printQueryDRList[i].tax,0);
+				unNegativeTotalTax += nvl(printQueryDRList[i].totalTax,0);
+			}
+			if(flag === 'negative'){
+				negativeActualAmount += nvl(printQueryDRList[i].actualAmount,0);
+				negativeTax += nvl(printQueryDRList[i].tax,0);
+				negativeTotalTax += nvl(printQueryDRList[i].totalTax,0);
+			}
+			
+			count++;
+			if(count === pageSize){
+				nextPage(array);
+			}
+		}
+		return array;
+	}
+	//结算单据类型：Q
+	function printQueryQ(array,printQueryQList,flag){
+		for(var i = 0; i < printQueryQList.length; i++){
+			array.push("<tr>")
+			
+			array.push("<td>")
+			array.push(nvl(printQueryQList[i].relDocNumH,''))
+			//array.push('<@spring.message "error.srm_purchase_1135"/>')
+			array.push("</td>")
+			array.push("<td>")
+			array.push('')
+			array.push("</td>")
+			array.push("<td>")
+			array.push('<@spring.message "error.srm_purchase_1135"/>')
+			array.push("</td>")
+			array.push("<td>")
+			array.push('')
+			array.push("</td>")
+			array.push("<td>")
+			array.push('')
+			array.push("</td>")
+			array.push("<td>")
+			array.push('')
+			array.push("</td>")
+			array.push("<td>")
+			array.push('')
+			array.push("</td>")
+			array.push("<td class='actualAmount_+"+ flag +"'>")
+			array.push(nvl(printQueryQList[i].actualAmount,0))
+			array.push("</td>")
+			array.push("<td class='taxCode_+"+ flag +"'>")
+			array.push(nvl(printQueryQList[i].taxCode,0))
+			array.push("</td>")
+			array.push("<td class='tax_+"+ flag +"'>")
+			array.push(nvl(printQueryQList[i].tax,0))
+			array.push("</td>")
+			array.push("<td class='totalTax_+"+ flag +"'>")
+			array.push(nvl(printQueryQList[i].totalTax,0))
+			array.push("</td>")
+			
+			array.push("</tr>")
+			
+			if(flag === 'unNegative'){
+				unNegativeActualAmount += nvl(printQueryQList[i].actualAmount,0);
+				unNegativeTax += nvl(printQueryQList[i].tax,0);
+				unNegativeTotalTax += nvl(printQueryQList[i].totalTax,0);
+			}
+			if(flag === 'negative'){
+				negativeActualAmount += nvl(printQueryQList[i].actualAmount,0);
+				negativeTax += nvl(printQueryQList[i].tax,0);
+				negativeTotalTax += nvl(printQueryQList[i].totalTax,0);
+			}
+			
+			count++;
+			if(count === pageSize){
+				nextPage(array);
+			}
+		}
+		return array;
+	}
+	
+	//调整行
+	function printQueryAdjustment(array,printQueryAdjustmentList,flag){
+		for(var i = 0; i < printQueryAdjustmentList.length; i++){
+			array.push("<tr>")
+			
+			array.push("<td>")
+			array.push("<@spring.message 'settlement.adjustment'/>")
+			array.push("</td>")
+			array.push("<td>")
+			array.push(nvl(printQueryAdjustmentList[i].docAdjustmentNum,''))
+			array.push("</td>")
+			
+			array.push("<td colSpan='5'>")
+			array.push(nvl(printQueryAdjustmentList[i].remarks,''))
+			array.push("</td>")
+			
+			array.push("<td class='adjustAmount_+"+ flag +"'>")
+			array.push(nvl(printQueryAdjustmentList[i].adjustAmount,0))
+			array.push("</td>")
+			array.push("<td class='taxCode_+"+ flag +"'>")
+			array.push(nvl(printQueryAdjustmentList[i].taxCode,0))
+			array.push("</td>")
+			array.push("<td class='tax_+"+ flag +"'>")
+			array.push(nvl(printQueryAdjustmentList[i].tax,0))
+			array.push("</td>")
+			array.push("<td class='totalTax_+"+ flag +"'>")
+			array.push(nvl(printQueryAdjustmentList[i].totalTax,0))
+			array.push("</td>")
+			
+			array.push("</tr>")
+			
+			if(flag === 'unNegative'){
+				unNegativeActualAmount += nvl(printQueryAdjustmentList[i].adjustAmount,0);
+				unNegativeTax += nvl(printQueryAdjustmentList[i].tax,0);
+				unNegativeTotalTax += nvl(printQueryAdjustmentList[i].totalTax,0);
+			}
+			if(flag === 'negative'){
+				negativeActualAmount += nvl(printQueryAdjustmentList[i].adjustAmount,0);
+				negativeTax += nvl(printQueryAdjustmentList[i].tax,0);
+				negativeTotalTax += nvl(printQueryAdjustmentList[i].totalTax,0);
+			}
+			
+			count++;
+			if(count === pageSize){
+				nextPage(array);
+			}
+		}
+		return array;
+	}
+	//分页
+	function nextPage(array){
+		array.push("</table>")
+		array.push("</div>")
+		head(array);
+		array.push("<table style='color: black;width: 100%;table-layout: fixed;font-size: small;text-align: center;' border='2px';")
+		//表格首行
+		array.push("<tr>")
+		array.push("<th style='text-align: center;'><@spring.message 'settlement.number'/></th>")
+		array.push("<th style='text-align: center;'><@spring.message 'settlement.linenum'/></th>")
+		array.push("<th style='text-align: center;'><@spring.message 'settlement.itemcode'/></th>")
+		array.push("<th style='text-align: center;'><@spring.message 'settlement.itemname'/></th>")
+		array.push("<th style='text-align: center;'><@spring.message 'settlement.docqty'/></th>")
+		array.push("<th style='text-align: center;'><@spring.message 'settlement.unitPrice'/></th>")
+		array.push("<th style='text-align: center;'><@spring.message 'settlement.priceUnit'/></th>")
+		array.push("<th style='text-align: center;'><@spring.message 'settlement.actualAmount'/></th>")
+		array.push("<th style='text-align: center;'><@spring.message 'settlement.taxCode'/></th>")
+		array.push("<th style='text-align: center;'><@spring.message 'settlement.tax'/></th>")
+		array.push("<th style='text-align: center;'><@spring.message 'settlement.totalTax'/></th>")
+		array.push("</tr>")
+		count = 0;
+	}
+	function float2(str){
+		str = str + '';
+		if(str.indexOf('.') > 0){
+			return str.split('.')[0] + '.' + str.split('.')[1].substr(0,2);
+		}else{
+			return str;
+		}
+	}
+</script>
+</body>

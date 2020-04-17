@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.spc.ecr_main.mapper.EcrSolutionMainMapper">
+    <resultMap id="BaseResultMap" type="com.hand.spc.ecr_main.dto.EcrSolutionMain">
+        <result column="SOLUTION_ID" property="solutionId" jdbcType="DECIMAL" />
+        <result column="SOLUTION_NUM" property="solutionNum" jdbcType="VARCHAR" />
+        <result column="ECRNO" property="ecrno" jdbcType="VARCHAR" />
+        <result column="ISSUE_TYPE" property="issueType" jdbcType="VARCHAR" />
+        <result column="ISSUE_MSG" property="issueMsg" jdbcType="VARCHAR" />
+    </resultMap>
+
+
+	   <resultMap id="ViewResultMap" type="com.hand.spc.ecr_main.view.EcrSolutionMainV0" extends="BaseResultMap">
+        <result column="finishDate" property="finishDate" jdbcType="DATE"/>
+        <result column="mainDuty" property="mainDuty" jdbcType="VARCHAR"/>
+    </resultMap>
+    
+    <select id="baseQuery" resultMap="ViewResultMap">
+ 		  select t.*,r.plan_finished_date,r.main_duty from HPM_ECR_SOLUTION_MAIN t,hpm_ecr_main r
+	       where t.ecrno=r.ecrno
+	       AND T.ECRNO=#{ecrno}
+    </select>
+</mapper>

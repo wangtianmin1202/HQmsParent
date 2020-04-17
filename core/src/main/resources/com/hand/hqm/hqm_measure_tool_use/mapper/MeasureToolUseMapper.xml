@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_measure_tool_use.mapper.MeasureToolUseMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_measure_tool_use.dto.MeasureToolUse">
+        <result column="MEASURE_TOOL_USE_ID" property="measureToolUseId" jdbcType="DECIMAL" />
+        <result column="MEASURE_TOOL_ID" property="measureToolId" jdbcType="DECIMAL" />
+        <result column="USE_NUMBER" property="useNumber" jdbcType="VARCHAR" />
+        <result column="APPLICATION_DATE" property="applicationDate" jdbcType="DATE" />
+        <result column="RETURN_DATE" property="returnDate" jdbcType="DATE" />
+        <result column="STATUS" property="status" jdbcType="VARCHAR" />
+        <result column="BORROWED_SUPPLIER" property="borrowedSupplier" jdbcType="DECIMAL" />
+        <result column="BUSINESS_KEY" property="businessKey" jdbcType="VARCHAR" />
+        <result column="PROCESS_START_TIME" property="processStartTime" jdbcType="DATE" />
+        <result column="PROCESS_END_TIME" property="processEndTime" jdbcType="DATE" />
+        <result column="PROCESS_INSTANCE_ID" property="processInstanceId" jdbcType="VARCHAR" />
+        <result column="PROCESS_STATUS" property="processStatus" jdbcType="VARCHAR" />
+        <result column="measure_tool_num" property="measureToolNum" jdbcType="VARCHAR" />
+        <result column="descriptions" property="descriptions" jdbcType="VARCHAR" />
+        <result column="measure_tool_type" property="measureToolType" jdbcType="VARCHAR" />
+        <result column="measuring_range" property="measuringRange" jdbcType="VARCHAR" />
+        <result column="borrowed_supplier_name" property="borrowedSupplierName" jdbcType="VARCHAR" />
+    </resultMap>
+
+	<select id="queryByCondition" resultMap="BaseResultMap" parameterType="com.hand.hqm.hqm_measure_tool_use.dto.MeasureToolUse">
+		select 
+			hmtu.MEASURE_TOOL_USE_ID,
+			hmtu.USE_NUMBER,
+			hmtu.MEASURE_TOOL_ID,
+			hmtu.APPLICATION_DATE,
+			hmtu.RETURN_DATE,
+			hmtu.status,
+			hmtu.borrowed_supplier,
+			hmtu.BUSINESS_KEY,
+			hmtu.PROCESS_START_TIME,
+			hmtu.PROCESS_END_TIME,
+			hmtu.PROCESS_INSTANCE_ID,
+			hmtu.PROCESS_STATUS,
+			hmt.measure_tool_num as measure_tool_num,
+			hmt.descriptions as descriptions,
+			hmt.measuring_range as measuring_range,
+			hmt.measure_tool_type as measure_tool_type,
+			hs.supplier_name as borrowed_supplier_name
+		from hqm_measure_tool_use hmtu
+		left join hqm_measure_tool hmt on hmt.MEASURE_TOOL_ID = hmtu.MEASURE_TOOL_ID
+		left join hcs_suppliers hs on hmtu.borrowed_supplier = hs.supplier_id
+		where 1=1
+		<if test="measureToolUseId != null and measureToolUseId != ''">
+			and hmtu.MEASURE_TOOL_USE_ID = #{measureToolUseId}
+		</if>
+		<if test="processInstanceId != null and processInstanceId != ''">
+			and hmtu.PROCESS_INSTANCE_ID = #{processInstanceId}
+		</if>
+		<if test="useNumber != null and useNumber != ''">
+			and hmtu.USE_NUMBER like concat('%',concat(#{useNumber},'%'))
+		</if>
+		<if test="measureToolNum != null and measureToolNum != ''">
+			and hmt.measure_tool_num like concat('%',concat(#{measureToolNum},'%'))
+		</if>
+		<if test="measureToolType != null and measureToolType != ''">
+			and hmt.measure_tool_type like concat('%',concat(#{measureToolType},'%'))
+		</if>
+		order by hmtu.MEASURE_TOOL_USE_ID desc
+	</select>
+	
+	<select id="queryByProcessInstId" resultMap="BaseResultMap" parameterType="com.hand.hqm.hqm_measure_tool_use.dto.MeasureToolUse">
+		select t.* from hqm_measure_tool_use t
+		where t.PROCESS_INSTANCE_ID = #{processInstanceId}
+	</select>
+</mapper>

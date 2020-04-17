@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<!--
+  description   项目维护界面
+  @author KOCDZX0 2020/03/16 9:44 AM 
+-->
+<#include "../include/header.html">
+<script src="${base.contextPath}/common/code?projectTypes=HQM_PRODUCT_TYPE"></script>
+<script src="${base.contextPath}/common/code?categorys=HQM_8D_RESEARCH_PRODUCT_TYPE"></script>
+<script type="text/javascript">
+    var viewModelHead =Hap.createGridViewModel("#gridHead");
+
+</script>
+<body>
+<div id="page-content">
+<div>
+    <div class="pull-left"  style="padding-bottom:10px;padding-top: 10px;">
+        <span id="add-btn" class="btn btn-primary k-grid-add" style="float:left;margin-right:15px;" onclick="openProjectNewWindow()">新增项目 </span>
+    </div>
+    <div id="query-form" class="pull-right" style="padding-bottom:10px;padding-top: 10px;">
+        <input id="projectType" data-role="maskedtextbox" style="width:150px;margin-right:5px;" placeholder='项目类型'
+               data-bind="value:model.projectType" >
+        <script>
+            $("#projectType").kendoComboBox({
+                dataTextField: "meaning",
+                dataValueField: "value",
+                valuePrimitive: true,
+                dataSource: projectTypes
+            });
+        </script>
+        <input  id="projectDescription" data-role="maskedtextbox"
+                style="width:150px;margin-right:5px;" placeholder="项目名称" data-bind="value:model.projectDescription">
+        <input  id="category" data-role="maskedtextbox"
+                style="width:150px;margin-right:5px;" placeholder="品类" data-bind="value:model.category">
+        <script>
+            $("#category").kendoComboBox({
+                dataTextField: "meaning",
+                dataValueField: "value",
+                valuePrimitive: true,
+                dataSource: categorys
+            });
+        </script>
+        <input  id="succession" data-role="maskedtextbox"
+                style="width:150px;margin-right:5px;" placeholder="系列" data-bind="value:model.succession">
+        <input  id="skuCode" data-role="maskedtextbox"
+                style="width:150px;margin-right:5px;" placeholder="SKU型号" data-bind="value:model.skuCode">
+        <input  id="skuName" data-role="maskedtextbox"
+                style="width:150px;margin-right:5px;" placeholder="SKU名称" data-bind="value:model.skuName">
+
+        <span class="btn btn-primary" style="width:70px;margin-right:5px;" data-bind="click:query" type="submit">查询</span>
+        <span class="btn btn-default" type="button" data-bind="click:reset" style="margin-right:40px;"><i class="fa fa-eraser"></i>重置</span>
+    </div>
+    <script>kendo.bind($('#query-form'), viewModelHead);</script>
+    <div id="gridRow" class="row">
+        <div style="clear: both;">
+            <div  id="gridHead"></div>
+        </div>
+    </div>
+</div>
+
+
+</div>
+<div id="projectNewWindow"></div>
+<div id="projectViewWindow"></div>
+<div id="projectLineNewWindow"></div>
+<div id="projectLineViewWindow"></div>
+<script>
+    //进入项目新建页面
+    function openProjectNewWindow(){
+        var url='project_new.html';
+        var projectNewWindow = $("#projectNewWindow").kendoWindow({
+            actions:["close"],
+            width:780,
+            height:400,
+            title:'新增项目',
+            content:url,
+            iframe:true,
+            visible:false,
+            resizable:true,
+            modal:true,
+            close:function(){
+                $("#gridHead").data('kendoGrid').dataSource.read();
+            }
+        }).data("kendoWindow");
+        projectNewWindow.center().open();
+    }
+
+    //进入项目编辑页面
+    function openProjectViewWindow(projectId){
+        var url='project_view.html?projectId='+projectId;
+        var projectViewWindow = $("#projectViewWindow").kendoWindow({
+            actions:["close"],
+            width:780,
+            height:400,
+            title:'编辑项目',
+            content:url,
+            iframe:true,
+            visible:false,
+            resizable:true,
+            modal:true,
+            close:function(){
+                $("#gridHead").data('kendoGrid').dataSource.read();
+            }
+        }).data("kendoWindow");
+        projectViewWindow.center().open();
+    }
+
+    //项目行新增界面
+    function openProjectLineNewWindow(projectId){
+        var url='project_line_new.html?projectId='+projectId;
+        var projectLineNewWindow = $("#projectLineNewWindow").kendoWindow({
+            actions:["close"],
+            width:780,
+            height:400,
+            title:'新增SKU',
+            content:url,
+            iframe:true,
+            visible:false,
+            resizable:true,
+            modal:true,
+            close:function(){
+                $("#gridHead").data('kendoGrid').dataSource.read();
+            }
+        }).data("kendoWindow");
+        projectLineNewWindow.center().open();
+    }
+
+    //进入项目行编辑页面
+    function openProjectLineViewWindow(projectLineId){
+        var url='project_line_view.html?projectLineId='+projectLineId;
+        var projectLineViewWindow = $("#projectLineViewWindow").kendoWindow({
+            actions:["close"],
+            width:780,
+            height:400,
+            title:'编辑SKU',
+            content:url,
+            iframe:true,
+            visible:false,
+            resizable:true,
+            modal:true,
+            close:function(){
+                $("#gridHead").data('kendoGrid').dataSource.read();
+            }
+        }).data("kendoWindow");
+        projectLineViewWindow.center().open();
+    }
+</script>
+
+<script type="text/javascript">
+
+    // var webWidth=window.screen.availHeight*0.4;
+    // $('#gridRow').css("height",webWidth);
+
+    var BaseUrl = _basePath;
+
+    var dataSource = new kendo.data.DataSource({
+        transport: {
+            read: {
+                url: BaseUrl + "/hpm/project/exquery",
+                type: "POST",
+                dataType: "json"
+            },
+            parameterMap: function (options, type) {
+                if (type !== "read" && options.models) {
+                    var datas = Hap.prepareSubmitParameter(options, type)
+                    return kendo.stringify(datas);
+                } else if (type === "read") {
+                    return Hap.prepareQueryParameter(viewModelHead.model.toJSON(), options)
+                }
+            }
+        },
+        batch: true,
+        serverPaging: true,
+        pageSize: 10,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+                id: "projectId",
+                fields: {
+
+                }
+            }
+        }
+    });
+
+    //项目头数据展示
+    var gridHead = $("#gridHead").kendoGrid({
+        dataSource: dataSource,
+        resizable: true,
+        scrollable: true,
+        navigatable: false,
+        sortable:true,
+        // selectable: 'multiple, rowbox',
+        detailInit: detailInit,
+        dataBound: function () {
+            if (parent.autoResizeIframe) {
+                parent.autoResizeIframe('${RequestParameters.functionCode!}')
+            }
+        },
+
+        columns: [
+            {
+                field: "projectCode",
+                title: '<@spring.message "hqm.project.projectcode"/>',
+                width: 120
+            },
+            {
+                field: "typeMeaning",
+                title: '<@spring.message "hqm.project.projecttype"/>',
+                width: 120
+            },
+            {
+                field: "projectDescription",
+                title: '<@spring.message "hqm.project.projectname"/>',
+                width: 120
+            },
+            {
+                field: "categoryMeaning",
+                title: '<@spring.message "hqm.project.category"/>',
+                width: 120
+            },
+            {
+                field: "succession",
+                title: '<@spring.message "hqm.project.succession"/>',
+                width: 120
+            },
+            {
+                field: "flagMeaning",
+                title: '<@spring.message "hqm.project.enableflag"/>',
+                width: 120
+            },
+            {
+                field: "",
+                title: '<@spring.message "hap.action"/>',
+                width: 120,
+                template:function (rowdata) {
+                    return '<a href="#" onclick="openProjectViewWindow(\'' + rowdata.projectId + '\')">编辑项目</a>&nbsp;&nbsp;'+
+                        '<a href="#" onclick="openProjectLineNewWindow(\'' + rowdata.projectId + '\')">新增SKU</a>';
+                }
+            },
+        ],
+    }).data("kendoGrid");
+
+    //项目行数据展示
+    function detailInit(e) {
+        if (!e.data.projectId) {
+            e.masterRow.find('.k-icon').removeClass('k-icon').removeClass('k-i-collapse')
+            e.detailRow.remove()
+            return false;
+        }
+        $("<div/>").appendTo(e.detailCell).kendoGrid({
+            dataSource: {
+                transport: {
+                    read: {
+                        url: BaseUrl + "/hpm/project/line/exquery?projectId="+e.data.projectId,
+                        type: "POST",
+                        dataType: "json"
+                    },
+                    parameterMap: function (options, type) {
+                        return Hap.prepareQueryParameter(viewModelHead.model.toJSON(), options)
+                    }
+                },
+                batch: true,
+                serverPaging: true,
+                schema: {
+                    data: 'rows',
+                    total: 'total',
+                    model: {
+                        id: "projectLineId",
+                        fields: {
+                            projectId:{
+                                type:"number",
+                                defaultValue:e.data.projectId
+                            }
+                        },
+                    }
+                }
+            },
+            sortable: true,
+            pageable: false,
+            columns: [
+                {
+                    field: "subcode",
+                    title: '<@spring.message "hqm.projectline.subcode"/>',
+                    width: 60,
+                    headerAttributes: {style: "text-align:center"},
+                    attributes: {style: "text-align:center;white-space:nowrap;text-overflow:ellipsis;text-align:center;"},
+
+                },
+                {
+                    field: "skuCode",
+                    title: '<@spring.message "ecrmain.skucode"/>',
+                    width: 60,
+                    headerAttributes: {style: "text-align:center"},
+                    attributes: {style: "text-align:center;white-space:nowrap;text-overflow:ellipsis;text-align:center;"},
+
+                },
+                {
+                    field: "skuDescription",
+                    title: '<@spring.message "ecrmain.skudescription"/>',
+                    headerAttributes: {style: "text-align:center"},
+                    attributes: {style: "text-align:center;white-space:nowrap;text-overflow:ellipsis;text-align:center;"},
+                    width: 80,
+                },
+                {
+                    field: "stage",
+                    title: '<@spring.message "hqm.projectline.stage"/>',
+                    width: 60,
+                    headerAttributes: {style: "text-align:center"},
+                    attributes: {style: "text-align:center;white-space:nowrap;text-overflow:ellipsis;text-align:center;"},
+
+                },
+                {
+                    field: "enableFlag",
+                    title: '<@spring.message "hqm.project.enableflag"/>',
+                    headerAttributes: {style: "text-align:center"},
+                    attributes: {style: "text-align:center;white-space:nowrap;text-overflow:ellipsis;text-align:center;"},
+                    width: 60,
+                },
+                {
+                    field: "",
+                    title: '<@spring.message "hap.action"/>',
+                    headerAttributes: {style: "text-align:center"},
+                    attributes: {style: "text-align:center;white-space:nowrap;text-overflow:ellipsis;text-align:center;"},
+                    width: 60,
+                    template:function (rowdata) {
+                        return '<a href="#" onclick="openProjectLineViewWindow(\'' + rowdata.projectLineId + '\')">编辑SKU</a>';
+                    }
+                }
+            ]
+        });
+    }
+
+</script>
+</body>
+</html>

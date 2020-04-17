@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<!--
+  description  供应商制程要求界面
+  @author KOCDZX0 2020/03/19 9:41 AM 
+-->
+<#include "../include/header.html">
+<script src="${base.contextPath}/common/code?yesOrNo=SYS.YES_NO"></script>
+
+<script type="text/javascript">
+    var viewModelHead =Hap.createGridViewModel("#gridHead");
+
+</script>
+<body>
+<div id="page-content">
+    <div class="pull-left"  style="padding-bottom:10px;padding-top: 10px;">
+        <span id="add-btn" class="btn btn-primary k-grid-add" style="float:left;margin-right:15px;" onclick="openWindow1()">新建要求</span>
+    </div>
+    <div style="clear: both;">
+        <div  id="gridHead"></div>
+    </div>
+</div>
+<div id="div1"></div>
+<div id="div2"></div>
+
+<script type="text/javascript">
+    //进入新建要求
+    function openWindow1(){
+        var url='hcs_station_new.html';
+        var div1 = $("#div1").kendoWindow({
+            actions:["close"],
+            width:840,
+            height:600,
+            title:'新建要求',
+            content:url,
+            iframe:true,
+            visible:false,
+            resizable:true,
+            modal:true,
+            close:function(){
+                $("#gridHead").data('kendoGrid').dataSource.read();
+            }
+        }).data("kendoWindow");
+        div1.center().open();
+    }
+    //进入新建工位
+    function openWindow2(supplierId,itemId){
+        var url='hcs_sequence_new.html?supplierId='+supplierId+'&itemId='+itemId;
+        var div2 = $("#div2").kendoWindow({
+            actions:["close"],
+            width:900,
+            height:200,
+            title:'新增工位',
+            content:url,
+            iframe:true,
+            visible:false,
+            resizable:true,
+            modal:true,
+            close:function(){
+                $("#gridHead").data('kendoGrid').dataSource.read();
+            }
+        }).data("kendoWindow");
+        div2.center().open();
+    }
+
+    //    失效/生效单据
+    function enable(itemStationId,flag){
+        $.ajax({
+            url:BaseUrl+"/hcs/supplier/item/station/enable?itemStationId="+itemStationId+'&flag='+flag,
+            success:function(data){
+                if(data.success){
+                    kendo.ui.showInfoDialog({
+                        title:$l('hap.tip.info'),
+                        message:'<@spring.message "hap.tip.success"/>'
+                    });
+                    $("#gridHead").data('kendoGrid').dataSource.read();
+                }
+            }
+        })
+    }
+
+    var BaseUrl = _basePath;
+    var dataSource = new kendo.data.DataSource({
+        transport: {
+            read: {
+                url: BaseUrl + "/hcs/supplier/item/station/listQuery",
+                type: "POST",
+                dataType: "json"
+            },
+            parameterMap: function (options, type) {
+                if (type !== "read" && options.models) {
+                    var datas = Hap.prepareSubmitParameter(options, type)
+                    return kendo.stringify(datas);
+                } else if (type === "read") {
+                    return Hap.prepareQueryParameter(viewModelHead.model.toJSON(), options)
+                }
+            }
+        },
+        batch: true,
+        serverPaging: true,
+        pageSize: 10,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+                id: "itemStationId",
+                fields: {
+
+                }
+            }
+        }
+    });
+
+    //供应商制程-工位
+    var gridHead = $("#gridHead").kendoGrid({
+        dataSource: dataSource,
+        resizable: true,
+        scrollable: true,
+        navigatable: false,
+        sortable:true,
+        dataBound: function () {
+            if (parent.autoResizeIframe) {
+                parent.autoResizeIframe('${RequestParameters.functionCode!}')
+            }
+        },
+
+        columns: [
+            {
+                field: "supplierCode",
+                title: '<@spring.message "asl.suppliercode"/>',
+                width: 120
+            },
+            {
+                field: "supplierName",
+                title: '<@spring.message "asl.suppliername"/>',
+                width: 120
+            },
+            {
+                field: "itemCode",
+                title: '<@spring.message "asl.itemcode"/>',
+                width: 120
+            },
+            {
+                field: "itemDescriptions",
+                title: '<@spring.message "settlement.itemname"/>',
+                width: 120
+            },
+            {
+                field: "stationSequence",
+                title: '<@spring.message "coderulesline.fieldsequence"/>',
+                width: 60
+            },
+            {
+                field: "stationName",
+                title: '<@spring.message "hcs.station.name"/>',
+                width: 120
+            },
+            {
+                field: "enableFlag",
+                title: '<@spring.message "asliqccontrol.enableflag"/>',
+                width: 60,
+                template:function (rowdata) {
+                    var v = rowdata.enableFlag;
+                    $.each(yesOrNo,function (i,n) {
+                        if(n.value == v){
+                            v = n.meaning;
+                        }
+                    })
+                    return v || '';
+                }
+            },
+            {
+                field: "",
+                title: '<@spring.message "hap.action"/>',
+                width: 80,
+                template:function (rowdata) {
+                    var flag1 ="Y";
+                    var flag2 ="N";
+                    if(rowdata.enableFlag == flag1){
+                        return '<a href="#" onclick="openWindow2(\'' + rowdata.supplierId + '\',\'' + rowdata.itemId + '\')">新增工位</a>&nbsp;&nbsp;'+
+                            '<a href="#" onclick="enable(\'' + rowdata.itemStationId + '\',\'' + flag2 + '\')">失效</a>';
+                    }else if(rowdata.enableFlag == flag2){
+                        return '<a href="#" onclick="openWindow2(\'' + rowdata.supplierId + '\',\'' + rowdata.itemId + '\')">新增工位</a>&nbsp;&nbsp;'+
+                            '<a href="#" onclick="enable(\'' + rowdata.itemStationId + '\',\'' + flag1 + '\')">生效</a>';
+                    }else{
+                        return '<a href="#" onclick="openWindow2(\'' + rowdata.supplierId + '\',\'' + rowdata.itemId + '\')">新增工位</a>&nbsp;&nbsp;'+
+                            '<a href="#" onclick="enable(\'' + rowdata.itemStationId + '\',\'' + flag2 + '\')">失效</a>&nbsp;&nbsp;'+
+                        '<a href="#" onclick="enable(\'' + rowdata.itemStationId + '\',\'' + flag1 + '\')">生效</a>';
+                    }
+
+                }
+            },
+        ],
+    }).data("kendoGrid");
+
+</script>
+</body>
+</html>

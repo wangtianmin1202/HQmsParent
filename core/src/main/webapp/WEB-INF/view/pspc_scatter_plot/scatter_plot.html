@@ -1,0 +1,1071 @@
+<#include "../include/header.html">
+<script src="${base.contextPath}/common/code?PSPC_TICK_LABEL=PSPC.TICK.LABEL" type="text/javascript"></script>
+<script src="${base.contextPath}/resources/lib/echarts/echarts.js"></script>
+<script src="${base.contextPath}/resources/lib/echarts/ecStat.js"></script>
+<script src="${base.contextPath}/resources/lib/utils/sys_util.js"></script>
+<script type="text/javascript">
+    var viewModel = Hap.createGridViewModel("#grid");
+    var lastQueryParams;//上一次查询成功的参数集合
+    var lastQueryResult = [];//上一次查询成功的结果点位集合
+    var scatterPlotSimpleChart;//散点图Chart
+    var matrixScatterPlotChart;//矩阵散点图
+    var exportThead;//导出的表格头
+    var exportTbody;//导出的表格数据
+</script>
+<style type="text/css">
+    .k-dirty {
+        border-width: 0px;
+    }
+
+    td .k-checkbox {
+        margin: 8px 0px;
+    }
+
+    .data-table {
+        width: 100%;
+        text-align: center;
+        border-color: #DDDDDD;
+    }
+
+    .data-thead {
+        color: #758697;
+        background-color: #F5F5F5;
+    }
+
+    .data-table .data-thead tr {
+        height: 40px;
+    }
+
+    .data-table .data-thead th {
+        padding: 0px;
+        text-align: center;
+        font-weight: bold;
+        font-family: "Helvetica Neue", "Luxi Sans", "DejaVu Sans", Tahoma, "Microsoft Yahei", "Hiragino Sans GB", sans-serif;
+        font-size: 12px;
+    }
+
+    .data-table .data-thead th div {
+        width: 100%;
+        height: 100%;
+        padding: 10px;
+        position: relative;
+        background-color: #F5F5F5;
+    }
+
+    .data-tbody {
+        font-weight: 100;
+        color: #758697;
+        font-family: "Helvetica Neue", "Luxi Sans", "DejaVu Sans", Tahoma, "Microsoft Yahei", "Hiragino Sans GB", sans-serif;
+        font-size: 12px;
+    }
+
+    .data-tbody tr{
+        height: 35px;
+    }
+
+    .data-tbody td{
+        padding: 5px 10px;
+    }
+</style>
+<body>
+<div id="picker"></div>
+<div id="page-content">
+    <div class="pull-left" id="toolbar-btn" style="padding-bottom:10px;">
+        <span class="btn btn-primary k-grid-add" style="float:left;margin-right:5px;" data-bind="click:create"><@spring.message "entitychart.add"/></span>
+        <span onclick="entityRemove()"class="btn btn-danger" style="float:left;"><@spring.message "hap.delete"/></span>
+    </div>
+    <script>kendo.bind($('#toolbar-btn'), viewModel);</script>
+    <div class="pull-right" id="query-form" style="padding-bottom:10px;">
+        <span class="btn btn-primary k-grid-excel" style="float:left; margin-right:5px;" onclick="exportExcel()">
+            <i class="fa fa-file-excel-o" style="margin-right:3px;"></i><@spring.message "hap.exportexcel"/>
+        </span>
+        <span class="btn btn-default" style="float:left;margin-right:5px;width:70px;" onclick="window.location.reload();"><@spring.message "hap.reset"/></span>
+        <span class="btn btn-primary" style="float:left;width:70px" onclick="queryScatterPlot()" type="submit"><@spring.message "hap.query"/></span>
+        <div style="clear:both"></div>
+    </div>
+    <div style="clear:both">
+        <div id="grid"></div>
+    </div>
+    <div style="width: 1560px; height: 500px; margin: 20px auto; ">
+        <div id="scatterPlotSimple" style="width: 780px; height: 500px; float: left"></div>
+        <div id="matrixScatterPlot" style="width: 780px; height: 500px; float: left"></div>
+    </div>
+    <div style="margin-top: 20px; width: 100%">
+        <div id="dataTableDiv" style="height: 500px; margin-left: 5%; overflow-y: scroll;">
+            <table id="dataTable" border="1" cellpadding="0px" cellspacing="0px" class="data-table">
+                <thead id="dataThead" class="data-thead"></thead>
+                <tbody id="dataTbody" class="data-tbody"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    Hap.initEnterQuery('#query-form', viewModel.query);
+    var BaseUrl = _basePath;
+    dataSource = new kendo.data.DataSource({
+        transport: {
+            read: {
+                url: BaseUrl + "/pspc/entity/query",
+                type: "POST",
+                dataType: "json"
+            },
+            update: {
+                url: BaseUrl + "/pspc/entity/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            destroy: {
+                url: BaseUrl + "/pspc/entity/remove",
+                type: "POST",
+                contentType: "application/json"
+            },
+            create: {
+                url: BaseUrl + "/pspc/entity/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            parameterMap: function (options, type) {
+                if (type !== "read" && options.models) {
+                    var datas = Hap.prepareSubmitParameter(options, type)
+                    return kendo.stringify(datas);
+                } else if (type === "read") {
+                    return Hap.prepareQueryParameter(viewModel.model.toJSON(), options)
+                }
+            }
+        },
+        batch: true,
+        serverPaging: false,
+        pageSize: 10,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+                id: "entityId",
+                fields: {
+                    individualAnalysis: {defaultValue: 'N', type: 'boolean', checkedValue: 'Y', uncheckedValue: 'N'}
+                }
+            }
+        }
+    });
+
+    $("#grid").kendoGrid({
+        autoBind: false,
+        dataSource: dataSource,
+        resizable: true,
+        scrollable: true,
+        navigatable: false,
+        rownumber: true,
+        selectable: 'multiple, rowbox',
+        dataBound: function () {
+            if (parent.autoResizeIframe) {
+                parent.autoResizeIframe('${RequestParameters.functionCode!}')
+            }
+        },
+        columns: [
+            {
+                field: "individualAnalysis",
+                title: '<@spring.message "pspcscatterchart.individualanalysis"/>',
+                attributes: {style: "text-align:center"},
+                headerAttributes: { style: "text-align: center" },
+                width: 70
+            },
+            {
+                field: "coordinateAxis",
+                title: '<@spring.message "pspcscatterchart.coordinateaxis"/>',
+                attributes: {style: "text-align:center"},
+                headerAttributes: { style: "text-align: center" },
+                width: 120,
+                template: function (dataItem) {
+                    var v = dataItem.coordinateAxis ? dataItem.coordinateAxis : "";
+                    $.each(PSPC_TICK_LABEL, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return v;
+                        }
+                    })
+                    return v;
+                },
+                editor: function (container, options) {
+                    $('<input name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            dataTextField: "meaning",
+                            dataValueField: "value",
+                            valuePrimitive: true,
+                            dataSource: PSPC_TICK_LABEL
+                        });
+                }
+            },
+            {
+                field: "entityId",
+                title: '<@spring.message "pspcscatterchart.entitycode"/>',
+                headerAttributes: { style: "text-align: center" },
+                width: 120,
+                template: function(item){
+                    return item['entityCode']||''
+                },
+                editor: function (container, options) {
+                    $('<input name="' + options.field + '" required="required" />')
+                        .appendTo(container)
+                        .kendoLov($.extend(<@lov "PSPC_PSPC_ENTITY_SAMPLE"/>, {
+                        textField: 'entityCode',
+                        model: options.model
+                    },{
+                        query: function (e) {
+                            e.param['tenantId'] = '-1';
+                            e.param['siteId'] = '-1';
+                        },
+                        select: function (e) {
+                            options.model.set('description', e.item.description);
+                            options.model.set('entityVersion', e.item.entityVersion);
+                            options.model.set('ceGroup', e.item.ceGroup);
+                            options.model.set('ceParameter', e.item.ceParameter);
+                            options.model.set('ceParameterName', e.item.ceParameterName);
+                            options.model.set('attachmentGroupDescription', e.item.attachmentGroupDescription);
+                        }
+                    }));
+                }
+            },
+            {
+                field: "description",
+                title: '<@spring.message "pspcscatterchart.entitydescription"/>',
+                headerAttributes: { style: "text-align: center" },
+                width: 120,
+                editor: function (container, options) {
+                    var val = options.model.description == null ? '' : options.model.description;
+                    $('<span>' + val + '</span>').appendTo(container);
+                }
+            },
+            {
+                field: "entityVersion",
+                title: '<@spring.message "pspcscatterchart.entityversion"/>',
+                headerAttributes: { style: "text-align: center" },
+                width: 120,
+                editor: function (container, options) {
+                    var val = options.model.entityVersion == null ? '' : options.model.entityVersion;
+                    $('<span>' + val + '</span>').appendTo(container);
+                }
+            },
+            {
+                field: "ceGroup",
+                title: '<@spring.message "pspcscatterchart.cegroup"/>',
+                headerAttributes: { style: "text-align: center" },
+                width: 120,
+                editor: function (container, options) {
+                    var val = options.model.ceGroup == null ? '' : options.model.ceGroup;
+                    $('<span>' + val + '</span>').appendTo(container);
+                }
+            },
+            {
+                field: "ceParameter",
+                title: '<@spring.message "pspcscatterchart.ceparameter"/>',
+                headerAttributes: { style: "text-align: center" },
+                width: 120,
+                editor: function (container, options) {
+                    var val = options.model.ceParameter == null ? '' : options.model.ceParameter;
+                    $('<span>' + val + '</span>').appendTo(container);
+                }
+            },
+            {
+                field: "attachmentGroupDescription",
+                title: '<@spring.message "pspcscatterchart.attachmentgroupdescription"/>',
+                headerAttributes: { style: "text-align: center" },
+                width: 120,
+                editor: function (container, options) {
+                    var val = options.model.attachmentGroupDescription == null ? '' : options.model.attachmentGroupDescription;
+                    $('<span>' + val + '</span>').appendTo(container);
+                }
+            },
+            {
+                field: "startDate",
+                title: '<@spring.message "pspcscatterchart.startdate"/>',
+                width: 150,
+                attributes: {style: "text-align:center"},
+                headerAttributes: {style: "text-align:center"},
+                format:"{0:yyyy-MM-dd HH:mm:ss}",
+                editor: function (container, options) {
+                    //获得到期时间
+                    var end = options.model.endDate;
+                    var opts = {
+                        format: "yyyy-MM-dd HH:mm:ss"
+                    }
+                    if (end) {
+                        opts.max = end;
+                    }
+                    $('<input name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDateTimePicker(opts);
+                }
+            },
+            {
+                field: "endDate",
+                title: '<@spring.message "pspcscatterchart.enddate"/>',
+                width: 150,
+                attributes: {style: "text-align:center"},
+                headerAttributes: {style: "text-align:center"},
+                format:"{0:yyyy-MM-dd HH:mm:ss}",
+                editor: function (container, options) {
+                    //获得开始时间
+                    var start = options.model.startDate;
+                    var opts = {
+                        format: "yyyy-MM-dd HH:mm:ss"
+                    }
+                    if (start) {
+                        opts.min = start;
+                    }
+                    $('<input name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDateTimePicker(opts);
+                }
+            }
+        ],
+        editable: {
+            createAt: "bottom"
+        }
+    });
+
+    //绑定table外层div滚动事件
+    $('#dataTableDiv').on('scroll', tableScrollHandle);
+
+    //表格滚动时固定表头
+    function tableScrollHandle() {
+        //获取table外层DIV的滚动值
+        var scrollTop = $('#dataTableDiv').scrollTop();
+
+        //当滚动距离大于0时设置top及相应的样式
+        if (scrollTop > 0) {
+            $('#dataThead').children('tr').children('th').children('div').css({
+                "top": (scrollTop-1) + 'px',
+                "border-bottom": "1px solid #DDDDDD",
+                "border-top": "1px solid #898989",
+                "height": "41px"
+            });
+        } else {
+            // 当滚动距离小于0时设置top及相应的样式
+            $('#dataThead').children('tr').children('th').children('div').css({
+                "top": scrollTop + 'px',
+                "border-bottom": "0px solid #DDDDDD",
+                "border-top": "0px solid #898989",
+                "height": "39px"
+            });
+        }
+    }
+
+    //删除按钮事件
+    function entityRemove() {
+        var grid = $('#grid').data("kendoGrid") || {};
+        if (grid.selectedDataItems().length) {
+            //删除前端数据
+            var checked = grid.selectedDataItems();
+            $.each(checked, function (i, v) {
+                grid.dataSource.remove(v);
+            });
+        }
+    }
+
+    //查询按钮事件
+    function queryScatterPlot() {
+        var grid = $('#grid').data("kendoGrid") || {};
+
+        if (grid.selectedDataItems().length && grid.selectedDataItems().length > 1) {
+            var checked = grid.selectedDataItems();
+            var params = '';
+            var entityIds = [];
+            var abscissaFlag = false;
+            var ordinateFlag = false;
+            var abscissaEntityId;
+            var ordinateEntityId;
+
+            //数据校验
+            $.each(checked, function (i, v) {
+                //校验是否选择了实体控制图
+                if(!ifNotNull(v.entityId)) {
+                    Hap.showToast({
+                        type:'error',  //1.success 2.error
+                        message: '请选择实体控制图',
+                        hideDuration:2000
+                    });
+                    return;
+                }
+
+                //检查是否有重复数据
+                if(contains(entityIds, v.entityId)) {
+                    Hap.showToast({
+                        type:'error',  //1.success 2.error
+                        message: '选择的实体控制图[' + v.entityCode + ']重复',
+                        hideDuration:2000
+                    });
+                    return;
+                }
+
+                //如果只有两个则直接勾选单个分析
+                // if(checked.length === 2){
+                //     v.individualAnalysis = 'Y';
+                // }
+
+                //校验单个分析横纵坐标
+                if(v.individualAnalysis === 'Y') {
+                    if(v.coordinateAxis === 'abscissa') {
+                        abscissaFlag = true;
+                        abscissaEntityId = v.entityId;
+                    }
+                    else if(v.coordinateAxis === 'ordinate') {
+                        ordinateFlag = true;
+                        ordinateEntityId = v.entityId;
+                    } else {
+                        Hap.showToast({
+                            type:'error',  //1.success 2.error
+                            message: '请选择实体控制图[' + v.entityCode + ']坐标',
+                            hideDuration:2000
+                        });
+                        return;
+                    }
+                }
+
+                //将当前ID添加到数组
+                entityIds.push(v.entityId);
+                params += v.entityId + ':' + v.startDate + ':' + v.endDate + ',';
+            });
+
+            //校验是否同时选择了横纵坐标
+            if((abscissaFlag && !ordinateFlag) || (!abscissaFlag && ordinateFlag)) {
+                Hap.showToast({
+                    type:'error',  //1.success 2.error
+                    message: '请选择单个分析的横纵坐标',
+                    hideDuration:2000
+                });
+                return;
+            }
+
+            //判断是否改变了查询的实体控制图集合，如果没改变，则仅重新加载散点图
+            if(lastQueryParams === params && lastQueryResult != null && lastQueryResult.length > 1){
+                var abscissaData = [];//X轴坐标原始数据
+                var ordinateData = [];//Y轴坐标原始数据
+                var scatterPlotSchema = {};//坐标轴信息
+                var scatterPlotPoints = [];//点位信息
+
+                //先从上次查询成功的结果集中找到对应的XY坐标值原始信息
+                $.each(lastQueryResult, function (i, v) {
+                    if (v.entityId === abscissaEntityId) {
+                        abscissaData = v.sampleValues;
+                        scatterPlotSchema.X = v.entityCode + '\n' + v.description;
+                    } else if (v.entityId === ordinateEntityId) {
+                        ordinateData = v.sampleValues;
+                        scatterPlotSchema.Y = v.entityCode + '\n' + v.description;
+                    }
+                });
+
+                //构造点位
+                if(abscissaData != null && abscissaData.length > 0
+                    && ordinateData != null && ordinateData.length > 0) {
+                    var size = abscissaData.length < ordinateData.length ? abscissaData.length : ordinateData.length;
+
+                    for(var i = 0; i < size; i++) {
+                        var point = [];
+                        point.push(abscissaData[i]);
+                        point.push(ordinateData[i]);
+                        scatterPlotPoints.push(point);
+                    }
+
+                    //加载散点图
+                    initScatterPlot(scatterPlotPoints, scatterPlotSchema);
+                }
+            } else {
+                //将数据传到后台
+                $.ajax({
+                    type: "POST",
+                    url: BaseUrl + "/pspc/entity/query/scatter/plot",
+                    data: JSON.stringify(checked),//json序列化
+                    datatype: "json", //此处不能省略
+                    contentType: "application/json; charset=utf-8",
+                    success: function (data) {
+                        if (data.success) {
+                            //加载图表
+                            initChartAndTable(data.rows[0]);
+                            //重置标识
+                            lastQueryParams = params;
+                            lastQueryResult = data.rows[0].inVo;
+                        } else {
+                            Hap.showToast({
+                                type: 'error',  //1.success 2.error
+                                message: data.message,
+                                hideDuration: 4000 //展示4秒
+                            });
+                        }
+                    },
+                    error: function (data) {
+                        Hap.showToast({
+                            type: 'error',  //1.success 2.error
+                            message: data,
+                            hideDuration: 2000
+                        });
+                    }
+                });
+            }
+        } else {
+            Hap.showToast({
+                type:'error',  //1.success 2.error
+                message: '查询的实体控制图需要大于等于两个',
+                hideDuration:2000
+            });
+        }
+    }
+
+    //加载统计图及统计表
+    function initChartAndTable(data) {
+        //加载散点图
+        initScatterPlot(data.scatterPlotPoints, data.scatterPlotSchema);
+
+        //加载矩阵散点图
+        initMatrixScatterPlot(data.matrixScatterPlotPoints, data.matrixScatterPlotSchema);
+
+        //加载表格
+        initTable(data.tableData, data.inVo);
+    }
+
+    /**
+     * @Description 加载散点图
+     *              scatterPlotPoints:点位信息
+     *              scatterPlotSchema:坐标轴信息
+     * @author yuchao.wang
+     * @date 2019/8/24 23:35
+     */
+    function initScatterPlot(scatterPlotPoints, scatterPlotSchema) {
+        // if(scatterPlotPoints == null || scatterPlotPoints.length < 1
+        //     || scatterPlotSchema == null || scatterPlotSchema.length < 1) {
+        //     scatterPlotSimpleChart = null;
+        //     $('#matrixScatterPlot').removeAttr('_echarts_instance_').html('');
+        //     return;
+        // }
+        if(scatterPlotPoints == null)
+            scatterPlotPoints = [];
+        if(scatterPlotSchema == null)
+            scatterPlotSchema = {X:'',Y:''};
+
+        var dom = document.getElementById("scatterPlotSimple");
+        scatterPlotSimpleChart = echarts.init(dom);
+
+        //构造回归分析
+        var myRegression = ecStat.regression('linear', scatterPlotPoints);
+        myRegression.points.sort(function(a, b) {
+            return a[0] - b[0];
+        });
+
+        //统计显示文字
+        var statisticsText = '{a|样本数      ：0'
+            +'\n回归方程式：'
+            +'\n相关系数   ：'
+            +'\n平均值(X)  ：'
+            +'\n平均值(Y)  ：}';
+
+        if(scatterPlotPoints.length > 0) {
+            //获取相关系数及平均数
+            var statistics = getStatistics(scatterPlotPoints);
+
+            statisticsText = '{a|样本数      ：' + scatterPlotPoints.length
+                +'\n回归方程式：' + myRegression.expression
+                +'\n相关系数   ：' + statistics.rValue
+                +'\n平均值(X)  ：' + statistics.avgX
+                +'\n平均值(Y)  ：' + statistics.avgY + '}';
+        }
+
+
+        //构造配置项
+        var option = {
+            title: [{
+                text: '{a|单图显示}',
+                left: 'center',
+                backgroundColor:'white',
+                top: '3%',
+                textStyle:{
+                    fontWeight: 'bolder',
+                    fontSize: 25,
+                    lineHeight: 26,
+                    rich: {
+                        a: {
+                            fontWeight: 'bolder',
+                            fontSize: 25,
+                            lineHeight: 26
+                        }
+                    }
+                }
+            },{
+                text: statisticsText,
+                textStyle:{
+                    fontWeight: 'normal',
+                    color: '#000',
+                    fontSize: 12,
+                    lineHeight: 15,
+                    rich: {
+                        a: {
+                            fontWeight: 'normal',
+                            color: '#000',
+                            fontSize: 12,
+                            lineHeight: 15
+                        }
+                    }
+                },
+                right: '1%',
+                top: '0%'
+            }],
+            grid: [{
+                top:'16%'
+            }],
+            tooltip: {
+                /*trigger: 'item',
+                formatter(params) {
+                    return '(' + params.value[0] + ',' + params.value[1] +')';
+                }*/
+                trigger: 'axis',
+                formatter(params) {
+                    return params[0].marker + 'scatter:(' + params[0].value[0] + ',' + params[0].value[1] +')<br/>'
+                        + params[1].marker + 'line:(' + params[1].value[0] + ',' + params[1].value[1] +')';
+                }
+            },
+            xAxis: {
+                name: scatterPlotSchema.X,
+                nameLocation:"middle",
+                nameGap:25,
+                nameTextStyle: {
+                    fontFamily:"Microsoft YaHei",
+                    fontSize:13,
+                    lineHeight:14
+                },
+                scale: true
+            },
+            yAxis: {
+                name: scatterPlotSchema.Y,
+                nameLocation:"middle",
+                nameGap:25,
+                nameRotate:90,
+                nameTextStyle: {
+                    fontFamily:"Microsoft YaHei",
+                    fontSize:13,
+                    lineHeight:14
+                },
+                scale: true
+            },
+            series: [{
+                symbolSize: 10,
+                data: scatterPlotPoints,
+                type: 'scatter'
+            }, {
+                name: 'line',
+                type: 'line',
+                showSymbol: false,
+                data: myRegression.points,
+                markPoint: {
+                    itemStyle: {
+                        normal: {
+                            color: 'transparent'
+                        }
+                    },
+                    label: {
+                        normal: {
+                            show: true,
+                            position: 'left',
+                            formatter: myRegression.expression,
+                            textStyle: {
+                                color: '#333',
+                                fontSize: 14
+                            }
+                        }
+                    },
+                    data: [{
+                        coord: myRegression.points[myRegression.points.length - 1]
+                    }]
+                }
+            }]
+        };
+
+        //如果为空设置坐标轴最大值最小值
+        if(scatterPlotPoints.length < 1) {
+            option.xAxis.min = 0;
+            option.xAxis.max = 100;
+            option.yAxis.min = 0;
+            option.yAxis.max = 100;
+        }
+
+        scatterPlotSimpleChart.setOption(option, true);
+    }
+
+    /**
+     * @Description 获取相关系数及平均数
+     *              scatterPlotPoints:点位信息
+     * @author yuchao.wang
+     * @date 2019/10/16 15:00
+     */
+    function getStatistics(scatterPlotPoints) {
+        var statistics = {
+            rValue: null,
+            avgX: null,
+            avgY: null
+        };
+
+        if(scatterPlotPoints == null || scatterPlotPoints.length == 0) {
+            return statistics;
+        }
+
+        //计算平均数
+        var sumX = 0;
+        var sumY = 0;
+        $.each(scatterPlotPoints, function (i, v) {
+            sumX += v[0];
+            sumY += v[1];
+        });
+        statistics.avgX = sumX / scatterPlotPoints.length;
+        statistics.avgY = sumY / scatterPlotPoints.length;
+
+        //计算相关系数
+        var SSR = 0;//公式分子部分
+        var SST = 1;//公式分母部分
+        var varX = 0;//公式分母部分X累加
+        var varY = 0;//公式分母部分Y累加
+        $.each(scatterPlotPoints, function (i, v) {
+            var diffXBar = v[0] - statistics.avgX;
+            var diffYBar = v[1] - statistics.avgY;
+            SSR += diffXBar * diffYBar;
+            varX += diffXBar * diffXBar;
+            varY += diffYBar * diffYBar;
+        });
+        var SST = Math.sqrt(varX * varY);
+        statistics.rValue = Number(Number(SSR / SST).toFixed(6));
+
+        //保留两位小数
+        statistics.avgX = Number(Number(statistics.avgX).toFixed(6));
+        statistics.avgY = Number(Number(statistics.avgY).toFixed(6));
+
+        return statistics;
+    }
+
+    /**
+     * @Description 加载矩阵散点图
+     *              matrixScatterPlotPoints:点位信息
+     *              matrixScatterPlotSchema:坐标轴信息
+     * @author yuchao.wang
+     * @date 2019/8/24 23:35
+     */
+    function initMatrixScatterPlot(matrixScatterPlotPoints, matrixScatterPlotSchema) {
+        // if(matrixScatterPlotPoints == null || matrixScatterPlotPoints.length < 1
+        //     || matrixScatterPlotSchema == null ||matrixScatterPlotSchema.length < 1) {
+        //     scatterPlotSimpleChart = null;
+        //     $('#matrixScatterPlot').removeAttr('_echarts_instance_').html('');
+        //     return;
+        // }
+
+        //构造矩阵坐标轴信息
+        var schema = [];
+        $.each(matrixScatterPlotSchema, function (i, v) {
+            var sch = {};
+            sch.name = v.name;
+            sch.text = v.text;
+            sch.index = (i+1);
+            schema.push(sch);
+        });
+
+        //构造option
+        var option = {
+            animation: true,
+            title: {
+                text: '多图显示',
+                left: 'center',
+                backgroundColor:'white'
+            },
+            brush: {
+                brushLink: 'all',
+                xAxisIndex: [],
+                yAxisIndex: [],
+                inBrush: {
+                    opacity: 1
+                }
+            },
+            visualMap: {
+                type: 'piecewise',
+                categories: [""],
+                dimension: schema.length,
+                orient: 'horizontal',
+                top: 0,
+                left: 'center',
+                inRange: {
+                    color: ['#c23531']
+                },
+                outOfRange: {
+                    color: '#555'
+                },
+                seriesIndex: [0]
+            },
+            tooltip: {
+                trigger: 'item',
+                formatter(params) {
+                    return '(' + params.value[0] + ',' + params.value[1] +')';
+                }
+            },
+            parallelAxis: [],
+            parallel: {},
+            grid: [],
+            xAxis: [],
+            yAxis: [],
+            series: []
+        };
+
+        //构造主要参数
+        generateMatrixScatterPlotGrids(option, matrixScatterPlotPoints, matrixScatterPlotSchema);
+
+        //绘制图表
+        var dom = document.getElementById("matrixScatterPlot");
+        matrixScatterPlotChart = echarts.init(dom);
+        matrixScatterPlotChart.setOption(option, true);
+    }
+
+    //矩阵散点图相关参数
+    var GAP = 3;//矩阵间隔
+    var BASE_LEFT = 10;//左侧预留宽度
+    var BASE_TOP = 8;//上方预留宽度
+    var BASE_BOTTOM = 3;//下方预留宽度
+    var SYMBOL_SIZE = 5;//散点大小
+
+    /**
+     * @Description 从所有点位信息中提取对应的点位信息
+     *              data:所有点位数据
+     *              dimX：该组x坐标值对应的索引
+     *              dimY：该组y坐标值对应的索引
+     *              schemaCount:坐标轴总数
+     * @author yuchao.wang
+     * @date 2019/8/24 23:35
+     */
+    function retrieveScatterData(data, dimX, dimY, schemaCount) {
+        var result = [];
+        for (var i = 0; i < data.length; i++) {
+            //提取对应的坐标点
+            var item = [data[i][dimX], data[i][dimY]];
+
+            //提取类别字段，类别字段索引和坐标轴总数仅在数值上相同
+            item[schemaCount] = data[i][schemaCount];
+
+            result.push(item);
+        }
+        return result;
+    }
+
+    /**
+     * @Description 构造矩阵散点图配置参数
+     *              option:基本参数
+     *              matrixScatterPlotPoints:点位信息
+     *              schema:坐标轴信息
+     * @author yuchao.wang
+     * @date 2019/8/24 23:35
+     */
+    function generateMatrixScatterPlotGrids(option, matrixScatterPlotPoints, schema) {
+        var index = 0;
+        var schemaCount = schema.length;//坐标轴总数
+        var gridWidth = (100 - BASE_LEFT - GAP) / schemaCount - GAP - BASE_BOTTOM;//每个矩形宽度 按百分比计算
+        var gridHeight = (100 - BASE_TOP - GAP) / schemaCount - GAP - BASE_BOTTOM;//每个矩形高度 按百分比计算
+
+        for (var i = 0; i < schemaCount; i++) {
+            // for (var j = i + 1; j < schemaCount; j++) {
+            for (var j = 0; j < schemaCount; j++) {
+
+                //添加图形
+                option.grid.push({
+                    left: BASE_LEFT + i * (gridWidth + GAP) + '%',
+                    top: BASE_TOP + j * (gridHeight + GAP) + '%',
+                    width: gridWidth + '%',
+                    height: gridHeight + '%'
+                });
+
+                //添加坐标轴
+                option.brush.xAxisIndex && option.brush.xAxisIndex.push(index);
+                option.brush.yAxisIndex && option.brush.yAxisIndex.push(index);
+
+                //构造X轴信息
+                option.xAxis.push({
+                    name:j === (schemaCount - 1) ? schema[i].text : '',//展示对应的坐标轴名称
+                    nameLocation:"middle",
+                    nameGap:25,
+                    splitNumber: 3,
+                    position: 'bottom',
+                    axisLine: {
+                        show: j === schemaCount - 1,
+                        onZero: false
+                    },
+                    axisTick: {
+                        show: j === schemaCount - 1,
+                        inside: true
+                    },
+                    axisLabel: {
+                        show: j === schemaCount - 1
+                    },
+                    type: 'value',
+                    gridIndex: index,
+                    scale: true
+                });
+
+                //构造Y轴信息
+                option.yAxis.push({
+                    name:i === 0 ? schema[j].text : '',//展示对应的坐标轴名称
+                    nameLocation:"middle",
+                    nameGap:35,
+                    nameRotate:90,
+                    splitNumber: 3,
+                    position: 'left',
+                    axisLine: {
+                        show: i === 0,
+                        onZero: false
+                    },
+                    axisTick: {
+                        show: i === 0,
+                        inside: true
+                    },
+                    axisLabel: {
+                        show: i === 0
+                    },
+                    type: 'value',
+                    gridIndex: index,
+                    scale: true
+                });
+
+                //如果为点位为空设置坐标轴最大值最小值
+                if(matrixScatterPlotPoints.length < 1) {
+                    option.xAxis[index].min = 0;
+                    option.xAxis[index].max = 90;
+                    option.yAxis[index].min = 0;
+                    option.yAxis[index].max = 90;
+                }
+
+                //构造散点信息
+                option.series.push({
+                    type: 'scatter',
+                    color: '#c23531',
+                    symbolSize: SYMBOL_SIZE,
+                    xAxisIndex: index,
+                    yAxisIndex: index,
+                    data: retrieveScatterData(matrixScatterPlotPoints, i, j, schemaCount)
+                    /*itemStyle: {
+                        normal: {
+                            shadowBlur: 10,
+                            shadowColor: 'rgba(120, 36, 50, 0.5)',
+                            shadowOffsetY: 5,
+                            color: new echarts.graphic.RadialGradient(0.4, 0.3, 1, [{
+                                offset: 0,
+                                color: 'rgb(251, 118, 123)'
+                            }, {
+                                offset: 1,
+                                color: 'rgb(204, 46, 72)'
+                            }])
+                        },
+                        emphasis: {
+                            color:"c23531",                 //颜色
+                            borderColor:"#c23531",         //边框颜色
+                            borderWidth:3,              //柱条的描边宽度，默认不描边。
+                            borderType:"solid",         //柱条的描边类型，默认为实线，支持 'dashed', 'dotted'。
+                            barBorderRadius:0,          //柱形边框圆角半径，单位http://www.echartsjs.com/tutorial.htmlpx，支持传入数组分别指定柱形4个圆角半径。
+                            shadowBlur:1,              //图形阴影的模糊大小。
+                            shadowColor:"#c23531",         //阴影颜色
+                            shadowOffsetX:0,            //阴影水平方向上的偏移距离。
+                            shadowOffsetY:0,            //阴影垂直方向上的偏移距离。
+                            opacity:1,                  //图形透明度。支持从 0 到 1 的数字，为 0 时不绘制该图形。
+                        }
+                    }*/
+                });
+
+                //放入对应的数据视觉映射集合
+                option.visualMap.seriesIndex.push(option.series.length - 1);
+
+                index++;
+            }
+        }
+    }
+
+    /**
+     * @Description 加载表格
+     *              tableData:表格数据
+     *              inVo:回传的DTO
+     * @author yuchao.wang
+     * @date 2019/8/27 15:35
+     */
+    function initTable(tableData, inVo) {
+        var columnCount = inVo.length;//总列数
+        var percentage = 95 / columnCount;//每列宽度
+        var tableHeadHtml = '';
+        var tableBodyHtml = '';
+        exportThead = '';
+        exportTbody = '';
+
+        //构造表头
+        tableHeadHtml = '<tr><th><div>序号</div></th>';
+        $.each(inVo, function (i, v) {
+            tableHeadHtml += '<th><div>' + v.entityCode + '</div></th>';
+            //预生成导出数据
+            exportThead += v.entityCode + ',';
+        });
+        tableHeadHtml += '</tr>';
+        $('#dataThead').html(tableHeadHtml);
+        exportThead = exportThead.substr(0, exportThead.length-1);
+
+        //判断表格是否超过界面宽度，如果没超过重新设置宽度
+        if($('#dataThead').width() < $('#dataThead').parent().parent().parent().width()) {
+            $('#dataTable').parent().css({'width': '90%'});
+
+            tableHeadHtml = '<tr><th style="width: 5%;"><div>序号</div></th>';
+            $.each(inVo, function (i, v) {
+                tableHeadHtml += '<th style="width: ' + percentage + '%;"><div>' + v.entityCode + '</div></th>';
+            });
+            tableHeadHtml += '</tr>';
+            $('#dataThead').html(tableHeadHtml);
+        }
+
+        //构造行数据
+        $.each(tableData, function (i, v) {
+            //序号
+            tableBodyHtml += '<tr>';
+            tableBodyHtml += '<td>' + (i+1) + '</td>';
+            //预生成导出数据
+            exportTbody += (i+1) + ',';
+
+            //列数据
+            for(var c = 0; c < columnCount;  c++) {
+                var val = v[c] === '-' ? '' : v[c];
+                tableBodyHtml += '<td>' + val + '</td>';
+                exportTbody += val + ',';
+            }
+            tableBodyHtml += '</tr>';
+            exportTbody = exportTbody.substr(0, exportTbody.length-1) + '#';
+        });
+        $('#dataTbody').html(tableBodyHtml);
+        exportTbody = exportTbody.substr(0, exportTbody.length-1);
+    }
+
+    //导出exportExcel
+    function exportExcel() {
+        if(exportThead == null || exportThead === '' || exportTbody == null || exportTbody === '') {
+            Hap.showToast({
+                type:'error',  //1.success 2.error
+                message: '请先查询再导出',
+                hideDuration:2000
+            });
+            return;
+        }
+
+        var url = '/pspc/entity/export/excel/scatter/plot';
+        var echarts = [];
+        if(matrixScatterPlotChart != null)
+            echarts.push(matrixScatterPlotChart);
+        if(scatterPlotSimpleChart != null)
+            echarts.push(scatterPlotSimpleChart);
+
+        //拼接其他参数
+        var otherParams = [];
+        otherParams.push({paramName:'thead', paramValue:exportThead});
+        otherParams.push({paramName:'tbody', paramValue:exportTbody});
+        otherParams.push({paramName:'rowEnd', paramValue:23});
+        otherParams.push({paramName:'colEnd', paramValue:9});
+        otherParams.push({paramName:'${_csrf.parameterName}', paramValue:'${_csrf.token}'});
+
+        exportExcelWithEcharts(echarts, url, otherParams);
+    }
+
+
+</script>
+</body>
+</html>

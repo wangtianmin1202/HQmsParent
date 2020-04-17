@@ -1,0 +1,220 @@
+<#include "../include/header.html">
+<script src="${base.contextPath}/common/code?HQM_NECKBAND_TYPE=HQM_NECKBAND_TYPE"></script>
+<script type="text/javascript">
+var viewModel = Hap.createGridViewModel("#grid");
+function closeWindow(){
+	window.parent.$("#useWindow").data("kendoWindow").close();
+}
+//领用
+viewModel.save = function(){
+	var validator = $("#mainForm").kendoValidator().data("kendoValidator");
+
+	if (validator.validate()) {
+		var jsonData = window.parent.parentData;
+		jsonData[0].principal = viewModel.model.principal;
+		jsonData[0].useDepartment = viewModel.model.useDepartment;
+		jsonData[0].borrowedSupplier = viewModel.model.borrowedSupplier;
+		var neckbandType = viewModel.model.neckbandType;
+
+		if(neckbandType == 1 && jsonData[0].useDepartment == "") {
+			kendo.ui.showErrorDialog({
+				title: "校验不通过",
+				message: "使用部门未填写"
+			})
+			return;
+		}
+		if(neckbandType == 2 && jsonData[0].borrowedSupplier == "") {
+			kendo.ui.showErrorDialog({
+				title: "校验不通过",
+				message: "供应商未填写"
+			})
+			return;
+		}
+		$.ajax({
+	   		url:"${base.contextPath}/hqm/measure/tool/forUse",
+	   		type: "POST",
+	   		data: JSON.stringify(jsonData),
+	   		contentType: "application/json",
+	   		success: function(data){
+	   			if(data.success){
+	   				Hap.showToast({
+            			type:'success',
+            			"positionClass": "toast-bottom-right",
+            			message:'领用成功',
+            			hideDuration:10*1000
+            		})
+	   				window.parent.viewModel.refresh();
+	   				window.parent.$("#useWindow").data("kendoWindow").close();
+	   			}else{
+	   				kendo.ui.showErrorDialog({
+							title: "提示",
+			    			message: data.message
+		    		})
+		    		return;
+	   		 }
+	   		}
+	   	})
+	}
+}
+$(function(){
+	var grid = $("#grid").data("kendoGrid");
+	//viewModel.model.set('userId',${userId})
+	var userData = {
+		'principal' : ${userId}
+	}
+	$.ajax({
+		url:"${base.contextPath}/hqm/measure/tool/queryUnit",
+		type:"POST",
+		data: userData,
+		dataType: "json",
+	  		success: function(data){
+	  			if(data.success){
+					if(data.rows.length == 1){
+						viewModel.model.set('principal',data.rows[0].principal);
+						viewModel.model.set('userName',data.rows[0].userName);
+						$("#principal").siblings('span').children('input').val(viewModel.model.userName)
+						
+// 						viewModel.model.set('useDepartment',data.rows[0].unitId);
+						viewModel.model.set('unitId',data.rows[0].unitId);
+						viewModel.model.set('name',data.rows[0].meaning);
+// 						$("#useDepartment").siblings('span').children('span').children('input').val(viewModel.model.name)
+					}
+	  			}
+	  		}
+	})
+	viewModel.model.set('principal',${userId})
+	viewModel.model.set('userName',${userId})
+})
+
+$(function() {
+	$("#useDepartmentDiv").hide();
+	$("#borrowedSupplierDiv").hide();
+})
+
+</script>
+<body>
+<div id="page-content">
+   <div class="row">
+    <div class="pull-left" id="toolbar-btn" style="padding-bottom:10px;">
+    	<span class="btn btn-success k-grid-save-changes" style="float:left;margin-right:5px;"data-bind="click:save"><i class="fa fa-save" style="margin-right:3px;"></i><@spring.message "hap.confirm"/></span>
+        <span class="btn btn-primary fa fa-undo" style="float:left;margin-right:5px;" onClick="closeWindow()">&nbsp;<@spring.message "return.back"/></span>
+    </div>
+    <script>kendo.bind($('#toolbar-btn'), viewModel);</script>
+    <div class="pull-right" id="query-form" style="padding-bottom:10px;">
+           
+        <div style="clear:both"></div>
+    </div>
+    <script>kendo.bind($('#query-form'), viewModel);</script>
+    </div>
+    <div id="mainForm" class="panel-body" style="margin-right:5px;padding-bottom:10px;width: 100%;">
+    	<div class="row" style="margin-top: 5px;font-size:small;text-align:center">
+    		<!-- 管理人 -->
+		    <div class="col-sm-12">
+		    	<div class="form-group">
+			    	 <lable class="col-xs-4 control-lable" style="text-align:right;margin-top:2%">管理人：</lable>
+			    	 <div class="col-xs-8" >
+		    	    	 <input id="principal" style="width: 100%;" required data-bind="value:model.principal"/>
+   	    	 			 <script>
+	    	    	 		kendo.bind($("#principal"),viewModel);
+		                	$("#principal").kendoLov($.extend
+		                	    (<@lov"LOV_USER"/>, {
+		                	        textField: 'userName',
+		                	        valueField:'userId',
+		                	        width:'50%',
+		                	        htight:'20%',
+		                	        change: function(e){
+
+		                	        }
+		                	}));
+		            	</script>
+	    	    	</div>
+	    	     </div>
+		    </div>
+	    </div>
+	    <div class="row" style="margin-top: 5px;font-size:small;text-align:center">
+	    	<!-- 领用 -->
+			<div class="col-sm-12">
+			    <div class="form-group">
+			    	<lable class="col-xs-4 control-lable" style="text-align:right;margin-top:2%"><@spring.message "领用方式"/>：</lable>
+			 		<div class="col-xs-8" >
+		    	    	 <input id="neckbandType" style="width: 100%;" required data-bind="value:model.neckbandType">
+	    				 <script type="text/javascript">
+	    					kendo.bind($("#neckbandType"),viewModel)
+	    					$("#neckbandType").kendoComboBox({
+	    				        dataTextField: "meaning",
+	    				        dataValueField: "value",
+	    				        valuePrimitive: true,
+	    				        dataSource:HQM_NECKBAND_TYPE,
+	    				        change:function(e){
+	    				        	if(this._old == '1'){
+	    				        		//内部领用	  
+	    				            	$("#borrowedSupplierDiv").hide();
+	    				            	$("#useDepartmentDiv").show();
+	    				            	viewModel.model.useDepartment = "";
+	    				            	viewModel.model.borrowedSupplier = "";
+	    		 						$("#borrowedSupplier").siblings('span').children('input').val('')
+	    				        	}else if(this._old == '2'){
+										//供应商领用
+	    				            	$("#useDepartmentDiv").hide();
+										$("#borrowedSupplierDiv").show();
+	    				            	viewModel.model.useDepartment = "";
+	    				            	viewModel.model.borrowedSupplier = "";
+										$("#useDepartment").siblings('span').children('span').children('input').val('')
+	    				        	}
+	    				        }
+	    					});
+	    				 </script>
+		    	    </div>
+			    </div> 
+			</div>
+	    </div>
+	    <div class="row" style="margin-top: 5px;font-size:small;text-align:center" id = "useDepartmentDiv">
+	    		<!-- 使用部门 -->
+	    		<div class="col-sm-12">
+	    			<div class="form-group">
+	                    <label class="col-xs-4 control-label" style="text-align:right;margin-top:2%">使用部门：</label>
+	                    <div class="col-xs-8">
+	                        <input id="useDepartment" style="width: 100%;" data-bind="value:model.useDepartment"/>
+		    	    		<script>
+		    	    	 		kendo.bind($("#useDepartment"),viewModel);
+			                	$("#useDepartment").kendoLov($.extend
+			                	    (<@lov"LOV_UNIT_HQM"/>, {
+			                	        textField: 'name',
+			                	        valueField:'unitId',
+			                	        query: function(){
+			                	        	
+			                	        },
+			                	        change: function(e){
+			                	        }
+			                	}));
+			            	</script>
+	                    </div>
+	                </div>
+			    </div>     
+	    </div>
+	    <div class="row" style="margin-top: 5px;font-size:small;text-align:center" id = "borrowedSupplierDiv">
+	    	<!-- 供应商领用 -->
+			<div class="col-sm-12">
+			    <div class="form-group">
+			    	<lable class="col-xs-4 control-lable" style="text-align:right;margin-top:2%"><@spring.message "dimensionproblemdescription.supplier"/>：</lable>
+			    	<div class="col-xs-8" >
+		    	    	<input id="borrowedSupplier" style="width: 100%;" data-bind="value:model.borrowedSupplier"/>
+	    	    	 	<script>
+	    	    	 		kendo.bind($("#borrowedSupplier"),viewModel);
+		                	$("#borrowedSupplier").kendoLov($.extend
+		                	    (<@lov"LOV_SUPPLIER_SRM"/>, {
+		                	        textField: 'supplierCode',
+		                	        valueField:'supplierId',
+		                	        query: function(e){
+		                	        	//e.param['supplierId'] = supplierId;
+		                	        }
+		                	}));
+		            	</script> 
+			    	</div>
+			    </div> 
+			</div>
+	    </div>
+    </div>
+</div>
+</body>
+</html>

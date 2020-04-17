@@ -1,0 +1,273 @@
+
+<#include "../include/header.html">
+
+<script src="${base.contextPath}/common/code?YES_NO=SYS.YES_NO" type="text/javascript"></script>
+<script type="text/javascript">
+	var BaseUrl = _basePath;
+	var fileTypeId = '${RequestParameters.fileTypeId!0}';
+    var viewModel = Hap.createGridViewModel(null,{
+    	model:{
+    		measureToolId:null
+    	},
+    	closeWin:function(e) {
+    		window.parent.$("#viewWindow").data("kendoWindow").close();
+    	},
+    	queryInfo:function(){
+    		if(fileTypeId != 0){
+    			$.ajax({
+    				url:BaseUrl+"/file/type/queryByCondition?fileTypeId="+fileTypeId,
+    				success:function(data){
+    					var a0 = data.rows[0] || {};
+    					for(var k in a0){
+    						viewModel.model.set(k,a0[k]);
+    					}
+    				}
+    			})
+    		}
+    	},
+    	save:function(){
+    		var data = viewModel.model.toJSON();
+    		data.__status = "update";
+    		
+    		var validator = $("#mainForm").data("kendoValidator");
+    		if(validator.validate()) {
+    			//Hap.blockUI();
+    			Hap.request({
+    				url: BaseUrl + "/file/type/add",
+    				data: kendo.stringify(data),
+    				success:function(data){
+    					//Hap.unblockUI();
+    					if(data.success){
+    						viewModel.closeWin();
+    					}
+    				}
+    			})
+    		}
+    	},
+    	/* getCodeRule:function(code){
+    		var result = null;
+    		$.ajax({
+    			url:_basePath + "/hqm/measure/tool/repair/getCode?code="+code,
+    			async:false,
+    			success:function(data){
+    				result = data;
+    			}
+    		});
+    		return result;
+    	}, */
+    	
+    });
+    //设置维修单号
+    //viewModel.model.set("repairNumber", viewModel.getCodeRule('MEASURE_TOOL_REPAIR_NUMBER'));
+    viewModel.queryInfo();
+</script>
+
+<body>
+
+<div id="page-content">
+	<form id = "mainForm" style="paddiing-bottom:50px;padding-top:15px" class="form-horizontal" method="post" enctype="application/json;charset=UTF-8">
+		<div class="row">
+			<div class="col-sm-6">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-4 control-label">文件类型名称</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="fileTypeName"  data-role="maskedtextbox" class="k-textbox"
+								data-bind="value:model.fileTypeName" data-label="文件类型名称" required>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="col-sm-6">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-4 control-label">文件类型代码</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="fileTypeCode"  data-role="maskedtextbox" class="k-textbox"
+								data-bind="value:model.fileTypeCode" data-label="文件类型代码" required>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-sm-6">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-4 control-label">Owner</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="owner"  data-role="maskedtextbox" class="k-textbox"
+								data-bind="value:model.owner" data-label="Owner" required>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="col-sm-6">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-4 control-label">链接位置</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="fileUrl"  data-role="maskedtextbox" class="k-textbox"
+								data-bind="value:model.fileUrl" >
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-sm-6">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-4 control-label">是否自动审批</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="isAutoApproval" 
+								data-bind="value:model.isAutoApproval" data-label="是否自动审批" required>
+						</div>
+						<script>
+	    					$("#isAutoApproval").kendoComboBox({
+	    				        dataTextField: "meaning",
+	    				        dataValueField: "value",
+	    				        valuePrimitive: true,
+	    				        dataSource: YES_NO,
+	    					});
+						</script>
+					</div>
+				</div>
+			</div>
+			<div class="col-sm-6">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-4 control-label">计算规则</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="calculationRule"  data-role="maskedtextbox" class="k-textbox"
+								data-bind="value:model.calculationRule" >
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-sm-6">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-4 control-label">申请人</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="applicant"  data-role="maskedtextbox" class="k-textbox"
+								data-bind="value:model.applicant" >
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="col-sm-6">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-4 control-label">一级审批人</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="approverOne"  data-label="一级审批人"
+								data-bind="value:model.approverOne,text:model.approverOneName" required>
+						</div>
+						<script>
+							$("#approverOne").kendoLov($.extend(<@lov "LOV_EMPLOYEE_EMAIL"/>,{
+								/* change:function(e){
+									if(e.sender._dataItem == undefined) {
+										viewModel.model.set("approverOne",null);
+										viewModel.model.set("approverOneName",null);
+		                           	} else {
+		                           		viewModel.model.set("approverOne",e.sender._dataItem.employeeId);
+										viewModel.model.set("approverOneName",e.sender._dataItem.name);
+		                           	}
+								}, */
+							}));
+						</script>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-sm-6">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-4 control-label">二级审批人</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="approverTwo" 
+								data-bind="value:model.approverTwo,text:model.approverTwoName" >
+						</div>
+						<script>
+							$("#approverTwo").kendoLov($.extend(<@lov "LOV_EMPLOYEE_EMAIL"/>,{
+								/* change:function(e){
+	                        		if(e.sender._dataItem == undefined) {
+	                        			viewModel.model.set("approverTwo",0);
+	                        			viewModel.model.set("approverTwoName",'');
+		                           	} else {
+		                           		viewModel.model.set("approverTwo",e.sender._dataItem.employeeId);
+		                           		viewModel.model.set("approverTwoName",e.sender._dataItem.name);
+		                           	}
+	                            }  */
+							}));
+						</script>
+					</div>
+				</div>
+			</div>
+			<div class="col-sm-6">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-4 control-label">三级审批人</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="approverThree" 
+								data-bind="value:model.approverThree,text:model.approverThreeName" >
+						</div>
+						<script>
+							$("#approverThree").kendoLov($.extend(<@lov "LOV_EMPLOYEE_EMAIL"/>,{
+								/* change:function(e){
+	                        		if(e.sender._dataItem == undefined) {
+	                        			viewModel.model.set("approverThree",0);
+	                        			viewModel.model.set("approverThreeName",'');
+	  	                           	} else {
+	  	                           		viewModel.model.set("approverThree",e.sender._dataItem.employeeId);
+	  	                          		viewModel.model.set("approverThreeName",e.sender._dataItem.name);
+	  	                           	}
+	                              	 
+	                            }  */
+							}));
+						</script>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-sm-6">
+				<div class="form-group">
+					<div class="col-sm-12">
+						<label class="col-sm-4 control-label">备注</label>
+						<div class="col-sm-8">
+							<input style="width:100%" id="remark"  data-role="maskedtextbox" class="k-textbox"
+								data-bind="value:model.remark" >
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</form>
+	<div style="clear:both">
+		<div id="grid"></div>
+	</div>
+	<div id="mainBottom" class="text-right" style="bottom:15px;position:fixed;float:left;padding-top:15px;border-top:1px solid #e8e1eb;
+		width:100%;background:#fff;margin-right:30px">
+		<span class="btn btn-primary" data-bind="click:save" type="submit" style="margin-right:5px">保存</span>
+		<span class="btn btn-default" data-bind="click:closeWin" type="button" style="margin-right:25px">关闭</span>
+	</div>
+	<script>
+		kendo.bind($('#mainForm'), viewModel);
+		kendo.bind($('#mainBottom'), viewModel);
+	</script>
+	<script>
+		$('#mainForm').kendoValidator({
+			messages:{
+				required:'<@spring.message "hap.validation.notempty"/>'
+			},
+			invalidMessageType:"tooltip"
+		});
+	</script>
+</div>
+</body>
+</html>

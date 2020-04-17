@@ -1,0 +1,182 @@
+<#include "../include/header.html">
+<!--引入JS-->
+<script src="${base.contextPath}/resources/recording_changes_basic_data/setUpColumns.js"  type="text/javascript"></script>
+<!-- 引入条件查询数据 -->
+<script src="${base.contextPath}/common/code?BASIC_DATA_HISTORY=BASIC_DATA_HISTORY"  type="text/javascript"></script>
+
+<!-- 需要展示的字段快速编码 -->
+<!-- 工厂 -->
+<script src="${base.contextPath}/common/code?HCM_PLANT=HIS.HCM_PLANT" type="text/javascript"></script>
+<!-- 生产线 -->
+<script src="${base.contextPath}/common/code?HCM_PRODUCTION_LINE=HIS.HCM_PRODUCTION_LINE" type="text/javascript"></script>
+<!-- 引入生产线类型快速编码 -->
+<script src="${base.contextPath}/common/code?PROD_LINE_TYPE=PROD_LINE_TYPE" type="text/javascript"></script>
+
+<!-- 抽样类型-->
+<script src="${base.contextPath}/common/code?HQM_SAMPLE_MANAGE=HIS.HQM_SAMPLE_MANAGE" type="text/javascript"></script>
+<script src="${base.contextPath}/common/code?sampleTypeData=HQM_SAMPLE_TYPE"></script>   
+<script src="${base.contextPath}/common/code?actionData=HQM_BASIC_ACTION"></script>
+<script type="text/javascript">
+    var viewModel = Hap.createGridViewModel("#grid");
+</script>
+<body>
+<div id="page-content">
+    <div class="pull-left" id="toolbar-btn" style="padding-bottom:10px;">
+    </div>
+    <script>kendo.bind($('#toolbar-btn'), viewModel);</script>
+    <div class="pull-right" id="query-form" style="padding-bottom:10px;">
+        
+        <input type="text" required id="tableName" placeholder='<@spring.message "ChangesBasicData.tableName"/>' data-bind="value:model.tableName" >
+        <script>
+            $("#tableName").kendoComboBox({
+                dataTextField: "meaning",
+                dataValueField: "value",
+                valuePrimitive: true,
+                dataSource: BASIC_DATA_HISTORY
+            });
+        </script>
+        <!-- <span class="btn btn-primary" onclick="query()" type="submit">查询所有</span> -->
+        
+        <input id="userLov" placeholder='操作人' data-bind="value:model.userId" >
+        <input type="text" data-role="datepicker" id="operationStartTime" style="margin-right:5px;" placeholder='操作时间从' data-bind="value:model.operationStartTime" class="datetpicker">
+        <input type="text" data-role="datepicker" id="operationEndTime" style="margin-right:5px;" placeholder='操作时间至' data-bind="value:model.operationEndTime" class="datetpicker">
+        <input id="changeType" placeholder='行为' data-bind="value:model.changeType" > 
+        <span class="btn btn-primary" onclick="query2()" type="submit">查询</span>
+        <span class="btn btn-default" onclick="resetFunction()" type="submit">重置</span>
+        <div style="clear:both"></div>
+    </div>
+    <script>kendo.bind($('#query-form'), viewModel);</script>
+    <div style="clear:both">
+        <div id="grid"></div>
+    </div>
+</div>
+
+<script type="text/javascript">
+	$("#userLov").kendoLov($.extend
+  	    (<@lov"LOV_USER"/>, {
+  	        textField: 'userName',
+  	        valueField:'userId',
+  	        query: function(e){
+  	        }
+  		}));
+	
+	$("#changeType").kendoComboBox({
+  	    dataTextField: "meaning",
+  	    dataValueField: "value",
+  	    valuePrimitive: true,
+  	    dataSource: actionData
+  		});
+    var BaseUrl = _basePath;
+
+    function query() {
+        $("#grid").html("");
+        var tableName = $("#tableName").val();
+        if (tableName == null || tableName == "" || tableName == undefined) {
+            alert("请选择基础数据表名");
+            return;
+        }
+        $.ajax({
+            url: BaseUrl + "/recording/changes/basic/data/query",
+            type: "POST",
+            dataType: "json",
+            data: {tableName: tableName},
+            success: function (res) {
+                if (res.success) {
+                    setUpColumns(res.rows)
+                }
+            }
+        })
+    }
+    
+    function query2() {
+        $("#grid").html("");
+        var userId = $("#userLov").val();
+        var operationStartTime = $("#operationStartTime").val();
+        var operationEndTime = $("#operationEndTime").val();
+        var changeType = $("#changeType").val();
+        var tableName = $("#tableName").val();
+        if (tableName == null || tableName == "" || tableName == undefined) {
+            alert("请选择基础数据表名");
+            return;
+        }
+        $.ajax({
+            url: BaseUrl + "/recording/changes/basic/data/query2",
+            type: "POST",
+            dataType: "json",
+            data: { tableName: tableName,
+            		userId: userId,
+            		operationStartTime:operationStartTime,
+            		operationEndTime:operationEndTime,
+            		changeType:changeType},
+            success: function (res) {
+                if (res.success) {
+                    setUpColumns(res.rows)
+                }
+            }
+        })
+    }
+    
+    function resetFunction () {
+        viewModel.reset();
+    }
+
+    function setUpColumns(data) {
+        var tableName = $("#tableName").val();
+        var newColumns = getColumns(tableName);
+        initGrid(newColumns);
+        for (var j = 0; j < data.length; j++) {
+            var changeContent = JSON.parse(data[j].changeContent);
+            for (var i in changeContent) {
+                data[j][i] = changeContent[i];
+            }
+            if (data[j].changeType == "update") {
+                data[j].changeType = "修改"
+            } else if (data[j].changeType == "add") {
+                data[j].changeType = "添加"
+            } else if (data[j].changeType == "delete") {
+                data[j].changeType = "删除"
+            }
+            ;
+        }
+        $("#grid").data("kendoGrid").dataSource.data(new Array())
+        $("#grid").data("kendoGrid").dataSource.data(data)
+    }
+
+    function initGrid(columns) {
+        var dataSource = new kendo.data.DataSource({
+            batch: true,
+            schema: {
+                data: 'rows',
+                total: 'total',
+                model: {
+                    id: "changeId",
+                    fields: {
+                        enableFlag: {
+                            type: "boolean",
+                            checkedValue: "Y",
+                            uncheckedValue: "N",
+                            defaultValue: "Y"
+                        }
+                    }
+                }
+            }
+        });
+        $("#grid").kendoGrid({
+            dataSource: dataSource,
+            resizable: true,
+            scrollable: true,
+            navigatable: false,
+            dataBound: function () {
+                if (parent.autoResizeIframe) {
+                    parent.autoResizeIframe('${RequestParameters.functionCode!}')
+                }
+            },
+
+            columns: columns,
+            editable: false
+        });
+    }
+
+</script>
+</body>
+</html>

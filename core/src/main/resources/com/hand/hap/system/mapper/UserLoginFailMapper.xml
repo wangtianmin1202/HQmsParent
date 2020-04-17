@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hap.system.mapper.UserLoginFailMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hap.system.dto.UserLoginFail">
+        <result column="LOGIN_ID" property="loginId" jdbcType="DECIMAL" />
+        <result column="USER_ID" property="userId" jdbcType="DECIMAL" />
+        <result column="USER_NAME" property="userName" jdbcType="VARCHAR" />
+        <result column="LOGIN_TIME" property="loginTime" jdbcType="VARCHAR" />
+        <result column="IP" property="ip" jdbcType="VARCHAR" />
+        <result column="REFERER" property="referer" jdbcType="VARCHAR" />
+        <result column="USER_AGENT" property="userAgent" jdbcType="VARCHAR" />
+    </resultMap>
+
+
+</mapper>

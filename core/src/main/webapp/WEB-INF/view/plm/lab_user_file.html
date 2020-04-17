@@ -1,0 +1,145 @@
+<#include "../include/header.html">
+
+<script type="text/javascript">
+	var BaseUrl = _basePath;
+	var labUserId = '${RequestParameters.labUserId!0}';
+	var filesList = [];
+	
+</script>
+<body>
+
+<div id="page-content">
+    <div class="col-xs-9" style="margin-left:75px">
+		<div class="row">
+			<span><@spring.message "dimensionproblemdescription.fileupload"/></span>
+		</div>
+		<div class="row">
+			<div id="fileDownLoadD2" style="display:none">
+			</div>
+			<div id="excelimport">
+				<form id="mainform" class="form-horizontal">
+					<div class="row" style="width:100%">
+						<div class="form-group">
+							<div class="col-sm-12">
+								<div class="demo-section k-content" >
+									<input name="files" id="files1"  type="file" accept=".xlsx,.pdf,.doc,.png,.pptx" />
+								</div>
+							
+								
+								</div>
+							</div>
+						</div>
+					</form>
+				</div>
+			</div>
+		</div>
+</div>
+
+<script>
+	function fileRemoveHaved(filePath){
+		$.ajax({
+	        url: '${base.contextPath}/plm/lab/user/file/remove',
+	        type: 'POST',
+	        data: JSON.stringify({"filePath":filePath}),
+	        async: false,
+	        contentType: "application/json",
+	        //dataType: "json",
+	        success: function (data) {
+	        	if (data.success) {
+	        		if(filesList.length!=0){
+                		$.each(filesList,function(i,o){
+                			if(o==filePath){
+                				filesList.splice(i,1);
+                			}
+                		});
+                	}
+                	// 显示文件
+                	//appendFileArray(filesList);
+	        		getFiles();
+	        		kendo.ui.showInfoDialog({title:"提示",message:"删除成功"});
+	            } else {
+	            	kendo.ui.showErrorDialog({title:"错误",message:data.message});
+	            }
+	        }
+	    });
+	}
+	function fileDownLoadHaved(fileUrl){
+		$("#fileDownLoadD2").html('');
+		window.open(fileUrl);
+		//单文件操作可以使用window.open
+		//多文件下载使用iframe嵌入的方式
+		//$('<iframe class="multi-download" src="'+ fileUrl +'" style="display:none"></iframe>').appendTo($("#fileDownLoadD2"));
+	}
+	function appendFileArray(fileArray){
+		$("#filesContentDiv").html('');
+		$.each(fileArray,function(e,v){
+			var appStr = ''+
+			'<span style="font-size:12px;">'+v.substring(v.lastIndexOf("/")+1)+'</span>'+
+			'<span class="fa fa-trash" style="font-size:16px;cursor:pointer;margin-left:5px;" onclick="fileRemoveHaved(\''+v+'\')"></span>'+
+			'<span class="fa fa-download" style="font-size:16px;cursor:pointer;margin-left:5px;" onclick="fileDownLoadHaved(\''+v+'\')"></span><br>';
+			$("#filesContentDiv").append(appStr);
+		});
+	}
+	function getFiles(){
+		//ajax查询上传的文件
+		//$("#fileDownLoadD2").html("");
+		$("#filesContentDiv").html("");
+		var fileArray = new Array();
+		$.ajax({
+	        url: '${base.contextPath}/plm/lab/user/file/query',
+	        type: 'POST',
+	        data: {labUserId:labUserId},
+	        async: false,
+	        dataType: "json",
+	        success: function (response) {
+	        	if (response.success) {
+	        		filesList=[];
+	        		$.each(response.rows,function(i,o){
+	        			filesList.push(o.filePath);
+	        		});
+	        		appendFileArray(filesList);
+	            } else {
+	            	kendo.ui.showErrorDialog({title:"错误",message:response.message});
+	            }
+	        }
+	    });
+
+	}
+	$("#files1").kendoUpload({
+		async: {
+	    	saveUrl: "${base.contextPath}/plm/lab/user/file/upload?${_csrf.parameterName}=${_csrf.token}&labUserId="+labUserId,
+			autoUpload: true,
+		},
+		showFileList:false,
+		upload: function(e){
+
+		},
+	    success: function(data){
+	    	if(data.response.success){
+		    	if(filesList.length!=0){
+	        		$.each(filesList,function(i,o){
+	        			if(o!=data.response.rows[0].filePath){
+	        				filesList.push(data.response.rows[0].filePath);
+	        			}
+	        		});
+	        	}else{
+	        		filesList.push(data.response.rows[0].filePath);
+	        	}
+		    	getFiles();
+		    	kendo.ui.showInfoDialog({message: "导入成功"});
+	     
+	        }else{
+	        	kendo.ui.showErrorDialog({message: data.response.message});
+	        } 
+	     },
+	});
+	$("div .k-dropzone").append('<div id="filesContentDiv" class="row"></div>');
+	$("div .k-dropzone").css("margin-bottom","10px");		
+	
+	
+	getFiles();
+</script>
+
+
+</body>
+</html>

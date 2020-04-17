@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.spc.pspc_box_plot.mapper.BoxPlotMapper">
+    <resultMap id="BaseResultMap" type="com.hand.spc.pspc_box_plot.view.BoxPlotVO">
+        <!--<result column="CHART_DETAIL_ID" property="chartDetailId" jdbcType="DECIMAL" />
+        <result column="TENANT_ID" property="tenantId" jdbcType="DECIMAL" />
+        <result column="SITE_ID" property="siteId" jdbcType="DECIMAL" />
+        <result column="CHART_ID" property="chartId" jdbcType="DECIMAL" />
+        <result column="CHART_DETAIL_TYPE" property="chartDetailType" jdbcType="VARCHAR" />
+        <result column="AXIS_LABEL_X" property="axisLabelX" jdbcType="VARCHAR" />
+        <result column="AXIS_LABEL_Y" property="axisLabelY" jdbcType="VARCHAR" />
+        <result column="AXIS_MAX_Y" property="axisMaxY" jdbcType="DECIMAL" />
+        <result column="AXIS_MIN_Y" property="axisMinY" jdbcType="DECIMAL" />
+        <result column="CONTROL_LIMIT_USAGE" property="controlLimitUsage" jdbcType="VARCHAR" />
+        <result column="UPPER_CONTROL_LIMIT" property="upperControlLimit" jdbcType="DECIMAL" />
+        <result column="CENTER_LINE" property="centerLine" jdbcType="DECIMAL" />
+        <result column="LOWER_CONTROL_LIMIT" property="lowerControlLimit" jdbcType="DECIMAL" />
+        <result column="DISPLAY_SPEC_LIMIT" property="displaySpecLimit" jdbcType="VARCHAR" />
+        <result column="UPPER_SPEC_LIMIT" property="upperSpecLimit" jdbcType="DECIMAL" />
+        <result column="SPEC_TARGET" property="specTarget" jdbcType="DECIMAL" />
+        <result column="LOWER_SPEC_LIMIT" property="lowerSpecLimit" jdbcType="DECIMAL" />
+        <result column="ENABLE_JUDGE_GROUP" property="enableJudgeGroup" jdbcType="VARCHAR" />
+        <result column="JUDGEMENT_GROUP_ID" property="judgementGroupId" jdbcType="DECIMAL" />-->
+
+        <result column="SAMPLE_VALUE" property="sampleValue" jdbcType="DECIMAL" />
+        <result column="SAMPLE_TIME" property="sampleTime" jdbcType="TIMESTAMP" />
+
+    </resultMap>
+
+
+    <!--  箱线图查询 1、带有时间计算的  -->
+    <select id="querySampleValuesByTime" parameterType="com.hand.spc.pspc_box_plot.view.BoxPlotVO" resultMap="BaseResultMap">
+        select nvl(psd.sample_value, 0) sample_value,
+        psd.sample_time
+        from pspc_sample_subgroup     pss,
+        pspc_sample_subgroup_relation pssr,
+        pspc_sample_data         psd
+        where pss.sample_subgroup_id = pssr.sample_subgroup_id
+        and pssr.sample_data_id = psd.sample_data_id
+        and pss.entity_code = #{entityCode}
+        and pss.entity_version = #{entityVersion}
+        <if test="startDate != null and startDate != ''">
+            and pss.sample_subgroup_time >= to_date(#{startDate}, 'yyyy-MM-dd hh24:mi:ss')
+        </if>
+        <if test="endDate != null and endDate != ''">
+            and pss.sample_subgroup_time &lt;= to_date(#{endDate}, 'yyyy-MM-dd hh24:mi:ss')
+        </if>
+        order by sample_value
+    </select>
+
+    <!-- 箱线图查询 2、不带有时间计算的 -->
+    <select id="querySampleValuesByMaxPoints" parameterType="com.hand.spc.pspc_box_plot.view.BoxPlotVO" resultMap="BaseResultMap">
+
+
+       select nvl(pssr.sample_value, 0) sample_value,
+       psd.sample_time
+          from pspc_sample_subgroup_relation pssr, pspc_sample_subgroup ppss,pspc_sample_data psd
+         where ppss.sample_subgroup_id = pssr.sample_subgroup_id
+         and psd.sample_data_id = pssr.sample_data_id
+           and exists
+                (select null
+                  from (select p.sample_subgroup_id, p.subgroup_num, rownum row_num
+                          from (select pss.sample_subgroup_id, pss.subgroup_num
+                                  from pspc_sample_subgroup pss
+                                 where pss.entity_code = #{entityCode,jdbcType=VARCHAR}
+                                   and pss.entity_version = #{entityVersion,jdbcType=VARCHAR}
+                                 order by pss.subgroup_num) p) mm
+                 where mm.row_num &lt;= #{maxPlotPoints,jdbcType=DECIMAL}
+                   and mm.sample_subgroup_id = pssr.sample_subgroup_id)
+        order by sample_value
+
+    </select>
+
+
+
+
+
+</mapper>

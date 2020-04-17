@@ -1,0 +1,517 @@
+<#include "../include/header.html">
+<script src="${base.contextPath}/lib/prints/doc_print.js" type="text/javascript" charset="UTF-8"></script>
+<script src="${base.contextPath}/common/code?HQM_CONTROL_CHART_TYPE=HQM_CONTROL_CHART_TYPE"></script>
+<script src="${base.contextPath}/lib/js/echarts.common.min.js" type="text/javascript" charset="UTF-8"></script>
+<script type="text/javascript">
+    var parentData = window.parent.parentData;
+    //列
+    var mapCol;
+	//行
+	var sampleAndStandardList;
+	
+	var sampleNumAndmeasuredByMap;
+	
+	var sampleNumMap;
+
+	var rows = 20;
+	var cols = 3;
+    var viewModel = kendo.observable({
+		model: {
+		},
+		submit: function(e){ 
+			//页面数据
+			var jsonList = [];
+
+				var index = -2;
+				$('#mytable tr').each(function() {
+					if(index >= 0){	
+						$(this).find('.data').each(function(){ 
+							if(checkStr($(this).val())){
+								var nameStr = $(this).attr('name')
+								var nameStrList = nameStr.split('_');
+								var msaConsistencyValueId = null;
+								if(nameStrList.length > 3){
+									msaConsistencyValueId = nameStrList[3];
+								}
+								var jsonData = {
+												"measureCharacter" : viewModel.model.measureCharacter,
+												"sampleDescription" : viewModel.model.sampleDescription,
+												"msaPlanId" : parentData.msaPlanId,
+												"measureValue" : $(this).val(),
+												"msaConsistencyValueId" : msaConsistencyValueId,
+												"measureNum" :$("#measureNumCol_"+nameStrList[1]+"_"+nameStrList[2])[0].innerHTML,
+												"standardValue" :$("#standardValueRow_"+index).val(),
+												"measuredBy" : $("#userCol_"+nameStrList[1]).val(),
+												"sampleNum":$("#sampleNumRow_"+index).val()
+									   }; 
+								jsonList.push(jsonData)
+							}
+						});
+					}
+					index++;
+				});	
+				if(jsonList.length == 0){
+					var jsonData = {
+							"measureCharacter" : viewModel.model.measureCharacter,
+							"sampleDescription" : viewModel.model.sampleDescription,
+							"msaPlanId" : parentData.msaPlanId,
+							"measureValue" : null
+				   }; 
+					jsonList.push(jsonData);
+				}
+			$.ajax({
+				url:"${base.contextPath}/hqm/msa/consistency/value/save",
+				type:"POST",
+				data: kendo.stringify(jsonList),
+				contentType: "application/json",
+				success: function (resultData){
+					if(resultData.success){
+						Hap.showToast({
+                			type:'success',
+                			"positionClass": "toast-bottom-right",
+                			message:"保存成功",
+                			hideDuration:10*1000
+                		})	
+                		parentData.sampleDescription = viewModel.model.sampleDescription
+                		parentData.measureCharacter = viewModel.model.measureCharacter
+                		window.parent.viewModel.query();
+                		initTable();
+					}else{
+						kendo.ui.showErrorDialog({
+							title: "错误提示",
+			    			message: resultData.message
+			    		})
+					}
+				}
+			}) 
+		},
+		//分析
+		analysis: function(){
+			var msaPlanLine = {
+		  			"measurePlanLineId": parentData.measurePlanLineId
+		  	}
+			$.ajax({
+				url: "${base.contextPath}/hqm/msa/plan/line/updateAnalyzeData",
+				data: msaPlanLine,
+				type: "POST",
+				dataType: "json",
+				success: function(data){
+					if(data.success){
+						viewModel.model.set('analyzeDate',data.rows[0].analyzeDate);
+						window.parent
+					}
+				}
+			})
+			//列
+			window.parent.mapCol = mapCol;
+			//行
+			window.parent.sampleAndStandardList = sampleAndStandardList;
+			
+			window.parent.sampleNumAndmeasuredByMap = sampleNumAndmeasuredByMap;
+			
+			window.parent.sampleNumMap = sampleNumMap;
+			
+			var selectFunction = window.parent.$("#selectConFunction").kendoWindow({
+	            actions: ["Close"],
+	            width: 1500,
+				height: 750,
+	            title: '<@spring.message "msaplan.analysis.consistency.result"/>',
+	            visible: false,
+	            iframe: true,
+	            modal: true,
+	            content: 'msa_consistency_value_picture.html'
+	        }).data("kendoWindow");
+	        selectFunction.center().open();
+		},
+		//删除
+		remove: function(){
+			if(!checkStr(parentData.msaPlanId)){
+				kendo.ui.showInfoDialog({
+	    			title: '<@spring.message "dialog.showInfo"/>',
+	    			message: '获取计划信息失败'
+	    		})
+	    		return;
+			}
+			kendo.ui.showConfirmDialog({
+	    		title: '<@spring.message "dialog.showInfo"/>',
+	    		message: '是否确认清除？'
+	    	}).done(function(e){
+	    		if(e.button=='OK'){	    			
+					var jsonData = {
+			    			"msaPlanId" : parentData.msaPlanId
+			    	}
+			    	$.ajax({
+			    		url: "${base.contextPath}/hqm/msa/consistency/value/removeByMsaPlanId",
+			    		data: jsonData,
+			    		type: "POST",
+			    		async:false,
+			    		dataType: "json",
+			    		success: function(data){
+			    			if(data.success){
+			    				 Hap.showToast({
+			                         type: 'success',
+			                         "positionClass": "toast-bottom-right",
+			                         message: "删除成功"
+			                     });
+			             		initTable()
+			    			}else{
+			            		kendo.ui.showErrorDialog({
+			                            message: data.message
+			                        });
+			            		
+			            	}
+			    		}
+			    	})
+	    		}
+	    	})
+		},
+		//返回
+		closeWin: function(e){
+        	window.parent.$("#selectFunction").data("kendoWindow").close();
+        },
+        //刷新
+        refresh: function(){
+        	initTable();
+        },
+        importExcel : function(){
+        	var newModelWindow = $('#excelimport').kendoWindow({
+                title: '<@spring.message "msaplan.import"/>',
+                width: 300,
+                height: 120,
+                modal: true,
+                actions: ["Minimize", "Maximize", "Close"],
+            }).data('kendoWindow');
+        	newModelWindow.center().open();
+        }
+	});
+    $(function(){
+    	//计算高度
+    	$("#tableRow").height(window.innerHeight*5/6)
+    	$("#tableRow").width(window.innerWidth*98/100)
+    	
+    	//样品名称 
+    	viewModel.model.set('sampleDescription',parentData.sampleDescription);
+    	//待测特性
+    	viewModel.model.set('measureCharacter',parentData.measureCharacter);
+    	//分析人
+    	viewModel.model.set('userName',parentData.userName);
+    	//分析日期
+    	viewModel.model.set('analyzeDate',parentData.analyzeDate);
+    	initTable()
+    	//已关闭隐藏按钮
+    	if(parentData.measurePlanStatus == '3'){
+    		$("#refresh").hide()
+    		$("#save").hide()
+    		$("#import").hide()
+    		$("#getImport").hide()
+    		$("#clear").hide();
+    	}
+    })
+    
+    //加载table数据 
+    function initTable(){
+    	var jsonData = {
+    			"msaPlanId" : parentData.msaPlanId
+    	}
+    	$.ajax({
+    		url: "${base.contextPath}/hqm/msa/consistency/value/query",
+    		data: jsonData,
+    		type: "POST",
+    		dataType: "json",
+    		success: function(data){
+    			if(data.success){
+    				if(data.rows != null && data.rows.length > 0){  
+    					//列集合 mapCol
+    					var _obj = JSON.stringify(data.rows[0].map);
+						var map = JSON.parse(_obj);
+						mapCol = data.rows[0].map;
+						sampleNumAndmeasuredByMap = data.rows[0].sampleNumAndmeasuredByMap;
+    					//行
+    					sampleAndStandardList = data.rows[0].sampleAndStandardList;
+    					
+    					sampleNumMap = data.rows[0].sampleNumMap;
+    					var str = '';
+    					//列数
+    					var lLength = 0;
+    					//遍历行
+    					var sampleNumId = 0;
+    					var standardValueId = 0;
+    					for(var i=0; i<(sampleAndStandardList.length+2); i++){
+    						//零件编号
+    						var sampleNum
+    						//基准
+    						var standardValue
+    						if(i>1){	    						
+	    						sampleNum =  sampleAndStandardList[i-2].split(',')[0];
+	    						standardValue =  sampleAndStandardList[i-2].split(',')[1];
+    						}
+							str += '<tr>'
+							if(i == 0){
+								//第一行 第一列
+								str += '<th rowspan="2" style="text-align: center"><@spring.message "msaplan.samplenum"/></th>';
+							}else if(i > 1){
+								//第三行开始
+								str += '<td style="text-align: center"><input disabled id="sampleNumRow_'+ sampleNumId +'"  style="margin:0px;border:0;background:transparent;width:100%;text-align: center;"  value="'+ sampleNum +'"/></td>';
+								sampleNumId++;
+							}
+    						//遍历列
+    						var userId = 0;
+    						
+							for(var key in map){
+								
+								if(i == 0){
+									str += '<th colspan="'+ Object.keys(map[key]).length +'" style="text-align: center"><input id="userCol_'+ userId +'"   style="margin:0px;border:0;background:transparent;width:100%;text-align: center;"  value="'+ key +'"/></th>';
+								}else{
+									var measureNumId = 0;
+									for(var keyChild in map[key]){
+										if(i == 1){
+											//第二行 
+											str += '<th id="measureNumCol_'+ userId +'_'+ measureNumId +'"  style="text-align: center">'+ parseFloat(keyChild).toFixed(0) +'</th>';
+											
+										}else{
+											var list = map[key][keyChild]
+											var flagChild = true;
+											//第三行
+											for(var j=0;j<list.length;j++){
+												if(sampleNum == list[j].sampleNum && key == list[j].measuredBy && keyChild == list[j].measureNum){
+													str += '<td style="text-align: center"><input name="data_'+ userId + '_' + measureNumId + '_' + list[j].msaConsistencyValueId +'" class="data"  style="margin:0px;border:0;background:transparent;width:100%;text-align: center;"  value="'+ list[j].measureValue +'"/></td>';
+													map[key][keyChild].splice(j,1);
+													flagChild = false;
+													break;
+												}
+											}
+											if(flagChild){
+					                			str += '<td><input name="data_'+ userId + '_' + measureNumId +'" class="data"  style="margin:0px;border:0;background:transparent;width:100%;text-align: center;"/></td>';
+					                	  	}
+										}
+										measureNumId++;
+									}
+								}
+								userId++;
+							}
+    						if(i==0){
+	    						//第一行  最后一列 基准值
+    							str += '<th rowspan="2" style="text-align: center"><@spring.message "msaplan.reference"/></th>';
+    						}else if(i>1){
+    							//第三行 最后一列 基准值
+    							str += '<td style="text-align: center"><input id="standardValueRow_'+ standardValueId +'"  style="margin:0px;border:0;background:transparent;width:100%;text-align: center;"  value="'+ standardValue +'"/></td>';
+    							standardValueId++;
+    						}
+							str += '</tr>';
+						}
+    					//设置table宽度
+    					for(var key in map){
+    						lLength += Object.keys(map[key]).length;
+    					}
+    					$("#mytable").width(window.innerWidth/13*(lLength+2));
+    					//$("#mytable").height(window.innerHeight/11*(lLength+2));
+    					
+    					$("table").html("");
+    					$("table").append(str);
+    				}else{
+    					
+    					var str ='';
+    					lLength = cols;
+    					str += '<tr>';
+    					var sampleNumId = 0;
+    					var standardValueId = 0;
+						for(var i=0; i<rows+2; i++){		
+							if(i == 0){
+								//第一行 第一列
+								str += '<th rowspan="2" style="text-align: center"><@spring.message "msaplan.samplenum"/></th>';
+							}else if(i > 1){
+								//第三行开始
+								str += '<td style="text-align: center"><input disabled id="sampleNumRow_'+ sampleNumId +'"  style="margin:0px;border:0;background:transparent;width:100%;text-align: center;"  value="'+ (sampleNumId+1) +'"/></td>';
+								sampleNumId++;
+							}
+							//遍历列
+    						var userId = 0;
+							
+    						for(var j=0;j<2;j++){
+								if(i == 0){
+									str += '<th colspan="'+ cols +'" style="text-align: center"><input id="userCol_'+ userId +'"   style="margin:0px;border:0;background:transparent;width:100%;text-align: center;"  value=""/></th>';
+								}else{
+									var measureNumId = 0;
+										for(var k=0;k<cols;k++){
+											if(i == 1){
+												//第二行 
+												str += '<th id="measureNumCol_'+ userId +'_'+ measureNumId +'"  style="text-align: center">'+ (k+1) +'</th>';
+											}else{
+												//第三行开始
+												str += '<td><input name="data_'+ userId + '_' + measureNumId +'" class="data"  style="margin:0px;border:0;background:transparent;width:100%;text-align: center;"/></td>';
+												var flagChild = true;
+											}
+											measureNumId++;
+										}
+								}
+								userId++;
+    						}
+							if(i==0){
+	    						//第一行  最后一列 基准值
+    							str += '<th rowspan="2" style="text-align: center"><@spring.message "msaplan.reference"/></th>';
+    						}else if(i>1){
+    							//第三行 最后一列 基准值
+    							str += '<td style="text-align: center"><input id="standardValueRow_'+ standardValueId +'"  style="margin:0px;border:0;background:transparent;width:100%;text-align: center;"  value=""/></td>';
+    							standardValueId++;
+    						}
+							str += '</tr>';
+    						
+						}
+						//设置table宽度
+    					$("#mytable").width(window.innerWidth/13*(lLength+2));
+	                	$("table").html("");
+    					$("table").append(str); 
+    				}
+    				if(parentData.measurePlanStatus == '3'){
+    		    		$("input").attr('readOnly','true')
+    		    	}
+    			}
+    		}
+    	}) 
+    }
+    function checkStr(str){
+		if(str == null || str === '' ||typeof(str) == "undefined"){
+    		return false;
+    	}
+		return true;
+    }
+    $(document).ready(function() {
+    	var msaPlanId = parentData.msaPlanId;
+		$("#files1").kendoUpload({
+			async: {
+            saveUrl: "${base.contextPath}/hqm/msa/consistency/value/upload?${_csrf.parameterName}=${_csrf.token}",//
+			autoUpload: true
+			},
+			upload : function(e){
+				e.data = {
+						"msaPlanId": msaPlanId
+				}
+			},
+            success : function(e){
+            	var response = e.response;
+            	if(response.success){
+            		/* kendo.ui.showInfoDialog({message: "导入成功"}); */
+            		Hap.showToast({
+                        type: 'success',
+                        "positionClass": "toast-bottom-right",
+                        message: "导入成功"
+                    });
+            		initTable()
+            		
+            	}else{
+            		kendo.ui.showErrorDialog({
+                            message: response.message
+                        });
+            		
+            	}
+            },
+			showFileList:false,
+						});
+					});
+</script>
+<body>
+<div id="pictureWindow"></div>
+<div id="page-content" style="heigth:100%;">
+	<div id="head" style="heigth:100%">
+		<form class="form-horizontal" style="heigth:100%">
+			<div id="form" style="heigth:100%">
+					<div class="row" style=";height:10%">
+					    <div class="pull-left" id="toolbar-btn" style="padding-bottom:10px;">
+					    	<span id="save" class="btn btn-success k-grid-save-changes" style="float:left;margin-right:5px;"
+                          	data-bind="click:submit"><i class="fa fa-save" style="margin-right:3px;"></i><@spring.message "hap.save"/></span>
+                          	<span type="button" class="btn btn-primary"
+                            style="float:left;margin-right:5px" data-bind="click:analysis"><i  style="margin-right:3px;"></i><@spring.message "msaplan.analyze"/></span>
+					    	<span id="getImport" class="btn btn-primary" style="float:left;width:120px;margin-right:5px;margin-left: 5px;" onclick="modelDownload()" type="submit"><@spring.message "excel.getexceltemplate"/></span>
+                            <span id="import"  data-bind="click:importExcel" class="btn btn-primary fa fa-upload" style="float:left;margin-right:5px;">&nbsp;<@spring.message "hap.import"/></span>
+					    	<span id="clear" class="btn btn-danger" style="float:left;margin-right:5px" data-bind="click:remove"><i class="fa fa-trash-o" style="margin-right:3px;"></i><@spring.message "hap.clear"/></span>
+					    	<span id="refresh" class="btn btn-default k-grid-save-changes"  style="float:left;margin-right:5px;" data-bind="click:refresh"><i class="fa fa-refresh" style="margin-right: 3px;"></i><@spring.message "hap.refresh"/></span>
+					    	<span type="button" class="btn btn-primary"
+                            style="float:left;margin-right:5px" data-bind="click:closeWin"><i class="fa fa-undo" style="margin-right:3px;"></i><@spring.message "hap.back"/></span>
+					    </div>
+					    <script>kendo.bind($('#toolbar-btn'), viewModel);</script>
+					    <div class="pull-right" id="query-form" style="padding-bottom:10px;">
+					           	
+					        <div style="clear:both"></div>
+					    </div>
+					    <script>kendo.bind($('#query-form'), viewModel);</script>
+				    </div>
+				    <div class="row" style="height:10%;margin-top: 5px;font-size:14px">
+						    <!-- 样品名称 -->
+						    <div class="col-sm-3" style="padding:0px">
+						    	    <lable class="col-xs-5 control-lable" style="text-align:right;padding:0px;margin-top:1%"><@spring.message "msaplan.sampledescription"/>：</lable>
+						    	    <div class="col-xs-7"  style="padding:0px">
+							    	    <input id="sampleDescription" style="width:200px"    data-role="maskedtextbox" type="text" data-bind="value:model.sampleDescription" />
+							    	    <script>kendo.bind($("#sampleDescription"),viewModel);</script>
+						    	    </div>
+						    </div>
+						     <!-- 待测特性 -->
+						    <div class="col-sm-3" style="padding:0px">
+						    	    <lable class="col-xs-5 control-lable" style="text-align:right;padding:0px;margin-top:1%"><@spring.message "msaplan.measurecharacter"/>：</lable>
+						    	    <div class="col-xs-7"  style="padding:0px">
+							    	    <input id="measureCharacter" style="width:200px" disabled="disabled"    data-role="maskedtextbox" type="text" data-bind="value:model.measureCharacter" />
+							    	    <script>kendo.bind($("#measureCharacter"),viewModel);</script>
+						    	    </div>
+						    </div>
+						    <!-- 分析人 -->
+						    <div class="col-sm-3" style="padding:0px">
+						    	    <lable class="col-xs-5 control-lable" style="text-align:right;padding:0px;margin-top:1%"><@spring.message "msaplan.analyzedby"/>：</lable>
+						    	    <div class="col-xs-7"  style="padding:0px">
+							    	    <input disabled id="userName" style="width:200px"   data-role="maskedtextbox" type="text" data-bind="value:model.userName" />
+							    	    <script>kendo.bind($("#userName"),viewModel);</script>
+						    	    </div>
+						    </div>
+				    </div>
+				    <div class="row" style="height:10%;margin-top: 5px;font-size:14px">
+						    
+						    <!-- 分析日期 -->
+						    <div class="col-sm-3" style="padding:0px">
+						    	    <lable class="col-xs-5 control-lable" style="text-align:right;padding:0px;margin-top:1%"><@spring.message "msaplanline.analyzeDate"/>：</lable>
+						    	    <div class="col-xs-7" style="padding:0px">
+							    	    <input  disabled id="analyzeDate" style="width:200px" data-role="maskedtextbox" type="text" data-bind="value:model.analyzeDate" type="text"  /> 
+						    	    	<script>kendo.bind($("#analyzeDate"),viewModel);</script>
+						    	    </div>				    	    
+						    </div>						    
+				    </div>
+				    <div id="tableRow" class="row" style="height:660px;margin-top:10px">
+				    	<div style="height:100%; overflow:scroll;">
+							<table id="mytable" style='color: black;width: 100%;table-layout: fixed;font-size: small;text-align: center;border-color:#697882;overflow:scroll' border='2px'>
+								<!-- <tr>
+									<th style="width:20%"></th>
+									<th style="text-align: center;width:80%">分析内容</th>
+								</tr> 
+								<tr>
+									<td style="width:20%"><input type="radio" name="check" value="" style="margin-top:5%"></td>
+									<td style="width:80%"></td>
+								</tr> -->
+							</table>
+						</div>
+				    </div>
+			</div>
+		</form>
+	</div>
+</div>
+<div id="excelimport" style="display:none">
+	<form id="mainform" class="form-horizontal">
+	<div class="row" style="width:95%">
+		<div class="form-group">
+			<label class="col-sm-3 control-label"><@spring.message "attachcategory.attachment"/></label>
+			<div class="col-sm-7" style="margin-left: 20%">
+			<div class="demo-section k-content">
+				<input name="files" id="files1" type="file" accept=".xlsx" />
+			</div>
+
+			<script>
+				
+				</script>
+			</div>
+		</div>
+	</div>
+	</form>
+</div>
+<script type="text/javascript">
+function modelDownload() {//EXCEL模板下载
+    window.location.href="${base.contextPath}/resources/files/一致性数据导入模板.xlsx";
+}
+</script>
+</body>
+</html>

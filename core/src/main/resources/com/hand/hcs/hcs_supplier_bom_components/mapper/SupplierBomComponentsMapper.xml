@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hcs.hcs_supplier_bom_components.mapper.SupplierBomComponentsMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hcs.hcs_supplier_bom_components.dto.SupplierBomComponents">
+        <result column="COMPONENT_ID" property="componentId" jdbcType="DECIMAL" />
+        <result column="BOM_ID" property="bomId" jdbcType="DECIMAL" />
+        <result column="PLANT_ID" property="plantId" jdbcType="DECIMAL" />
+        <result column="ITEM_ID" property="itemId" jdbcType="DECIMAL" />
+        <result column="ITEM_CODE" property="itemCode" jdbcType="VARCHAR" />
+        <result column="DESCRIPTIONS" property="descriptions" jdbcType="VARCHAR" />
+        <result column="SUPPLIER_ID" property="supplierId" jdbcType="DECIMAL" />
+        <result column="SUPPLIER_SITE_ID" property="supplierSiteId" jdbcType="DECIMAL" />
+        <result column="FORMAT" property="format" jdbcType="VARCHAR" />
+        <result column="BOM_USAGE" property="bomUsage" jdbcType="DECIMAL" />
+        <result column="UOM" property="uom" jdbcType="VARCHAR" />
+        <result column="PRODUCTION_CYCLE" property="productionCycle" jdbcType="DECIMAL" />
+        <result column="PURCHASE_CYCLE" property="purchaseCycle" jdbcType="DECIMAL" />
+        <result column="REMARKS" property="remarks" jdbcType="VARCHAR" />
+        <result column="ENABLE_FLAG" property="enableFlag" jdbcType="VARCHAR" />
+        <result column="USER_TYPE" property="userType" jdbcType="VARCHAR" />
+    </resultMap>
+
+	<!-- 获取最大物料号  从最大值修改为 item_b表的序列  added by wtm 20200105-->
+	<select id="queryMaxNum" resultType="java.lang.Integer" >
+		SELECT hcm_item_b_s.nextval FROM dual
+	
+		<!-- select nvl(max(hsbc.item_id),0) from hcs_supplier_bom_components hsbc  -->
+	</select>
+</mapper>

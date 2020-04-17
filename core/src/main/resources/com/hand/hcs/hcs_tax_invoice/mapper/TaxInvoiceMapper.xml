@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hcs.hcs_tax_invoice.mapper.TaxInvoiceMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hcs.hcs_tax_invoice.dto.TaxInvoice">
+        <result column="WEB_INVOICE_ID" property="webInvoiceId" jdbcType="DECIMAL" />
+        <result column="WEB_INVOICE_NUM" property="webInvoiceNum" jdbcType="VARCHAR" />
+        <result column="WEB_INVOICE_STATUS" property="webInvoiceStatus" jdbcType="VARCHAR" />
+        <result column="TAX_INVOICE_NUM" property="taxInvoiceNum" jdbcType="VARCHAR" />
+        <result column="ENABLE_FLAG" property="enableFlag" jdbcType="VARCHAR" />
+        <result column="TAX_INVOICE_QTY" property="taxInvoiceQty" jdbcType="DECIMAL" />
+        <result column="NO_TAX_AMOUNT" property="noTaxAmount" jdbcType="DECIMAL" />
+        <result column="INVOICE_TAX_AMOUNT" property="invoiceTaxAmount" jdbcType="DECIMAL" />
+        <result column="INVOICE_AMOUNT" property="invoiceAmount" jdbcType="DECIMAL" />
+        <result column="NO_TAX_AMOUNT_S" property="noTaxAmountS" jdbcType="DECIMAL" />
+        <result column="INVOICE_TAX_AMOUNT_S" property="invoiceTaxAmountS" jdbcType="DECIMAL" />
+        <result column="INVOICE_AMOUNT_S" property="invoiceAmountS" jdbcType="DECIMAL" />
+        <result column="PLANT_ID" property="plantId" jdbcType="DECIMAL" />
+        <result column="SUPPLIER_ID" property="supplierId" jdbcType="DECIMAL" />
+        <result column="SUPPLIER_SITE_ID" property="supplierSiteId" jdbcType="DECIMAL" />
+        <result column="SUPPLIER_REMARKS" property="supplierRemarks" jdbcType="VARCHAR" />
+        <result column="CURRENCY" property="currency" jdbcType="VARCHAR" />
+        <result column="APPROVED_BY" property="approvedBy" jdbcType="DECIMAL" />
+        <result column="APPROVED_FULL_NAME" property="approvedFullName" jdbcType="VARCHAR" />
+        <result column="SUBMITED_ID" property="submitedId" jdbcType="DECIMAL" />
+        <result column="SUBMITED_DATE" property="submitedDate" jdbcType="DATE" />
+        <result column="APPROVED_DATE" property="approvedDate" jdbcType="DATE" />
+        <result column="APPROVED_REMARKS" property="approvedRemarks" jdbcType="VARCHAR" />
+        <result column="CREATION_DATE" property="creationDate" jdbcType="TIMESTAMP" />
+        
+        <!-- 业务字段 -->
+        <result column="PLANT_NAME" property="plantName" jdbcType="VARCHAR" />
+        <result column="SUPPLIER_CODE" property="supplierCode" jdbcType="VARCHAR" />
+        <result column="SUPPLIER_NAME" property="supplierName" jdbcType="VARCHAR" />
+        <result column="SUPPLIER_SITE_NAME" property="supplierSiteName" jdbcType="VARCHAR" />
+        <result column="CREATION_NAME" property="creationName" jdbcType="VARCHAR" />
+        <result column="START_TIME" property="startTime" jdbcType="VARCHAR" />
+        <result column="END_TIME" property="endTime" jdbcType="VARCHAR" />
+        <result column="START_DATE" property="startDate" jdbcType="VARCHAR" />
+        <result column="END_DATE" property="endDate" jdbcType="VARCHAR" />
+        <result column="SUBMIT_START_DATE" property="submitStartDate" jdbcType="VARCHAR"/>
+        <result column="SUBMIT_END_DATE" property="submitEndDate" jdbcType="VARCHAR"/>
+        <result column="SUBMIT_NAME" property="submitName" jdbcType="VARCHAR"/>
+        <result column="purchase_group" property="purchaseGroup" jdbcType="VARCHAR" /> 
+    </resultMap>
+	<!-- 应收发票 创建/查询 -->
+	<select id="query" resultMap="BaseResultMap" parameterType="com.hand.hcs.hcs_tax_invoice.dto.TaxInvoice">
+		select distinct hti.web_invoice_id,
+		       hti.web_invoice_num,
+		       hti.web_invoice_status,
+		       hti.plant_id,
+		       hp.descriptions PLANT_NAME,
+		       hti.invoice_tax_amount_s,
+		       hti.invoice_amount_s,
+		       hti.invoice_tax_amount,
+		       hti.invoice_amount,
+		       hti.currency,
+		       hti.tax_invoice_num,
+		       hti.tax_invoice_qty,
+		       hti.supplier_remarks,
+		       hti.supplier_id,
+		       hs.supplier_code,
+		       hs.supplier_name,
+		       hti.supplier_site_id,
+		       hss.description SUPPLIER_SITE_NAME,
+		       suu.user_name CREATION_NAME,
+		       hti.creation_date,
+		       hti.approved_full_name,
+		       hti.approved_date,
+		       hti.approved_remarks,
+		       hti.submited_date,
+		       sus.user_name SUBMIT_NAME,
+		       hti.ENABLE_FLAG,
+		       hti.no_tax_amount,
+           	   hti.no_tax_amount_s
+		from sys_user su
+		left join hcs_tax_invoice hti on decode(su.user_type,'S',su.supplier_id,hti.supplier_id) = hti.supplier_id
+		left join hcm_plant hp on hti.plant_id = hp.plant_id
+		left join hcs_suppliers hs on hti.supplier_id = hs.supplier_id
+		left join hcs_supplier_site hss on hti.supplier_site_id = hss.supplers_site_id
+		left join sys_user suu on hti.created_by = suu.user_id
+		left join sys_user sus on hti.submited_id = sus.user_id
+		<if test="purchaseGroup != null">
+         	left join hcs_asl_control hac on hac.purchase_group = #{purchaseGroup}
+         	left join hcs_asl ha on hac.asl_id = ha.asl_id and ha.enable_flag = 'Y'
+        </if>
+		where 
+		su.user_id = #{request.userId}
+		<if test="purchaseGroup!=null">
+			and ha.plant_id = hti.plant_id
+			and ha.supplier_id = hti.supplier_id
+		</if>
+		<if test="functionFlag == 'N'.toString()">
+			and hti.web_invoice_status in ('N','R')
+		</if>
+		<if test="functionFlag == 'C'.toString() and webInvoiceNum != null">
+			and hti.web_invoice_num != #{webInvoiceNum}
+		</if>
+		<if test = "functionFlag != 'C'.toString() and webInvoiceNum != null">
+			and hti.web_invoice_num LIKE concat('%',concat(#{webInvoiceNum,jdbcType=VARCHAR},'%'))
+		</if> 
+		<if test = "webInvoiceStatus != null">
+			and hti.web_invoice_status = #{webInvoiceStatus}
+		</if> 
+		<if test = "taxInvoiceNum != null">
+			and hti.tax_invoice_num LIKE concat('%',concat(#{taxInvoiceNum},'%'))
+		</if> 
+		<if test = "enableFlag != null">
+			and hti.ENABLE_FLAG = #{enableFlag}
+		</if>
+		<if test = "startTime != null">
+			and hti.creation_date &gt;= to_date(#{startTime}, 'yyyy-mm-dd hh24:mi:ss')
+		</if>
+		<if test = "endTime != null">
+			and hti.creation_date &lt;= to_date(#{endTime}, 'yyyy-mm-dd hh24:mi:ss')
+		</if>
+		<if test = "plantId != null">
+			and hti.plant_id = #{plantId}
+		</if>
+		<if test = "supplierId != null">
+			and hti.supplier_id= #{supplierId}
+		</if>
+		<if test = "startDate != null">
+			and hti.approved_date &gt;= to_date(#{startDate}, 'yyyy-mm-dd hh24:mi:ss')
+		</if>
+		<if test = "endDate != null">
+			and hti.approved_date &lt;= to_date(#{endDate}, 'yyyy-mm-dd hh24:mi:ss')
+		</if>
+		<if test = "submitStartDate != null">
+			and hti.submited_date &gt;= to_date(#{submitStartDate}, 'yyyy-mm-dd hh24:mi:ss')
+		</if>
+		<if test = "submitEndDate != null">
+			and hti.submited_date &lt;= to_date(#{submitEndDate}, 'yyyy-mm-dd hh24:mi:ss')
+		</if>
+		<if test="webInvoiceId!=null">
+			and hti.web_invoice_id = #{webInvoiceId}
+		</if>
+		
+		order by hti.creation_date desc
+	</select>
+	<!-- 查询今年最大流水号 -->
+	<select id="queryMaxNum" resultType="java.lang.Integer" parameterType="com.hand.hcs.hcs_tax_invoice.dto.TaxInvoice">
+		select nvl(max(substr(hti.web_invoice_num,-7)),0) 
+		from HCS_TAX_INVOICE hti 
+		where extract(year from hti.creation_date)= extract(year from sysdate)
+	</select>
+</mapper>

@@ -1,0 +1,330 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.plm.spec_product_detail.mapper.SpecProductDetailMapper">
+    <resultMap id="BaseResultMap" type="com.hand.plm.spec_product_detail.dto.SpecProductDetail">
+        <result column="SPEC_LINE_ID" property="specLineId" jdbcType="DECIMAL" />
+        <result column="SPEC_ID" property="specId" jdbcType="DECIMAL" />
+        <result column="DEMAND_MSG" property="demandMsg" jdbcType="VARCHAR" />
+        <result column="ATTACHMENT" property="attachment" jdbcType="VARCHAR" />
+        <result column="STD_TEST_METHOD" property="stdTestMethod" jdbcType="VARCHAR" />
+        <result column="SPEC_CODE" property="specCode" jdbcType="VARCHAR" />
+        <result column="COUNT_TYPE" property="countType" jdbcType="VARCHAR" />
+        <result column="MIN_VALUE" property="minValue" jdbcType="DECIMAL" />
+        <result column="MAX_VALUE" property="maxValue" jdbcType="DECIMAL" />
+        <result column="UOM" property="uom" jdbcType="VARCHAR" />
+        <result column="APPROVAL_STATUS" property="approvalStatus" jdbcType="VARCHAR" />
+        <result column="VERSION" property="version" jdbcType="VARCHAR" />
+        <result column="STATUS" property="status" jdbcType="VARCHAR" />
+        <result column="LEVEL_NUM" property="levelNum" jdbcType="DECIMAL" />
+        <result column="PARENT_SPEC_ID" property="parentSpecId" jdbcType="DECIMAL" />
+        <result column="SPEC_NAME" property="specName" jdbcType="VARCHAR" />
+        <result column="SPEC_DESCRIPTION" property="specDescription" jdbcType="VARCHAR"/>
+        <result column="TMP" property="tmp" jdbcType="VARCHAR"/>
+        <result column="KID" property="kid" jdbcType="DECIMAL" />
+        <result column="COUNT" property="count" jdbcType="DECIMAL" />
+    </resultMap>
+    
+    <select id="selectTreeDatas" resultMap="BaseResultMap">
+		  select spb.parent_spec_id,
+		       spb.level_num,
+		       spb.spec_id,
+		       spb.spec_description
+		  from PLM_SPEC_PRODUCT_BASIC spb
+    </select>
+    
+    <select id="queryAll" resultMap="BaseResultMap">
+				select dd.*, spp.kid
+				  from (select cc.spec_description,
+				               spd.spec_line_id,
+				               spd.spec_id,
+				               spd.DEMAND_MSG,
+				               spd.ATTACHMENT,
+				               spd.STD_TEST_METHOD,
+				               spd.SPEC_CODE,
+				               spd.COUNT_TYPE,
+				               spd.MIN_VALUE,
+				               spd.MAX_VALUE,
+				               spd.UOM,
+				               spd.APPROVAL_STATUS,
+				               spd.VERSION,
+				               cc.spec_description || spd.DEMAND_MSG || spd.ATTACHMENT ||
+				               spd.STD_TEST_METHOD || spd.SPEC_CODE || spd.COUNT_TYPE ||
+				               spd.MIN_VALUE || spd.MAX_VALUE || spd.UOM ||
+				               spd.APPROVAL_STATUS || spd.VERSION tmp
+				          from PLM_SPEC_PRODUCT_DETAIL spd
+				          left join (select spb.parent_spec_id,
+				                           spb.level_num,
+				                           spb.spec_id,
+				                           LTRIM(SYS_CONNECT_BY_PATH(spb.spec_description,
+				                                                     ';'),
+				                                 ';') spec_description
+				                      from PLM_SPEC_PRODUCT_BASIC spb
+				                     where connect_by_isleaf = 1
+				                     start with spb.parent_spec_id is null
+				                    connect by prior spb.spec_id = spb.parent_spec_id) cc
+				            on cc.spec_id = spd.spec_id) dd
+				  left join PLM_SPEC_PRODUCT_PENDDING spp
+				    on dd.spec_line_id = spp.spec_line_id
+				    where 1=1
+					<if test="tmp != null and tmp != ''">
+						and instr(dd.tmp, #{tmp}) > 0
+					</if>
+					<if test="specLineIdList != null and specLineIdList.size() > 0">
+						and dd.SPEC_LINE_ID in(
+							<foreach collection="specLineIdList" item="specLineId" separator=",">
+								#{specLineId}
+							</foreach>
+						)
+					</if>
+    </select>
+    
+    <update id="updateSpecLineIdStatus" parameterType="java.util.List">
+		update PLM_SPEC_PRODUCT_DETAIL spd
+		<set>
+			spd.status = 'UNDER_REVIEW'
+		</set>
+		where spd.spec_line_id in(
+			<foreach collection="list" item="item" separator=",">
+				#{item.specLineId}
+			</foreach>
+		)
+    </update>
+    
+	    
+	<insert id="insertSpecChangeLinePen">
+	    insert into PLM_SPEC_CHANGE_LINE
+	      (LINE_ID,
+	       CHANGE_ORDER_ID,
+	       SPEC_LINE_ID,
+	       DEMAND_MSG,
+	       ATTACHMENT,
+	       ATTRIBUTE_TYPE,
+	       STD_TEST_METHOD,
+	       SPEC_CODE,
+	       COUNT_TYPE,
+	       MIN_VALUE,
+	       max_value,    
+	       uom,   
+	       approval_status,
+	       version,         
+	       status,
+	       object_version_number,
+	       request_id,
+	       program_id,
+	       created_by,
+	       creation_date,
+	       last_updated_by,
+	       last_update_date,
+	       last_update_login,
+	       attribute_category)
+	    SELECT
+	         PLM_SPEC_CHANGE_LINE_s.nextval,
+	         #{changeOrderId} CHANGE_ORDER_ID,
+	         spd.SPEC_LINE_ID,
+	         spd.DEMAND_MSG,
+	         spd.ATTACHMENT,
+	         spd.ATTRIBUTE_TYPE,
+	         spd.STD_TEST_METHOD,
+	         spd.SPEC_CODE,
+	         spd.COUNT_TYPE,
+	         spd.MIN_VALUE,
+	         spd.max_value,    
+	         spd.uom,   
+	         spd.approval_status,
+	         spd.version,         
+	         spd.status,
+	         spd.object_version_number,
+	         spd.request_id,
+	         spd.program_id,
+	         spd.created_by,
+	         spd.creation_date,
+	         spd.last_updated_by,
+	         spd.last_update_date,
+	         spd.last_update_login,
+	         spd.attribute_category
+	        FROM PLM_SPEC_PRODUCT_PENDDING spd
+	        WHERE spd.SPEC_LINE_ID = #{specLineId,jdbcType=DECIMAL}
+	  </insert> 
+	  
+	  <insert id="insertSpecChangeLineDdt">
+	    insert into PLM_SPEC_CHANGE_LINE
+	      (LINE_ID,
+	       CHANGE_ORDER_ID,
+	       SPEC_LINE_ID,
+	       DEMAND_MSG,
+	       ATTACHMENT,
+	       ATTRIBUTE_TYPE,
+	       STD_TEST_METHOD,
+	       SPEC_CODE,
+	       COUNT_TYPE,
+	       MIN_VALUE,
+	       max_value,    
+	       uom,   
+	       approval_status,
+	       version,         
+	       status,
+	       object_version_number,
+	       request_id,
+	       program_id,
+	       created_by,
+	       creation_date,
+	       last_updated_by,
+	       last_update_date,
+	       last_update_login,
+	       attribute_category)
+	    SELECT
+	         PLM_SPEC_CHANGE_LINE_s.nextval,
+	         #{changeOrderId} CHANGE_ORDER_ID,
+	         spd.SPEC_LINE_ID,
+	         spd.DEMAND_MSG,
+	         spd.ATTACHMENT,
+	         spd.ATTRIBUTE_TYPE,
+	         spd.STD_TEST_METHOD,
+	         spd.SPEC_CODE,
+	         spd.COUNT_TYPE,
+	         spd.MIN_VALUE,
+	         spd.max_value,    
+	         spd.uom,   
+	         spd.approval_status,
+	         spd.version,         
+	         spd.status,
+	         spd.object_version_number,
+	         spd.request_id,
+	         spd.program_id,
+	         spd.created_by,
+	         spd.creation_date,
+	         spd.last_updated_by,
+	         spd.last_update_date,
+	         spd.last_update_login,
+	         spd.attribute_category
+	        FROM PLM_SPEC_PRODUCT_DETAIL spd
+	        WHERE spd.SPEC_LINE_ID = #{specLineId,jdbcType=DECIMAL}
+	  </insert> 
+	  
+	  <select id="queryLastSpecId" resultType="java.lang.String">
+			select spd.spec_line_id
+		     from PLM_SPEC_PRODUCT_DETAIL spd,
+		          (select spb.spec_id
+		             from PLM_SPEC_PRODUCT_BASIC spb
+		            where connect_by_isleaf = 1
+		              and spb.level_num = 4
+		            start with spb.parent_spec_id = #{specId}
+		           connect by prior spb.spec_id = spb.parent_spec_id) cc
+		    where spd.spec_id = cc.spec_id
+	  </select>
+	  
+      <select id="selectTreeChild" resultMap="BaseResultMap">
+		  select spb.spec_id, spb.spec_description
+		   from PLM_SPEC_PRODUCT_BASIC spb
+		   where 1=1
+		   <if test="specId != null and specId != ''">
+		  		and spb.parent_spec_id = #{specId}
+		   </if>
+    </select>
+    
+    <select id="selectKey" resultType="java.lang.Long">
+    	select PLM_SPEC_PRODUCT_DETAIL_s.nextval from dual
+    </select>
+    
+    <select id="selectLevelInfo" resultMap="BaseResultMap">
+		 select spb.spec_id, spb.spec_description
+		  from PLM_SPEC_PRODUCT_BASIC spb
+		 where spb.level_num = #{levelNum}
+    </select>
+    
+     <select id="selectLevelInfoById" resultMap="BaseResultMap">
+		 select spb.spec_id, spb.spec_description
+		  	from PLM_SPEC_PRODUCT_BASIC spb
+		 where spb.parent_spec_id = #{parentSpecId}
+    </select>
+    
+    <select id="queryAllPendding" resultMap="BaseResultMap">
+		select dd.*
+  			from (select cc.spec_description,
+               spd.spec_line_id,
+               spd.spec_id,
+               spd.kid,
+               spd.DEMAND_MSG,
+               spd.ATTACHMENT,
+               spd.STD_TEST_METHOD,
+               spd.SPEC_CODE,
+               spd.COUNT_TYPE,
+               spd.MIN_VALUE,
+               spd.MAX_VALUE,
+               spd.UOM,
+               spd.APPROVAL_STATUS,
+               spd.VERSION,
+               cc.spec_description || spd.DEMAND_MSG || spd.ATTACHMENT ||
+               spd.STD_TEST_METHOD || spd.SPEC_CODE || spd.COUNT_TYPE ||
+               spd.MIN_VALUE || spd.MAX_VALUE || spd.UOM ||
+               spd.APPROVAL_STATUS || spd.VERSION tmp
+          from PLM_SPEC_PRODUCT_PENDDING spd
+          left join (select spb.parent_spec_id,
+                           spb.level_num,
+                           spb.spec_id,
+                           LTRIM(SYS_CONNECT_BY_PATH(spb.spec_description,
+                                                     ';'),
+                                 ';') spec_description
+                      from PLM_SPEC_PRODUCT_BASIC spb
+                     where connect_by_isleaf = 1
+                     start with spb.parent_spec_id is null
+                    connect by prior spb.spec_id = spb.parent_spec_id) cc
+            on cc.spec_id = spd.spec_id) dd
+    </select>
+    
+    <select id="queryAllHis" resultMap="BaseResultMap">
+		select dd.*
+  			from (select cc.spec_description,
+               spd.spec_line_id,
+               spd.spec_id,
+               spd.kid,
+               spd.DEMAND_MSG,
+               spd.ATTACHMENT,
+               spd.STD_TEST_METHOD,
+               spd.SPEC_CODE,
+               spd.COUNT_TYPE,
+               spd.MIN_VALUE,
+               spd.MAX_VALUE,
+               spd.UOM,
+               spd.APPROVAL_STATUS,
+               spd.VERSION,
+               cc.spec_description || spd.DEMAND_MSG || spd.ATTACHMENT ||
+               spd.STD_TEST_METHOD || spd.SPEC_CODE || spd.COUNT_TYPE ||
+               spd.MIN_VALUE || spd.MAX_VALUE || spd.UOM ||
+               spd.APPROVAL_STATUS || spd.VERSION tmp
+          from PLM_SPEC_PRODUCT_HIS spd
+          left join (select spb.parent_spec_id,
+                           spb.level_num,
+                           spb.spec_id,
+                           LTRIM(SYS_CONNECT_BY_PATH(spb.spec_description,
+                                                     ';'),
+                                 ';') spec_description
+                      from PLM_SPEC_PRODUCT_BASIC spb
+                     where connect_by_isleaf = 1
+                     start with spb.parent_spec_id is null
+                    connect by prior spb.spec_id = spb.parent_spec_id) cc
+            on cc.spec_id = spd.spec_id) dd
+    </select>
+    
+		<select id="selectParentTree" resultMap="BaseResultMap">
+		    select spb.spec_description,
+		         spb.spec_id,
+		         (select count(0)
+		            from PLM_SPEC_PRODUCT_DETAIL spd
+		            left join (select spb.parent_spec_id,
+		                             spb.spec_description,
+		                             spb.spec_id
+		                        from PLM_SPEC_PRODUCT_BASIC spb
+		                       where connect_by_isleaf = 1
+		                       start with spb.parent_spec_id = spb.spec_id
+		                      connect by prior spb.spec_id = spb.parent_spec_id) cc
+		              on cc.spec_id = spd.spec_id) count
+		    from PLM_SPEC_PRODUCT_BASIC spb
+		   where spb.parent_spec_id is null
+		  </select>
+		  
+		  <select id="hisCount" resultType="java.lang.Long">
+		  		select count(0) from PLM_SPEC_PRODUCT_HIS sph
+		  </select>
+</mapper>

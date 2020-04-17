@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<!--
+  description  物料类别属性编辑界面
+  @author KOCDZX0 2020/03/20 12:17 PM 
+-->
+<#include "../include/header.html">
+<script src="${base.contextPath}/common/code?yesOrNo=SYS.YES_NO"></script>
+
+<script type="text/javascript">
+    var BaseUrl = _basePath;
+    var itemId = '${RequestParameters.itemId!0}';
+    var viewModel = Hap.createGridViewModel(null,{
+        model:{},
+        closeWin:function(e) {
+            window.parent.$("#div1").data("kendoWindow").close();
+        },
+        save:function(){
+            var data = viewModel.model.toJSON();
+            data.__status = "update";
+            data.itemId=itemId;
+            var validator = $("#mainForm").data("kendoValidator");
+            if(validator.validate()) {
+                Hap.request({
+                    url: BaseUrl + "/hcm/item/category/settings/add",
+                    data: kendo.stringify(data),
+                    success:function(data){
+                        if(data.success){
+                            kendo.ui.showInfoDialog({
+                                title:$l('hap.tip.info'),
+                                message:'<@spring.message "hap.tip.success"/>'
+                            })
+                            viewModel.closeWin();
+                        }
+                    }
+                })
+            }
+        },
+        queryInfo:function(){
+            if(itemId != 0){
+                $.ajax({
+                    url:BaseUrl+"/hcm/item/category/settings/listQuery?itemId="+itemId,
+                    success:function(data){
+                        var a0 = data.rows[0] || {};
+                        for(var k in a0){
+                            viewModel.model.set(k,a0[k]);
+                        }
+                    }
+                })
+            }
+        }
+
+    });
+    viewModel.queryInfo();
+
+</script>
+
+<body>
+<div id="page-content">
+    <form id = "mainForm" style="paddiing-bottom:50px;padding-top:15px" class="form-horizontal" method="post" enctype="application/json;charset=UTF-8">
+        <div class="row">
+            <div class="col-sm-12">
+                <!-- 物料编码+ 物料名称 -->
+                <div class="row" style="margin-top:15px">
+                    <div class="col-sm-6">
+                        <label class="col-sm-3 control-label"><@spring.message "asl.itemcode"/>:</label>
+                        <div class="col-sm-9">
+                            <input disabled id="itemId" style="width:100%" name="itemId"
+                                   data-bind="value:model.itemId,text:model.itemCode">
+                            <span data-for="itemId" class="k-state-disabled"></span>
+                        </div>
+                        <script>
+                            $("#itemId").kendoLov($.extend(<@lov"LOV_ITEM"/>, {
+                                textField: 'itemCode',
+                                valueField:'itemId',
+                                select:function(e){
+                                    viewModel.model.set("itemDescription",e.item.itemDescriptions);
+                                }
+                            }));
+                        </script>
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="col-sm-3 control-label"><@spring.message "settlement.itemname"/>:</label>
+                        <div class="col-sm-9">
+                            <input disabled style="width:100%" name="itemDescription"
+                                   id="itemDescription"
+                                   data-bind="value:model.itemDescription" data-role="maskedtextbox" >
+                            <span data-for="itemDescription" class="k-state-disabled"></span>
+                        </div>
+                    </div>
+                </div>
+                <!--物料分类-->
+                <div class="row" style="margin-top:15px">
+                    <div class="col-sm-6">
+                        <label class="col-sm-3 control-label"><@spring.message "hcm.item.itemtype"/>:</label>
+                        <div class="col-sm-9">
+                            <input style="width:100%" disabled name="itemType"
+                                   id="itemType"
+                                   data-bind="value:model.itemType" data-role="maskedtextbox">
+                            <span data-for="itemType" class="k-state-disabled"></span>
+                            <script type="text/javascript">
+                                // $("#thirdCategory").kendoComboBox({
+                                //     dataTextField: "meaning",
+                                //     dataValueField: "value",
+                                //     valuePrimitive: true,
+                                //     dataSource: category3
+                                // });
+                            </script>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="col-sm-3 control-label"><@spring.message "codedetail.itemversion"/>:</label>
+                        <div class="col-sm-9">
+                            <input style="width:100%"  name="itemEdition"
+                                   id="itemEdition"
+                                   data-bind="value:model.itemEdition" data-role="maskedtextbox">
+                            <span data-for="itemEdition"></span>
+                            <script type="text/javascript">
+                                $("#itemEdition").kendoNumericTextBox({
+                                    min:0,
+                                    format:"0"
+                                });
+                            </script>
+                        </div>
+                    </div>
+                </div>
+                <!-- 一级分类 + 二级分类 -->
+                <div class="row" style="margin-top:15px">
+                    <div class="col-sm-6">
+                        <label class="col-sm-3 control-label"><@spring.message "hcs.certificate.firstcategory"/>:</label>
+                        <div class="col-sm-9">
+                            <input style="width:100%" required name="categoryFirstId"
+                                   id="categoryFirstId"
+                                   data-bind="value:model.categoryFirstId,text:model.firstCode">
+                            <span data-for="categoryFirstId" class=".k-invalid-msg"></span>
+                            <script>
+                                $("#categoryFirstId").kendoLov($.extend(<@lov"ITEM_CATEGORY_LOV"/>, {
+                                    select:function(e){
+                                        viewModel.model.set("secondCode",e.item.secondCode);
+                                        viewModel.model.set("thirdCode",e.item.thirdCode);
+                                        viewModel.model.set("categorySecondId",e.item.categorySecondId);
+                                        viewModel.model.set("categoryThirdId",e.item.categoryThirdId);
+                                    }
+                                }));
+                            </script>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="col-sm-3 control-label"><@spring.message "hcs.certificate.secondcategory"/>:</label>
+                        <div class="col-sm-9">
+                            <input style="width:100%" disabled name="secondCode"
+                                   id="secondCode"
+                                   data-bind="value:model.secondCode" data-role="maskedtextbox">
+                            <span data-for="secondCode" class="k-state-disabled"></span>
+                        </div>
+                    </div>
+                </div>
+                <!--三级分类-->
+                <div class="row" style="margin-top:15px">
+                    <div class="col-sm-6">
+                        <label class="col-sm-3 control-label"><@spring.message "hcs.certificate.thirdcategory"/>:</label>
+                        <div class="col-sm-9">
+                            <input style="width:100%" disabled name="thirdCode"
+                                   id="thirdCode"
+                                   data-bind="value:model.thirdCode" data-role="maskedtextbox">
+                            <span data-for="thirdCode" class="k-state-disabled"></span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </form>
+    <div style="clear:both">
+        <div id="grid"></div>
+    </div>
+    <div id="mainBottom" class="text-right" style="bottom:15px;position:fixed;float:left;padding-top:15px;border-top:1px solid #e8e1eb;
+		width:100%;background:#fff;margin-right:30px">
+        <span class="btn btn-primary" data-bind="click:save" type="submit" style="margin-right:5px">保存</span>
+        <span class="btn btn-default" data-bind="click:closeWin" type="button" style="margin-right:25px">取消</span>
+    </div>
+    <script>
+        kendo.bind($('#mainForm'), viewModel);
+        kendo.bind($('#mainBottom'), viewModel);
+    </script>
+    <script>
+        $('#mainForm').kendoValidator({
+            messages:{
+                required:'<@spring.message "hap.validation.notempty"/>'
+            },
+            invalidMessageType:"tooltip"
+        });
+    </script>
+</div>
+</body>
+</html>

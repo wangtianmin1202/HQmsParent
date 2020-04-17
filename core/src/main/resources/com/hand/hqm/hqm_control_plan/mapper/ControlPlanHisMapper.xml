@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_control_plan.mapper.ControlPlanHisMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_control_plan.dto.ControlPlanHis">
+        <result column="CONTROL_PLAN_HIS_ID" property="controlPlanHisId" jdbcType="DECIMAL" />
+        <result column="CONTROL_PLAN_ID" property="controlPlanId" jdbcType="DECIMAL" />
+        <result column="CONTROL_VERSION" property="controlVersion" jdbcType="VARCHAR" />
+        <result column="CONTROL_VERSION_TIME" property="controlVersionTime" jdbcType="DATE" />
+        <result column="CREATION_DATE" property="creationDate" jdbcType="DATE" />
+    </resultMap>
+
+
+</mapper>

@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.dimension.hqm_dimension_order.mapper.DimensionOrderMapper">
+    <resultMap id="BaseResultMap" type="com.hand.dimension.hqm_dimension_order.dto.DimensionOrder">
+        <result column="ORDER_ID" property="orderId" jdbcType="DECIMAL" />
+        <result column="PLANT_ID" property="plantId" jdbcType="DECIMAL" />
+        <result column="ORDER_THEME" property="orderTheme" jdbcType="VARCHAR" />
+        <result column="ORDER_CODE" property="orderCode" jdbcType="VARCHAR" />
+        <result column="ORDER_STATUS" property="orderStatus" jdbcType="VARCHAR" />
+        <result column="ORDER_PROCESS" property="orderProcess" jdbcType="VARCHAR" />
+        <result column="EXPECTED_COMPLETE_TIME" property="expectedCompleteTime" jdbcType="DATE" />
+        <result column="SOURCE_TYPE" property="sourceType" jdbcType="VARCHAR" />
+        <result column="SOURCE_ORDER" property="sourceOrder" jdbcType="VARCHAR" />
+        
+        <result column="CREATE_DATE" property="createDate" jdbcType="DATE" />
+        <result column="UPDATE_DATE" property="updateDate" jdbcType="DATE" />
+        <result column="PROCESS_DETAIL" property="processDetail" jdbcType="VARCHAR" />
+        <result column="PLANT_CODE" property="plantCode" jdbcType="VARCHAR" />
+        <result column="PROBLEM_DESCRIPTION" property="problemDescription" jdbcType="VARCHAR" />
+        
+        <result column="MEMBER_NAME" property="memberName" jdbcType="VARCHAR" />
+        <result column="MEMBER_ID" property="memberId" jdbcType="DECIMAL" />
+        <result column="CREATE_NAME" property="createName" jdbcType="VARCHAR" />
+        <result column="ORDER_PROCESS_DES" property="orderProcessDes" jdbcType="VARCHAR" />
+        <result column="DETAIL_UPDATE_DATE" property="detailUpdateDate" jdbcType="VARCHAR" />
+        <result column="MEMBER_NAME" property="memberName" jdbcType="VARCHAR" />
+        
+        <result column="ENTITY_ID" property="entityId" jdbcType="VARCHAR" />
+        <result column="CHART_ID" property="chartId" jdbcType="VARCHAR" />
+        
+         <result column="ORDER_TYPE" property="orderType" jdbcType="VARCHAR" /> 
+        
+    </resultMap>
+    <!-- 基础查询 -->
+<select id="reselect" resultMap="BaseResultMap"
+            parameterType="com.hand.dimension.hqm_dimension_order.dto.DimensionOrder">
+SELECT t.*, 
+       t.creation_date AS create_date,
+       t.last_update_date AS update_date,
+        (SELECT listagg(s.status, ',') within GROUP(ORDER BY s.step)
+          FROM hqm_8d_step s
+         WHERE s.order_id = t.order_id) AS process_detail,
+       (SELECT listagg(to_char(s.last_update_date, 'yyyy-MM-dd'), ',') within GROUP(ORDER BY s.step)
+          FROM hqm_8d_step s
+         WHERE s.order_id = t.order_id) AS detail_update_date,
+       hr.name AS create_name,
+       sb.meaning AS order_process_des,
+       (SELECT listagg(su.user_name, ',') within GROUP(ORDER BY team.kid)
+          FROM hqm_8d_team_assembled team, sys_user su
+         WHERE team.order_id = t.order_id
+           AND team.member_id = su.user_id
+           AND team.member_role = 'L') AS member_name
+        ,(SELECT hpd.problem_description
+					FROM hqm_8d_problem_description hpd
+				 WHERE hpd.order_id = t.order_id) AS problem_description 
+		,(SELECT npe.entity_id
+				 FROM (SELECT *
+								 FROM pspc_entity pe
+								WHERE pe.entity_code = t.order_theme
+								ORDER BY pe.entity_version DESC) npe
+				WHERE rownum = 1)  as ENTITY_ID
+        ,(SELECT npe.Chart_Id
+         FROM (SELECT *
+                 FROM pspc_entity pe
+                WHERE pe.entity_code = t.order_theme
+                ORDER BY pe.entity_version DESC) npe
+        WHERE rownum = 1)  as CHART_ID
+  FROM hqm_8d_order t, sys_user suu, hr_employee hr, sys_code_b sc, sys_code_value_b sb
+ WHERE 1 = 1
+   AND t.created_by = suu.user_id
+   AND suu.employee_id = hr.employee_id
+   AND sc.code = 'HQM_8D_ORDER_PROCESS'
+   AND sb.code_id = sc.code_id
+   AND sb.value = t.order_process
+
+<if test="plantId!=null">
+	AND t.palnt_id = #{plantId}
+</if>
+<if test="orderCode!=null">
+	AND t.order_code LIKE concat('%',concat(#{orderCode},'%'))
+</if>
+<if test="orderStatus != null">
+	AND t.order_status = #{orderStatus}
+</if>
+<if test="createName !=null">
+	AND hr.name LIKE concat('%',concat(#{createName},'%'))
+</if>
+<if test="memberName!=null">
+	AND EXISTS (SELECT 1 
+          FROM hqm_8d_team_assembled teami, sys_user sui
+         WHERE teami.order_id = t.order_id
+           AND teami.member_id = sui.user_id
+           AND teami.member_role = 'L'
+           AND sui.user_name LIKE concat('%', concat(#{memberName}, '%')))
+</if>
+<if test="orderId!=null">
+	AND t.order_id = #{orderId}
+</if>
+<if test="memberId != null">
+	AND EXISTS (SELECT 1
+          FROM hqm_8d_team_assembled team
+         WHERE team.order_id = t.order_id
+           AND team.member_id = #{memberId})
+</if>
+<if test="creationDateStart != null">
+	AND t.creation_date >= to_date(#{creationDateStart},'yyyy-MM-dd HH24:mi:ss')
+</if>
+<if test="creationDateEnd != null">
+	AND t.creation_date &lt;= to_date(#{creationDateEnd},'yyyy-MM-dd HH24:mi:ss')
+</if>
+<if test="lastUpdateDateStart != null">
+	AND t.last_update_date >= to_date(#{lastUpdateDateStart},'yyyy-MM-dd HH24:mi:ss')
+</if>
+<if test="lastUpdateDateEnd != null">
+	AND t.last_update_date &lt;= to_date(#{lastUpdateDateEnd},'yyyy-MM-dd HH24:mi:ss')
+</if>
+<if test="createdByUserId !=null">
+	AND t.created_by = #{createdByUserId}
+</if>
+ORDER BY t.creation_date DESC
+</select>
+<!-- 最大流水号 -->
+<select id="selectMaxNumber" resultMap="BaseResultMap"
+            parameterType="com.hand.hqm.hqm_iqc_inspection_h.dto.IqcInspectionH">
+SELECT t.order_code
+  FROM hqm_8d_order t
+ WHERE 1 = 1
+   AND t.order_code LIKE concat(#{orderCode}, '%')
+ ORDER BY t.order_code DESC
+</select>
+</mapper>

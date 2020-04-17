@@ -1,0 +1,389 @@
+<#include "../include/header.html">
+<script src="${base.contextPath}/lib/prints/doc_print.js" type="text/javascript" charset="UTF-8"></script>
+<script src="${base.contextPath}/common/code?HQM_CONTROL_CHART_TYPE=HQM_CONTROL_CHART_TYPE"></script>
+<script src="${base.contextPath}/lib/js/echarts.common.min.js?_v_=1553896255267" type="text/javascript" charset="UTF-8"></script>
+<script type="text/javascript" src="https://www.echartsjs.com/examples/vendors/echarts/echarts.min.js?_v_=1553896255267"></script> 
+<script type="text/javascript" src="https://www.echartsjs.com/examples/vendors/echarts-stat/ecStat.min.js?_v_=1553896255267"></script>
+
+<script type="text/javascript">
+    var parentData = window.parent.parentData;
+    //列
+    var mapCol = window.parent.mapCol;
+	//行
+	var sampleAndStandardList = window.parent.sampleAndStandardList; 
+	
+	var sampleNumAndmeasuredByMap = window.parent.sampleNumAndmeasuredByMap;
+	
+	var sampleNumMap = window.parent.sampleNumMap;
+	var msg = '';
+	var msgEn = '';
+	//零件总数
+	var ljCount = 0;
+ 	var viewModel = kendo.observable({
+		model: {
+		},
+		//返回
+		closeWin: function(e){
+        	window.parent.$("#selectConFunction").data("kendoWindow").close();
+        },
+        //去打印
+        toPrint: function(){
+//         	$("#iframePrint").attr("src","msa_consistency_value_print.html");
+        	var dialog = $("#printWindow").kendoWindow({
+    				actions: ["Close"],
+    				width: "95%",
+    				height: "90%",
+    				title: '<@spring.message "打印msa"/>',
+    				visible: false,
+    				iframe: true,
+    				modal: true,
+    				content: 'msa_consistency_value_print.html'
+    			}).data("kendoWindow");
+    			dialog.center().open();
+        }
+	});
+    $(function(){
+    	//统计测量人对测试结果与基准一致的数量 集合
+		var list1 = [];
+    	//统计测量人测量值为G的数量
+    	var listG = [];
+    	//统计测量人测量值为NG的数量
+    	var listNG = [];
+    	
+    	ljCount = sampleAndStandardList.length;
+    	//基准Kappa系数
+    	var Kappa = [];
+    	//测量人自身一致性
+    	var list0 = [];
+    	//测量人与基准一致性
+    	var list2 = [];
+    	
+//     	var msaPlanLine = {
+// 	  			"measurePlanLineId": parentData.measurePlanLineId
+// 	  	}
+// 		$.ajax({
+// 			url: "${base.contextPath}/hqm/msa/plan/line/updateAnalyzeData",
+// 			data: msaPlanLine,
+// 			type: "POST",
+// 			dataType: "json",
+// 			success: function(data){
+// 			}
+// 		})
+		
+    	/* for(var i=0 ; i<sampleAndStandardList.length; i++){
+			if(sampleAndStandardList[i].split(',')[1] == 'G'){
+				G++;
+			}else if(sampleAndStandardList[i].split(',')[1] == 'NG'){
+				NG++;
+			}
+		} */
+		for(var key in mapCol){
+			var resultKappa = {
+					'name' : key + '与基准',
+					'value' : null
+				}
+			//统计测量人对测试结果与基准一致的数量 
+			var count1 = 0;
+			//统计测量人测量值为G的数量
+			var countG = 0;
+			//统计测量人测量值为NG的数量
+			var countNG = 0;
+			//实际一致性概率
+			var P0 = 0;
+			//偶然一致性概率
+			var Pe = 0;
+			//重复测量次数
+			var cfCount = Object.keys(mapCol[key]).length;
+			//基准值中G的数量
+	    	var G = 0;
+	    	//基准值中NG的数量
+	    	var NG = 0;
+			for(var keyChild in mapCol[key]){
+				for(var i=0; i< Object.keys(mapCol[key][keyChild]).length; i++){
+					var data = mapCol[key][keyChild][i];
+					if(checkStr(data)){
+						if(data.measureValue == data.standardValue){
+							count1++;
+						}  
+						if(data.measureValue == 'G'){
+							countG++;
+						}
+						if(data.measureValue == 'NG'){
+							countNG++;
+						}
+						if(data.standardValue == 'G'){
+							G++;
+						}
+						if(data.standardValue == 'NG'){
+							NG++;
+						}
+					}
+					
+				}
+			}
+			P0 = count1/(ljCount*cfCount);
+			Pe = (countG*G+countNG*NG)/Math.pow((ljCount*cfCount),2)
+			resultKappa.value = (P0-Pe)/(1-Pe)
+			Kappa.push(resultKappa);
+		}
+		
+		kappaTable(Kappa)
+		
+		for(var key in sampleNumAndmeasuredByMap){
+			var result0 = {
+					'name' : key,
+					'value' : null,
+				}
+			var result2 = {
+					'name' : key,
+					'value' : null,
+				}
+			//测量人对同一个零件测量值均一致的零件个数
+			var count0 = 0;
+			//测量人自身测量结果一致且与基准一致的个数
+			var count2 = 0;
+			for(var keyChild in sampleNumAndmeasuredByMap[key]){
+				var flag0 = true;
+				var flag2 = true;
+				var data = sampleNumAndmeasuredByMap[key][keyChild];
+				for(var i=1; i<data.length; i++){
+					if(!(data[i].measureValue === data[i-1].measureValue)){
+						flag0 = false;
+					}
+				}
+				for(var i=0; i<data.length; i++){
+					if(!(data[i].measureValue === data[i].standardValue)){
+						flag2 = false;
+					}
+				}
+				if(flag0){
+					count0++;
+				}
+				if(flag0 && flag2){
+					count2++;
+				}
+			}
+			result0.value = count0;
+			list0.push(result0)
+			
+			result2.value = count2;
+			list2.push(result2)
+		}
+		var n1 = 0;
+		var n2 = 0;
+		for(var key in sampleNumMap){
+			var data = sampleNumMap[key];
+			var flagn1 = true;
+			var flagn2 = true;
+			for(var i=1; i<data.length; i++){
+				if(!(data[i].measureValue === data[i-1].measureValue)){
+					flagn1 = false;
+				}
+			}
+			for(var i=0; i<data.length; i++){
+				if(!(data[i].measureValue === data[i].standardValue)){
+					flagn2 = false;
+				}
+			}
+			if(flagn1){
+				n1++
+			}
+			if(flagn1 && flagn2){
+				n2++
+			}
+		}
+		resultTable(list0,n1,'a','<@spring.message "msaplan.consistency.between.person"/>')
+		resultTable(list2,n2,'b','<@spring.message "msaplan.consistency.measure.system"/>')
+		$("#result").html(msgEn)
+    })
+    //评价人一致性
+    function resultTable(list,n1,str1,title){
+    	var str = '<tr>';
+    	str += '<th></th>'
+    	for(var i=0;i<list.length;i++){
+    		str += '<th  style="text-align: center">'+ list[i].name +'</th>'
+    	}
+    	str += '<th  style="text-align: center">'+ title +'</th>'
+    	str += '</tr>';
+    	
+    	str += '<tr>';
+    	str += '<th style="text-align: center"><@spring.message "msaplan.consistency.sampleqty"/></th>'
+    	for(var i=0;i<list.length;i++){
+    		str += '<th  style="text-align: center">'+ list[i].value.toFixed(0) +'</th>'
+    	}
+    	str += '<th  style="text-align: center">'+ n1 +'</th>'
+    	str += '</tr>';
+    	
+    	str += '<tr>';
+    	str += '<th style="text-align: center"><@spring.message "msaplan.consistency"/></th>'
+    	for(var i=0;i<list.length;i++){
+    		str += '<th  style="text-align: center">'+ (list[i].value/ljCount).toFixed(4) * 100 +'%</th>'
+    		/* if(i == (list.length -1)){
+    			if((list[i].value/ljCount).toFixed(2)>= 0.9){
+    				msg = '一致性>=90%,可接受'
+    			}else if((list[i].value/ljCount).toFixed(2) < 0.8){
+    				msg = '一致性<80%，不可接受'
+    			}else{
+    				msg = '一致性在80%和90%之间，可接受但需改进'
+    			}
+    			if(parentData.measurePlanStatus != '3'){    				
+	    			var msaResult = '';
+	    			
+	    			if((list[i].value/ljCount).toFixed(2) >= parseFloat(parentData.judgementStandard)*0.01){
+	    				msaResult = 'OK';
+	    			}else{
+	    				msaResult = 'NG';
+	    			}
+	    			//MSA结论
+					var msaPlanLine = {
+			    			"measurePlanId" : parentData.msaPlanId,
+			    			"msaContent" : '5',
+			    			"msaResult":msaResult,
+			    			"msaConclusion":msg
+			    	}
+					$.ajax({
+			    		url: "${base.contextPath}/hqm/msa/plan/line/updateResult",
+			    		data: msaPlanLine,
+			    		type: "POST",
+			    		dataType: "json",
+			    		success: function(data){
+			    			if(data.success){
+			    				window.parent.viewModel.query();
+			    			}
+			    		}
+			    	})
+    			}
+    		} */
+    	}
+    	str += '<th  style="text-align: center">'+ (n1/ljCount).toFixed(4) * 100  +'%</th>'
+    	str += '</tr>';
+    	if((n1/ljCount).toFixed(2)>= 0.9){
+    		msg += '一致性>=90%,可接受';
+    		msgEn += '<@spring.message "msaplan.consistency.conclusion1"/>';
+		}else if((n1/ljCount).toFixed(2) < 0.8){
+			msg += '一致性<80%，不可接受';
+			msgEn += '<@spring.message "msaplan.consistency.conclusion2"/>';
+		}else{
+			msg += '一致性在80%和90%之间，可接受但需改进';
+			msgEn += '<@spring.message "msaplan.consistency.conclusion3"/>';
+		}
+		if(parentData.measurePlanStatus != '3'){    				
+			var msaResult = '';
+			
+			if((n1/ljCount).toFixed(2) >= parseFloat(parentData.judgementStandard)*0.01){
+				msaResult = 'OK';
+			}else{
+				msaResult = 'NG';
+			}
+			//MSA结论
+			var msaPlanLine = {
+	    			"measurePlanId" : parentData.msaPlanId,
+	    			"msaContent" : '5',
+	    			"msaResult":msaResult,
+	    			"msaConclusion":msg,
+	    			"measurePlanLineId": parentData.measurePlanLineId
+	    	}
+			$.ajax({
+	    		url: "${base.contextPath}/hqm/msa/plan/line/updateResult",
+	    		data: msaPlanLine,
+	    		type: "POST",
+	    		dataType: "json",
+	    		success: function(data){
+	    			if(data.success){
+	    				window.parent.viewModel.query();
+	    			}
+	    		}
+	    	})
+		}
+    	$("#resultTable"+str1).html("");
+		$("#resultTable"+str1).append(str); 
+		return msgEn;
+    }
+    //kappa表格
+    function kappaTable(list){
+    	var flag = true;
+    	var str = '<tr>';
+    	str += '<th></th>'
+    	for(var i=0;i<list.length;i++){
+    		str += '<th  style="text-align: center">'+ list[i].name +'</th>'
+    	}
+    	str += '</tr>';
+    	
+    	str += '<tr>';
+    	str += '<th style="text-align: center">Kappa</th>'
+    	for(var i=0;i<list.length;i++){
+    		str += '<th  style="text-align: center">'+ list[i].value.toFixed(2) +'</th>'
+    		if(list[i].value.toFixed(2) < 0.75){
+    			flag = false;
+    		}
+    	}
+    	str += '</tr>';
+    	$("#kappaTable").html("");
+		$("#kappaTable").append(str); 
+		if(flag){
+			msg = 'Kappa的系数是均大于0.75，测量人与基准一致性好。';
+			msgEn = '<@spring.message "msaplan.consistency.conclusion4"/>';
+		}else{
+			msg = 'Kappa的系数存在小于0.75，测量人与基准一致性不好。';
+			msgEn = '<@spring.message "msaplan.consistency.conclusion5"/>';
+		}
+    }
+    function checkStr(str){
+		if(str == null || str === '' ||typeof(str) == "undefined"){
+    		return false;
+    	}
+		return true;
+    }
+</script>
+<body>
+<div style="display:none">
+	<iframe id="iframePrint" ></iframe>
+</div>
+<div id="printWindow"></div>
+<div id="page-content" style="heigth:100%">
+		<div class="row" style=";height:10%">
+			<div class="pull-left" id="toolbar-btn" style="padding-bottom:10px;">
+		    	<span class="btn btn-success k-grid-save-changes" data-bind="click:toPrint"  style="float:left;margin-right:5px;"><i class="fa fa-print" style="margin-right:3px;"></i><@spring.message "hap.print"/></span>
+		    	<span type="button" class="btn btn-primary" style="float:left;margin-right:5px" data-bind="click:closeWin"><i class="fa fa-undo" style="margin-right:3px;"></i><@spring.message "hap.back"/></span>
+		    </div>
+		    <script>kendo.bind($('#toolbar-btn'), viewModel);</script>
+	    </div>
+	    <div class="row" style="margin-top:20px;padding:0px">
+	    	<div class="row" style="margin:0px;padding:0px">
+	    		<lable class="col-xs-5 control-lable" style="text-align:center;padding:0px;width: 50%;margin-left:25%;font-size: 20px;"><@spring.message "msaplan.consistency.kappa"/></lable>
+	    	</div>
+	    	<div class="row" style="margin-top:10px;padding:0px">
+		    	<table id="kappaTable" style='color: black;margin-left:25%;width: 50%;table-layout: fixed;font-size: small;text-align: center;border-color:#697882;overflow:scroll' border='2px'>
+		    	
+		    	</table>
+	    	</div>
+	    </div>
+	    <div class="row" style="margin-top:20px;padding:0px">
+	    	<div class="row" style="margin:0px;padding:0px">
+	    		<lable class="col-xs-5 control-lable" style="text-align:center;padding:0px;width: 50%;margin-left:25%;font-size: 20px;"><@spring.message "msaplan.consistency.person"/></lable>
+	    	</div>
+	    	<div class="row" style="margin-top:10px;padding:0px">
+		    	<table id="resultTablea" style='color: black;margin-left:25%;width: 50%;table-layout: fixed;font-size: small;text-align: center;border-color:#697882;overflow:scroll' border='2px'>
+		    	
+		    	</table>
+	    	</div>
+	    </div>
+	    <div class="row" style="margin-top:20px;padding:0px">
+	    	<div class="row" style="margin:0px;padding:0px">
+	    		<lable class="col-xs-5 control-lable" style="text-align:center;padding:0px;width: 50%;margin-left:25%;font-size: 20px;"><@spring.message "msaplan.consistency.person.reference"/></lable>
+	    	</div>
+	    	<div class="row" style="margin-top:10px;padding:0px">
+		    	<table id="resultTableb" style='color: black;margin-left:25%;width: 50%;table-layout: fixed;font-size: small;text-align: center;border-color:#697882;overflow:scroll' border='2px'>
+		    	
+		    	</table>
+	    	</div>
+	    </div>
+	    <div class="row" style="margin-top:20px;padding:0px">
+				<span class="col-sm-2" style="font-size:20px;text-align:right;margin-left:15%"><@spring.message "msaplan.analysisconclusion"/></span>
+				<textarea class="col-sm-10" id="result" rows="8" cols="50" style="width: 40%;resize:none;font-size:20px"></textarea>
+		</div>
+</div>
+<script type="text/javascript">
+</script>
+</body>
+</html>

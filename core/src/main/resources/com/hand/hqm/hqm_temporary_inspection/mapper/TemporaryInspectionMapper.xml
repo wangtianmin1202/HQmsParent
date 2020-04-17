@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_temporary_inspection.mapper.TemporaryInspectionMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_temporary_inspection.dto.TemporaryInspection">
+        <result column="KID" property="kid" jdbcType="DECIMAL" />
+        <result column="PLANT_ID" property="plantId" jdbcType="DECIMAL" />
+        <result column="CATEGORY_ID" property="categoryId" jdbcType="VARCHAR" />
+        <result column="INSPECTION_TYPE" property="inspectionType" jdbcType="VARCHAR" />
+        <result column="STANDARD_TYPE" property="standardType" jdbcType="VARCHAR" />
+        <result column="PROD_LINE_ID" property="prodLineId" jdbcType="DECIMAL" />
+        <result column="WORKSTATIONS" property="workstations" jdbcType="VARCHAR" />
+        <result column="ATTRIBUTE_ID" property="attributeId" jdbcType="DECIMAL" />
+        <result column="ATTRIBUTE_TYPE" property="attributeType" jdbcType="VARCHAR" />
+        <result column="SAMPLE_WAY_ID" property="sampleWayId" jdbcType="DECIMAL" />
+        <result column="INSPECTION_REQUEST" property="inspectionRequest" jdbcType="VARCHAR" />
+        <result column="INSPECTION_METHOD" property="inspectionMethod" jdbcType="DECIMAL" />
+        <result column="STANDRAD_FROM" property="standradFrom" jdbcType="VARCHAR" />
+        <result column="STANDRAD_TO" property="standradTo" jdbcType="VARCHAR" />
+        <result column="STANDRAD_UOM" property="standradUom" jdbcType="VARCHAR" />
+        <result column="TEXT_STANDRAD" property="textStandrad" jdbcType="VARCHAR" />
+        <result column="QUALITY_CHARACTER_GRADE" property="qualityCharacterGrade" jdbcType="VARCHAR" />
+        <result column="ENABLE_TYPE" property="enableType" jdbcType="VARCHAR" />
+        <result column="IS_SYNC" property="isSync" jdbcType="VARCHAR" />
+        <result column="REMARK" property="remark" jdbcType="VARCHAR" />
+        <result column="ENABLE_TIME" property="enableTime" jdbcType="DATE" />
+        <result column="DISABLE_TIME" property="disableTime" jdbcType="DATE" />
+        <result column="STATUS" property="status" jdbcType="VARCHAR" />
+        <result column="STANDARD_OP_ID" property="standardOpId" jdbcType="DECIMAL" />
+        <result column="WORKSTATION_ID" property="workstationId" jdbcType="DECIMAL" />
+        <result column="PLANT_CODE" property="plantCode" jdbcType="VARCHAR" />
+        <result column="PLANT_DESCRIPTIONS" property="plantDescriptions" jdbcType="VARCHAR" />
+        <result column="INSPECTION_ATTRIBUTE" property="inspectionAttribute" jdbcType="VARCHAR" />
+        <result column="SAMPLE_WAY_CODE" property="sampleWayCode" jdbcType="VARCHAR" />
+        <result column="SAMPLE_TYPE" property="sampleType" jdbcType="VARCHAR" />
+        <result column="CATEGORY_CODE" property="categoryCode" jdbcType="VARCHAR" />
+        <result column="STANDARD_OP_CODE" property="standardOpCode" jdbcType="VARCHAR" />
+        <result column="WORKSTATION_CODE" property="workstationCode" jdbcType="VARCHAR" />
+        <result column="WORKSTATION_DES" property="workstationDes" jdbcType="VARCHAR" />
+        
+    </resultMap>
+<!-- 基础查询主界面用到的 -->
+<select id="reSelect" resultMap="BaseResultMap" parameterType="com.hand.hqm.hqm_temporary_inspection.dto.TemporaryInspection">
+SELECT t.kid,
+       t.plant_id,
+       t.category_id,
+       t.inspection_type,
+       t.attribute_id,
+       t.attribute_type,
+       t.standard_type,
+       t.workstation_id,
+       t.inspection_request,
+       t.standrad_from,
+       t.sample_way_id,
+       t.inspection_method,
+       t.standrad_to,
+       t.standrad_uom,
+       t.text_standrad,
+       t.quality_character_grade,
+       t.enable_type,
+       t.is_sync,
+       t.remark,
+       t.enable_time,
+       t.disable_time,
+       t.status,
+       t.attribute_category,
+       t.object_version_number,
+       t.program_id,
+       t.request_id,
+       t.standard_op_id,
+       hp.plant_code,
+       hp.descriptions AS plant_descriptions,
+       hia.inspection_attribute,
+       hsm.sample_way_code,
+       hsm.sample_type,
+       hic.category_code,
+       hh.standard_op_code,
+       hl.workstation_code,
+       hl.workstation_des
+  FROM hqm_temporary_inspection t
+  LEFT JOIN hqm_sop_pqc_control_h hh
+    ON t.standard_op_id = hh.standard_op_id
+  LEFT JOIN hqm_sop_pqc_control_l hl
+    ON t.standard_op_id = hl.standard_op_id
+   AND t.workstation_id = hl.workstation_id, hcm_plant hp, hqm_sample_manage hsm,
+ hqm_inspection_attribute hia, hcm_item_category hic
+ WHERE t.plant_id = hp.plant_id
+   AND t.sample_way_id = hsm.sample_way_id
+   AND t.attribute_id = hia.attribute_id
+   AND t.category_id = hic.category_id
+   
+   AND t.inspection_type = #{inspectionType}
+   <if test="kid != null">
+   AND t.kid = #{kid}
+   </if>
+   <if test="attributeType != null">
+   AND t.attribute_type = #{attributeType}
+   </if>
+   <if test="standardType != null">
+   AND t.standard_type = #{standardType}
+   </if>
+   <if test="plantId != null">
+   AND t.plant_id = #{plantId}
+   </if>
+   <if test="categoryId != null">
+   AND t.category_id = #{categoryId}
+   </if>
+   <if test="status != null">
+   AND t.status = #{status}
+   </if>
+   ORDER BY t.disable_time
+</select>
+
+</mapper>

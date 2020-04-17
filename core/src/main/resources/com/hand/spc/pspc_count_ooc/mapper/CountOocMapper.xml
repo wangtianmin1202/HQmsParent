@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.spc.pspc_count_ooc.mapper.CountOocMapper">
+    <resultMap id="BaseResultMap" type="com.hand.spc.pspc_count_ooc.dto.CountOoc">
+        <result column="COUNT_OOC_ID" property="countOocId" jdbcType="VARCHAR" />
+        <result column="TENANT_ID" property="tenantId" jdbcType="DECIMAL" />
+        <result column="SITE_ID" property="siteId" jdbcType="DECIMAL" />
+        <result column="OOC_STATUS" property="oocStatus" jdbcType="VARCHAR" />
+        <result column="ENTITY_CODE" property="entityCode" jdbcType="VARCHAR" />
+        <result column="ENTITY_VERSION" property="entityVersion" jdbcType="VARCHAR" />
+        <result column="MAX_PLOT_POINTS" property="maxPlotPoints" jdbcType="DECIMAL" />
+        <result column="TICK_LABEL_X" property="tickLabelX" jdbcType="VARCHAR" />
+        <result column="AXIS_LABEL_X" property="axisLabelX" jdbcType="VARCHAR" />
+        <result column="AXIS_LABEL_Y" property="axisLabelY" jdbcType="VARCHAR" />
+        <result column="CHART_DETAIL_TYPE" property="chartDetailType" jdbcType="VARCHAR" />
+        <result column="UPPER_CONTROL_LIMIT" property="upperControlLimit" jdbcType="DECIMAL" />
+        <result column="CENTER_LINE" property="centerLine" jdbcType="DECIMAL" />
+        <result column="LOWER_CONTROL_LIMIT" property="lowerControlLimit" jdbcType="DECIMAL" />
+        <result column="UPPER_SPEC_LIMIT" property="upperSpecLimit" jdbcType="DECIMAL" />
+        <result column="SPEC_TARGET" property="specTarget" jdbcType="DECIMAL" />
+        <result column="LOWER_SPEC_LIMIT" property="lowerSpecLimit" jdbcType="DECIMAL" />
+        <result column="JUDGEMENT_ID" property="judgementId" jdbcType="DECIMAL" />
+        <result column="FIRST_SUBGROUP_NUM" property="firstSubgroupNum" jdbcType="DECIMAL" />
+        <result column="LAST_SUBGROUP_NUM" property="lastSubgroupNum" jdbcType="DECIMAL" />
+        <result column="CLASSIFY_GROUP_ID" property="classifyGroupId" jdbcType="DECIMAL" />
+        <result column="CLASSIFY_ID" property="classifyId" jdbcType="DECIMAL" />
+        <result column="REMARK" property="remark" jdbcType="VARCHAR" />
+        <result column="COUNT_SAMPLE_DATA_ID" property="countSampleDataId" jdbcType="DECIMAL" />
+        <!-- 业务字段 -->
+        <result column="judgement_code" property="judgementCode" jdbcType="VARCHAR" />
+        <result column="judgement_short_code" property="judgementShortCode" jdbcType="VARCHAR" />
+        <result column="length_data" property="lengthData" jdbcType="DECIMAL" />
+        <result column="limit_data" property="limitData" jdbcType="DECIMAL" />
+        <result column="classify_group" property="classifyGroup" jdbcType="VARCHAR" />
+        <result column="classify_code" property="classifyCode" jdbcType="VARCHAR" />
+    </resultMap>
+
+    <resultMap id="OocReportResultMap" type="com.hand.spc.pspc_ooc.view.OocReportVO" extends="com.hand.spc.pspc_ooc.mapper.OocMapper.BaseResultMap">
+        <result column="OOC_ID" property="oocId" jdbcType="VARCHAR" />
+        <result column="judgement_code" property="judgementCode" jdbcType="VARCHAR" />
+        <result column="judgement_short_code" property="judgementShortCode" jdbcType="VARCHAR" />
+        <result column="entity_id" property="entityId" jdbcType="DECIMAL" />
+        <result column="entity_desc" property="entityDesc" jdbcType="VARCHAR" />
+        <result column="chart_type" property="chartType" jdbcType="VARCHAR" />
+        <result column="attachment_group_desc" property="attachmentGroupDesc" jdbcType="VARCHAR" />
+        <result column="ce_group" property="ceGroup" jdbcType="VARCHAR" />
+        <result column="ce_group_desc" property="ceGroupDesc" jdbcType="VARCHAR" />
+        <result column="ce_parameter" property="ceParameter" jdbcType="VARCHAR" />
+        <result column="ce_parameter_name" property="ceParameterName" jdbcType="VARCHAR" />
+        <result column="chart_id" property="chartId" jdbcType="DECIMAL" />
+        <result column="chart_code" property="chartCode" jdbcType="VARCHAR" />
+        <result column="chart_desc" property="chartDesc" jdbcType="VARCHAR" />
+        <result column="message_type_code" property="messageTypeCode" jdbcType="VARCHAR" />
+        <result column="classify_group" property="classifyGroup" jdbcType="VARCHAR" />
+        <result column="classify_group_desc" property="classifyGroupDesc" jdbcType="VARCHAR" />
+        <result column="classify_code" property="classifyCode" jdbcType="VARCHAR" />
+        <result column="classify_desc" property="classifyDesc" jdbcType="VARCHAR" />
+        <result column="creation_date_str" property="creationDateStr" jdbcType="VARCHAR" />
+    </resultMap>
+
+    <select id="queryOocReport" parameterType="com.hand.spc.pspc_ooc.view.OocReportVO" resultMap="OocReportResultMap">
+        select po.count_ooc_id ooc_id,
+               pe.entity_id,
+               po.entity_code,
+               pe.description                   entity_desc,
+               pc.chart_type,
+               po.entity_version,
+               pag.attachment_group_description attachment_group_desc,
+               pcg.ce_group,
+               pcg.description                  ce_group_desc,
+               pcp.ce_parameter,
+               pcp.ce_parameter_name,
+               pe.chart_id,
+               pc.chart_code,
+               pc.description                   chart_desc,
+               pj.judgement_short_code,
+               pj.judgement_code,
+               pj.message_type_code,
+               po.ooc_status,
+               po.classify_group_id,
+               pcfg.classify_group,
+               pcfg.description                 classify_group_desc,
+               po.classify_id,
+               pcf.classify_code,
+               pcf.description                  classify_desc,
+               to_char(po.creation_date, 'yyyy-MM-dd hh24:mi:ss') creation_date_str,
+               po.remark
+          from pspc_count_ooc        po,
+               pspc_entity           pe,
+               pspc_chart            pc,
+               pspc_attachment_group pag,
+               pspc_ce_group         pcg,
+               pspc_ce_parameter     pcp,
+               pspc_judgement        pj,
+               pspc_classify_group   pcfg,
+               pspc_classify         pcf
+         where po.entity_code = pe.entity_code
+           and po.entity_version = pe.entity_version
+           and pe.chart_id = pc.chart_id(+)
+           and pe.attachment_group_id = pag.attachment_group_id(+)
+           and pe.ce_group_id = pcg.ce_group_id(+)
+           and pe.ce_parameter_id = pcp.ce_parameter_id(+)
+           and po.judgement_id = pj.judgement_id(+)
+           and po.classify_group_id = pcfg.classify_group_id(+)
+           and po.classify_id = pcf.classify_id(+)
+            <if test="oocId != null and oocId != ''">
+                and po.count_ooc_id = #{oocId}
+            </if>
+           <if test="ceGroupId != null and ceGroupId != ''">
+               and pe.ce_group_id = #{ceGroupId}
+           </if>
+           <if test="ceParameterId != null and ceParameterId != ''">
+               and pe.ce_parameter_id = #{ceParameterId}
+           </if>
+           <if test="attachmentGroupId != null and attachmentGroupId != ''">
+               and pe.attachment_group_id = #{attachmentGroupId}
+           </if>
+           <if test="entityId != null and entityId != ''">
+               and pe.entity_id = #{entityId}
+           </if>
+           <if test="(startDate != null and startDate != '') or (endDate != null and endDate != '')">
+                and exists (select null
+                      from pspc_count_statistic pcs
+                     where pcs.count_sample_data_id = po.count_sample_data_id
+                <if test="startDate != null and startDate != ''">
+                    and pcs.sample_time >= to_date(#{startDate}, 'yyyy-MM-dd hh24:mi:ss')
+                </if>
+                <if test="endDate != null and endDate != ''">
+                    and pcs.sample_time &lt;= to_date(#{endDate}, 'yyyy-MM-dd hh24:mi:ss')
+                </if>
+                )
+           </if>
+    </select>
+    <select id="selectCountOocJudge" parameterType="com.hand.spc.pspc_count_ooc.dto.CountOoc" resultMap="BaseResultMap">
+        select pco.count_ooc_id,
+               pco.ooc_status,
+               pco.entity_code,
+               pco.max_plot_points,
+               pco.judgement_id,
+               pj.judgement_code,
+               pj.judgement_short_code,
+               pj.limit_data,
+               pj.length_data,
+               pco.remark,
+               pco.classify_group_id,
+               pco.classify_id,
+               pcg.classify_group,
+               pc.classify_code
+        from pspc_count_ooc pco,pspc_judgement pj,pspc_classify_group pcg,pspc_classify pc
+            where
+        pco.judgement_id = pj.judgement_id(+)
+        and pco.classify_group_id = pcg.classify_group_id(+)
+     and pco.classify_id = pc.classify_id(+)
+       and pco.count_sample_data_id = #{countSampleDataId,jdbcType=DECIMAL}
+       and pco.entity_code = #{entityCode}
+       and pco.entity_version = #{entityVersion}
+       order by pj.judgement_short_code
+    </select>
+</mapper>

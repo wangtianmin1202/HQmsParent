@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_qc_task.mapper.IqcTaskMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_qc_task.dto.IqcTask">
+        <result column="TASK_ID" property="taskId" jdbcType="DECIMAL" />
+        <result column="PLANT_ID" property="plantId" jdbcType="DECIMAL" />
+        <result column="ITEM_ID" property="itemId" jdbcType="DECIMAL" />
+        <result column="SOURCE_ORDER" property="sourceOrder" jdbcType="VARCHAR" />
+        <result column="LINE_NUM" property="lineNum" jdbcType="DECIMAL" />
+        <result column="SOURCE_TYPE" property="sourceType" jdbcType="VARCHAR" />
+        <result column="ITEM_VERSION" property="itemVersion" jdbcType="VARCHAR" />
+        <result column="SPREADING" property="spreading" jdbcType="VARCHAR" />
+        <result column="PRODUCTION_BATCH" property="productionBatch" jdbcType="VARCHAR" />
+        <result column="SUPPLIER_ID" property="supplierId" jdbcType="DECIMAL" />
+        <result column="SUPPLIER_SITE_ID" property="supplierSiteId" jdbcType="DECIMAL" />
+        <result column="INSPECTION_TYPE" property="inspectionType" jdbcType="VARCHAR" />
+        <result column="RECEIVE_QTY" property="receiveQty" jdbcType="DECIMAL" />
+        <result column="SAMPLE_QTY" property="sampleQty" jdbcType="DECIMAL" />
+        <result column="RECEIVE_DATE" property="receiveDate" jdbcType="DATE" />
+        <result column="PACK_QTY" property="packQty" jdbcType="DECIMAL" />
+        <result column="PACKET_INFO" property="packetInfo" jdbcType="VARCHAR" />
+        <result column="PO_NUMBER" property="poNumber" jdbcType="DECIMAL" />
+        <result column="INSPECTION_PLACE" property="inspectionPlace" jdbcType="VARCHAR" />
+        <result column="RECIPIENT_NUM" property="recipientNum" jdbcType="VARCHAR" />
+        <result column="TASK_FROM" property="taskFrom" jdbcType="VARCHAR" />
+        <result column="IS_URGENCY" property="isUrgency" jdbcType="VARCHAR" />
+        <result column="SOLVE_STATUS" property="solveStatus" jdbcType="VARCHAR" />
+        <result column="ERROR_MSG" property="errorMsg" jdbcType="VARCHAR" />
+        <result column="INSPECTION_NUM" property="inspectionNum" jdbcType="VARCHAR" />
+        <result column="INSPECTION_RES" property="inspectionRes" jdbcType="VARCHAR" />
+        <result column="DEAL_METHOD" property="dealMethod" jdbcType="VARCHAR" />
+        
+        <result column="ITEM_CODE" property="itemCode" jdbcType="VARCHAR" />
+        <result column="ITEM_DESCRIPTIONS" property="itemDescriptions" jdbcType="VARCHAR" />
+        <result column="PLANT_CODE" property="plantCode" jdbcType="VARCHAR" />
+        <result column="SUPPLIER_CODE" property="supplierCode" jdbcType="VARCHAR" />
+        <result column="SUPPLIER_NAME" property="supplierName" jdbcType="VARCHAR" />
+        <result column="REL_ORDER" property="relOrder" jdbcType="VARCHAR" />
+        <result column="RECHECK_SAMPLE_WAY" property="recheckSampleWay" jdbcType="VARCHAR" />
+        
+        <result column="WARE_HOUSE_TYPE" property="wareHouseType" jdbcType="VARCHAR" />
+        <result column="SAMPLE_PACK_QTY" property="samplePackQty" jdbcType="DECIMAL" />
+        <result column="ECR_NUMBER" property="ecrNumber" jdbcType="VARCHAR" />
+        
+        <result column="RECIPIENT_NUM_EMPLOYEE_NAME" property="recipientNumEmployeeName" jdbcType="VARCHAR" />
+    </resultMap>
+
+<select id="reSelect" resultMap="BaseResultMap" parameterType="com.hand.hqm.hqm_qc_task.dto.IqcTask">
+SELECT t.*,
+       hi.item_code,
+       hi.descriptions  AS item_descriptions,
+       hp.plant_code,
+       hs.supplier_code,
+       hs.supplier_name,
+       he.name          AS recipient_num_employee_name
+  FROM hqm_iqc_task t
+  LEFT JOIN sys_user su
+    ON t.recipient_num = su.user_id
+  LEFT JOIN hr_employee he
+    ON he.employee_id = su.employee_id, hcm_item hi, hcm_plant hp, hcs_suppliers hs
+ WHERE t.item_id = hi.item_id
+   AND t.plant_id = hi.plant_id
+   AND t.plant_id = hp.plant_id
+   AND t.supplier_id = hs.supplier_id
+   AND t.inspection_num IS NULL
+	<if test="sourceOrder != null">
+	AND t.source_order = #{sourceOrder}
+	</if>
+	<if test="itemId != null">
+	AND t.item_id = #{itemId}
+	</if>
+	<if test="supplierId != null">
+	AND t.supplier_id = #{supplierId}
+	</if>
+	<if test="poNumber != null">
+	AND t.po_number = #{poNumber}
+	</if>
+	<if test="receiveDateFrom != null"> 
+   AND t.receive_date &gt;= to_date(#{receiveDateFrom},'yyyy-mm-dd hh24:mi:ss')
+   </if>
+   <if test="receiveDateTo != null">
+   AND t.receive_date &lt;= to_date(#{receiveDateTo},'yyyy-mm-dd hh24:mi:ss')
+   </if>
+</select>
+
+<select id="getIqcTaskEarlistBySourceOrder" resultMap="BaseResultMap">
+
+SELECT tt.* FROM (SELECT t.* FROM hqm_iqc_task t WHERE t.source_order = #{0} ORDER BY t.creation_date) tt WHERE rownum = 1
+
+</select>
+
+
+</mapper>

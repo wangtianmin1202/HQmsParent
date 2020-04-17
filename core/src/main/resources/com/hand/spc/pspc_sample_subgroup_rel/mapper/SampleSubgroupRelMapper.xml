@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.spc.pspc_sample_subgroup_rel.mapper.SampleSubgroupRelMapper">
+    <resultMap id="BaseResultMap" type="com.hand.spc.pspc_sample_subgroup_rel.dto.SampleSubgroupRel">
+        <result column="SAMPLE_SUBGROUP_RELATION_ID" property="sampleSubgroupRelationId" jdbcType="DECIMAL" />
+        <result column="TENANT_ID" property="tenantId" jdbcType="DECIMAL" />
+        <result column="SITE_ID" property="siteId" jdbcType="DECIMAL" />
+        <result column="SAMPLE_SUBGROUP_ID" property="sampleSubgroupId" jdbcType="DECIMAL" />
+        <result column="SAMPLE_DATA_ID" property="sampleDataId" jdbcType="DECIMAL" />
+        <result column="SAMPLE_VALUE" property="sampleValue" jdbcType="DECIMAL" />
+        <result column="ENTITY_CODE" property="entityCode" jdbcType="VARCHAR" />
+        <result column="ENTITY_VERSION" property="entityVersion" jdbcType="VARCHAR" />
+    </resultMap>
+    <select id="selectBySampleSubgroup"
+            resultMap="BaseResultMap" parameterType="com.hand.spc.pspc_cpk_analysis.dto.CPKAnalyseReqDTO">
+
+        SELECT
+          *
+        FROM
+          pspc_sample_subgroup_relation
+        WHERE
+          sample_subgroup_id IN
+        (  SELECT
+            sample_subgroup_id
+            FROM
+            pspc_sample_subgroup
+            WHERE
+                1 = 1
+            AND entity_code = #{entityCode}
+            AND entity_version = #{entityVersion}
+            <if test="startDate != null">AND sample_subgroup_time &gt;= #{startDate}
+            </if>
+            <if test="
+            endDate != null">
+                AND sample_subgroup_time &lt;= #{endDate}
+            </if>
+            <if test="startDate == null and endDate == null">
+                AND rownum &lt;= #{size}
+            </if>
+        )
+    </select>
+
+
+</mapper>

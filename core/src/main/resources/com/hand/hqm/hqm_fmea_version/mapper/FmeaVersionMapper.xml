@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_fmea_version.mapper.FmeaVersionMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_fmea_version.dto.FmeaVersion">
+        <result column="VERSION_ID" property="versionId" jdbcType="DECIMAL" />
+        <result column="FMEA_ID" property="fmeaId" jdbcType="DECIMAL" />
+        <result column="FMEA_CODE" property="fmeaCode" jdbcType="VARCHAR" />
+        <result column="FMEA_VERSION" property="fmeaVersion" jdbcType="DECIMAL" />
+    </resultMap>
+
+
+</mapper>

@@ -1,0 +1,231 @@
+<#include "../include/header.html">
+<script src="${base.contextPath}/common/code?SRM_USER_MANAGEMENT=SRM_USER_MANAGEMENT"></script>
+<script src="${base.contextPath}/common/code?SRM_PURCHASE_GROUP=SRM_PURCHASE_GROUP"></script>
+<script type="text/javascript">
+    var viewModel = Hap.createGridViewModel("#grid");
+</script>
+<body>
+<div id="page-content">
+    <div class="pull-left" id="toolbar-btn" style="padding-bottom:10px;">
+        <span type="button" class="btn btn-primary" style="float:left;margin-right:5px" data-bind="click:create"><i class="fa fa-plus-square" style="margin-right:3px;"></i><@spring.message "hap.new"/></span>
+        <span class="btn btn-success k-grid-save-changes" style="float:left;margin-right:5px;" data-bind="click:save"><i class="fa fa-save" style="margin-right:3px;"></i><@spring.message "hap.save"/></span>
+		<span class="btn btn-danger" style="float:left;" data-bind="click:remove"><i class="fa fa-trash-o" style="margin-right:3px;"></i><@spring.message "hap.delete"/></span>
+    </div>
+    <script>kendo.bind($('#toolbar-btn'), viewModel);</script>
+    <div id="queryPanel" class="pull-right" id="query-form" style="padding-bottom:10px;">
+    	<div class="k-query-simple" id="query-form">
+	    	<!-- 采购组织 -->
+            <input id="purchaseGroupCode"style="margin-right:5px;" placeholder='<@spring.message "asl.purchaseGroup"/>'
+            data-bind="value:model.purchaseGroupCode">
+            <script>
+                   $("#purchaseGroupCode").kendoComboBox({
+	               	    dataTextField: "meaning",
+	               	    dataValueField: "value",
+	               	    valuePrimitive: true,
+	               	    dataSource: SRM_PURCHASE_GROUP
+	               	});
+            </script>
+	        <!-- 用户名 -->
+            <input type="text" data-role="maskedtextbox" style="float:left;margin-right:5px;" placeholder='<@spring.message "UserPurchaseGroup.userId"/>'
+            	   data-bind="value:model.userName" class="k-textbox">
+        </div>
+        <script>kendo.bind($('#query-form'), viewModel);</script>
+        <div style="clear:both"></div>
+    </div>
+    <script>
+    kendo.bind($('#query-form'), viewModel);
+    $('#queryPanel').kendoQueryPanel({
+        queryFunction: function () {
+            viewModel.query();
+        },
+        resetFunction: function () {
+            viewModel.reset();
+        }
+    });
+    </script>
+    <div style="clear:both">
+        <div id="grid"></div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    Hap.initEnterQuery('#query-form', viewModel.query);
+    var BaseUrl = _basePath;
+    dataSource = new kendo.data.DataSource({
+        transport: {
+            read: {
+                url: BaseUrl + "/srm/user/purchase/group/query",
+                type: "POST",
+                dataType: "json"
+            },
+            update: {
+                url: BaseUrl + "/srm/user/purchase/group/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            destroy: {
+                url: BaseUrl + "/srm/user/purchase/group/remove",
+                type: "POST",
+                contentType: "application/json"
+            },
+            create: {
+                url: BaseUrl + "/srm/user/purchase/group/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            parameterMap: function (options, type) {
+                if (type !== "read" && options.models) {
+                    var datas = Hap.prepareSubmitParameter(options, type)
+                    return kendo.stringify(datas);
+                } else if (type === "read") {
+                    return Hap.prepareQueryParameter(viewModel.model.toJSON(), options)
+                }
+            }
+        },
+        batch: true,
+        serverPaging: true,
+        pageSize: 20,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+                id: "purchaseGroupId",
+                fields: {
+                	enableFlag:{
+                    	type:'boolean',
+                        defaultValue:"Y",
+                        checkedValue: 'Y',
+                        uncheckedValue: 'N'
+                    },
+                    purchaseGroupCode : {
+                    	validation: {
+                    		required: true,
+                    		purchaseGroupCodevalidation: function(input){
+                            	if(input.val().length>30){
+                            		 input.attr("data-purchaseGroupCodevalidation-msg", '<@spring.message "error.srm_purchase_1000"/>');
+                            		return false;
+                            	}
+                            	return true;
+                            }
+                    	},                   		
+                    }
+                },
+                editable: function (col) {
+                    if(col == "purchaseGroupCode"){
+                  	  if (!this.isNew()) {
+                  		  return false;
+                  	  }
+                    }
+                    return true;
+                }
+            }
+        }
+    });
+
+    $("#grid").kendoGrid({
+        dataSource: dataSource,
+        resizable: true,
+        scrollable: true,
+        navigatable: false,
+        sortable:true,
+        selectable: 'multiple, rowbox',
+        dataBound: function () {
+            if (parent.autoResizeIframe) {
+                parent.autoResizeIframe('${RequestParameters.functionCode!}')
+            }
+        },
+        pageable: {
+            pageSizes: [5, 10, 20, 50],
+            refresh: true,
+            buttonCount: 5
+        },
+        columns: [
+                    {
+                field: "purchaseGroupCode",
+                title: '<@spring.message "userpurchasegroup.purchasegroupcode"/>'+'<span style='+'color:red>'+'&nbsp;*</span>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+                template: function (dataItem) {
+                    var v = dataItem.purchaseGroupCode ? dataItem.purchaseGroupCode : "";
+                    $.each(SRM_PURCHASE_GROUP, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return v;
+                        }
+                    });
+                    return v;
+                },
+                editor: function (container, options) {
+                    $('<input required name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            dataTextField: "meaning",
+                            dataValueField: "value",
+                            valuePrimitive: true,
+                            dataSource:SRM_PURCHASE_GROUP
+                        });
+                },
+            },
+                    {
+                field: "userId",
+                title: '<@spring.message "userpurchasegroup.userid"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+                template: function (Item) {
+                    return Item['userName'] || ''
+                },
+                editor: function (container, options) {
+                    $('<input name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoLov($.extend(<@lov "LOV_USER_PURCHASE"/>, {
+                        query: function (e) {
+                            e.param['enableFlag'] = 'Y'
+                            e.param['roleFastCode']= 'SRM_USER_MANAGEMENT';
+                        },
+                        textField: 'userName',
+                        model: options.model,
+                        select:function(e) {
+                        		options.model.set('userId',e.item.userId);
+                        		options.model.set('userName',e.item.userName);
+                                options.model.set('employeeCode',e.item.employeeCode);
+                                options.model.set('name',e.item.name);
+                        }
+                    }));
+                },
+            },
+            {
+                field: "employeeCode",
+                title: '<@spring.message "userpurchasegroup.employeeCode"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+                editor: function (container, options) {
+                    $('<span data-bind="text:employeeCode"></span>').appendTo(container);
+                }
+            },
+            {
+                field: "name",
+                title: '<@spring.message "userpurchasegroup.name"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+                editor: function (container, options) {
+                    $('<span data-bind="text:name"></span>').appendTo(container);
+                }
+            },
+                    {
+                field: "enableFlag",
+                title: '<@spring.message "userpurchasegroup.enableflag"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"}
+            },
+        ],
+        editable: true
+    });
+
+</script>
+</body>
+</html>

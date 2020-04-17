@@ -1,0 +1,634 @@
+<#include "../include/header.html">
+<script src="${base.contextPath}/common/code?PSPC_TICK_LABEL=PSPC.TICK.LABEL" type="text/javascript"></script>
+<script src="${base.contextPath}/resources/lib/echarts/echarts.js"></script>
+<script src="${base.contextPath}/resources/lib/utils/sys_util.js"></script>
+<script type="text/javascript">
+    var viewModel = Hap.createGridViewModel("#grid");
+    var parametricComparisonChart;//折线图Chart
+    var chartOption;//折线图Chart配置信息
+    var exportThead;//导出的表格头
+    var exportTbody;//导出的表格数据
+</script>
+<style type="text/css">
+    .k-dirty {
+        border-width: 0px;
+    }
+
+    .data-table {
+        width: 100%;
+        text-align: center;
+        border-color: #DDDDDD;
+    }
+
+    .data-thead {
+        color: #758697;
+        background-color: #F5F5F5;
+    }
+
+    .data-table .data-thead tr {
+        height: 40px;
+    }
+
+    .data-table .data-thead th {
+        padding: 0px;
+        text-align: center;
+        font-weight: bold;
+        font-family: "Helvetica Neue", "Luxi Sans", "DejaVu Sans", Tahoma, "Microsoft Yahei", "Hiragino Sans GB", sans-serif;
+        font-size: 12px;
+    }
+
+    .data-table .data-thead th div {
+        width: 100%;
+        height: 100%;
+        padding: 10px;
+        position: relative;
+        background-color: #F5F5F5;
+    }
+
+    .data-tbody {
+        font-weight: 100;
+        color: #758697;
+        font-family: "Helvetica Neue", "Luxi Sans", "DejaVu Sans", Tahoma, "Microsoft Yahei", "Hiragino Sans GB", sans-serif;
+        font-size: 12px;
+    }
+
+    .data-tbody tr{
+        height: 35px;
+    }
+    .data-tbody td{
+        padding: 5px 10px;
+    }
+
+    .input-div label{
+        color: black;
+        font-size: 14px;
+        line-height: 30px;
+        text-align: right;
+        padding-right: 0px;
+    }
+
+    .input-div input{
+        width:150px;
+    }
+
+    .input-div .row{
+        margin-top: 20px;
+    }
+</style>
+<body>
+<div id="picker"></div>
+<div id="page-content">
+    <div class="pull-left" id="toolbar-btn" style="padding-bottom:10px;">
+        <span class="btn btn-primary k-grid-add" style="float:left;margin-right:5px;" data-bind="click:create"><@spring.message "entitychart.add"/></span>
+        <span onclick="entityRemove()"class="btn btn-danger" style="float:left;"><@spring.message "hap.delete"/></span>
+    </div>
+    <script>kendo.bind($('#toolbar-btn'), viewModel);</script>
+    <div class="pull-right" id="query-form" style="padding-bottom:10px;">
+        <span class="btn btn-primary k-grid-excel" style="float:left; margin-right:5px;" onclick="exportExcel()">
+            <i class="fa fa-file-excel-o" style="margin-right:3px;"></i><@spring.message "hap.exportexcel"/>
+        </span>
+        <span class="btn btn-default" style="float:left;margin-right:5px;width:70px;" onclick="window.location.reload();"><@spring.message "hap.reset"/></span>
+        <span class="btn btn-primary" style="float:left;width:70px" onclick="queryParametricComparison()" type="submit"><@spring.message "hap.query"/></span>
+        <div style="clear:both"></div>
+    </div>
+    <div style="clear:both">
+        <div id="grid"></div>
+    </div>
+    <div style="height: 550px; margin-top: 20px;">
+        <div id="parametricComparison" style="height: 550px; margin: 0 auto; padding: 0px 50px;"></div>
+        <!--<div class="input-div" style="width: 20%; height: 500px; float: right;">
+            <div class="row" style="float: left;">
+                <label class="col-sm-6 col-md-6">最多展示点数:</label>
+                <div class="col-sm-6 sol-md-6">
+                    <input class="k-textbox" id="maxPoints" value="50" onchange="updateData()"/>
+                </div>
+            </div>
+        </div>-->
+    </div>
+    <div style="margin-top: 20px; width: 100%">
+        <div id="dataTableDiv" style="height: 500px; margin-left: 5%; overflow-y: scroll;">
+            <table id="dataTable" border="1" cellpadding="0px" cellspacing="0px" class="data-table">
+                <thead id="dataThead" class="data-thead"></thead>
+                <tbody id="dataTbody" class="data-tbody"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    Hap.initEnterQuery('#query-form', viewModel.query);
+    var BaseUrl = _basePath;
+    dataSource = new kendo.data.DataSource({
+        transport: {
+            read: {
+                url: BaseUrl + "/pspc/entity/query",
+                type: "POST",
+                dataType: "json"
+            },
+            update: {
+                url: BaseUrl + "/pspc/entity/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            destroy: {
+                url: BaseUrl + "/pspc/entity/remove",
+                type: "POST",
+                contentType: "application/json"
+            },
+            create: {
+                url: BaseUrl + "/pspc/entity/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            parameterMap: function (options, type) {
+                if (type !== "read" && options.models) {
+                    var datas = Hap.prepareSubmitParameter(options, type)
+                    return kendo.stringify(datas);
+                } else if (type === "read") {
+                    return Hap.prepareQueryParameter(viewModel.model.toJSON(), options)
+                }
+            }
+        },
+        batch: true,
+        serverPaging: false,
+        pageSize: 10,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+                id: "entityId",
+                fields: {}
+            }
+        }
+    });
+
+    $("#grid").kendoGrid({
+        autoBind: false,
+        dataSource: dataSource,
+        resizable: true,
+        scrollable: true,
+        navigatable: false,
+        rownumber: true,
+        selectable: 'multiple, rowbox',
+        dataBound: function () {
+            if (parent.autoResizeIframe) {
+                parent.autoResizeIframe('${RequestParameters.functionCode!}')
+            }
+        },
+        columns: [
+            {
+                field: "entityId",
+                title: '<@spring.message "pspcmultiparameterchart.entitycode"/>',
+                headerAttributes: { style: "text-align: center" },
+                width: 120,
+                template: function(item){
+                    return item['entityCode']||''
+                },
+                editor: function (container, options) {
+                    $('<input name="' + options.field + '" required="required" />')
+                        .appendTo(container)
+                        .kendoLov($.extend(<@lov "PSPC_PSPC_ENTITY_SAMPLE"/>, {
+                        textField: 'entityCode',
+                        model: options.model
+                    },{
+                        query: function (e) {
+                            e.param['tenantId'] = '-1';
+                            e.param['siteId'] = '-1';
+                        },
+                        select: function (e) {
+                            options.model.set('description', e.item.description);
+                            options.model.set('entityVersion', e.item.entityVersion);
+                            options.model.set('ceGroup', e.item.ceGroup);
+                            options.model.set('ceParameter', e.item.ceParameter);
+                            options.model.set('attachmentGroupDescription', e.item.attachmentGroupDescription);
+                        }
+                    }));
+                }
+            },
+            {
+                field: "description",
+                title: '<@spring.message "pspcmultiparameterchart.description"/>',
+                headerAttributes: { style: "text-align: center" },
+                width: 120,
+                editor: function (container, options) {
+                    var val = options.model.description == null ? '' : options.model.description;
+                    $('<span>' + val + '</span>').appendTo(container);
+                }
+            },
+            {
+                field: "entityVersion",
+                title: '<@spring.message "pspcmultiparameterchart.entityversion"/>',
+                headerAttributes: { style: "text-align: center" },
+                width: 120,
+                editor: function (container, options) {
+                    var val = options.model.entityVersion == null ? '' : options.model.entityVersion;
+                    $('<span>' + val + '</span>').appendTo(container);
+                }
+            },
+            {
+                field: "ceGroup",
+                title: '<@spring.message "pspcmultiparameterchart.cegroup"/>',
+                headerAttributes: { style: "text-align: center" },
+                width: 120,
+                editor: function (container, options) {
+                    var val = options.model.ceGroup == null ? '' : options.model.ceGroup;
+                    $('<span>' + val + '</span>').appendTo(container);
+                }
+            },
+            {
+                field: "ceParameter",
+                title: '<@spring.message "pspcmultiparameterchart.ceparameter"/>',
+                headerAttributes: { style: "text-align: center" },
+                width: 120,
+                editor: function (container, options) {
+                    var val = options.model.ceParameter == null ? '' : options.model.ceParameter;
+                    $('<span>' + val + '</span>').appendTo(container);
+                }
+            },
+            {
+                field: "attachmentGroupDescription",
+                title: '<@spring.message "pspcmultiparameterchart.attachmentgroup"/>',
+                headerAttributes: { style: "text-align: center" },
+                width: 120,
+                editor: function (container, options) {
+                    var val = options.model.attachmentGroupDescription == null ? '' : options.model.attachmentGroupDescription;
+                    $('<span>' + val + '</span>').appendTo(container);
+                }
+            },
+            {
+                field: "startDate",
+                title: '<@spring.message "pspcmultiparameterchart.startdate"/>',
+                width: 150,
+                attributes: {style: "text-align:center"},
+                headerAttributes: {style: "text-align:center"},
+                format:"{0:yyyy-MM-dd HH:mm:ss}",
+                editor: function (container, options) {
+                    //获得到期时间
+                    var end = options.model.endDate;
+                    var opts = {
+                        format: "yyyy-MM-dd HH:mm:ss"
+                    }
+                    if (end) {
+                        opts.max = end;
+                    }
+                    $('<input name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDateTimePicker(opts);
+                }
+            },
+            {
+                field: "endDate",
+                title: '<@spring.message "pspcmultiparameterchart.enddate"/>',
+                width: 150,
+                attributes: {style: "text-align:center"},
+                headerAttributes: {style: "text-align:center"},
+                format:"{0:yyyy-MM-dd HH:mm:ss}",
+                editor: function (container, options) {
+                    //获得开始时间
+                    var start = options.model.startDate;
+                    var opts = {
+                        format: "yyyy-MM-dd HH:mm:ss"
+                    }
+                    if (start) {
+                        opts.min = start;
+                    }
+                    $('<input name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDateTimePicker(opts);
+                }
+            }
+        ],
+        editable: {
+            createAt: "bottom"
+        }
+    });
+
+    //绑定table外层div滚动事件
+    $('#dataTableDiv').on('scroll', tableScrollHandle);
+
+    //表格滚动时固定表头
+    function tableScrollHandle() {
+        //获取table外层DIV的滚动值
+        var scrollTop = $('#dataTableDiv').scrollTop();
+
+        //当滚动距离大于0时设置top及相应的样式
+        if (scrollTop > 0) {
+            $('#dataThead').children('tr').children('th').children('div').css({
+                "top": (scrollTop-1) + 'px',
+                "border-bottom": "1px solid #DDDDDD",
+                "border-top": "1px solid #898989",
+                "height": "41px"
+            });
+        } else {
+            // 当滚动距离小于0时设置top及相应的样式
+            $('#dataThead').children('tr').children('th').children('div').css({
+                "top": scrollTop + 'px',
+                "border-bottom": "0px solid #DDDDDD",
+                "border-top": "0px solid #898989",
+                "height": "39px"
+            });
+        }
+    }
+
+    //删除按钮事件
+    function entityRemove() {
+        var grid = $('#grid').data("kendoGrid") || {};
+        if (grid.selectedDataItems().length) {
+            //删除前端数据
+            var checked = grid.selectedDataItems();
+            $.each(checked, function (i, v) {
+                grid.dataSource.remove(v);
+            });
+        }
+    }
+
+    //刷新最大点数
+    function updateData() {
+        var check = /^[1-9]*[1-9][0-9]*$/;
+        var maxPoints = $('#maxPoints').val();
+
+        //输入值校验
+        if(!check.test(maxPoints) || maxPoints < 1 || maxPoints > 100){
+            Hap.showToast({
+                type:'error',  //1.success 2.error
+                message: '请输入小于等于100的正整数',
+                hideDuration:2000
+            });
+            return;
+        }
+
+        //更新option参数
+        chartOption.dataZoom[0].endValue = maxPoints;
+        parametricComparisonChart.clear();
+        parametricComparisonChart.setOption(chartOption, true);
+    }
+
+    //查询按钮事件
+    function queryParametricComparison() {
+        var grid = $('#grid').data("kendoGrid") || {};
+
+        if (grid.selectedDataItems().length && grid.selectedDataItems().length > 1) {
+            // var check = /^[1-9]*[1-9][0-9]*$/;
+            // var maxPoints = $('#maxPoints').val();
+            //
+            // //输入值校验
+            // if(!check.test(maxPoints) || maxPoints < 1 || maxPoints > 100){
+            //     Hap.showToast({
+            //         type:'error',  //1.success 2.error
+            //         message: '请输入小于等于100的正整数',
+            //         hideDuration:2000
+            //     });
+            //     return;
+            // }
+
+            var checked = grid.selectedDataItems();
+            var entityIds = [];
+
+            //数据校验
+            $.each(checked, function (i, v) {
+                //校验是否选择了实体控制图
+                if(!ifNotNull(v.entityId)) {
+                    Hap.showToast({
+                        type:'error',  //1.success 2.error
+                        message: '请选择实体控制图',
+                        hideDuration:2000
+                    });
+                    return;
+                }
+
+                //检查是否有重复数据
+                if(contains(entityIds, v.entityId)) {
+                    Hap.showToast({
+                        type:'error',  //1.success 2.error
+                        message: '选择的实体控制图[' + v.entityCode + ']重复',
+                        hideDuration:2000
+                    });
+                    return;
+                }
+
+                //将当前ID添加到数组
+                entityIds.push(v.entityId);
+            });
+            
+            //重置条件
+            exportThead = '';
+            exportTbody = '';
+            chartOption = {};
+            parametricComparisonChart = null;
+            $('#parametricComparison').removeAttr('_echarts_instance_').html('');
+
+            //将数据传到后台
+            $.ajax({
+                type: "POST",
+                url: BaseUrl + "/pspc/entity/query/parametric/comparison",
+                data: JSON.stringify(checked),//json序列化
+                datatype: "json", //此处不能省略
+                contentType: "application/json; charset=utf-8",
+                success: function (data) {
+                    if (data.success) {
+                        //加载图表
+                        initChartAndTable(data.rows[0]);
+                    } else {
+                        Hap.showToast({
+                            type: 'error',  //1.success 2.error
+                            message: data.message,
+                            hideDuration: 4000 //展示4秒
+                        });
+                    }
+                },
+                error: function (data) {
+                    Hap.showToast({
+                        type: 'error',  //1.success 2.error
+                        message: data,
+                        hideDuration: 2000
+                    });
+                }
+            });
+        } else {
+            Hap.showToast({
+                type:'error',  //1.success 2.error
+                message: '查询的实体控制图需要大于等于两个',
+                hideDuration:2000
+            });
+        }
+    }
+
+    //加载统计图及统计表
+    function initChartAndTable(data) {
+        //加载图
+        initparametricsComparisonChart(data.parametricComparisonPoints, data.parametricComparisonSchema, data.tableData);
+
+        //加载表格
+        initTable(data.tableData, data.inVo);
+    }
+
+    /**
+     * @Description 加载统计图
+     *              points:点位集合
+     *              schema:坐标轴信息
+     *              tableData:表格数据
+     * @author yuchao.wang
+     * @date 2019/8/27 15:35
+     */
+    function initparametricsComparisonChart(points, schema, tableData) {
+        if(points == null || points.length < 1
+            || schema == null || schema.length < 1) {
+            scatterPlotSimpleChart = null;
+            chartOption = null;
+            $('#parametricComparison').removeAttr('_echarts_instance_').html('');
+            return;
+        }
+
+        //构造legend 线段
+        var legendData = [];
+        var seriesData = [];
+        for(var i = 0; i < points.length; i++){
+            legendData.push(schema[i].text);
+            var series = {
+                name:schema[i].text,
+                type:'line',
+                data:points[i]
+            };
+            seriesData.push(series);
+        }
+
+        //构造X轴
+        var xData = [];
+        if(tableData != null && tableData.length > 0) {
+            for (var i = 1; i <= tableData.length; i++) {
+                xData.push(i);
+            }
+        }
+
+        var dom = document.getElementById("parametricComparison");
+        parametricComparisonChart = echarts.init(dom);
+
+        chartOption = {
+            title: {
+                text: '多参数对比图',
+                left: 'center',
+                backgroundColor:'white'
+            },
+            tooltip: {
+                trigger: 'axis'
+            },
+            legend: {
+                type: 'scroll',
+                orient: 'horizontal',
+                top: 40,
+                data: legendData
+            },
+            grid: {
+                top:80,
+                left: '3%',
+                right: '3%',
+                bottom: '3%',
+                containLabel: true
+            },
+            dataZoom: [{
+                startValue: 0,
+                endValue: 50
+            }, {
+                type: 'inside'
+            }],
+            xAxis: {
+                type: 'category',
+                boundaryGap: false,
+                data: xData
+            },
+            yAxis: {
+                type: 'value'
+            },
+            series: seriesData
+        };
+
+        parametricComparisonChart.setOption(chartOption, true);
+    }
+
+    /**
+     * @Description 加载表格
+     *              tableData:表格数据
+     *              inVo:回传的DTO
+     * @author yuchao.wang
+     * @date 2019/8/27 15:35
+     */
+    function initTable(tableData, inVo) {
+        var columnCount = inVo.length;//总列数
+        var percentage = 95 / columnCount;//每列宽度
+        var tableHeadHtml = '';
+        var tableBodyHtml = '';
+        exportThead = '';
+        exportTbody = '';
+
+        //构造表头
+        tableHeadHtml = '<tr><th><div>序号</div></th>';
+        $.each(inVo, function (i, v) {
+            tableHeadHtml += '<th><div>' + v.entityCode + '</div></th>';
+            //预生成导出数据
+            exportThead += v.entityCode + ',';
+        });
+        tableHeadHtml += '</tr>';
+        $('#dataThead').html(tableHeadHtml);
+        exportThead = exportThead.substr(0, exportThead.length-1);
+
+        //判断表格是否超过界面宽度，如果没超过重新设置宽度
+        if($('#dataThead').width() < $('#dataThead').parent().parent().parent().width()) {
+            $('#dataTable').parent().css({'width': '90%'});
+
+            tableHeadHtml = '<tr><th style="width: 5%;"><div>序号</div></th>';
+            $.each(inVo, function (i, v) {
+                tableHeadHtml += '<th style="width: ' + percentage + '%;"><div>' + v.entityCode + '</div></th>';
+            });
+            tableHeadHtml += '</tr>';
+            $('#dataThead').html(tableHeadHtml);
+        }
+
+        //构造行数据
+        $.each(tableData, function (i, v) {
+            //序号
+            tableBodyHtml += '<tr>';
+            tableBodyHtml += '<td>' + (i+1) + '</td>';
+            //预生成导出数据
+            exportTbody += (i+1) + ',';
+
+            //列数据
+            for(var c = 0; c < columnCount;  c++) {
+                var val = v[c] === '-' ? '' : v[c];
+                tableBodyHtml += '<td>' + val + '</td>';
+                exportTbody += val + ',';
+            }
+            tableBodyHtml += '</tr>';
+            exportTbody = exportTbody.substr(0, exportTbody.length-1) + '#';
+        });
+        $('#dataTbody').html(tableBodyHtml);
+        exportTbody = exportTbody.substr(0, exportTbody.length-1);
+    }
+
+    //导出exportExcel
+    function exportExcel() {
+        if(exportThead == null || exportThead === '' || exportTbody == null || exportTbody === '') {
+            Hap.showToast({
+                type:'error',  //1.success 2.error
+                message: '请先查询再导出',
+                hideDuration:2000
+            });
+            return;
+        }
+
+        var url = '/pspc/entity/export/excel/single/graph';
+
+        //拼接其他参数
+        var otherParams = [];
+        otherParams.push({paramName:'thead', paramValue:exportThead});
+        otherParams.push({paramName:'tbody', paramValue:exportTbody});
+        otherParams.push({paramName:'title', paramValue:'多参数对比图'});
+        otherParams.push({paramName:'rowEnd', paramValue:23});
+        otherParams.push({paramName:'colEnd', paramValue:9});
+        otherParams.push({paramName:'exportFileName', paramValue:'parametricComparisonExport'});
+        otherParams.push({paramName:'${_csrf.parameterName}', paramValue:'${_csrf.token}'});
+
+        exportExcelWithEcharts(parametricComparisonChart, url, otherParams);
+    }
+</script>
+</body>
+</html>

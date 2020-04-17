@@ -1,0 +1,560 @@
+<#include "../include/header.html">
+<script src="${base.contextPath}/lib/echarts/echarts.min.js"></script>
+<script src="${base.contextPath}/lib/echarts/ecStat.min.js"></script>
+<script src="${base.contextPath}/lib/layer/layer.js"></script>
+<script src="${base.contextPath}/resources/lib/utils/sys_util.js"></script>
+<script src="${base.contextPath}/lib/g2/g2.min.js"></script>
+<script src="${base.contextPath}/lib/g2/data-set.min.js"></script>
+<script type="text/javascript">
+    var viewModel = Hap.createGridViewModel("#grid");
+    var exportHead = '';
+    var exportTbody = '';
+    var chartData = {};
+    var zArray = [1, 5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 95, 99];
+    viewModel.query = function () {
+        var obj = {
+            'entityId':viewModel.model.entityId,
+            'chartId':viewModel.chartId,
+
+        };
+        if(viewModel.model.sampleTimeStart){
+            obj.sampleStartTimeStr = viewModel.model.sampleTimeStart.Format("yyyy-MM-dd hh:mm:ss");
+        }
+        if(viewModel.model.sampleTimeEnd){
+            obj.sampleEndTimeStr = viewModel.model.sampleTimeEnd.Format("yyyy-MM-dd hh:mm:ss");
+        }
+        var index = layer.load(1, {
+            shade: [0.4,'#AAAAAA']
+        });
+        $.ajax({
+            type: "POST",
+            // async:false,
+            url: _basePath + "/pspc/entity/query/normal/cali/data",
+            data:obj,
+            dataType:"json",
+            // 此处不能设置，否则后台无法接值
+            // contentType: "application/json; charset=utf-8",
+            success:function(data){
+                layer.close(index);
+                if(chart){
+                    clearTableChart();
+                }
+                if(data.success){
+                    if(data.rows && data.rows.length > 0){
+                        chartData.allData = data.rows;
+                        initTable();
+                        initChart();
+
+                        initNumerical();
+                    }
+                }else{
+                    Hap.showToast({
+                        type:'error',  //1.success 2.error
+                        message: data.message,
+                        // showDuration:3000,//3秒后显示成功框
+                        hideDuration:3000 ,//展示3秒成功框
+                        "positionClass": "toast-bottom-right"
+                    });
+                }
+            },
+            error:function(data){
+                console.log(data);
+            }
+        });
+    }
+</script>
+<style>
+
+    .element::-webkit-scrollbar {display:none}
+    .table-div{
+        /*width: 90%;*/
+        margin: 0 auto;
+        height: 500px;
+        overflow-y: scroll;
+    }
+    #out-table-div table{
+        /*width: 100%;*/
+        margin: 0 auto;
+    }
+    #out-table-div table th,#out-table-div table td{
+        text-align: center;
+        border: 1px solid grey;
+        border-right: none;
+        border-left: none;
+        min-width:80px;
+    }
+    #out-table-div table th{
+        height: 40px;
+        background-color: #F5F5F5;
+        position: relative;
+    }
+    /*#out-table-div table thead th div:last-child{*/
+    /*border-right: 1px solid grey;*/
+    /*}*/
+    #out-table-div table td{
+        height: 30px;
+    }
+    .btn-foot{
+        width: 95%;
+        position: absolute;
+        bottom: 20px;
+    }
+    .row{
+        margin: 0;
+        padding: 0;
+    }
+    #detailDialog label,div{
+        padding: 0;
+        margin: 0;
+    }
+    .padding-div>div{
+        padding: 0 10px;
+    }
+    .sample-label label{
+        height: 30px;
+        line-height: 30px;
+        text-align: center;
+    }
+    #setDialog .sample-label{
+        height:30px
+    }
+    #setDialog .sample-label label{
+        text-align: right;
+    }
+    #setDialog .sample-label label,.sample-label div{
+        height: 100%;
+        padding: 0;
+        margin: 0;
+        padding-left: 10px;
+    }
+    #setDialog .row{
+        margin-top: 20px;
+    }
+    .head-div{
+        margin-top: 15px;
+    }
+    .head-div label{
+        color: black;
+        font-size: 14px;
+        line-height: 30px;
+        text-align: right;
+    }
+    .head-div input{
+        width:180px;
+        /*margin-right:5px;*/
+    }
+
+    #out-table-div table th div {
+        width: 100%;
+        height: 100%;
+        position: relative;
+        text-align: center;
+        line-height: 40px;
+        background-color: #F5F5F5;
+        white-space:nowrap;
+    }
+
+    #countDetailDialog label{
+        padding: 0;
+    }
+    #countDetailDialog .row{
+        margin-top: 10px;
+    }
+</style>
+<body>
+<div style="clear:both">
+    <!-- 顶部查询框 -->
+    <div class="container" id="query-form-head" style="width: 100%">
+        <!-- 第一行查询 -->
+        <div class="head-div row">
+            <label class="col-md-2">控制要素组：</label>
+            <div class="col-md-2">
+                <input id="ceGroup" style="width: 180px" data-bind="value:model.ceGroupId">
+            </div>
+            <label class="col-md-2" >控制要素：</label>
+            <div class="col-md-2">
+                <input id="ceParameter" style="width: 180px" data-bind="value:model.ceParameterId">
+            </div>
+            <label class="col-md-2">附着对象组：</label>
+            <div class="col-md-2">
+                <input id="attachmentGroup" style="width: 180px" data-bind="value:model.attachmentGroupId">
+            </div>
+        </div>
+        <script>
+            var ceGroup = $("#ceGroup").kendoLov($.extend(<@lov "PSPC_PSPC_CE_GROUP"/>,{
+                textField: 'classifyGroup',
+                valueField:'classifyGroupId',
+                select:function (e) {
+
+                }
+            })).data("kendoLov");
+            var ceParameter = $("#ceParameter").kendoLov($.extend(<@lov "PSPC_PSPC_CE_PARAMETER"/>,{
+                textField: 'ceParameter',
+                valueField:'ceParameterId',
+                query:function (e) {
+                    e.param.ceGroupId = viewModel.model.ceGroupId;
+                }
+            })).data("kendoLov");
+            var attachmentGroup = $("#attachmentGroup").kendoLov($.extend(<@lov "PSPC_PSPC_ATTACHMENT_GROUP_PRO"/>,{
+                textField: 'attachmentGroupDescription',
+                valueField:'attachmentGroupId',
+                select:function (e) {
+                },
+                query:function (e) {
+                    e.param.ceGroupId = viewModel.model.ceGroupId;
+                }
+            })).data("kendoLov");
+        </script>
+        <!-- 第二行查询 -->
+        <div class="head-div row">
+            <label class="col-md-2">控制图：</label>
+            <div class="col-md-2">
+                <input id="chartId" style="width: 180px" data-bind="value:model.chartId">
+            </div>
+            <label class="col-md-2" ><span style='color:red'>*&nbsp;&nbsp;</span>实体控制图：</label>
+            <div class="col-md-2">
+                <input id="entityId" required style="width: 180px" data-bind="value:model.entityId">
+            </div>
+            <div class="col-md-4">
+                <span class="btn btn-default k-grid-save-changes" data-bind="click:reset" style="float:left;margin-right:5px;"><@spring.message "hap.reset"/></span>
+                <span  class="btn btn-primary" data-bind="click:query" style="float:left;margin-right:5px;"><@spring.message "hap.query"/></span>
+                <span class="btn btn-primary k-grid-excel" style="float:left; margin-right:5px;" onclick="exportExcel()">
+                    <i class="fa fa-file-excel-o" style="margin-right:3px;"></i><@spring.message "hap.exportexcel"/>
+                </span>
+            </div>
+        </div>
+        <script>
+            var pspcChart = $("#chartId").kendoLov($.extend(<@lov "PSPC_PSPC_CHART"/>,{
+                textField: 'chartCode',
+                valueField:'chartId',
+                select:function (e) {
+                },
+                query:function (e) {
+                    e.param.ceGroupId = viewModel.model.ceGroupId;
+                }
+            })).data("kendoLov");
+
+            var pspcEntity = $("#entityId").kendoLov($.extend(<@lov "PSPC_PSPC_ENTITY"/>,{
+                textField: 'entityCode',
+                valueField:'entityId',
+                select:function (e) {
+                    viewModel.chartId = e.item.chartId;
+                    viewModel.entityCode = e.item.entityCode;
+                    viewModel.ceParameterName = e.item.ceParameterName;
+                },
+                query:function (e) {
+                    e.param.ceGroupId = viewModel.model.ceGroupId;
+                    e.param.attachmentGroupId = viewModel.model.attachmentGroupId;
+                    e.param.ceParameterId = viewModel.model.ceParameterId;
+                    e.param.chartId = viewModel.model.chartId;
+                }
+            })).data("kendoLov");
+        </script>
+        <!-- 第三行查询 -->
+        <div class="head-div row">
+            <label class="col-md-2">样本开始时间：</label>
+            <div class="col-md-2">
+                <input type="text" id="startTime" data-role="datetimepicker" style="margin-right:5px;"
+                       placeholder='<@spring.message "hmes.startedtime"/>'
+                       data-bind="value:model.sampleTimeStart" class="datetimepicker">
+            </div>
+            <label class="col-md-2">样本结束时间：</label>
+            <div class="col-md-2">
+                <input type="text" id="endTime" data-role="datetimepicker" style="margin-right:5px;"
+                       placeholder='<@spring.message "attachment.endactivedate"/>'
+                       data-bind="value:model.sampleTimeEnd" class="datetimepicker">
+            </div>
+        </div>
+    </div>
+    <script>kendo.bind($('#query-form-head'), viewModel);</script>
+</div>
+<div style="height:330px;width: 100%;padding: 10px;text-align: center">
+    <h4 style="display: none" id="chart-title-h"><span></span>的正态检定图</h4>
+    <!-- 正态检定图 -->
+    <div id="normal-calibration-chart" class="pull-left" style="width:85%;height:100%;margin: 0 auto;overflow: visible;">
+
+    </div>
+    <div class="pull-left" style="border: 1px solid grey;height: 100px;width: 15%;color: black;font-size: 14px;display: none" id="number-div">
+        <div class="row">
+            <span class="col-md-6">均值</span>
+            <span class="col-md-6" id="average-span"></span>
+        </div>
+        <div class="row">
+            <span class="col-md-6">标准差</span>
+            <span class="col-md-6" id="standard-span"></span>
+        </div>
+        <div class="row">
+            <span class="col-md-6">N</span>
+            <span class="col-md-6" id="N-span"></span>
+        </div>
+        <div class="row">
+            <span class="col-md-6">AD</span>
+            <span class="col-md-6" id="AD-span"></span>
+        </div>
+        <div class="row">
+            <span class="col-md-6">P值</span>
+            <span class="col-md-6" id="P-span"></span>
+        </div>
+    </div>
+
+</div>
+<!-- 表格 -->
+<div id="out-table-div" style="width: 100%;clear: both;display: none">
+
+    <!-- 表格 -->
+    <div class="table-div" id="scroll-table-div" style="overflow:auto">
+        <table border="1px" cellspacing="0" cellpadding="0" style="width: 95%">
+            <thead id="table-thead">
+            </thead>
+            <tbody id="table-body" style="margin-top: 40px">
+
+            </tbody>
+        </table>
+    </div>
+</div>
+<script type="text/javascript">
+    var exportHead;
+    var exportTbody;
+    var chart;
+    /**
+     * 初始化下方表格，并且在循环数据时 获得上方图形的数据
+     */
+    function initTable() {
+        $('#table-thead').html('');
+        $('#table-body').html('');
+        $('#out-table-div').css('display','block');
+        var tableHeadTitle = ['序号','样本时间','平均值','极差值','标准差值','最大值','最小值'];
+        for (var i = 0; i < tableHeadTitle.length; i++) {
+            $('#table-thead').append('<th><div>'+tableHeadTitle[i]+'</div></th>');
+
+            if(i == 0){
+                //不添加序号 后台有
+                continue;
+            }
+            exportHead += tableHeadTitle[i]+',';
+        }
+        for (var i = 0; i < chartData.allData[0].sampleCount; i++) {
+            $('#table-thead').append('<th><div>样本'+(i+1)+'</div></th>');
+            exportHead += ('样本'+(i+1))+',';
+        }
+        exportHead = exportHead.substr(0,exportHead.length-1);
+        //表格 表体
+        for (var i = 0; i < chartData.allData.length; i++) {
+            var tempRow = chartData.allData[i];
+            if(i == 0){
+                //标题
+                chartData.sampleMainXName = tempRow.chartDetailM?tempRow.chartDetailM.axisLabelX:"";
+                chartData.sampleMainYName = tempRow.chartDetailM?tempRow.chartDetailM.axisLabelY:"";
+                chartData.sampleLessXName = tempRow.chartDetailS?tempRow.chartDetailS.axisLabelX:"";
+                chartData.sampleLessYName = tempRow.chartDetailS?tempRow.chartDetailS.axisLabelY:"";
+            }
+
+            var tr = '<tr>';
+            //序号
+            tr += '<td>' + checkNull(tempRow.subgroupNum) + '</td>';
+            exportTbody += checkNull(tempRow.subgroupNum) + ',';
+            //样本时间
+            tr += '<td>' + checkNull(tempRow.sampleSubgroupTime) + '</td>';
+            exportTbody += checkNull(tempRow.sampleSubgroupTime) + ',';
+
+            //平均值
+            tr += '<td>' + checkNull(tempRow.subgroupBar) + '</td>';
+            exportTbody += checkNull(tempRow.subgroupBar) + ',';
+            //极差值
+            tr += '<td>' + checkNull(tempRow.subgroupR) + '</td>';
+            exportTbody += checkNull(tempRow.subgroupR) + ',';
+            //标准差值
+            tr += '<td>' + checkNull(tempRow.subgroupSigma) + '</td>';
+            exportTbody += checkNull(tempRow.subgroupSigma) + ',';
+            //最大值
+            tr += '<td>' + checkNull(tempRow.subgroupMax) + '</td>';
+            exportTbody += checkNull(tempRow.subgroupMax) + ',';
+            //最小值
+            tr += '<td>' + checkNull(tempRow.subgroupMin) + '</td>';
+            exportTbody += checkNull(tempRow.subgroupMin) + ',';
+
+            //样本
+            for (var j = 0; j < chartData.allData[0].sampleCount; j++) {
+                var value = tempRow.sampleDataList[j]?checkNull(tempRow.sampleDataList[j].sampleValue):'';
+                tr += '<td>' + value + '</td>';
+                exportTbody += value + ',';
+            }
+            tr += '</tr>';
+            $('#table-body').append(tr);
+
+            var length = exportTbody.length - 1;
+            exportTbody = exportTbody.substr(0,length);
+            exportTbody += '#';
+        }
+
+        exportTbody = exportTbody.substr(0,exportTbody.length - 1);
+    }
+
+    /**
+     * 初始化图形
+     */
+    function initChart() {
+        chart = new G2.Chart({
+            container: 'normal-calibration-chart',
+            forceFit: true,
+            height: 300,
+            padding: [20, 20, 50, 60]
+        });
+        chart.source(chartData.allData[0].xzScot);
+        chart.scale('xAbscissa', {
+            range: [0, 1],
+            alias: viewModel.ceParameterName
+        });
+        chart.scale('zOrdinates', {
+            alias: '百分比',
+            min: -3,
+            ticks:chartData.allData[0].convertZ,
+            formatter:function (value) {
+                return zArray[chartData.allData[0].convertZ.indexOf(value)];
+            }
+        });
+        chart.point().position('xAbscissa*zOrdinates').shape('circle').size(3).color('#4f81bd');
+        chart.axis('zOrdinates', {
+            label: {
+                autoRotate: false, // 文本是否需要自动旋转，默认为 true
+            },
+            title: {
+                autoRotate: true,
+                offset: 30,
+                textStyle: {
+                    fill: '#404040', // 文本的颜色
+                    fontSize: '12', // 文本大小
+                },
+            }
+        });
+        chart.axis('xAbscissa', {
+            title: {
+                offset: 35,
+                textStyle: {
+                    fill: '#404040', // 文本的颜色
+                    fontSize: '12', // 文本大小
+                },
+            }
+        });
+        //拟合直线
+        var dv = new DataSet.View().source(chartData.allData[0].convertXzScot);
+        dv.transform({
+            type: 'regression',
+            method: 'linear',     // 回归算法类型
+            fields: [ 'xAbscissa', 'zOrdinates' ], // 统计字段
+            bandwidth: 0.01,       // 步长
+            extent: [Math.min.apply(null, chartData.allData[0].convertX),
+                Math.max.apply(null, chartData.allData[0].convertX)],     // 结果集里，x的数值范围
+            as: [ 'xAbscissa', 'zOrdinates' ]      // 结果字段
+        });
+        var view = chart.view();
+        view.axis(false);
+        view.source(dv);
+        view.line().position('xAbscissa*zOrdinates').color('#be504d');
+        chart.render();
+    }
+
+    /**
+     * 校验为空就返回空字符
+     */
+    function checkNull(value) {
+        if(value){
+            return value;
+        }else{
+            return '';
+        }
+    }
+
+    //绑定table外层div滚动事件
+    $('#scroll-table-div').on('scroll', tableScrollHandle);
+
+    //表格滚动时固定表头
+    function tableScrollHandle() {
+        //获取table外层DIV的滚动值
+        var scrollTop = $('#scroll-table-div').scrollTop();
+        //当滚动距离大于0时设置top及相应的样式
+        if ((scrollTop) > 0) {
+            $('#scroll-table-div thead').children('th').children('div').css({
+                "top": (scrollTop-0.8) + 'px',
+                "border-bottom": "1px solid #DDDDDD",
+                "border-top": "1px solid #898989",
+                "height": "41px"
+            });
+        } else {
+            // 当滚动距离小于0时设置top及相应的样式
+            $('#scroll-table-div thead').children('th').children('div').css({
+                "top": scrollTop + 'px',
+                "border-bottom": "0px solid #DDDDDD",
+                "border-top": "0px solid #898989",
+                "height": "px"
+            });
+        }
+    }
+
+    //导出exportExcel
+    function exportExcel() {
+        if(exportHead == null || exportHead === '' || exportTbody == null || exportTbody === '') {
+            Hap.showToast({
+                type:'error',  //1.success 2.error
+                message: '请先查询再导出',
+                hideDuration:2000
+            });
+            return;
+        }
+
+        var url = '/pspc/entity/export/excel/single/graph';
+        var rowEnd = 2;
+        var colEnd = 23;
+        //拼接其他参数
+        var otherParams = [];
+        otherParams.push({paramName:'thead', paramValue:exportHead});
+        otherParams.push({paramName:'tbody', paramValue:exportTbody});
+        otherParams.push({paramName:'title', paramValue:viewModel.entityCode});
+        otherParams.push({paramName:'rowEnd', paramValue:rowEnd});
+        otherParams.push({paramName:'colEnd', paramValue:colEnd});
+        otherParams.push({paramName:'exportFileName', paramValue:viewModel.entityCode});
+        otherParams.push({paramName:'${_csrf.parameterName}', paramValue:'${_csrf.token}'});
+        setTimeout(function() {
+            chart.downloadImage(viewModel.entityCode);
+        }, 1000);
+        exportExcelWithEcharts(null, url, otherParams);
+    }
+
+    /**
+     * 清空图表
+     */
+    function clearTableChart() {
+        if(!chart.destroyed){
+            chart.destroy();
+        }
+        $('#table-thead').html('');
+        $('#table-body').html('');
+        $('#average-span').html('');
+        $('#standard-span').html('');
+        $('#N-span').html('');
+        $('#AD-span').html('');
+        $('#P-span').html('');
+        $('#number-div').css('display','none');
+        $('#chart-title-h').css('display','none');
+    }
+
+    /**
+     * 给图形右上角的数值框复制
+     */
+    function initNumerical() {
+        $('#number-div').css('display','block');
+        $('#chart-title-h').css('display','block');
+        $('#chart-title-h').children('span').html(viewModel.entityCode);
+        if(chartData.allData && chartData.allData.length > 0){
+            var temp = chartData.allData[0];
+            $('#average-span').html((temp.averageValue+"").substring(0, 8));
+            $('#standard-span').html((temp.standardValue+"").substring(0, 8));
+            $('#N-span').html(temp.xzScot.length);
+            $('#AD-span').html((temp.adValue+"").substring(0, 8));
+            $('#P-span').html((temp.pOfAdValue+"").substring(0, 8));
+
+        }
+    }
+</script>
+</body>
+</html>

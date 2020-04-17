@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.plm.laboratory.mapper.LabUserFileMapper">
+    <resultMap id="BaseResultMap" type="com.hand.plm.laboratory.dto.LabUserFile">
+        <result column="FILE_ID" property="fileId" jdbcType="DECIMAL" />
+        <result column="LAB_USER_ID" property="labUserId" jdbcType="DECIMAL" />
+        <result column="FILE_NAME" property="fileName" jdbcType="VARCHAR" />
+        <result column="FILE_PATH" property="filePath" jdbcType="VARCHAR" />
+        <result column="FILE_DATE" property="fileDate" jdbcType="DATE" />
+    </resultMap>
+
+
+</mapper>

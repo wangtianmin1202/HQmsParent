@@ -1,0 +1,488 @@
+<#include "../include/header.html">
+<script type="text/javascript">
+    var viewModel = Hap.createGridViewModel("#grid");
+    var viewModelTree = kendo.observable({
+        model: { },
+        query: function (e) {
+            $('#gridTree').data('kendoTreeList').dataSourceTree.read();
+        },
+    });
+</script>
+<body>
+<div id="page-content">
+    <div class="pull-left" id="toolbar-btn" style="padding-bottom:10px;">
+        <span class="btn btn-primary k-grid-add" style="float:left;margin-right:5px;" onclick="addhead()"><@spring.message "hap.new"/></span>
+        <span class="btn btn-success k-grid-save-changes" data-bind="click:save" style="float:left;margin-right:5px;"><@spring.message "hap.save"/></span>
+        <span  data-bind="click:remove" class="btn btn-danger" style="float:left;"><@spring.message "hap.delete"/></span>
+    </div>
+    <script>kendo.bind($('#toolbar-btn'), viewModel);</script>
+    <div id="queryPanel" class="pull-right" id="query-form" style="padding-bottom:10px;">
+    
+    	<div class="k-query-simple" id="query-form">
+            <input type="text" data-role="maskedtextbox" style="float:left;width:150px;margin-right:5px;" placeholder='<@spring.message "PfmeaLevel.levelCode"/>'
+                   data-bind="value:model.levelCode" class="k-textbox">
+        </div>
+        <script>kendo.bind($('#query-form'), viewModel);</script>
+        <div class="k-query-detail" id="query-form2">
+            <div class="rows" style="margin-top:5px">
+            <input type="text" data-role="maskedtextbox" style="float:left;width:150px;margin-right:5px;" placeholder='<@spring.message "PfmeaLevel.levelCode"/>'
+                   data-bind="value:model.levelCode" class="k-textbox">
+
+            </div>
+        </div>
+        <script>kendo.bind($('#query-form2'), viewModel);</script>
+    
+        
+        <div style="clear:both"></div>
+    </div>
+    <script>
+    kendo.bind($('#query-form'), viewModel);
+    $('#queryPanel').kendoQueryPanel({
+        queryFunction: function () {
+            viewModel.query();
+        },
+        resetFunction: function () {
+            viewModel.reset();
+        }
+    });
+    </script>
+    <div style="clear:both">
+        <div id="grid"></div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    /* Hap.initEnterQuery('#query-form', viewModel.query);
+    var BaseUrl = _basePath;
+    dataSource = new kendo.data.DataSource({
+        transport: {
+            read: {
+                url: BaseUrl + "/hqm/pfmea/level/query",
+                type: "POST",
+                dataType: "json"
+            },
+            update: {
+                url: BaseUrl + "/hqm/pfmea/level/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            destroy: {
+                url: BaseUrl + "/hqm/pfmea/level/remove",
+                type: "POST",
+                contentType: "application/json"
+            },
+            create: {
+                url: BaseUrl + "/hqm/pfmea/level/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            parameterMap: function (options, type) {
+                if (type !== "read" && options.models) {
+                    var datas = Hap.prepareSubmitParameter(options, type)
+                    return kendo.stringify(datas);
+                } else if (type === "read") {
+                    return Hap.prepareQueryParameter(viewModel.model.toJSON(), options)
+                }
+            }
+        },
+        batch: true,
+        serverPaging: true,
+        pageSize: 20,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+                id: "levelId",
+                fields: {}
+            }
+        }
+    });
+
+    $("#grid").kendoGrid({
+        dataSource: dataSource,
+        resizable: true,
+        scrollable: true,
+        navigatable: false,
+        sortable:true,
+        selectable: 'multiple, rowbox',
+        dataBound: function () {
+            if (parent.autoResizeIframe) {
+                parent.autoResizeIframe('${RequestParameters.functionCode!}')
+            }
+        },
+        pageable: {
+            pageSizes: [5, 10, 20, 50],
+            refresh: true,
+            buttonCount: 5
+        },
+        columns: [
+            {
+                field: "levelId",
+                title: '<@spring.message "pfmealevel.levelid"/>',
+                width: 120
+            },
+                    {
+                field: "fmeaLevel",
+                title: '<@spring.message "pfmealevel.fmealevel"/>',
+                width: 120
+            },
+                    {
+                field: "parentLevelId",
+                title: '<@spring.message "pfmealevel.parentlevelid"/>',
+                width: 120
+            },
+                    {
+                field: "levelCode",
+                title: '<@spring.message "pfmealevel.levelcode"/>',
+                width: 120
+            },
+                    {
+                field: "description",
+                title: '<@spring.message "pfmealevel.description"/>',
+                width: 120
+            },
+        ],
+        editable: true
+    });
+
+     */
+    function treelist(arr, childrens, parentId,parentCode) {
+        for (var i = 0; i < childrens.length; i++) {
+            childrens[i].parentId = parentId;
+            childrens[i].parentCode = parentCode;
+            childrens[i].hasChildren = true;
+            arr.push(childrens[i])
+            if (childrens[i].children && childrens[i].children.length > 0) {
+                treelist(arr, childrens[i].children, childrens[i].id,childrens[i].functionCode);
+            } else {
+                childrens[i].hasChildren = false;
+            }
+        }
+    }
+
+    Hap.initEnterQuery('#query-form', viewModel.query);
+    var BaseUrl = _basePath;
+    dataSource = new kendo.data.TreeListDataSource({
+        transport: {
+            read: {
+                url: BaseUrl + "/hqm/pfmea/level/query/tree/data",
+                type: "POST",
+                dataType: "json"
+            },
+            update: {
+                url: BaseUrl + "/hdm/invalid/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            destroy: {
+                url: BaseUrl + "/hdm/invalid/remove",
+                type: "POST",
+                contentType: "application/json"
+            },
+            create: {
+                url: BaseUrl + "/hdm/invalid/submit",
+                type: "POST",
+                contentType: "application/json"
+            },
+            parameterMap: function (options, type) {
+                if (type !== "read" && options.models) {
+                    var datas = Hap.prepareSubmitParameter(options, type)
+                    return kendo.stringify(datas);
+                } else if (type === "read") {
+                  
+                    return Hap.prepareQueryParameter(viewModelTree.model.toJSON(), options)
+                }
+            }
+        },
+        requestEnd: function (e) {
+            var response = e.response;
+            if (!response)
+                return;
+            var datas = [];
+            treelist(datas, response.rows || [], null,null);
+            response.rows = datas;
+        },
+        batch: true,
+        serverPaging: true,
+        pageSize: 10,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+                id: "id",
+                parentId: 'parentId',
+                fields: {},
+                expanded: true,
+ 
+                	
+               
+            }
+        }
+    });
+
+    var grid = $("#grid").kendoTreeList({
+        dataSource: dataSource,
+        editable: "incell",
+        resizable: true,
+        scrollable: true,
+        navigatable: false,
+        selectable: 'multiple, rowbox',
+        dataBound: function (e) {
+            if (parent.autoResizeIframe) {
+                parent.autoResizeIframe('${RequestParameters.functionCode!}')
+            } 
+            var datas =grid.dataSource.data();
+            $.each(datas,function(i,v)
+            		{
+           	 if(addLineFlag && addRanks != -1 && addBranchId != -1){
+					if(v.parentId == addBranchId && !isNotEmpty(v.branchId)){
+						v.fmeaLevel = addRanks;
+         		    addLineFlag = false;
+         	    	addRanks = -1;
+         	    	addBranchId = -1;
+					}
+     	 }    		
+                    
+            		
+           })
+            		var items = e.sender.items();
+                            for (var i = 0; i < items.length; i++) {
+                                var dataItem = e.sender.dataItem(items[i]);
+                                var row = $(items[i]);
+                                if (dataItem.isNew()) {
+                                    row.find("[data-command='createchild']").hide();
+                                }
+                                else {
+                                    row.find("[data-command='createchild']").show();
+                                }
+                            }		
+        },
+        pageable: {
+            pageSizes: [5, 10, 20, 50],
+            refresh: true,
+            buttonCount: 5
+        },
+        columns: [
+                     {
+                 field: "levelCode",
+                 title: '<@spring.message "pfmealevel.levelcode"/>',
+                 width: 120
+             },
+                     {
+                 field: "description",
+                 title: '<@spring.message "pfmealevel.description"/>',
+                 width: 120
+             },
+              {
+                  field: "",
+                  title: '<@spring.message "fmea.operating"/>',
+                  width: 200,
+                  template: function (dataItem) {
+                	  if(!isNotEmpty(dataItem.levelId)){
+                		  //add
+                		  if(dataItem.fmeaLevel == '4'){
+                			  return '<a href="#" onclick="submitLine('+ dataItem.levelId +',' + dataItem.parentId +')"><@spring.message "hap.save"/></a>'  
+                		  }else{
+                			  return '<a href="#" onclick="submit('+ dataItem.levelId +',' + dataItem.parentId +')"><@spring.message "hap.save"/></a>' 
+                		  }
+                	  }else{
+                		  if(dataItem.fmeaLevel == '1'){
+                			  return '<a href="#" onclick="addrow('+ dataItem.levelId+ ',' + dataItem.fmeaLevel +')"><@spring.message "fmea.newfunction"/></a>&nbsp;&nbsp;' 
+	                			   + '<a href="#" onclick="editrow('+ dataItem.levelId +')"><@spring.message "fmea.edit"/></a>&nbsp;&nbsp;' 
+	                			   + '<a href="#" onclick="submit('+ dataItem.levelId +',' + dataItem.parentId +')"><@spring.message "hap.save"/></a>&nbsp;&nbsp;'  
+	                			   + '<a href="#" onclick="removerow('+ dataItem.levelId +')"><@spring.message "fmea.delect"/></a>';
+                		  }else if(dataItem.fmeaLevel == '2'){
+                			  return '<a href="#" onclick="addrow('+ dataItem.levelId+ ',' + dataItem.fmeaLevel +')"><@spring.message "fmea.newfailure"/></a>&nbsp;&nbsp;' 
+		               			   + '<a href="#" onclick="editrow('+ dataItem.levelId +')"><@spring.message "fmea.edit"/></a>&nbsp;&nbsp;' 
+		               			   + '<a href="#" onclick="submit('+ dataItem.levelId +',' + dataItem.parentId +')"><@spring.message "hap.save"/></a>&nbsp;&nbsp;'  
+		               			   + '<a href="#" onclick="removerow('+ dataItem.levelId +')"><@spring.message "fmea.delect"/></a>';
+                		  }else if(dataItem.fmeaLevel == '3'){
+                			  return '<a href="#" onclick="editrow('+ dataItem.levelId +')"><@spring.message "fmea.edit"/></a>&nbsp;&nbsp;' 
+	                			   + '<a href="#" onclick="submitLine('+ dataItem.levelId +',' + dataItem.parentId +')"><@spring.message "hap.save"/></a>&nbsp;&nbsp;'  
+	                			   + '<a href="#" onclick="removerow('+ dataItem.levelId +')"><@spring.message "fmea.delect"/></a>';
+                		  }else if(dataItem.fmeaLevel == '4'){
+                			  return '<a href="#" onclick="editrow('+ dataItem.levelId +')"><@spring.message "fmea.edit"/></a>&nbsp;&nbsp;' 
+               			   + '<a href="#" onclick="submitLine('+ dataItem.levelId +',' + dataItem.parentId +')"><@spring.message "hap.save"/></a>&nbsp;&nbsp;'  
+               			   + '<a href="#" onclick="removerow('+ dataItem.levelId +')"><@spring.message "fmea.delect"/></a>';
+           		  }
+                	  }
+                  },
+              },
+        ],
+        editable: true
+    }).data('kendoTreeList');
+</script>
+<script type="text/javascript">
+
+  function addhead(){
+    	grid.addRow();
+    }
+  var addLineFlag = false;
+  var addRanks = -1;
+  var addBranchId = -1;
+    function addrow(levelId,fmeaLevel){
+    	addLineFlag = true;
+    	addRanks = parseInt(fmeaLevel) + 1;
+    	addBranchId = levelId;
+    	$.each(grid.dataSource.data(),function(i,n){
+			if(n.levelId == levelId){
+				//n.fmeaLevel = parseInt(fmeaLevel) + 1;
+				grid.addRow("#grid tbody>tr:eq("+ i +")");
+// 				$.each(grid.dataSource.data(),function(j,m){
+// 					if(m.parentId == levelId && !isNotEmpty(m.levelId)){
+// 						m.fmeaLevel = parseInt(fmeaLevel) + 1;
+// 					}
+// 				})
+			}
+    	})
+    }
+    function editrow(levelId){
+    	$.each(grid.dataSource.data(),function(i,n){
+    		if(n.levelId == levelId){
+    			$("#grid").data("kendoTreeList").editRow($("#grid tbody>tr:eq("+ i +")"));
+			}
+    	})
+    	//grid.editRow("#grid tbody>tr:eq(0)");
+    }
+    function submit(levelId,parentId){
+    	var validator = $("#grid").kendoValidator().data("kendoValidator");
+		if (validator.validate()) {	
+	    	$.each(grid.dataSource.data(),function(i,n){
+	    		if(levelId == n.levelId &&n.dirty){    
+			    	var obj = {
+							
+			    			'levelId':levelId, 
+			    			'levelCode':n.levelCode,
+			  	            'parentLevelId':parentId,
+			  	            'fmeaLevel':n.fmeaLevel,
+			  	            'description':n.description,
+			  	            'fmeaLevel':n.fmeaLevel,
+			  	            'tenantId':-1,
+			  	            'siteId':-1
+			  	        };
+			    	console.log(obj);
+					$.ajax({
+				            type: "POST",
+				            url: BaseUrl + "/hqm/pfmea/level/save/or/update",
+				            data:obj,//json序列化
+				            datatype:"json", //此处不能省略
+				            success:function(data){
+				                if(data.success){
+				                    Hap.showToast({
+				                        type:'success',  //1.success 2.error
+				                        message: '保存成功',
+				                        hideDuration:2000,
+				                        "positionClass": "toast-bottom-right",
+				                    });
+				                   //editDialog1.close();
+				                    grid.dataSource.read();
+				                }else{
+				                    alert(data.message);
+				                }
+				            },
+				            error:function(data){
+				                alert(JSON.stringify(data));
+				            }
+				        });
+	    		}
+	    	})
+		}
+    }
+    function submitLine(levelId,parentId){
+    	var validator = $("#grid").kendoValidator().data("kendoValidator");
+		if (validator.validate()) {			
+	    	$.each(grid.dataSource.data(),function(i,n){
+	    		if(n.dirty && isNotEmpty(levelId)){
+	    			if(levelId == n.levelId){    				
+		    			//edie
+	    				 
+		    			var obj = {
+								//新加字段
+				  	            'levelId':levelId,  
+				  	            'levelCode':n.levelCode,
+				  	            'parentLevelId':parentId,
+				  	            'fmeaLevel':n.fmeaLevel,
+				  	            'description':n.description,
+				  	          'fmeaLevel':n.fmeaLevel,
+				  	            'tenantId':-1,
+				  	            'siteId':-1
+				  	        };
+		    			console.log(obj)
+						$.ajax({
+					            type: "POST",
+					            url: BaseUrl + "/hqm/pfmea/level/save/or/update",
+					            data:obj,//json序列化
+					            datatype:"json", //此处不能省略
+					            success:function(data){
+					                if(data.success){
+					                    Hap.showToast({
+					                        type:'success',  //1.success 2.error
+					                        message: '保存成功',
+					                        hideDuration:2000,
+					                        "positionClass": "toast-bottom-right",
+					                    });
+					                    //editDialog.close();
+					                    grid.dataSource.read();
+					                }else{
+					                    alert(data.message);
+					                }
+					            },
+					            error:function(data){
+					                alert(JSON.stringify(data));
+					            }
+					        });
+	    			}
+	    		}else if(n.dirty && !isNotEmpty(levelId)){
+	    				
+		    			//add
+		    			var obj = {
+		        				 
+		    					'levelId':levelId,   
+		    					'levelCode':n.levelCode,
+				  	            'parentLevelId':parentId,
+				  	            'fmeaLevel':n.fmeaLevel,
+				  	            'description':n.description,
+				  	            'fmeaLevel':n.fmeaLevel,
+				  	            'tenantId':-1,
+				  	            'siteId':-1
+		          	        };
+		    			
+		           		$.ajax({
+		      	            type: "POST",
+		      	            url: BaseUrl + "/hqm/pfmea/level/save/or/update",
+		      	            data:obj,//json序列化
+		      	            datatype:"json", //此处不能省略
+		      	            success:function(data){
+		      	                if(data.success){
+		      	                    Hap.showToast({
+		      	                        type:'success',  //1.success 2.error
+		      	                        message: '保存成功',
+		      	                        hideDuration:2000,
+		      	                        "positionClass": "toast-bottom-right",
+		      	                    });
+		      	                    //editDialog.close();
+		      	                    grid.dataSource.read();
+		      	                }else{
+		      	                    alert(data.message);
+		      	                }
+		      	            },
+		      	            error:function(data){
+		      	                alert(JSON.stringify(data));
+		      	            }
+		      	        });
+	    			
+	    		}
+	    	})
+		}
+    }
+    function removerow(levelId){
+    	$.each(grid.dataSource.data(),function(i,n){
+    		if(levelId == n.levelId){
+    			deleteRow(levelId,n.branchName);
+    		}
+    	})
+    	
+    }
+</script>
+</body>
+</html>

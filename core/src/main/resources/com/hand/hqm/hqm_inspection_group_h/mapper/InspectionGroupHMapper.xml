@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_inspection_group_h.mapper.InspectionGroupHMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_inspection_group_h.dto.InspectionGroupH">
+        <result column="GROUP_ID" property="groupId" jdbcType="DECIMAL" />
+        <result column="GROUP_CODE" property="groupCode" jdbcType="VARCHAR" />
+        <result column="DESCRIPTION" property="description" jdbcType="VARCHAR" />
+        <result column="PLANT_ID" property="plantId" jdbcType="DECIMAL" />
+        <result column="ENABLE_FLAG" property="enableFlag" jdbcType="VARCHAR" />
+        <result column="REMARK" property="remark" jdbcType="VARCHAR" />
+        
+        <result column="PLANT_CODE" property="plantCode" jdbcType="VARCHAR" />
+        <result column="CREATE_DATE" property="createDate" jdbcType="VARCHAR" />
+        <result column="ITEM_ID" property="itemId" jdbcType="DECIMAL" />
+        <result column="ITEM_DESC" property="itemDesc" jdbcType="VARCHAR" />
+        <result column="ITEM_CODE" property="itemCode" jdbcType="VARCHAR" />
+    </resultMap>
+    
+  <select id="myselect" resultMap="BaseResultMap" parameterType="com.hand.hqm.hqm_inspection_group_h.dto.InspectionGroupH">
+  
+        SELECT t.plant_id,
+       hp.plant_code,
+       t.group_id,
+       t.group_code,
+       t.description,
+       t.remark,
+       t.enable_flag,
+       t.creation_date AS create_date
+  FROM hqm_inspection_group_h t, hcm_plant hp
+ WHERE hp.plant_id = t.plant_id
+        <if test="plantId!=null"> 
+            AND t.plant_id  = #{plantId}
+        </if>
+        <if test="groupCode!=null">
+            AND t.group_code LIKE concat('%',concat(#{groupCode,jdbcType=VARCHAR},'%')) 
+        </if> 
+        <if test="description!=null">
+            AND t.description LIKE concat('%',concat(#{description,jdbcType=VARCHAR},'%'))  
+        </if>
+          <if test="enableFlag!=null"> 
+            AND t.enable_flag  = #{enableFlag}
+        </if>
+        ORDER BY t.group_id DESC
+    </select>    
+
+ <select id="itemselect" resultMap="BaseResultMap" parameterType="com.hand.hqm.hqm_inspection_group_h.dto.InspectionGroupH">
+    SELECT hp.plant_code, hi.item_id, hi.item_code, hi.descriptions as ITEM_DESC
+	FROM hcm_item hi, hcm_plant hp, hqm_inspection_group_h h
+     WHERE hi.plant_id = hp.plant_id
+	 AND hp.plant_id = h.plant_id
+	 AND h.group_id =#{groupId} 
+	  <if test="itemDesc!=null">
+            AND hi.descriptions LIKE concat('%',concat(#{itemDesc,jdbcType=VARCHAR},'%')) 
+        </if> 
+        <if test="itemCode!=null">
+            AND hi.item_code LIKE concat('%',concat(#{itemCode,jdbcType=VARCHAR},'%'))   
+        </if>  
+  </select>    
+
+</mapper>

@@ -1,0 +1,536 @@
+<html style="color: black">
+<#include "../include/header.html">
+<script src="${base.contextPath}/lib/prints/doc_print.js" type="text/javascript" charset="UTF-8"></script>
+<script src="${base.contextPath}/common/code?HQM_CONTROL_CHART_TYPE=HQM_CONTROL_CHART_TYPE"></script>
+<script src="${base.contextPath}/lib/js/echarts.common.min.js?_v_=1553896255267" type="text/javascript" charset="UTF-8"></script>
+<script type="text/javascript" src="${base.contextPath}/lib/js/echarts.min.js"></script> 
+<script type="text/javascript" src="${base.contextPath}/lib/js/ecStat.min.js"></script>
+<script>
+function initAsnPrintSetting() {
+    var jsonSetting = {
+        PaperWidth: 297,//A4纵向宽度
+        PaperHeight: 210,//A4纵向高度
+        MainFontSize: 'middle',
+        TableFontSize: 'middle',
+        TitleFontSize: 'xx-large',
+        TableRowHeight: '15',
+        TableBarCodeFontSize: '5',
+        BarCodeFontSize: '20',
+//         FirstPageRowNum: "30", //第一页的表格显示多少行
+//         MaxRowNum: "35"  //第2页~第n页的表格显示多少行
+    };
+
+    return jsonSetting;
+}
+var asnPrintSetting = initAsnPrintSetting();
+</script>
+<style>
+       span {
+       		font-size:130%
+       }
+</style>
+<script>
+    var viewModel = kendo.observable({
+        model: {
+            limit: '700'  //上下差距
+        }
+    });
+</script>
+<body style="width: 98%; margin-left: 15px;">
+	<!--页面布局-->
+	<div id="pageDiv" style="width: 100%;">
+<!-- 		<div class="row" style=";height:5%;text-align:center"> -->
+<!-- 			<label id="label" style="font-size:250%;"></label> -->
+<!-- 	    </div> -->
+<!-- 	    <div class="row" style=";text-align:left"> -->
+<!-- 			<span class="form-group col-sm-12" >测试信息：</span> -->
+<!-- 	    </div> -->
+	    <div class="row" style=";text-align:left">
+			<span class="form-group col-sm-2" id="measureToolNum"></span>
+			<span class="form-group col-sm-2" id="measureToolName"></span>
+			<span class="form-group col-sm-2" id="positionTitle"></span>
+			<span class="form-group col-sm-2" id="userName"></span>
+			<span class="form-group col-sm-4" id="analyzeDate"></span>
+	    </div>
+	    <div class="row" style=";text-align:left">
+			<span class="form-group col-sm-2" id="sampleDescription"></span>
+			<span class="form-group col-sm-2" id="measureCharacter"></span>
+			<span class="form-group col-sm-2" id="tolerance"></span>
+			<span class="form-group col-sm-2" id="count"></span>
+			<span class="form-group col-sm-4" id="measuredBy"></span>
+	    </div>
+	    <div class="row" style=";text-align:left">
+			<span class="form-group col-sm-12" >分析图表：</span>
+	    </div>
+	    <div class="row" style="margin:0px;padding:0px;">
+	    	<div id="picture" class="form-group col-sm-6" style="height:250px">
+
+	    	</div>
+	    	<div id="picture2" class="form-group col-sm-6" style="height:250px">
+
+	    	</div>
+	    </div>
+	    <div class="row" style="margin:0px;padding:0px;">
+	    	<div id="picture3" class="form-group col-sm-6" style="height:250px;">
+
+	    	</div>
+	    	<div id="picture4" class="form-group col-sm-6" style="height:250px;">
+
+	    	</div>
+	    </div>
+	    <div class="row" style="margin-top:0px;padding:0px;">
+	    	<div id="picture5" class="form-group col-sm-6" style="height:250px;">
+	    	</div>
+	    	<div id="picture6" class="form-group col-sm-6" style="height:250px;">
+
+	    	</div>
+	    </div>
+	    <div class="row" style=";text-align:left">
+			<span class="form-group col-sm-12" >分析结论：</span>
+	    </div>
+	    <div class="row" style="height:10%;text-align:left;padding-left:1%">
+			<span class="form-group col-sm-11" id="result" style="border: 1px solid #e2e2e4;border-radius:10px;height:100%;padding-top:5px"></span>
+	    </div>
+	    <div class="row" style=";text-align:left">
+			<span class="form-group col-sm-12" >备注：</span>
+	    </div>
+	    <div class="row" style="height:10%;text-align:left;padding-left:1%">
+			<span class="form-group col-sm-11" id="result" style="border: 1px solid #e2e2e4;border-radius:10px;height:100%;"></span>
+	    </div>
+	    <div class="row" style=";text-align:left">
+			<span class="form-group col-sm-2">编制人：</span>
+			<span class="form-group col-sm-2">日期：</span>
+			<span class="form-group col-sm-2"></span>
+			<span class="form-group col-sm-2">批准人：</span>
+			<span class="form-group col-sm-4">日期：</span>
+	    </div>
+	</div>
+
+	<script>kendo.bind($('html'), viewModel);</script>
+	<script>
+		$(document).ready(function () {
+		    /*根据asnPrintSetting初始化样式*/
+	        //纸张大小
+	        $('html').css('width', tranMmToPxWidth(asnPrintSetting.PaperWidth) + "px");
+	        var parentData = window.parent.parentData;
+		    
+// 		    $('#label').html('标题：'+parentData.measureToolNum+'MSA');
+		    $('#measureToolNum').html('量具编号：'+nvl(parentData.measureToolNum,''));
+		    $('#measureToolName').html('量具名称：'+nvl(parentData.measureToolName,''))
+		    $('#positionTitle').html('使用岗位：'+nvl(parentData.positionTitle,''))
+		    $('#userName').html('分析人：'+nvl(parentData.userName,''))
+		    $('#analyzeDate').html('研究日期：'+nvl(parentData.analyzeDate,''))
+		    
+		    $('#sampleDescription').html('样品名称：'+nvl(parentData.sampleDescription,''));
+		    $('#measureCharacter').html('测量特性：'+nvl(parentData.measureCharacter,''))
+		    $('#tolerance').html('公差范围：'+nvl(parentData.tolerance,''))
+		    $('#count').html('样品数量：'+window.parent.sampleNumList.length)
+		    $('#measuredBy').html('测量人员：'+ nvl(parentData.measuredBy,''))
+		    $('#result').html(nvl(window.parent.message,''))
+			showXbar();
+		    bar();
+		    line('<@spring.message "msaplan.analysis.grr.sample"/>',window.parent.sampleNumList,window.parent.ljValueList,window.parent.avgByLjList,'picture2','<@spring.message "msaplan.sample.value"/>','<@spring.message "msaplan.sample.average"/>');
+		    var userList = window.parent.userList;
+			var userljList = window.parent.userljList;
+			var avgByUserList = window.parent.avgByUserList;
+		    line('<@spring.message "msaplan.analysis.grr.person"/>',userList,userljList,avgByUserList,'picture5','<@spring.message "msaplan.person.value"/>','<@spring.message "msaplan.person.average"/>');
+	    	line2();
+            setTimeout(function(){
+            	window.print();
+                window.close();
+            	window.parent.$('#printWindow').data('kendoWindow').close();
+        	},0.4*1000)
+		});
+		
+		   /*
+	     初始化当前的css样式
+	     */
+	    function initCss() {
+	        $('.titleDiv').css('font-size', asnPrintSetting.TitleFontSize);  //标题div的字体
+	        $('.mainDiv').css('font-size', asnPrintSetting.MainFontSize);  //标题div的字体
+	        $('.myTable').css('font-size', asnPrintSetting.TableFontSize);   //表格内的字体
+	    }	   
+	</script>
+<script type="text/javascript">
+//展示Xbar图
+var sampleNumList = window.parent.sampleNumList;
+var map = window.parent.map;
+var averageJc = window.parent.averageJc;
+var userLjList = window.parent.userLjList;
+var jzByUserList = window.parent.jzByUserList;
+var jcList = window.parent.jcList;
+function showXbar(type){
+	var averageData = window.parent.averageData;
+	
+	var xData = [];
+	for(var i=0; i<sampleNumList.length; i++){
+		xData.push(i+1)
+	}
+	var averageDataSum = 0;
+	for(var i=0; i<averageData.length; i++){
+		averageDataSum += averageData[i]
+	}
+	//所有测量值均值
+	cl = averageDataSum/averageData.length;
+	var n;
+	for(var key in map){
+		n = Object.keys(map[key]).length
+		break;
+	}
+	var jsonData = {
+			"n" : n
+	}
+	//各组标准差的平均值
+	/* var averageSum = 0;	
+	for(var i=0; i<bzcList.length; i++){
+		averageSum += Number(bzcList[i]);
+	}
+	averageBzc = averageSum/bzcList.length; */
+	var returnMsg = '';
+	var msgEn = '';
+	//获取控制图系数
+	$.ajax({
+		url:"${base.contextPath}/hqm/control/chart/value/query",
+		type: "POST",
+		data: jsonData,
+		async: false,
+		jsonType: "json",
+		success: function(resultData){
+			if(resultData.success){
+				data = resultData.rows[0]
+				
+				
+				/* Xbar图 */
+				//UCL
+				var UCL = (cl + data.a2*averageJc).toFixed(3);
+				//LCL
+				var LCL = (cl - data.a2*averageJc).toFixed(3);
+				XbarR(averageData,UCL,LCL,cl,xData,'<@spring.message "msaplan.xbar.chart"/>','<@spring.message "msaplan.sample.average"/>','picture3',userLjList);
+				/* R图 */
+				var R_UCL = (averageJc*data.d4).toFixed(3);
+   				var R_LCL = (averageJc*data.d3).toFixed(3);
+   				XbarR(jcList,R_UCL,R_LCL,averageJc,xData,'<@spring.message "msaplan.Range.chart"/>','<@spring.message "msaplan.sample.range"/>','picture4',jzByUserList);
+   				
+   				//Xbar分析
+   				var flagCount = 0;
+   				for(var i=0;i<userLjList.length;i++){
+   					for(var j=0;j<userLjList[i].length;j++){       						
+       					if(userLjList[i][j]>UCL || userLjList[i][j]<LCL){
+       						flagCount++;
+       					}
+   					}
+   				}
+   				if(flagCount/averageData.length > 0.5){
+   					returnMsg = 'Xbar图有超出百分之五十的点在控制限外，零件间变差可识别；';
+   					msgEn = '<@spring.message "msaplan.grr.conclusion1"/>';
+   				}else{
+   					returnMsg = 'Xbar图没有超出百分之五十的点在控制限外，零件间变差不可识别；';
+   					msgEn = '<@spring.message "msaplan.grr.conclusion2"/>';
+   				}
+   				//R图分析
+   				var rFlagCount = 0;
+   				for(var i=0;i<jzByUserList.length;i++){
+   					for(var j=0;j<jzByUserList[i];j++){       						
+       					if(jzByUserList[i][j]>UCL || jzByUserList[i][j]<LCL){
+       						rFlagCount++;
+       					}
+   					}
+   				}
+   				if(rFlagCount>0){
+   					returnMsg += 'R图有点在控制限外；';
+   					msgEn += '<@spring.message "msaplan.grr.conclusion3"/>';
+   				}else{
+   					returnMsg += 'R图是所有点均在控制限内；';
+   					msgEn += '<@spring.message "msaplan.grr.conclusion4"/>';
+   				}
+			}
+		}
+	})
+	returnMsg = returnMsg + '_' + msgEn;
+	return returnMsg;
+	
+}
+function getRandomColor(){    
+return  '#' +    
+(function(color){    
+return (color +=  '0123456789abcdef'[Math.floor(Math.random()*16)])    
+  && (color.length == 6) ?  color : arguments.callee(color);    
+})('');    
+} 
+//R图
+/*  
+* dataList: 数据体
+* UCL：不同图的UCL
+* LCL：不同图的LCL
+* CL：数据平均值
+* LCL：x轴：测量次数的总个数
+* title： 标题
+* name: 数据描述
+* id: div id
+*/
+function XbarR(dataList,UCL,LCL,CL,xData,title,name,id,userList){
+dataList.push(UCL);
+dataList.push(LCL);
+userList[0].push(UCL)
+userList[0].push(LCL)
+option = {
+	    title: {
+	        text: title,
+	        //subtext: '纯属虚构'
+	    },
+	    tooltip: {
+	        trigger: 'axis'
+	    },
+	    legend: {
+	        data:[name]
+	    },
+	    animation:false,
+	    toolbox: {
+	        show: true,
+	        feature: {
+	            /* dataZoom: {
+	                yAxisIndex: 'none'
+	            }, */
+	            dataView: {readOnly: false},
+	            magicType: {type: ['line', 'bar']},
+	            restore: {},
+	            saveAsImage: {}
+	        }
+	    },
+	    xAxis:  {
+	        type: 'category',
+	        boundaryGap: false,
+	        data: xData
+	    },
+	    yAxis: {
+	    	//name: name,
+	        type: 'value',
+	        axisLabel: {
+	            formatter: '{value}'
+	        },
+	        min:'dataMin'
+	    },
+	    series: [
+	        {
+	            name:name,
+	            type:'line',
+	            lineStyle:{
+	            	color: 'black'
+	            },
+	            data:userList[0],
+	            markPoint: {
+	                data: [
+	                    {type: 'max', name: '最大值'},
+	                    {type: 'min', name: '最小值'}
+	                ]
+	            },
+	            markLine: {
+	                data: [
+	                    {
+	                    	yAxis: CL, 
+	                    	name: '<@spring.message "msaplan.measure.average"/>',
+	                    	label:{
+	                    			normal: {formatter: '<@spring.message "msaplan.measure.average"/>('+ CL +')'}
+	                    	},
+	                    	lineStyle:{
+	                    		color: 'green'
+	                    	}
+	                    },
+	                    {
+	                    	yAxis: UCL,  
+	                    	name: 'UCL',
+	                    	label:{
+	                    		normal: {formatter: 'UCL('+ UCL +')'}
+	                    	},
+	                    	lineStyle:{
+	                    		color: 'red',
+	                    		type: 'solid'
+	                    	}
+	                    },
+	                    {
+	                    	yAxis: LCL,  
+	                    	name: 'LCL',
+	                    	label:{
+	                    		normal: {formatter: 'LCL('+ LCL +')'}
+	                    	},
+	                    	lineStyle:{
+	                    		color: 'red',
+	                    		type: 'solid'
+	                    	}
+	                    }
+	                ]
+	            }
+	        },
+	    ]
+	};
+for(var i=1;i<userList.length;i++){
+		var seriesData = {
+				
+	            name:name,
+	            type:'line',
+	            lineStyle:{
+	            	color:getRandomColor()
+	            },
+	            data:userList[i],
+	            markPoint: {
+	                data: [
+	                    {type: 'max', name: '最大值'},
+	                    {type: 'min', name: '最小值'}
+	                ]
+	            },
+	        
+		}
+		option.series.push(seriesData);
+	}
+$("#"+ id +"").empty();
+$("#"+ id +"").append('<div id="'+ id +'a" style="height:100%;width:100%;"></div>')
+var myChart = echarts.init(document.getElementById(id+'a'));
+myChart.setOption(option);
+dataList.splice(dataList.length-2,2);
+}
+
+//条形图
+function bar(){
+var EV = window.parent.EV;
+var TV = window.parent.TV;
+var parentData = window.parent.parentData;
+var AV = window.parent.AV;
+var PV = window.parent.PV;
+option = {
+	    legend: {},
+	    tooltip: {},
+	    animation:false,
+	    dataset: {
+	        source: [
+	            ['product', '<@spring.message "msaplan.grr.contribution.rate"/>', '<@spring.message "msaplan.grr.variance.rate"/>', '<@spring.message "msaplan.grr.tolerance.rate"/>'],
+	            ['<@spring.message "msaplan.grr.repeatability"/>',  Math.pow(EV,2)/Math.pow(TV,2),   EV/TV, 6*EV/parentData.tolerance],
+	            ['<@spring.message "msaplan.grr.reproducibility"/>',  Math.pow(AV,2)/Math.pow(TV,2),   AV/TV, 6*AV/parentData.tolerance],
+	            ['<@spring.message "msaplan.grr.partsvariance"/>',Math.pow(PV,2)/Math.pow(TV,2),  PV/TV, 6*PV/parentData.tolerance]
+	        ]
+	    },
+	    xAxis: {type: 'category'},
+	    yAxis: {},
+	    series: [
+	        {type: 'bar'},
+	        {type: 'bar'},
+	        {type: 'bar'}
+	    ]
+	};
+var id = 'picture';
+$("#"+ id +"").empty();
+$("#"+ id +"").append('<div id="'+ id +'c" style="height:100%;width:100%;"></div>')
+var myChart = echarts.init(document.getElementById(id+'c'));
+myChart.setOption(option);
+}
+//折线
+function line(title,XData,pointList,lineDataList,idStr,name1,name2){
+
+	option = {
+	    title: {
+	        text: title
+	    },
+	    /* tooltip: {
+	        trigger: 'axis'
+	    }, */
+	    legend: {
+	        data:[name1,name2]
+	    },
+	    animation:false,
+	    grid: {
+	        left: '3%',
+	        right: '4%',
+	        bottom: '3%',
+	        containLabel: true
+	    },
+	    toolbox: {
+	        feature: {
+	            saveAsImage: {}
+	        }
+	    },
+	    xAxis: {
+	        type: 'category',
+	        boundaryGap: false,
+	        data: XData
+	    },
+	    yAxis: {
+	        type: 'value',
+	        min:'dataMin'
+	    },
+	    series: [
+	        {
+	            name:name2,
+	            type:'line',
+	            data:lineDataList
+	        },
+	    ]
+	}; 
+	for(var i=0;i<pointList.length;i++){
+		var seriesData = {
+				name:name1,
+				type:'line',
+				lineStyle:{opacity:0},
+				data:pointList[i]
+		}
+		option.series.push(seriesData);
+	}
+var id = idStr;
+$("#"+ id +"").empty();
+$("#"+ id +"").append('<div id="'+ id +'c" style="height:100%;width:100%;"></div>')
+var myChart = echarts.init(document.getElementById(id+'c'));
+myChart.setOption(option);
+}
+
+//折线
+function line2(){
+var avgByUserLjList = window.parent.avgByUserLjList;
+	option = {
+	    title: {
+	        text: '<@spring.message "msaplan.analysis.grr.sampleperson"/>'
+	    },
+	    /* tooltip: {
+	        trigger: 'axis'
+	    }, */
+	    legend: {
+	       // data:['<@spring.message "msaplan.sample.value"/>','<@spring.message "msaplan.sample.average"/>']
+	    },
+	    animation:false,
+	    grid: {
+	        left: '3%',
+	        right: '4%',
+	        bottom: '3%',
+	        containLabel: true
+	    },
+	    toolbox: {
+	        feature: {
+	            saveAsImage: {}
+	        }
+	    },
+	    xAxis: {
+	        type: 'category',
+	        boundaryGap: false,
+	        data: sampleNumList
+	    },
+	    yAxis: {
+	        type: 'value',
+	        min:'dataMin'
+	    },
+	    series: [
+	    ]
+	}; 
+	for(var i=0;i<avgByUserLjList.length;i++){
+		var seriesData = {
+				name:'<@spring.message "msaplan.measure.average"/>',
+				type:'line',
+				data:avgByUserLjList[i]
+		}
+		option.series.push(seriesData);
+	}
+var id = 'picture6';
+$("#"+ id +"").empty();
+$("#"+ id +"").append('<div id="'+ id +'c" style="height:100%;width:100%;"></div>')
+var myChart = echarts.init(document.getElementById(id+'c'));
+myChart.setOption(option);
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,591 @@
+<#include "../include/header.html">
+<script src="${base.contextPath}/common/code?SRM_WEB_INVOICE_STATUS=SRM_WEB_INVOICE_STATUS"></script>
+<script src="${base.contextPath}/common/code?SRM_PURCHASE_GROUP=SRM_PURCHASE_GROUP"></script>
+<script src="${base.contextPath}/lib/bootstrap-3.3.7/js/bootstrap.min.js"></script>
+<script type="text/javascript">
+	var supplierId;
+    var viewModel = Hap.createGridViewModel("#grid");
+    var parentData = new Array();
+    $(function(){
+    	//应收发票查询
+    	$("#tab-query-invoice").on("click",function(){
+    			window.location.reload()
+    			//viewModel.query();
+    	});
+    	//结算单据查询
+    	$("#iframe-query-settlement").on("load",function(){
+    		$(this).show();
+    	});
+    	$("#tab-query-settlement").on("click",function(){
+    		$("#iframe-query-settlement").hide();
+    		$("#iframe-query-settlement").attr("src","${base.contextPath}/hcs_tax_invoice/doc_settlement_query.html");
+    	})
+    	
+    }) ; 
+    /* 页面初始化查询供应商id */
+    $(document).ready(function(){
+    	$.ajax({
+    		url:"${base.contextPath}/hcs/supplier/onhand/quantities/querySupplier",
+    		type: "POST",
+    		contentType: "application/json",
+    		success: function(data){
+    			if(data.success){
+    				if(data.rows[0] != null){
+    					supplierId = data.rows[0].supplierId;
+    					if(supplierId != null){
+    						$("#refused").hide();
+    						$("#group").hide();
+    					}
+    				}
+    			}
+    		}
+    	})
+    })
+    //校验字符串是否为空
+    function checkStr(str){
+		if(str == null || str === '' ||typeof(str) == "undefined"){
+    		return false;
+    	}
+		return true;
+    }
+    //应收发票明细
+    function editorWindow(id){
+    	var jsonData = {
+    			"webInvoiceId" : id
+    	}
+    	$.ajax({
+    		url:"${base.contextPath}/hcs/tax/invoice/query",
+    		type: "POST",
+    		data: jsonData,
+    		jsonType: "json",
+    		success: function(resultData){
+    			if(resultData.success){
+    				parentData = new Array();
+	    			parentData.splice(0, 1, resultData.rows[0]);
+    				parentData[0].changeFlag = "E";
+    				var dialog = $("#lineWindow").kendoWindow({
+    					actions: ["Close"],
+    					width: 1400,
+    					height: 750,
+    					title: '<@spring.message "srm.invoice.detailpage"/>',
+    					visible: false,
+    					iframe: true,
+    					modal: true,
+    					content: 'tax_invoice_detail.html'
+    				}).data("kendoWindow");
+    				dialog.center().open();
+    			}
+    		}
+    	})
+    }
+    //拒绝
+    viewModel.refused = function(){
+    	var grid = $("#grid").data("kendoGrid");
+    	var checked = grid.selectedDataItems();
+    	var len = checked.length;
+    	if(len === 0){
+    		kendo.ui.showInfoDialog({
+    			title: '<@spring.message "hap.tip.info"/>',
+    			message: '<@spring.message "hap.tip.selectrow"/>'
+    		})
+    		return;
+    	}
+    	for(var i=0;i<len;i++){
+    		if(checked[i].webInvoiceStatus != 'S'){
+    			kendo.ui.showInfoDialog({
+        			title: '<@spring.message "hap.tip.info"/>',
+        			message: '<@spring.message "error.srm_purchase_0046"/>'
+        		})
+        		return;
+    		}
+    	}
+    	kendo.ui.showConfirmDialog({
+    		title: '<@spring.message "hap.tip.info"/>',
+    		message: '<@spring.message "error.srm_purchase_0047"/>'
+    	}).done(function(e){
+    		if(e.button=='OK'){
+    			$.ajax({
+    				url:"${base.contextPath}/hcs/tax/invoice/refused",
+    				type:"POST",
+    				data: kendo.stringify(checked),
+    				contentType: "application/json",
+    				success: function (data){
+    					if(data.success){
+    						Hap.showToast({
+                    			type:'success',
+                    			"positionClass": "toast-bottom-right",
+                    			message:"拒绝成功",
+                    			hideDuration:10*1000
+                    		})
+    			    		viewModel.query();
+    					}else{
+    						kendo.ui.showErrorDialog({
+    							title: '<@spring.message "hap.tip.info"/>',
+    			    			message: data.message
+    			    		})
+    					}
+    				}
+    			}) 
+    		}
+    	})
+    }
+    //打印明细
+    viewModel.print = function(){
+    	var grid = $("#grid").data("kendoGrid");
+    	var checked = grid.selectedDataItems();
+    	var len = checked.length;
+    	
+    	if(len === 0){
+    		kendo.ui.showInfoDialog({
+    			title: '<@spring.message "hap.tip.info"/>',
+    			message: '<@spring.message "hap.tip.selectrow"/>'
+    		})
+    		return;
+    	}
+    	if(checked[0].webInvoiceStatus != 'S'){
+    		kendo.ui.showInfoDialog({
+    			title: '<@spring.message "hap.tip.info"/>',
+    			message: '<@spring.message "error.srm_purchase_1069"/>'
+    		})
+    		return;
+    	}else{
+    		//跳转打印页面
+	    	parentData = checked[0];
+	    	var dialog = $("#printWindow").kendoWindow({
+				actions: ["Close"],
+				width: 1400,
+				height: 750,
+				title: '<@spring.message "print.detail"/>',
+				visible: false,
+				iframe: true,
+				modal: true,
+				content: 'adjustment_print.html'
+			}).data("kendoWindow");
+			dialog.center().open();
+    	}
+    }
+    viewModel.exportDetailExcel = function(){//明细excel 明细清单
+    	
+    	$("#submitDiv").html("");
+    	var grid = $("#grid").data("kendoGrid");
+    	var checked = grid.selectedDataItems();
+    	var len = checked.length;
+    	
+    	if(len === 0){
+    		kendo.ui.showInfoDialog({
+    			title: '<@spring.message "hap.tip.info"/>',
+    			message: '<@spring.message "hap.tip.selectrow"/>'
+    		})
+    		return;
+    	}
+    	if(checked[0].webInvoiceStatus != 'S'){
+    		kendo.ui.showInfoDialog({
+    			title: '<@spring.message "hap.tip.info"/>',
+    			message: '<@spring.message "error.srm_purchase_1069"/>'
+    		})
+    		return;
+    	}
+    	Hap.blockUI();
+        var $inputImg = $('<input/>').attr({
+            name: "webInvoiceId",
+            value: checked[0].webInvoiceId
+        });
+        var $inputImg1 = $('<input/>').attr({
+            name: "userId",
+            value: '${Session.userId}'
+        });
+        var $inputToken = $('<input/>').attr({
+            name: "${_csrf.parameterName}",
+            value: "${_csrf.token}",
+            type: "hidden"
+        });
+        //   var $inputSubmitBtn=$('<input>').attr({type:"submit",value:"submit"});
+        var $form = $("<form  method='post'></form>");
+        
+        $form.attr({
+            target: '_self',
+            method: 'post',
+            action: '${base.contextPath}/hcs/doc/settlement/excel/export',
+            success: function(e){
+            	Hap.unblockUI();
+            }
+        }).append($inputImg).append($inputImg1);
+        $form.append($inputToken);
+        $("#submitDiv").append($form);
+        $($form).submit();
+    }
+</script>
+<body>
+<div id="submitDiv" style="display: none;"></div>
+<div id="printWindow"></div>
+<div id="lineWindow"></div>
+<div id="page-content">
+	<div class="col-sm-12" style="margin-top:10px">
+    	<ul class="nav nav-tabs" id="mytab">
+    		<li class="active"><a id="tab-query-invoice" href="#tab1-id" data-toggle="tab"><@spring.message "srm.invoice.query"/></a></li>
+    		<li class=""><a id="tab-query-settlement" href="#tab2-id" data-toggle="tab"><@spring.message "srm.invoice.docquery"/></a></li>
+    		<!--  采购组-->
+              <span id="group" style="float:right">              
+	              <input id="purchaseGroup" style="margin-right:5px;" placeholder='<@spring.message "polinelocations.purchaseGroup"/>'
+	                 data-bind="value:model.purchaseGroup">     
+	              <script>
+		              	   kendo.bind($("#purchaseGroup"),viewModel);
+		                   $("#purchaseGroup").kendoComboBox({
+			               	    dataTextField: "meaning",
+			               	    dataValueField: "value",
+			               	    valuePrimitive: true,
+			               	    dataSource: SRM_PURCHASE_GROUP
+			               	});    
+	              </script> 
+              </span>
+    	</ul>
+    	<div id="tabContent" class="tab-content" style="margin-top:5px">
+	    	<div class="tab-pane fade in active" id="tab1-id">
+					<div class="pull-left" id="toolbar-btn" style="padding-bottom:10px;">
+						<span class="btn btn-primary k-grid-excel" style="float:left;margin-right:5px;" data-bind="click:print">
+			    		<i class="" style="margin-right:3px"></i><@spring.message "print.detail"/></span>   
+			    		
+			    		<span class="btn btn-primary k-grid-excel" style="float:left;margin-right:5px;" data-bind="click:exportDetailExcel">
+			    		<i class="fa fa-file-excel-o" style="margin-right:3px"></i><@spring.message "detail.excel.export"/></span>
+			    		
+						<span class="btn btn-primary k-grid-excel" style="float:left;margin-right:5px;" data-bind="click:exportExcel">
+			    		<i class="fa fa-file-excel-o" style="margin-right:3px"></i><@spring.message "srm.exportexcel"/></span>     
+			    		<span id="refused" class="btn btn-success fa fa-share" data-bind="click:refused" style="float:left;margin-right:5px;"><@spring.message "taxinvoicequery.refused"/></span>
+				    </div>
+			   		<script>kendo.bind($('#toolbar-btn'), viewModel);</script>
+						    <div id="queryPanel" class="pull-right" style="margin-right:5px;padding-bottom:10px;">
+						        <div class="k-query-simple" id="query-form">
+						        		<!-- 网上发票号 -->
+						                <input type="text" data-role="maskedtextbox" style="width:150px;margin-right:5px;" placeholder='<@spring.message "taxinvoice.webInvoiceNum"/>'
+						                   data-bind="value:model.webInvoiceNum" class="k-textbox">
+						                <!-- 税务发票 -->
+						                <input type="text" data-role="maskedtextbox" style="width:150px;margin-right:5px;" placeholder='<@spring.message "taxinvoice.taxinvoicenum"/>'
+						                   data-bind="value:model.taxInvoiceNum" class="k-textbox">
+						                <!-- 网上发票状态 -->
+						                <input id="webInvoiceStatus" style="width:150px;margin-right:5px;" placeholder='<@spring.message "taxinvoice.webInvoiceStatus"/>'
+						                   data-bind="value:model.webInvoiceStatus">     
+						                <script>
+									                   $("#webInvoiceStatus").kendoComboBox({
+										               	    dataTextField: "meaning",
+										               	    dataValueField: "value",
+										               	    valuePrimitive: true,
+										               	    dataSource: SRM_WEB_INVOICE_STATUS
+										               	});
+									                   
+							            </script> 
+							            
+						        	
+						        </div>
+						        <script>kendo.bind($('#query-form'), viewModel);</script>
+						        <div class="k-query-detail" id="query-form2">
+						            <div class="rows">
+						            	<!-- 工厂-->
+							            <input  id="plantLov" style="margin-right:5px" placeholder="<@spring.message 'srm.plantname'/>" data-bind="value:model.plantId" >
+							            <script>
+							                	$("#plantLov").kendoLov($.extend
+							                	    (<@lov"LOV_PLANT_BY_USER"/>, {
+							                	        textField: 'plantName',
+							                	        valueField:'plantId',
+							                	        query: function(e){
+							                	        	e.param['supplierId'] = supplierId;
+							                	        	e.param['enableFlag'] = 'Y';
+							                	        }
+							                	}));
+							            </script> 
+							             <!-- 供应商名称 -->
+							            <input  id="supplierLov" style="margin-right:5px" placeholder="<@spring.message 'srm.suppliername'/>" data-bind="value:model.supplierId" >
+							            <script>
+							                	$("#supplierLov").kendoLov($.extend
+							                	    (<@lov"LOV_SUPPLIER_SRM"/>, {
+							                	        textField: 'supplierCode',
+							                	        valueField:'supplierId',
+							                	        query: function(e){
+							                	        	e.param['supplierId'] = supplierId;
+							                	        }
+							                	}));
+							            </script>
+						            	<!-- 审批日期从 -->
+							            <input type="text" data-role="datetimepicker" style="margin-right:5px;" placeholder='<@spring.message "taxinvoice.startDate"/>'
+								                   data-bind="value:model.startDate" class="datetimepicker">
+							            <!-- 审批日期至 -->
+							            <input type="text" data-role="datetimepicker" style="margin-right:5px;" placeholder='<@spring.message "taxinvoice.endDate"/>'
+							            data-bind="value:model.endDate" class="datetimepicker">  
+						            </div>
+						            <div class="rows" style="margin-top:5px">
+						            	<!-- 提交日期从 -->
+							            <input type="text" data-role="datepicker" style="margin-right:5px;" placeholder='<@spring.message "taxinvoice.submitStartDate"/>'
+								                   data-bind="value:model.submitStartDate" class="datepicker">
+							            <!-- 提交日期至 -->
+							            <input type="text" data-role="datepicker" style="margin-right:5px;" placeholder='<@spring.message "taxinvoice.submitEndDate"/>'
+							            data-bind="value:model.submitEndDate" class="datepicker"> 
+							            <!-- 创建日期从 -->
+							            <input type="text" data-role="datetimepicker" style="margin-right:5px;" placeholder='<@spring.message "taxinvoice.startTime"/>'
+								                   data-bind="value:model.startTime" class="datetimepicker">
+							            <!-- 创建日期至 -->
+							            <input type="text" data-role="datetimepicker" style="margin-right:5px;" placeholder='<@spring.message "taxinvoice.endTime"/>'
+							            data-bind="value:model.endTime" class="datetimepicker"> 
+						            </div>
+						        </div>
+						        <script>kendo.bind($('#query-form2'), viewModel);</script>
+						         <div style="clear:both"></div>
+						    </div>
+						    <div style="clear:both">
+						        <div id="grid"></div>
+						    </div>
+		</div>
+			<div class="tab-pane fade" id="tab2-id">
+	    		<iframe id="iframe-query-settlement" height="740px" width="100%" frameborder="0" seamless scrolling="auto"></iframe>
+	    	</div>  
+	  </div>
+    </div> 	    
+</div>
+
+<script type="text/javascript">
+	$('#queryPanel').kendoQueryPanel({
+	    queryFunction: function () {
+	        viewModel.query();
+	    },
+	    resetFunction: function () {
+	        viewModel.reset();
+	    }
+	});
+    Hap.initEnterQuery('#query-form', viewModel.query);
+    var BaseUrl = _basePath;
+    dataSource = new kendo.data.DataSource({
+        transport: {
+            read: {
+                url: BaseUrl + "/hcs/tax/invoice/query",
+                type: "POST",
+                dataType: "json"
+            },
+            parameterMap: function (options, type) {
+                if (type !== "read" && options.models) {
+                    var datas = Hap.prepareSubmitParameter(options, type)
+                    return kendo.stringify(datas);
+                } else if (type === "read") {
+                    return Hap.prepareQueryParameter(viewModel.model.toJSON(), options)
+                }
+            }
+        },
+        batch: true,
+        serverPaging: true,
+        pageSize: 20,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+                id: "webInvoiceId",
+                fields: {}
+            }
+        }
+    });
+
+    $("#grid").kendoGrid({
+    	excel: {
+    		fileName:"应收发票查询.xlsx",
+    		filterable: true,
+    	},
+    	excelExport: function(e){
+    		var rows = e.workbook.sheets[0].rows;
+    		var datas = e.data;
+    		
+    		for(var i=1;i<rows.length; i++){
+    			rows[i].cells[1].value = Hap.getCodeMeaning(SRM_WEB_INVOICE_STATUS,datas[i-1].webInvoiceStatus);
+    		}
+    	},
+        dataSource: dataSource,
+        resizable: true,
+        scrollable: true,
+        navigatable: false,
+        sortable:true,
+        autoResize: true,
+        selectable: 'rowbox',
+        dataBound: function () {
+            if (parent.autoResizeIframe) {
+                parent.autoResizeIframe('${RequestParameters.functionCode!}')
+            }
+        },
+        pageable: {
+            pageSizes: [5, 10, 20, 50],
+            refresh: true,
+            buttonCount: 5
+        },
+        columns: [
+                    {
+                field: "webInvoiceNum",
+                title: '<@spring.message "taxinvoice.webinvoicenum"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+                template: function(rowdata){
+                	return '<a href="javascript:void(0)" style="color:blue" onclick="editorWindow('+rowdata.webInvoiceId+')">'+rowdata.webInvoiceNum+'</a>'
+                },
+                locked:true
+            },
+                    {
+                field: "webInvoiceStatus",
+                title: '<@spring.message "taxinvoice.webinvoicestatus"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+                template: function (dataItem) {
+                    var v = dataItem.webInvoiceStatus ? dataItem.webInvoiceStatus : "";
+                    $.each(SRM_WEB_INVOICE_STATUS, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return v;
+                        }
+                    });
+                    return v;
+                },
+                editor: function (container, options) {
+                    $('<input name="' + options.field + '"/>')
+                        .appendTo(container)
+                        .kendoDropDownList({
+                            dataTextField: "meaning",
+                            dataValueField: "value",
+                            valuePrimitive: true,
+                            dataSource:SRM_WEB_INVOICE_STATUS
+                        });
+                }
+            },
+            {
+                field: "plantName",
+                title: '<@spring.message "taxinvoice.plantName"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+            {
+                field: "invoiceTaxAmountS",
+                title: '<@spring.message "taxinvoice.invoicetaxamounts"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+                    {
+                field: "invoiceAmountS",
+                title: '<@spring.message "taxinvoice.invoiceamounts"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+            {
+                field: "invoiceTaxAmount",
+                title: '<@spring.message "taxinvoice.invoicetaxamount"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+                    {
+                field: "invoiceAmount",
+                title: '<@spring.message "taxinvoice.invoiceamount"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+            {
+                field: "currency",
+                title: '<@spring.message "taxinvoice.currency"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+            {
+                field: "taxInvoiceNum",
+                title: '<@spring.message "taxinvoice.taxinvoicenum"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+            {
+                field: "taxInvoiceQty",
+                title: '<@spring.message "taxinvoice.taxinvoiceqty"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+            {
+                field: "supplierRemarks",
+                title: '<@spring.message "taxinvoice.supplierremarks"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+            {
+                field: "supplierCode",
+                title: '<@spring.message "taxinvoice.supplierCode"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+            {
+                field: "supplierName",
+                title: '<@spring.message "taxinvoice.supplierName"/>',
+                width: 200,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+//             {
+//                 field: "supplierSiteName",
+//                 title: '<@spring.message "taxinvoice.supplierSiteName"/>',
+//                 width: 120,
+//                 attributes: {style: "text-align:center;white-space: nowrap;"},
+//                 headerAttributes: {style: "text-align:center"},
+//             },
+            {
+                field: "creationName",
+                title: '<@spring.message "taxinvoice.creationName"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+            {
+                field: "creationDate",
+                title: '<@spring.message "taxinvoice.creationDate"/>',
+                width: 150,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+            {
+                field: "submitName",
+                title: '<@spring.message "taxinvoice.submitName"/>',
+                width: 120,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+            {
+                field: "submitedDate",
+                title: '<@spring.message "taxinvoice.submitedDate"/>',
+                width: 150,
+                attributes: {style: "text-align:center;white-space: nowrap;"},
+                headerAttributes: {style: "text-align:center"},
+            },
+//             {
+//                 field: "approvedFullName",
+//                 title: '<@spring.message "taxinvoice.approvedfullname"/>',
+//                 width: 120,
+//                 attributes: {style: "text-align:center;white-space: nowrap;"},
+//                 headerAttributes: {style: "text-align:center"},
+//             },
+//             {
+//                 field: "approvedDate",
+//                 title: '<@spring.message "taxinvoice.approveddate"/>',
+//                 width: 150,
+//                 attributes: {style: "text-align:center;white-space: nowrap;"},
+//                 headerAttributes: {style: "text-align:center"},
+//             },
+//                     {
+//                 field: "approvedRemarks",
+//                 title: '<@spring.message "taxinvoice.approvedremarks"/>',
+//                 width: 120,
+//                 attributes: {style: "text-align:center;white-space: nowrap;"},
+//                 headerAttributes: {style: "text-align:center"},
+//             },     
+        ],
+        editable: false
+    });
+
+</script>
+</body>
+</html>

@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<!--
+  description  新增工位界面
+  @author KOCDZX0 2020/03/19 10:45 AM 
+-->
+<#include "../include/header.html">
+<script type="text/javascript">
+    var BaseUrl = _basePath;
+    var supplierId = '${RequestParameters.supplierId!0}';
+    var itemId = '${RequestParameters.itemId!0}';
+    var viewModel = Hap.createGridViewModel(null,{
+        model:{},
+        closeWin:function(e) {
+            window.parent.$("#div2").data("kendoWindow").close();
+        },
+        save:function(){
+            debugger
+            var data = viewModel.model.toJSON();
+            data.__status = "add";
+            data.supplierId=supplierId;
+            data.itemId=itemId;
+            var validator = $("#mainForm").data("kendoValidator");
+            if(validator.validate()) {
+                Hap.request({
+                    url: BaseUrl + "/hcs/supplier/item/station/add",
+                    data: kendo.stringify(data),
+                    success:function(data){
+                        if(data.success){
+                            kendo.ui.showInfoDialog({
+                                title:$l('hap.tip.info'),
+                                message:'<@spring.message "hap.tip.success"/>'
+                            })
+                            viewModel.closeWin();
+                        }
+                    }
+                })
+            }
+        },
+        // queryInfo:function(){
+        //     if(itemStationId != 0){
+        //         $.ajax({
+        //             url:BaseUrl+"/hcs/supplier/item/station/listQuery?itemStationId="+itemStationId,
+        //             success:function(data){
+        //                 var a0 = data.rows[0] || {};
+        //                 for(var k in a0){
+        //                     viewModel.model.set(k,a0[k]);
+        //                 }
+        //             }
+        //         })
+        //     }
+        // }
+    });
+    // viewModel.queryInfo();
+</script>
+
+<body>
+
+<div id="page-content">
+    <form id = "mainForm" style="paddiing-bottom:50px;padding-top:15px" class="form-horizontal" method="post" enctype="application/json;charset=UTF-8">
+        <div class="row">
+            <div class="col-sm-12">
+<!--                &lt;!&ndash; 供应商编码+ 供应商名称 &ndash;&gt;-->
+<!--                <div class="row" style="margin-top:15px">-->
+<!--                    <div class="col-sm-6">-->
+<!--                        <label class="col-sm-3 control-label"><@spring.message "asl.suppliercode"/>:</label>-->
+<!--                        <div class="col-sm-9">-->
+<!--                            <input disabled id="supplierId" style="width:100%" name="supplierId"-->
+<!--                                   data-bind="value:model.supplierId,text:model.supplierCode">-->
+<!--                            <span data-for="supplierId" class="k-state-disabled"></span>-->
+<!--                        </div>-->
+<!--                        <script>-->
+<!--                            $("#supplierId").kendoLov($.extend(<@lov"LOV_SUPPLIER"/>, {-->
+<!--                                textField: 'supplierCode',-->
+<!--                                valueField:'supplierId',-->
+<!--                                select:function(e){-->
+<!--                                    viewModel.model.set("supplierName",e.item.supplierName);-->
+<!--                                }-->
+<!--                            }));-->
+<!--                        </script>-->
+<!--                    </div>-->
+<!--                    <div class="col-sm-6">-->
+<!--                        <label class="col-sm-3 control-label"><@spring.message "asl.suppliername"/>:</label>-->
+<!--                        <div class="col-sm-9">-->
+<!--                            <input disabled style="width:100%" name="supplierName"-->
+<!--                                   id="supplierName"-->
+<!--                                   data-bind="value:model.supplierName" data-role="maskedtextbox" >-->
+<!--                            <span data-for="supplierName" class="k-state-disabled"></span>-->
+<!--                        </div>-->
+<!--                    </div>-->
+<!--                </div>-->
+<!--                &lt;!&ndash; 物料编码+ 物料名称 &ndash;&gt;-->
+<!--                <div class="row" style="margin-top:15px">-->
+<!--                    <div class="col-sm-6">-->
+<!--                        <label class="col-sm-3 control-label"><@spring.message "asl.itemcode"/>:</label>-->
+<!--                        <div class="col-sm-9">-->
+<!--                            <input disabled id="itemId" style="width:100%" name="itemId"-->
+<!--                                   data-bind="value:model.itemId,text:model.itemCode">-->
+<!--                            <span data-for="itemId" class="k-state-disabled"></span>-->
+<!--                        </div>-->
+<!--                        <script>-->
+<!--                            $("#itemId").kendoLov($.extend(<@lov"LOV_ITEM"/>, {-->
+<!--                                textField: 'itemCode',-->
+<!--                                valueField:'itemId',-->
+<!--                                select:function(e){-->
+<!--                                    viewModel.model.set("itemDescription",e.item.itemDescriptions);-->
+<!--                                }-->
+<!--                            }));-->
+
+<!--                        </script>-->
+<!--                    </div>-->
+<!--                    <div class="col-sm-6">-->
+<!--                        <label class="col-sm-3 control-label"><@spring.message "settlement.itemname"/>:</label>-->
+<!--                        <div class="col-sm-9">-->
+<!--                            <input disabled style="width:100%" name="itemDescriptions"-->
+<!--                                   id="itemDescriptions"-->
+<!--                                   data-bind="value:model.itemDescriptions" data-role="maskedtextbox" >-->
+<!--                            <span data-for="itemDescriptions" class="k-state-disabled"></span>-->
+<!--                        </div>-->
+<!--                    </div>-->
+<!--                </div>-->
+
+                <!-- 工位序号+ 工位名称 -->
+                <div class="row" style="margin-top:15px">
+                    <div class="col-sm-6">
+                        <label class="col-sm-3 control-label"><@spring.message "coderulesline.fieldsequence"/>:</label>
+                        <div class="col-sm-9">
+                            <input disabled style="width:100%" name="stationSequence"
+                                    id="stationSequence"
+                                    data-bind="value:model.stationSequence" data-role="maskedtextbox" >
+                            <span data-for="stationSequence" class="k-state-disabled"></span>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="col-sm-3 control-label"><@spring.message "hcs.station.name"/>:</label>
+                        <div class="col-sm-9">
+                            <input required style="width:100%" name="stationName"
+                                    id="stationName"
+                                    data-bind="value:model.stationName" data-role="maskedtextbox" >
+                            <span data-for="stationName" class=".k-invalid-msg"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </form>
+    <div style="clear:both">
+        <div id="grid"></div>
+    </div>
+    <div id="mainBottom" class="text-right" style="bottom:15px;position:fixed;float:left;padding-top:15px;border-top:1px solid #e8e1eb;
+		width:100%;background:#fff;margin-right:30px">
+        <span class="btn btn-primary" data-bind="click:save" type="submit" style="margin-right:5px">保存</span>
+        <span class="btn btn-default" data-bind="click:closeWin" type="button" style="margin-right:25px">取消</span>
+    </div>
+    <script>
+        kendo.bind($('#mainForm'), viewModel);
+        kendo.bind($('#mainBottom'), viewModel);
+    </script>
+    <script>
+        $('#mainForm').kendoValidator({
+            messages:{
+                required:'<@spring.message "hap.validation.notempty"/>'
+            },
+            invalidMessageType:"tooltip"
+        });
+    </script>
+</div>
+</body>
+</html>

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hcs.hcs_certificate_file_manage.mapper.CertificateHistoryMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hcs.hcs_certificate_file_manage.dto.CertificateHistory">
+        <result column="HIS_ID" property="hisId" jdbcType="DECIMAL" />
+        <result column="ATTACHMENT" property="attachment" jdbcType="VARCHAR" />
+        <result column="STATUS" property="status" jdbcType="VARCHAR" />
+        <result column="START_DATE" property="startDate" jdbcType="DATE" />
+        <result column="END_DATE" property="endDate" jdbcType="DATE" />
+    </resultMap>
+
+    <select id="hisQuery" parameterType="com.hand.hcs.hcs_certificate_file_manage.dto.CertificateHistory" resultMap="BaseResultMap">
+        select
+        hch.his_id,
+        hch.certificate_id,
+        hch.attachment,
+        hch.start_date,
+        hch.end_date,
+        hch.submit_name,
+        hch.submit_date
+        from hcs_certificate_history hch
+    <where>
+        <if test="certificateId != null">
+            hch.certificate_id = #{certificateId}
+        </if>
+    </where>
+    </select>
+
+</mapper>

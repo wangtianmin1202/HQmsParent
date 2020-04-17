@@ -1,0 +1,168 @@
+<#include "../include/header.html">
+    <script src="${base.contextPath}/common/code?SRM_BARCODE_STATUS=SRM_BARCODE_STATUS"></script>
+    <script src="${base.contextPath}/common/code?yesorno=SRM_YES_NO"></script>
+    <script src="${base.contextPath}/common/code?SRM_PACKING_MODE=SRM_PACKING_MODE"></script>
+    <script src="${base.contextPath}/common/code?SRM_YES_NO=SRM_YES_NO"></script>
+    <script src="${base.contextPath}/lib/prints/JsBarcode.all.min.js" type="text/javascript"></script>
+    <script src="${base.contextPath}/lib/prints/jquery-barcode.js" type="text/javascript"></script>
+    <script src="${base.contextPath}/lib/prints/jquery-qrcode.min.js" type="text/javascript"></script>
+    <script src="${base.contextPath}/lib/prints/qrcode.js" type="text/javascript"></script>
+    <script src="${base.contextPath}/lib/prints/doc_print.js" type="text/javascript" charset="UTF-8"></script>
+    <script>
+        //     function initAsnPrintSetting() { 
+        //     	var jsonSetting = { 
+        //     			PaperWidth: 472,
+        //     			A4纵向宽度 
+        //     			PaperHeight: 283,
+        //     			A4纵向高度
+        //     			/* MainFontSize: 'middle', 
+        //     			TableFontSize: 'middle', 
+        //     			TitleFontSize: 'xx-large', 
+        //     			TableRowHeight: '15', 
+        //     			TableBarCodeFontSize:'5', 
+        //     BarCodeFontSize: '20', 
+        //     FirstPageRowNum: "30", 
+        //     第一页的表格显示多少行 
+        //     MaxRowNum: "35" 
+        //     第2页~第n页的表格显示多少行 */ 
+        //     }; 
+        // return jsonSetting; 
+        //     } 
+        //  var asnPrintSetting = initAsnPrintSetting();
+    </script>
+    <script type="text/javascript">
+        var dataList = window.parent.dataList;
+        console.log(window.parent.dataList);
+
+        function formatDate(date) {
+            var d = new Date(date),
+                month = '' + (d.getMonth() + 1),
+                day = '' + d.getDate(),
+                year = d.getFullYear();
+
+            if (month.length < 2) month = '0' + month;
+            if (day.length < 2) day = '0' + day;
+
+            return [year, month, day].join('-');
+        }
+        $(function() {
+            //$('html').css('width', tranMmToPxWidth(asnPrintSetting.PaperWidth) + "px");
+            var str = "";
+            var list = [];
+            $.ajax({
+                url: "${base.contextPath}/hcs/small/barcode/updatePrintTime",
+                type: "POST",
+                data: JSON.stringify(dataList),
+                contentType: "application/json",
+                success: function() {}
+            });
+            for (var i = 0; i < dataList.length; i++) {
+                var smallList = dataList[i];
+                var code = smallList.barcodeContent;
+                var str1 = "qrcode" + i;
+                list.push({
+                	id: str1,
+                	code: code
+                	});
+                var v = smallList.packingLevel ? smallList.packingLevel : "";
+                $.each(SRM_PACKING_MODE, function(i, n) {
+                    if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                        v = n.meaning;
+                    }
+                });
+                str += "<div style='page-break-after:always;padding-left:7%;padding-top:2%;padding-right:5%;font-family:宋体;'>"
+                str += "<div>"
+                str += "<div style='margin-left:0px'>"
+                str += "<div class='rows' style='text-align: center;width: 100%;'>"
+                str += "<div style='float:right;width:35%;padding-bottom:0px'  id='" + str1 + "'></div>"
+                str += "</div>"
+                str += "</div>"
+                str += "</div>"
+
+                str += "<div>"
+                str += "<lable  style='margin-top: 1%;width: 70%;font-size: 13px;'><b>NO.&nbsp;" + smallList.sbarcode + "</b></lable>"
+                str += "</div>"
+
+                str += "<div class='rows' style='text-align: left;width: 100%;'>"
+                str += "<lable class='rows' style='margin-top: 2%;width: 80%;font-size: 16px;'><b>上海科勒电子科技有限公司</b></lable>"
+                str += "</div>"
+
+                //str += "<div class='rows' style='width: 100%;margin-top:2%'>"
+                str += "<div style='margin-top: 2%;font-size: 16px;'>"
+                str += "<span class='col-sm-6' style='padding:0px'><span class='col-sm-6' style='padding:0px'><@spring.message 'smallbarcodeprint.itemdesc'/>&nbsp;" + smallList.itemDesc.substr(0,13) + "</span></span>"
+                str += "</div>"
+
+                str += "<div style='margin-top: 1%;font-size: 16px;'>"
+                str += "<span class='col-sm-6' style='padding:0px'><span class='col-sm-6' style='padding:0px'><@spring.message 'smallbarcodeprint.itemcode'/></span><span class='col-sm-6'>" + smallList.itemCode + "</span></span>"
+                str += "</div>"
+
+                //str += "</div>"
+                str += "<div style='margin-top: 1%;font-size: 16px;'>"
+                str += "<span class='col-sm-6' style='padding:0px'><span class='col-sm-6' style='padding:0px'><@spring.message 'smallbarcodeprint.lotcode'/></span><span class='col-sm-6'>" + smallList.lotCode + "</span></span>"
+                str += "</div>"
+                str += "<div style='margin-top: 1%;font-size: 16px;'>"
+                str += "<span class='col-sm-6' style='padding:0px'><span class='col-sm-6' style='padding:0px'><@spring.message 'smallbarcodeprint.productiontime'/></span><span class='col-sm-6'>" + formatDate(smallList.productionTime) + "</span></span>"
+                str += "</div>"
+                str += "<div style='margin-top: 1%;padding:0px;font-size: 16px;width:472px;'>"
+                str += "<span class='col-sm-6' style='padding:0px'><span class='col-sm-6' style='padding:0px'><@spring.message 'smallbarcodeprint.quantity'/></span><span class='col-sm-6'>" + nvl(smallList.quantity, '') + "</span></span><span class='col-sm-6'><span class='col-sm-6'><@spring.message 'smallbarcodeprint.packingSize'/></span><span class='col-sm-6' style='padding-left:0px'>" + nvl(smallList.packingSize, '') + "</span></span>"
+                    //str += "<lable class='col-sm-6' style='margin-top: 5px;width: 60%;font-size: 15px;'>版本："+smallList.itemVersion+"</lable>"
+                str += "</div>"
+                str += "<div style='margin-top: 1%;font-size: 16px;'>"
+                str += "<span class='col-sm-6' style='padding:0px'><span class='col-sm-6' style='padding:0px'><@spring.message 'smallbarcodeprint.poNumberPrint'/></span><span class='col-sm-6'>" + nvl(smallList.poNumberPrint, '') + "</span></span><span class='col-sm-6'><span class='col-sm-6'><@spring.message 'smallbarcodeprint.packinglevel'/></span><span class='col-sm-6' style='padding-left:0px'>" + nvl(v, '') + "</span></span>"
+                str += "</div>"
+                str += "<div style='margin-top: 1%;font-size: 16px;'>"
+                str +=
+                    "<span class='col-sm-12' style='padding:0px'>" +
+                    "<span class='col-sm-2' style='padding:0px'><@spring.message 'smallbarcodeprint.spreading'/></span>" +
+                    "<span class='col-sm-2'>" + nvl(smallList.spreading, '') + "</span>" +
+
+                    "<span class='col-sm-2' style='margin-left: 10px;'><@spring.message 'smallbarcodeprint.itemversion'/></span>" +
+                    "<span class='col-sm-2' style='padding: 0px'>" + nvl(smallList.itemVersion, '') + "</span>" +
+
+                    "<span class='col-sm-2' style='margin-left: 80px;'><@spring.message 'smallbarcodeprint.caseNumber'/></span>" +
+                    "<span class='col-sm-2' style='padding-left:0px'>" + smallList.caseNumber + "</span>" +
+                    "</span>"
+                str += "</div>"
+                str += "<div style='margin-top: 1%;font-size: 16px;'>"
+                str += "<span class='col-sm-6' style='padding:0px'><span class='col-sm-6' style='padding:0px'><@spring.message 'smallbarcodeprint.productionRegion'/></span><span class='col-sm-6'>" + nvl(smallList.productionRegion, '') + "</span></span><span class='col-sm-6'><span class='col-sm-6'><@spring.message 'smallbarcodeprint.productionEquipment'/></span><span class='col-sm-6' style='padding-left:0px'>" + nvl(smallList.productionEquipment, '') + "</span></span>"
+                str += "</div>"
+
+                str += "<div class='rows' style='margin-top: 1%;text-align: left;width: 97%;'>"
+                str += "<b><lable class='rows' style='width: 80%;font-size: 16px;'><@spring.message 'smallbarcodeprint.suppliercode'/>" + nvl(smallList.supplierCode, '') + "</lable>"
+                str += "<lable style='margin-left: 10%;font-size: 16px;'>I4.0</lable></b>"
+                str += "</div>"
+                str += "</div>"
+                str += "</div>"
+            }
+            $("#printWindow").append(str);
+            for (var k = 0; k < list.length; k++) {
+                var qrcode = new QRCode(list[k].id, {
+                    text: list[k].code,
+                    width: 126,
+                    height: 126,
+                    colorDark: '#000000',
+                    colorLight: '#ffffff',
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+            }
+
+
+
+            setTimeout(function() {
+                var barcode = $("#printWindow").html();
+
+                window.document.body.innerHTML = barcode;
+
+                window.print();
+                window.parent.viewModel.refresh();
+                window.parent.$('#printWindow').data('kendoWindow').close();
+                parent.location.reload();
+            }, 0.1 * 1000);
+        })
+    </script>
+
+    <body>
+        <div id="printWindow"></div>
+    </body>
+
+    </html>

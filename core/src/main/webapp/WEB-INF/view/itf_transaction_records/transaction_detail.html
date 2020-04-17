@@ -1,0 +1,63 @@
+<#include "../include/header.html">
+
+<script src="${base.contextPath}/lib/js/jquery.json-viewer.js" type="text/javascript" charset="utf-8"></script>
+<link rel="stylesheet" type="text/css" href="${base.contextPath}/lib/css/jquery.json-viewer.css" />
+
+<body>
+
+<script type="text/javascript">
+    var transId = "${RequestParameters.transId!'-1'}";
+</script>
+
+<button onclick="expand()">展开</button>
+<button onclick="collapse()">折叠</button>
+<pre id="json-renderer"></pre>
+
+<script type="text/javascript">
+
+    var transData;
+
+    function getTransactionData() {
+        $.ajax({
+            url:'${base.contextPath}/itf/transaction/records/detail',
+            type:'POST',
+            data: {
+                id:transId,
+            },
+            async: false,
+            dataType: "json",
+            success: function (data) {
+                transData=JSON.parse(data);
+            }
+        })
+    }
+    function expand() {
+        $("#json-renderer").jsonViewer(transData, {
+            collapsed: false,
+            rootCollapsable: true,
+            withQuotes: false,
+            withLinks: true
+        });
+        flag = false;
+    }
+
+    function collapse() {
+        $("#json-renderer").jsonViewer(transData, {
+            collapsed: true,
+            rootCollapsable: true,
+            withQuotes: false,
+            withLinks: true
+        });
+        flag = true;
+    };
+</script>
+
+<script>
+    $(function () {
+        getTransactionData();
+        expand();
+    })
+</script>
+</body>
+
+</html>

@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hqm.hqm_stan_op_item_h.mapper.StandardOpItemHMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hqm.hqm_stan_op_item_h.dto.StandardOpItemH">
+        <result column="HEAD_ID" property="headId" jdbcType="DECIMAL" />
+         <result column="HSO_HEAD_ID" property="hsoHeadId" jdbcType="VARCHAR" />
+        <result column="PLANT_ID" property="plantId" jdbcType="DECIMAL" />
+        <result column="PROD_LINE_ID" property="prodLineId" jdbcType="DECIMAL" />
+        <result column="STANDARD_OP_ID" property="standardOpId" jdbcType="DECIMAL" />
+        <result column="WORKSTATION_ID" property="workstationId" jdbcType="DECIMAL" />
+        <result column="VERSION" property="version" jdbcType="VARCHAR" />
+        <result column="ENABLE_FLAG" property="enableFlag" jdbcType="VARCHAR" />
+        <result column="ITEM_ID" property="itemId" jdbcType="DECIMAL" />
+        <result column="ITEM_CODE" property="itemCode" jdbcType="DECIMAL" />
+        <result column="ITEM_DESCRIPTIONS" property="itemDescriptions" jdbcType="DECIMAL" />
+        <result column="PLANT_CODE" property="plantCode" jdbcType="VARCHAR" />
+        <result column="PROD_LINE_CODE" property="prodLineCode" jdbcType="VARCHAR" />
+        <result column="STANDARD_OP_CODE" property="standardOpCode" jdbcType="VARCHAR" />
+        <result column="STANDARD_OP_DES" property="standardOpDes" jdbcType="VARCHAR" />
+        <result column="WORKSTATION_CODE" property="workstationCode" jdbcType="VARCHAR" />
+        <result column="TIME_LIMIT" property="timeLimit" jdbcType="DECIMAL" />
+        <result column="STATUS" property="status" jdbcType="VARCHAR" />
+        <result column="SOURCE_TYPE" property="sourceType" jdbcType="VARCHAR" />
+        <result column="ITEM_EDITION" property="itemEdition" jdbcType="VARCHAR" />
+        <result column="ATTRIBUTE1" property="attribute1" jdbcType="VARCHAR" />
+    </resultMap>
+<select id="myselect" resultMap="BaseResultMap"  parameterType="com.hand.hqm.hqm_stan_op_item_h.dto.StandardOpItemH">   
+SELECT hsi.head_id,
+       hsi.hso_head_id,
+       h.plant_id,
+       hp.plant_code,
+       h.prod_line_id,
+       hpl.prod_line_code,
+       hsh.standard_op_code,
+       hsh.standard_op_des,
+       hsl.workstation_code,
+       hsi.version,
+       hsi.enable_flag,
+       hsi.item_id,
+       hi.item_code,
+       hi.descriptions AS item_descriptions,
+       h.source_type,
+       hsi.time_limit,
+       hsi.status,
+       hsi.item_edition,
+       hsi.attribute1
+  FROM hqm_standard_op_item_h hsi, hqm_standard_op_inspection_h h
+  LEFT JOIN hqm_sop_pqc_control_l hsl
+    ON h.workstation_id = hsl.workstation_id, hcm_plant hp, hcm_item hi, hcm_production_line hpl,
+ hqm_sop_pqc_control_h hsh
+ WHERE hp.plant_id = h.plant_id
+   AND h.prod_line_id = hpl.prod_line_id
+   AND hsh.standard_op_id = h.standard_op_id
+   AND hi.plant_id = h.plant_id
+   AND hi.item_id = hsi.item_id
+   AND hsi.hso_head_id = h.head_id
+	 <if test="headId != null">
+     AND hsi.head_id = #{headId}
+     </if>
+   <if test="hsoHeadId != null">
+     AND  hsi.hso_head_id = #{hsoHeadId}
+   </if>  
+   <if test="itemCode != null">
+     AND  hi.item_code LIKE concat('%',concat(#{itemCode},'%')) 
+   </if>  
+   <if test="itemDescriptions != null">
+     AND  hi.descriptions LIKE concat('%',concat(#{itemDescriptions},'%')) 
+   </if>  
+   <if test="itemId != null">
+     AND hsi.item_id = #{itemId}  
+   </if>
+   <if test="plantId != null">
+     AND h.plant_id = #{plantId}  
+   </if>
+   <if test="prodLineId != null">
+     AND h.prod_line_id = #{prodLineId}  
+   </if>
+   <if test="standardOpId != null">
+     AND hsh.standard_op_id = #{standardOpId}  
+   </if>
+   <if test="workstationId!=null">
+   AND hsl.workstation_id = #{workstationId}
+   </if>
+   <if test="sourceType !=null">
+   AND h.source_type = #{sourceType}
+   </if>
+   ORDER BY h.creation_date DESC
+	 </select>
+  <select id="myselectLov" resultMap="BaseResultMap"  parameterType="com.hand.hqm.hqm_stan_op_item_h.dto.StandardOpItemH">   
+SELECT hp.plant_code, hi.item_code, hi.descriptions AS item_descriptions, hi.item_id
+  FROM hqm_standard_op_item_h hsi, hqm_standard_op_inspection_h h
+  LEFT JOIN hqm_sop_pqc_control_l hsl
+    ON h.workstation_id = hsl.workstation_id, hcm_plant hp, hcm_item hi, hcm_production_line hpl,
+ hqm_sop_pqc_control_h hsh
+ WHERE hp.plant_id = h.plant_id
+   AND h.prod_line_id = hpl.prod_line_id
+   AND hsh.standard_op_id = h.standard_op_id
+   AND hi.item_id = hsi.item_id
+   AND hi.plant_id = h.plant_id
+   AND hsi.hso_head_id = h.head_id
+	 <if test="headId != null">
+     AND hsi.head_id = #{headId}
+     </if>
+   <if test="hsoHeadId != null">
+     AND  hsi.hso_head_id = #{hsoHeadId}
+   </if>  
+   <if test="itemId != null">
+     AND hsi.item_id = #{itemId}  
+   </if>
+   <if test="plantId != null">
+     AND h.plant_id = #{plantId}  
+   </if>
+   <if test="prodLineId != null">
+     AND h.prod_line_id = #{prodLineId}  
+   </if>
+   <if test="standardOpId != null">
+     AND hsh.standard_op_id = #{standardOpId}  
+   </if>
+   <if test="workstationId!=null">
+   AND hsl.workstation_id = #{workstationId}
+   </if>
+   <if test="sourceType != null">
+      AND h.source_type = #{sourceType}
+   </if>
+   GROUP BY hp.plant_code, hi.item_code, hi.descriptions, hi.item_id
+	</select>
+	
+	 <!-- 根据物料组ID 找模板 临时检验项 -->
+<select id="selectByCategoryId" resultMap="BaseResultMap"
+            parameterType="com.hand.hqm.hqm_temporary_inspection.dto.TemporaryInspection">
+SELECT t.*
+  FROM hqm_standard_op_item_h t
+  JOIN hcm_item_category_assign hica
+    ON t.item_id = hica.item_id
+   AND hica.plant_id = t.plant_id
+ WHERE 1 = 1
+ 	AND t.status = '2'
+   AND t.plant_id = #{plantId}
+   AND hica.category_id = #{categoryId}
+   AND t.standard_op_id = #{standardOpId}
+   AND t.workstation_id = #{workstationId}
+</select>
+	
+</mapper>

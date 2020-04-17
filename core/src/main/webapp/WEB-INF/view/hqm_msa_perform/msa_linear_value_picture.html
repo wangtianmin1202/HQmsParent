@@ -1,0 +1,358 @@
+<#include "../include/header.html">
+<script src="${base.contextPath}/lib/prints/doc_print.js" type="text/javascript" charset="UTF-8"></script>
+<script src="${base.contextPath}/common/code?HQM_CONTROL_CHART_TYPE=HQM_CONTROL_CHART_TYPE"></script>
+<script src="${base.contextPath}/lib/js/echarts.common.min.js?_v_=1553896255267" type="text/javascript" charset="UTF-8"></script>
+<script type="text/javascript" src="https://www.echartsjs.com/examples/vendors/echarts/echarts.min.js?_v_=1553896255267"></script> 
+<script type="text/javascript" src="https://www.echartsjs.com/examples/vendors/echarts-stat/ecStat.min.js?_v_=1553896255267"></script>
+<script type="text/javascript" src="${base.contextPath}/lib/js/Chart.bundle.js"></script>
+<script type="text/javascript">
+    var parentData = window.parent.parentData;
+  	//系数a
+    var a;
+    //斜率b
+	var b;
+	//标准差s
+	var s;
+	//数据总数
+	var n;
+	//x-x平均  平方求和
+	var xxpfSum;
+	//基准值的平均值
+	var jzAvg;
+	//求临界值
+	var t;
+	//基准值的最大值
+	var jzMax;
+	//基准值的最小值
+	var jzMin;
+	//行
+	var mapData;
+	//列
+	var sampleNumAndstandardValueList;
+	//极差的平均值
+	var jcAvg;
+	var flag = true;
+	
+    var viewModel = kendo.observable({
+		model: {
+		},
+		//返回
+		closeWin: function(e){
+        	window.parent.$("#pictureLineWindow").data("kendoWindow").close();
+        },
+        //刷新
+        refresh: function(){
+        	initTable();
+        },
+        //去打印
+        toPrint: function(){
+        	var dialog = $("#printWindow").kendoWindow({
+    				actions: ["Close"],
+    				width: "95%",
+    				height: "90%",
+    				title: '<@spring.message "打印msa"/>',
+    				visible: false,
+    				iframe: true,
+    				modal: true,
+    				content: 'msa_linear_value_print.html'
+    			}).data("kendoWindow");
+    			dialog.center().open();
+        }
+	});
+    var msgEn = '';
+    $(function(){
+		//获取父页面参数
+		//行
+		mapData = window.parent.mapData;
+		//列
+		sampleNumAndstandardValueList = window.parent.sampleNumAndstandardValueList;
+    	//系数a
+	    a = window.parent.a;
+	    //斜率b
+		b = window.parent.b;
+		//标准差s
+		s = window.parent.s;
+		//s = 0.01;
+		//数据总数
+		n = window.parent.n;
+		//x-x平均  平方求和
+		xxpfSum = window.parent.xxpfSum;
+		//基准值的平均值
+		jzAvg = window.parent.jzAvg;
+		//求临界值
+		t = tinvs(n-2,0.05);
+		//基准值的最大值
+		jzMax = window.parent.jzMax;
+		//基准值的最小值
+		jzMin = window.parent.jzMin;
+		//极差的平均值
+		jcAvg = window.parent.jcAvg;
+		//斜率a统计量 ta
+		var ta = Math.abs(a) * Math.sqrt(xxpfSum)/s
+		//截距b统计值 tb
+		var tb = Math.abs(b)/(s*Math.sqrt(1/n+Math.pow(jzAvg,2)/xxpfSum)) 
+		var d2 = getD2(Object.keys(mapData).length,sampleNumAndstandardValueList.length);
+
+		//重复性EV
+		var EV = jcAvg/d2;
+		
+		//拟合直线
+		viewModel.model.set('nhLine' ,'y='+a.toFixed(5)+'x+' + b.toFixed(5))
+		//边界值
+		viewModel.model.set('bjz' ,parseFloat(t).toFixed(5))
+		//斜率a统计量 ta
+		viewModel.model.set('ta' ,ta.toFixed(5))
+		//截距b统计值 tb
+		viewModel.model.set('tb' ,tb.toFixed(5))
+		//重复性EV
+		viewModel.model.set('EV' ,EV.toFixed(5))
+		//EV%
+		viewModel.model.set('EVB' ,(EV*100/parentData.expectedDeterioration).toFixed(2)+'%')
+		var msg = '';
+		
+		var msaResult = '';
+		var resultFlag = true;
+		
+		linesPicture();
+		if(flag){
+			msg = '该测量系统线性可接受;';
+			msgEn = '<@spring.message "msaplan.linear.conclusion1"/>';
+		}else{
+			msg = '该测量系统线性不可接受;';
+			msgEn = '<@spring.message "msaplan.linear.conclusion2"/>';
+			resultFlag = false;
+		}
+		if(ta<t && tb<t){
+			msg += '本测量系统不存在线性问题';
+			msgEn = '<@spring.message "msaplan.linear.conclusion3"/>';
+		}else{
+			msg += '本测量系统存在线性问题，需进行调整';
+			msgEn = '<@spring.message "msaplan.linear.conclusion4"/>';
+			resultFlag = false;
+		}
+		//结论
+		$("#result").html(msgEn)
+		if(parentData.measurePlanStatus != '3'){			
+			if(resultFlag){
+				msaResult = 'OK'
+			}else{
+				msaResult = 'NG'
+			}
+			var msaPlanLine = {
+	    			"measurePlanId" : parentData.msaPlanId,
+	    			"msaContent" : '3',
+	    			"msaResult":msaResult,
+	    			"msaConclusion":msg,
+	    			"measurePlanLineId": parentData.measurePlanLineId
+	    	}
+			$.ajax({
+	    		url: "${base.contextPath}/hqm/msa/plan/line/updateResult",
+	    		data: msaPlanLine,
+	    		type: "POST",
+	    		dataType: "json",
+	    		success: function(data){
+	    			if(data.success){
+	    				window.parent.viewModel.query();
+	    			}
+	    		}
+	    	})
+		}
+// 		var msaPlanLine = {
+// 	  			"measurePlanLineId": parentData.measurePlanLineId
+// 	  	}
+// 		$.ajax({
+// 			url: "${base.contextPath}/hqm/msa/plan/line/updateAnalyzeData",
+// 			data: msaPlanLine,
+// 			type: "POST",
+// 			dataType: "json",
+// 			success: function(data){
+// 			}
+// 		})
+    })
+ 	//求临界值
+    function tinvs(v,a){
+    	var tinv = -1;
+    	var jsonData = {
+    			"v": v,
+    			"a": a
+    	}
+    	$.ajax({
+    		url:"${base.contextPath}/hqm/d2/v/value/getTinvs",
+    		type:"POST",
+    		data:jsonData,
+    		jsonType:"json",
+    		async: false,
+    		success: function(resultData){
+    			if(resultData != -1){
+    				tinv = resultData.toFixed(3);
+    			}else{
+    				//获取失败
+    			}
+    		}
+    	})
+    	return tinv;
+    }
+    
+  	//求d2
+    function getD2(m,g){
+    	var d2 = -1;
+    	var jsonData = {
+    			"m": m,
+    			"g": g
+    	}
+    	$.ajax({
+    		url:"${base.contextPath}/hqm/d2/value/query",
+    		type:"POST",
+    		data:jsonData,
+    		jsonType:"json",
+    		async: false,
+    		success: function(resultData){
+    			if(resultData.success){
+    				d2 = resultData.rows[0].d2.toFixed(3);
+    			}else{
+    				//获取失败
+    			}
+    		}
+    	})
+    	return d2;
+    }
+    function checkStr(str){
+		if(str == null || str === '' ||typeof(str) == "undefined"){
+    		return false;
+    	}
+		return true;
+    }
+</script>
+<body>
+<div style="display:none">
+	<iframe id="iframePrint" ></iframe>
+</div>
+<div id="printWindow"></div>
+<div id="page-content" style="heigth:100%">
+		<div class="row" style=";height:10%">
+			<div class="pull-left" id="toolbar-btn" style="padding-bottom:10px;">
+		    	<span type="button" class="btn btn-primary" style="float:left;margin-right:5px" data-bind="click:closeWin"><i class="fa fa-undo" style="margin-right:3px;"></i><@spring.message "hap.back"/></span>
+		    	<span class="btn btn-success k-grid-save-changes" data-bind="click:toPrint"  style="float:left;margin-right:5px;"><i class="fa fa-print" style="margin-right:3px;"></i><@spring.message "hap.print"/></span>
+		    </div>
+		    <script>kendo.bind($('#toolbar-btn'), viewModel);</script>
+	    </div>
+	    <div class="row" style="margin:0px;padding:0px;width:50%;margin-left:25%">
+	    	<canvas id="myCanvas" class="form-group col-sm-6" style="height:100%;">
+
+	    	</canvas>
+	    </div>
+	    <div class="row" style="margin-top:0px;padding:0px;width:50%;margin-left:25%">
+	    	<div class="form-group col-sm-6" style="">
+				<lable class="col-xs-5 control-lable" style="text-align:right;padding:0px;margin-top:1%"><@spring.message "msaplan.repeatability.ev"/>:</lable>
+	    	    <div class="col-xs-7"  style="padding:0px">
+		    	    <input id="EV" style="width:200px" disabled="disabled"    data-role="maskedtextbox" type="text" data-bind="value:model.EV"/>
+		    	    <script>kendo.bind($('#EV'), viewModel);</script>
+	    	    </div>
+	    	</div>
+	    	<div  class="form-group col-sm-6" style="">
+				<lable class="col-xs-5 control-lable" style="text-align:right;padding:0px;margin-top:1%"><@spring.message "msaplan.repeatability.per"/>:</lable>
+	    	    <div class="col-xs-7"  style="padding:0px">
+		    	    <input id='EVB' style="width:200px" data-bind="value:model.EVB" disabled="disabled"    data-role="maskedtextbox" type="text" />
+		    	    <script>kendo.bind($('#EVB'), viewModel);</script>
+	    	    </div>
+	    	</div>
+	    </div>
+	    <div class="row" style="margin-top:0px;padding:0px;width:50%;margin-left:25%">
+	    	<div class="form-group col-sm-6" style="">
+				<lable class="col-xs-5 control-lable" style="text-align:right;padding:0px;margin-top:1%"><@spring.message "msaplan.linear.line"/>:</lable>
+	    	    <div class="col-xs-7"  style="padding:0px">
+		    	    <input id='nhLine' style="width:200px" data-bind="value:model.nhLine" disabled="disabled"    data-role="maskedtextbox" type="text" />
+	    	   		<script>kendo.bind($('#nhLine'), viewModel);</script>
+	    	    </div>
+	    	</div>
+	    	<div class="form-group col-sm-6" style="">
+				<lable class="col-xs-5 control-lable" style="text-align:right;padding:0px;margin-top:1%"><@spring.message "msaplan.threshold"/>:</lable>
+	    	    <div class="col-xs-7"  style="padding:0px">
+		    	    <input id='bjz' style="width:200px" data-bind="value:model.bjz" disabled="disabled"    data-role="maskedtextbox" type="text" />
+	    	    	<script>kendo.bind($('#bjz'), viewModel);</script>
+	    	    </div>
+	    	</div>
+	    </div>
+	    <div class="row" style="margin-top:0px;padding:0px;width:50%;margin-left:25%">
+	    	<div class="form-group col-sm-6" style="">
+				<lable class="col-xs-5 control-lable" style="text-align:right;padding:0px;margin-top:1%"><@spring.message "msaplan.slope.statistic"/>:</lable>
+	    	    <div class="col-xs-7"  style="padding:0px">
+		    	    <input id='ta' style="width:200px" data-bind="value:model.ta" disabled="disabled"    data-role="maskedtextbox" type="text" />
+	    	    	<script>kendo.bind($('#ta'), viewModel);</script>
+	    	    </div>
+	    	</div>
+	    	<div  class="form-group col-sm-6" style="">
+				<lable class="col-xs-5 control-lable" style="text-align:right;padding:0px;margin-top:1%"><@spring.message "msaplan.intercept.statistic"/>:</lable>
+	    	    <div class="col-xs-7"  style="padding:0px">
+		    	    <input id='tb' style="width:200px" data-bind="value:model.tb" disabled="disabled"    data-role="maskedtextbox" type="text" />
+	    	    	<script>kendo.bind($('#tb'), viewModel);</script>
+	    	    </div>
+	    	</div>
+	    </div>
+	    <div class="row" style="margin-top:0px;padding:0px;width:50%;margin-left:25%">
+				<span class="col-sm-2" style="font-size:15px;text-align:right"><@spring.message "msaplan.analysisconclusion"/></span>
+				<textarea readonly="readonly" class="col-sm-9" id="result" rows="8" cols="40" style="resize:none;font-size:15px"></textarea>
+	    </div>
+</div>
+<script type="text/javascript">
+function linesPicture(){
+	var ctx = document.getElementById("myCanvas").getContext("2d");
+	var X = [];
+	//上限
+	var upperY = [];
+	//下限
+	var lowerY = [];
+	//直线
+	var line = [];
+	for(var i=0; i<=jzMax+jzMax/2; i += jzMax/16){
+		X.push(i.toFixed(2));
+		if(i >= jzMin && i<= jzMax){			
+			var upy = b + a*i + (t*s*Math.sqrt(1/n + Math.pow((i-jzAvg),2)/xxpfSum));
+			upperY.push(upy);
+			var lowy = b + a*i - (t*s*Math.sqrt(1/n + Math.pow((i-jzAvg),2)/xxpfSum));
+			lowerY.push(lowy);
+			line.push(a*i+b)
+			if(parseFloat(upy)<0 || parseFloat(lowy)>0){
+				flag = false;
+			}
+		}else{
+			upperY.push(null);
+			lowerY.push(null);
+			line.push(null)
+		}
+	}
+	
+	
+	var myChart = new Chart(ctx, {
+	    type: 'line', // line 表示是 曲线图，柱形图 : bar  或者其他
+	    data: {
+	        labels : X, 
+	        datasets : [
+	            {
+	                label: '<@spring.message "msaplan.linear.upper"/>',  //当前数据的说明
+	                fill: false,  //是否要显示数据部分阴影面积块  false:不显示
+	                borderColor: "rgba(200,187,205,1)",//数据曲线颜色
+	                pointBackgroundColor: "#fff", //数据点的颜色
+	                data: upperY,  //填充的数据
+	            },
+	            {
+	                label: '<@spring.message "msaplan.linear.line"/>',  //当前数据的说明
+	                fill: false,  //是否要显示数据部分阴影面积块  false:不显示
+	                borderColor: "rgba(75,192,192,1)",//数据曲线颜色
+	                pointBackgroundColor: "#fff", //数据点的颜色
+	                data: line,  //填充的数据
+	            },
+	            {
+	                label: '<@spring.message "msaplan.linear.lower"/>',   //当前数据的说明
+	                fill: false,  //是否要显示数据部分阴影面积块  false:不显示
+	                borderColor: "rgba(200,187,205,1)",//数据曲线颜色
+	                pointBackgroundColor: "#fff", //数据点的颜色
+	                data: lowerY,  //填充的数据
+	            }
+	        ]
+	    },
+	});	
+}
+</script>
+</body>
+</html>

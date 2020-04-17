@@ -1,0 +1,472 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hcm.hcm_object_events.mapper.ObjectEventsMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hcm.hcm_object_events.dto.ObjectEvents">
+        <result column="EVENT_TABLE" property="eventTable" jdbcType="VARCHAR" />
+        <result column="EVENT_ID" property="eventId" jdbcType="DECIMAL" />
+        <result column="EVENT_BY" property="eventBy" jdbcType="DECIMAL" />
+        <result column="EVENT_TIME" property="eventTime" jdbcType="DATE" />
+        <result column="STATUS" property="status" jdbcType="VARCHAR" />
+        <result column="EVENT_CONTENT" property="eventContent" jdbcType="VARCHAR" />
+        <result column="EVENT_BY_NAME" property="eventByName" jdbcType="VARCHAR" />
+        
+        <result column="supplier_name" property="supplierName" jdbcType="VARCHAR" />
+        <result column="supplier_code" property="supplierCode" jdbcType="VARCHAR" />
+        <result column="program_type" property="programType" jdbcType="VARCHAR" />
+        <result column="platform_type" property="platformType" jdbcType="VARCHAR" />
+        <result column="item_code" property="itemCode" jdbcType="VARCHAR" />
+        <result column="item_descriptions" property="itemDescriptions" jdbcType="VARCHAR" />
+        <result column="plant_code" property="plantCode" jdbcType="VARCHAR" />
+        <result column="warning_level" property="warningLevel" jdbcType="VARCHAR" />
+        <result column="level_desc" property="levelDesc" jdbcType="VARCHAR" />
+        <result column="inspection_attribute" property="inspectionAttribute" jdbcType="VARCHAR" />
+        <result column="inspection_tool" property="inspectionTool" jdbcType="VARCHAR" />
+        <result column="sku_type" property="skuType" jdbcType="VARCHAR" />
+        <result column="item_edition" property="itemEdition" jdbcType="VARCHAR" />
+        <result column="source_type" property="sourceType" jdbcType="VARCHAR" />
+        <result column="status" property="status" jdbcType="VARCHAR" />
+        <result column="main_type" property="mainType" jdbcType="VARCHAR" />
+        
+        <result column="prod_line_code" property="prodLineCode" jdbcType="VARCHAR" />
+        <result column="standard_op_code" property="standardOpCode" jdbcType="VARCHAR" />
+        <result column="workstation_code" property="workstationCode" jdbcType="VARCHAR" />
+        <result column="test_type" property="testType" jdbcType="VARCHAR" />
+    </resultMap>
+
+<!-- 型式试验 -->
+<select id="selectItemTypeTests"  resultMap="BaseResultMap" parameterType="com.hand.hcm.hcm_object_events.dto.ObjectEvents">
+SELECT t.event_time, t.event_content, hr.name AS event_by_name, ta.test_type
+  FROM hcm_object_events t
+  JOIN sys_user su
+    ON t.event_by = su.user_id
+  LEFT JOIN hr_employee hr
+    ON hr.employee_id = su.employee_id
+  JOIN hqm_item_type_tests_his his
+    ON t.event_id = his.event_id
+  JOIN hqm_item_type_tests ta
+    ON his.kid = ta.kid
+ WHERE t.event_table = 'HQM_ITEM_TYPE_TESTS'
+   AND ta.kid = #{businessKeyId}
+ ORDER BY t.event_time DESC
+</select>
+<!-- PQC检验单模板 -->
+<select id="selectStandardOpItem" resultMap="BaseResultMap" parameterType="com.hand.hcm.hcm_object_events.dto.ObjectEvents">
+SELECT temp.*
+  FROM ((SELECT t.event_time,
+                hr.name                AS event_by_name,
+                t.event_content,
+                hi.item_code,
+                hi.descriptions        AS item_descriptions,
+                hpl.prod_line_code,
+                hspch.standard_op_code,
+                hspcl.workstation_code,
+                ta.item_edition,
+                ta.source_type
+           FROM hcm_object_events t
+           JOIN sys_user su
+             ON t.event_by = su.user_id
+           LEFT JOIN hr_employee hr
+             ON hr.employee_id = su.employee_id
+           JOIN hqm_standard_op_item_h_his his
+             ON t.event_id = his.event_id
+           JOIN hqm_standard_op_item_h ta
+             ON his.head_id = ta.head_id
+           JOIN hcm_production_line hpl
+             ON ta.prod_line_id = hpl.prod_line_id
+           JOIN hcm_item hi
+             ON ta.item_id = hi.item_id
+            AND ta.plant_id = hi.plant_id
+           JOIN hqm_sop_pqc_control_h hspch
+             ON ta.standard_op_id = hspch.standard_op_id
+           LEFT JOIN hqm_sop_pqc_control_l hspcl
+             ON ta.standard_op_id = hspcl.standard_op_id
+            AND ta.workstation_id = hspcl.workstation_id
+          WHERE t.event_table = 'HQM_STANDARD_OP_ITEM_H'
+            AND ta.head_id = #{businessKeyId}) UNION ALL
+        (SELECT MAX(t.event_time) AS event_time,
+                hr.name AS event_by_name,
+                listagg(t.event_content, '&lt;br/&gt;') within GROUP(ORDER BY t.event_id) AS event_content,
+                hi.item_code,
+                hi.descriptions AS item_descriptions,
+                hpl.prod_line_code,
+                hspch.standard_op_code,
+                hspcl.workstation_code,
+                h.item_edition,
+                h.source_type
+           FROM hcm_object_events t
+           JOIN sys_user su
+             ON t.event_by = su.user_id
+           LEFT JOIN hr_employee hr
+             ON hr.employee_id = su.employee_id
+           JOIN hqm_standard_op_item_l_his his
+             ON t.event_id = his.event_id
+           JOIN hqm_standard_op_item_h h
+             ON his.head_id = h.head_id
+           JOIN hqm_sop_pqc_control_h hspch
+             ON h.standard_op_id = hspch.standard_op_id
+           LEFT JOIN hqm_sop_pqc_control_l hspcl
+             ON h.standard_op_id = hspcl.standard_op_id
+            AND h.workstation_id = hspcl.workstation_id
+           JOIN hcm_production_line hpl
+             ON h.prod_line_id = hpl.prod_line_id
+           JOIN hcm_item hi
+             ON h.plant_id = hi.plant_id
+            AND h.item_id = hi.item_id
+          WHERE t.event_table = 'HQM_STANDARD_OP_ITEM_L'
+            AND his.head_id = #{businessKeyId}
+          GROUP BY his.head_id,
+                   his.event_h_id,
+                   hr.name,
+                   hi.item_code,
+                   hi.descriptions,
+                   hpl.prod_line_code,
+                   hspch.standard_op_code,
+                   hspcl.workstation_code,
+                   h.item_edition,
+                   h.source_type) UNION ALL
+        (SELECT t.event_time,
+                hr.name                AS event_by_name,
+                t.event_content,
+                hi.item_code,
+                hi.descriptions        AS item_descriptions,
+                hpl.prod_line_code,
+                hspch.standard_op_code,
+                hspcl.workstation_code,
+                th.item_edition,
+                th.source_type
+           FROM hcm_object_events t
+           JOIN sys_user su
+             ON t.event_by = su.user_id
+           LEFT JOIN hr_employee hr
+             ON hr.employee_id = su.employee_id
+           JOIN hqm_inspection_attribute_his his
+             ON t.event_id = his.event_id
+           JOIN hqm_inspection_attribute ta
+             ON his.attribute_id = ta.attribute_id
+           JOIN hqm_standard_op_item_l tl
+             ON tl.attribute_id = ta.attribute_id
+            AND tl.creation_date &lt; t.event_time
+           JOIN hqm_standard_op_item_h th
+             ON tl.head_id = th.head_id
+           JOIN hcm_production_line hpl
+             ON th.prod_line_id = hpl.prod_line_id
+           JOIN hqm_sop_pqc_control_h hspch
+             ON th.standard_op_id = hspch.standard_op_id
+           LEFT JOIN hqm_sop_pqc_control_l hspcl
+             ON th.standard_op_id = hspcl.standard_op_id
+            AND th.workstation_id = hspcl.workstation_id
+           JOIN hcm_item hi
+             ON th.item_id = hi.item_id
+            AND th.plant_id = hi.plant_id
+          WHERE t.event_table = 'HQM_INSPECTION_ATTRIBUTE'
+            AND th.head_id = #{businessKeyId})) temp
+ ORDER BY temp.event_time DESC
+</select>
+<!-- IQC/F检验单模板 -->
+<select id="selectInspectionTemplate" resultMap="BaseResultMap" parameterType="com.hand.hcm.hcm_object_events.dto.ObjectEvents">
+SELECT temp.*
+  FROM ((SELECT t.event_time,
+                hr.name AS event_by_name,
+                t.event_content,
+                hi.item_code,
+                hi.descriptions AS item_descriptions,
+                ta.item_edition,
+                ta.source_type,
+                ta.status,
+                ta.main_type
+           FROM hcm_object_events t
+           JOIN sys_user su
+             ON t.event_by = su.user_id
+           LEFT JOIN hr_employee hr
+             ON hr.employee_id = su.employee_id
+           JOIN hqm_iqc_inspection_template_h_his his
+             ON t.event_id = his.event_id
+           JOIN hqm_iqc_inspection_template_h ta
+             ON his.header_id = ta.header_id
+           JOIN hcm_item hi
+             ON ta.item_id = hi.item_id
+            AND ta.plant_id = hi.plant_id
+          WHERE t.event_table = 'HQM_IQC_INSPECTION_TEMPLATE_H'
+            AND ta.header_id = #{businessKeyId}) 
+         UNION ALL
+        (SELECT MAX(t.event_time) AS event_time,
+                hr.name AS event_by_name,
+                listagg(t.event_content, '&lt;br/&gt;') within GROUP(ORDER BY t.event_id) AS event_content,
+                hi.item_code,
+                hi.descriptions AS item_descriptions,
+                h.item_edition,
+                h.source_type,
+                h.status,
+                h.main_type
+           FROM hcm_object_events t
+           JOIN sys_user su
+             ON t.event_by = su.user_id
+           LEFT JOIN hr_employee hr
+             ON hr.employee_id = su.employee_id
+           JOIN hqm_iqc_inspection_template_l_his his
+             ON t.event_id = his.event_id
+           JOIN hqm_iqc_inspection_template_h h
+             ON his.header_id = h.header_id
+           JOIN hcm_item hi
+             ON h.plant_id = hi.plant_id
+            AND h.item_id = hi.item_id
+          WHERE t.event_table = 'HQM_IQC_INSPECTION_TEMPLATE_L'
+            AND his.header_id = #{businessKeyId}
+          GROUP BY his.header_id,
+                   his.event_h_id,
+                   hr.name,
+                   hi.item_code,
+                   hi.descriptions,
+                   h.item_edition,
+                   h.source_type,
+                   h.status,
+                   h.main_type) 
+         UNION ALL
+        (SELECT t.event_time,
+                hr.name AS event_by_name,
+                t.event_content,
+                hi.item_code,
+                hi.descriptions AS item_descriptions,
+                th.item_edition,
+                th.source_type,
+                th.status,
+                th.main_type
+           FROM hcm_object_events t
+           JOIN sys_user su
+             ON t.event_by = su.user_id
+           LEFT JOIN hr_employee hr
+             ON hr.employee_id = su.employee_id
+           JOIN hqm_inspection_attribute_his his
+             ON t.event_id = his.event_id
+           JOIN hqm_inspection_attribute ta
+             ON his.attribute_id = ta.attribute_id
+           JOIN hqm_iqc_inspection_template_l tl
+             ON tl.attribute_id = ta.attribute_id
+            AND tl.creation_date &lt; t.event_time
+           JOIN hqm_iqc_inspection_template_h th
+             ON tl.header_id = th.header_id
+           JOIN hcm_item hi
+             ON th.item_id = hi.item_id
+            AND th.plant_id = hi.plant_id
+          WHERE t.event_table = 'HQM_INSPECTION_ATTRIBUTE'
+            AND th.header_id = #{businessKeyId})) temp
+ ORDER BY temp.event_time DESC
+</select>
+<!-- IQC抽样方案转移 -->
+<select id="selectSampleSwitchRule" resultMap="BaseResultMap" parameterType="com.hand.hcm.hcm_object_events.dto.ObjectEvents">
+SELECT t.event_time, t.event_content, hr.name AS event_by_name
+  FROM hcm_object_events t
+  JOIN sys_user su
+    ON t.event_by = su.user_id
+  LEFT JOIN hr_employee hr
+    ON hr.employee_id = su.employee_id
+  JOIN hqm_sample_switch_rule_his his
+    ON t.event_id = his.event_id
+  JOIN hqm_sample_switch_rule ta
+    ON his.sample_switch_rule_id = ta.sample_switch_rule_id
+ WHERE t.event_table = 'HQM_SAMPLE_SWITCH_RULE'
+   AND ta.sample_switch_rule_id = #{businessKeyId}
+ ORDER BY t.event_time DESC
+</select>
+<!-- FQC抽样方案转移 -->
+<select id="selectFqcSampleSwitch" resultMap="BaseResultMap" parameterType="com.hand.hcm.hcm_object_events.dto.ObjectEvents">
+SELECT t.event_time, t.event_content, hr.name AS event_by_name
+  FROM hcm_object_events t
+  JOIN sys_user su
+    ON t.event_by = su.user_id
+  LEFT JOIN hr_employee hr
+    ON hr.employee_id = su.employee_id
+  JOIN hqm_fqc_sample_switch_his his
+    ON t.event_id = his.event_id
+  JOIN hqm_fqc_sample_switch ta
+    ON his.switch_id = ta.switch_id
+ WHERE t.event_table = 'HQM_FQC_SAMPLE_SWITCH'
+   AND ta.switch_id = #{businessKeyId}
+ ORDER BY t.event_time DESC
+</select>
+<!-- 原材料免检清单 -->
+<select id="selectSuppItemExemption" resultMap="BaseResultMap" parameterType="com.hand.hcm.hcm_object_events.dto.ObjectEvents">
+SELECT t.event_time,
+       t.event_content,
+       hr.name          AS event_by_name,
+       hi.item_code,
+       hi.descriptions  AS item_descriptions,
+       hs.supplier_code,
+       hs.supplier_name
+  FROM hcm_object_events t
+  JOIN sys_user su
+    ON t.event_by = su.user_id
+  LEFT JOIN hr_employee hr
+    ON hr.employee_id = su.employee_id
+  JOIN hqm_supp_item_exemption_his his
+    ON t.event_id = his.event_id
+  JOIN hqm_supp_item_exemption ta
+    ON his.exemption_id = ta.exemption_id
+  JOIN hcm_item hi
+    ON ta.item_id = hi.item_id
+   AND ta.plant_id = hi.plant_id
+  JOIN hcs_suppliers hs
+    ON ta.supplier_id = hs.supplier_id
+ WHERE t.event_table = 'HQM_SUPP_ITEM_EXEMPTION'
+   AND ta.exemption_id = #{businessKeyId}
+ ORDER BY t.event_time DESC
+</select>
+<!-- 项目与SKU关系 -->
+<select id="selectProgramSkuRel" resultMap="BaseResultMap" parameterType="com.hand.hcm.hcm_object_events.dto.ObjectEvents">
+SELECT t.event_time, t.event_content, hr.name AS event_by_name, ta.sku_type
+  FROM hcm_object_events t
+  JOIN sys_user su
+    ON t.event_by = su.user_id
+  LEFT JOIN hr_employee hr
+    ON hr.employee_id = su.employee_id
+  JOIN hqm_program_sku_rel_his his
+    ON t.event_id = his.event_id
+  JOIN hqm_program_sku_rel ta
+    ON his.kid = ta.kid
+ WHERE t.event_table = 'HQM_PROGRAM_SKU_REL'
+   AND ta.kid = #{businessKeyId}
+ ORDER BY t.event_time DESC
+</select>
+<!-- 在线新品检验规则维护 -->
+<select id="selectOnlineSkuRule" resultMap="BaseResultMap" parameterType="com.hand.hcm.hcm_object_events.dto.ObjectEvents">
+SELECT t.event_time, t.event_content, hr.name AS event_by_name, ta.sku_type
+  FROM hcm_object_events t
+  JOIN sys_user su
+    ON t.event_by = su.user_id
+  LEFT JOIN hr_employee hr
+    ON hr.employee_id = su.employee_id
+  JOIN hqm_online_sku_rule_his his
+    ON t.event_id = his.event_id
+  JOIN hqm_online_sku_rule ta
+    ON his.kid = ta.kid
+ WHERE t.event_table = 'HQM_ONLINE_SKU_RULE'
+   AND ta.kid = #{businessKeyId}
+ ORDER BY t.event_time DESC
+</select>
+<!-- 检验项目维护 -->
+<select id="selectInspectionAttribute" resultMap="BaseResultMap" parameterType="com.hand.hcm.hcm_object_events.dto.ObjectEvents">
+SELECT t.event_time,
+       t.event_content,
+       hr.name AS event_by_name,
+       ta.inspection_attribute,
+       ta.inspection_tool
+  FROM hcm_object_events t
+  JOIN sys_user su
+    ON t.event_by = su.user_id
+  LEFT JOIN hr_employee hr
+    ON hr.employee_id = su.employee_id
+  JOIN hqm_inspection_attribute_his his
+    ON t.event_id = his.event_id
+  JOIN hqm_inspection_attribute ta
+    ON his.attribute_id = ta.attribute_id
+ WHERE t.event_table = 'HQM_INSPECTION_ATTRIBUTE'
+   AND ta.attribute_id = #{businessKeyId}
+ ORDER BY t.event_time DESC
+</select>
+<!-- PQC巡检预警 -->
+<select id="selectPqcWarning" resultMap="BaseResultMap" parameterType="com.hand.hcm.hcm_object_events.dto.ObjectEvents">
+SELECT t.event_time,
+       t.event_content,
+       hr.name AS event_by_name,
+       hp.plant_code,
+       ta.warning_level,
+       ta.level_desc
+  FROM hcm_object_events t
+  JOIN sys_user su
+    ON t.event_by = su.user_id
+  LEFT JOIN hr_employee hr
+    ON hr.employee_id = su.employee_id
+  JOIN hqm_pqc_warning_his his
+    ON t.event_id = his.event_id
+  JOIN hqm_pqc_warning ta
+    ON his.warning_id = ta.warning_id
+  JOIN hcm_plant hp
+    ON ta.plant_id = hp.plant_id
+ WHERE t.event_table = 'HQM_PQC_WARNING'
+   AND ta.warning_id = #{businessKeyId}
+ ORDER BY t.event_time DESC
+</select>
+<!-- 检验员供应商关系 -->
+<select id="selectSupplierInspectorRel" resultMap="BaseResultMap" parameterType="com.hand.hcm.hcm_object_events.dto.ObjectEvents">
+SELECT t.event_time, t.event_content, hr.name AS event_by_name, hs.supplier_name
+  FROM hcm_object_events t
+  JOIN sys_user su
+    ON t.event_by = su.user_id
+  LEFT JOIN hr_employee hr
+    ON hr.employee_id = su.employee_id
+  JOIN hqm_supplier_inspector_rel_his his
+    ON t.event_id = his.event_id
+  JOIN hqm_supplier_inspector_rel ta
+    ON his.rel_id = ta.rel_id
+  JOIN hcs_suppliers hs
+    ON ta.supplier_id = hs.supplier_id
+ WHERE t.event_table = 'HQM_SUPPLIER_INSPECTOR_REL'
+   AND ta.rel_id = #{businessKeyId}
+   ORDER BY t.event_time DESC
+</select>
+<!-- 成品平台项目组 -->
+<select id="selectPlatformProgram" resultMap="BaseResultMap" parameterType="com.hand.hcm.hcm_object_events.dto.ObjectEvents">
+SELECT t.event_time, t.event_content, hr.name AS event_by_name, ta.program_type, ta.platform_type
+  FROM hcm_object_events t
+  JOIN sys_user su
+    ON t.event_by = su.user_id
+  LEFT JOIN hr_employee hr
+    ON hr.employee_id = su.employee_id
+  JOIN hqm_platform_program_his his
+    ON t.event_id = his.event_id
+  JOIN hqm_platform_program ta
+    ON his.platform_id = ta.platform_id
+ WHERE t.event_table = 'HQM_PLATFORM_PROGRAM'
+   AND ta.platform_id = #{businessKeyId}
+ ORDER BY t.event_time DESC
+</select>
+<!-- 库存重检周期 -->
+<select id="selectItemControl" resultMap="BaseResultMap" parameterType="com.hand.hcm.hcm_object_events.dto.ObjectEvents">
+SELECT t.event_time,
+       t.event_content,
+       hr.name         AS event_by_name,
+       hi.item_code,
+       hi.descriptions AS item_descriptions
+  FROM hcm_object_events t
+  JOIN sys_user su
+    ON t.event_by = su.user_id
+  LEFT JOIN hr_employee hr
+    ON hr.employee_id = su.employee_id
+  JOIN hqm_item_control_his his
+    ON t.event_id = his.event_id
+  JOIN hqm_item_control ta
+    ON his.kid = ta.kid
+  JOIN hcm_item hi
+    ON ta.item_id = hi.item_id
+   AND ta.plant_id = hi.plant_id
+ WHERE t.event_table = 'HQM_ITEM_CONTROL'
+   AND ta.kid = #{businessKeyId}
+ ORDER BY t.event_time DESC
+</select>
+
+<!-- 获取历史记录 IQC/FQC -->
+<select id="getHisContent" resultMap="BaseResultMap" parameterType="com.hand.hcm.hcm_object_events.dto.ObjectEvents">
+	SELECT *
+		FROM hcm_object_events t
+		WHERE 1=1
+		<if test="eventId != null">
+			AND t.event_id = #{eventId}
+		</if>
+		AND t.event_table in ('HQM_IQC_INSPECTION_TEMPLATE_H','HQM_IQC_INSPECTION_TEMPLATE_L')
+		ORDER BY t.creation_date asc
+</select>
+
+<!-- 获取历史记录 PQC -->
+<select id="getHisContentPqc" resultMap="BaseResultMap" parameterType="com.hand.hcm.hcm_object_events.dto.ObjectEvents">
+	SELECT *
+		FROM hcm_object_events t
+		WHERE 1=1
+		<if test="eventId != null">
+			AND t.event_id = #{eventId}
+		</if>
+		AND t.event_table in ('HQM_STANDARD_OP_ITEM_H','HQM_STANDARD_OP_ITEM_L')
+		ORDER BY t.creation_date asc
+</select>
+
+</mapper>
